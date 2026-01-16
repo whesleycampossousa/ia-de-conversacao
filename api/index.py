@@ -10,9 +10,21 @@ from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
-from google.cloud import texttospeech
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
+try:
+    from google.cloud import texttospeech
+    TEXTTOSPEECH_AVAILABLE = True
+except ImportError as e:
+    TEXTTOSPEECH_AVAILABLE = False
+    TEXTTOSPEECH_ERROR = str(e)
+
+try:
+    from reportlab.lib.pagesizes import letter
+    from reportlab.pdfgen import canvas
+    REPORTLAB_AVAILABLE = True
+except ImportError as e:
+    REPORTLAB_AVAILABLE = False
+    REPORTLAB_ERROR = str(e)
+
 import requests
 
 # Load environment variables
@@ -1017,10 +1029,20 @@ def transcribe_audio():
 def health_check():
     """Health check endpoint"""
     return jsonify({
-        "status": "ok",
-        "ai_configured": GOOGLE_API_KEY is not None and model is not None,
-        "groq_configured": GROQ_API_KEY is not None,
         "timestamp": datetime.now().isoformat()
+    })
+
+@app.route('/api/debug_imports', methods=['GET'])
+def debug_imports():
+    return jsonify({
+        "google-cloud-texttospeech": {
+            "available": globals().get('TEXTTOSPEECH_AVAILABLE'),
+            "error": globals().get('TEXTTOSPEECH_ERROR')
+        },
+        "reportlab": {
+            "available": globals().get('REPORTLAB_AVAILABLE'),
+            "error": globals().get('REPORTLAB_ERROR')
+        }
     })
 
 @app.route('/<path:path>')
