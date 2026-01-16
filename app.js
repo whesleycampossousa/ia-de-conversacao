@@ -986,7 +986,7 @@ document.addEventListener('DOMContentLoaded', () => {
             sendBtn.click();
         }
     };
-}
+    // Stray brace removed from here
 
 
     function finishConversation() {
