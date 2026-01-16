@@ -494,8 +494,41 @@ def chat():
     # Get System Prompt based on context
     system_prompt = CONTEXT_PROMPTS.get(context_key, CONTEXT_PROMPTS.get('coffee_shop', ''))
 
-    # Enhanced prompt with grammar correction focus
-    full_prompt = f"""{system_prompt}
+    # Check if this is a grammar/learning topic
+    is_grammar_topic = context_key in ['verb_to_be', 'greetings', 'articles', 'plurals', 
+                                        'demonstratives', 'subject_pronouns', 'possessives',
+                                        'present_simple', 'present_continuous', 'basic_questions']
+
+    if is_grammar_topic:
+        # Beginner-friendly learning mode - English only, empathetic scaffolding
+        full_prompt = f"""{system_prompt}
+
+### CURRENT SITUATION
+The student just said: "{user_text}"
+
+### YOUR RESPONSE STRATEGY
+1. If they show confusion or make a mistake:
+   - **Validate:** Reassure them warmly ("That's totally normal! 😊")
+   - **Micro-Explain:** One simple sentence explaining the concept
+   - **Example:** One clear, relatable example
+   - **Guided Practice:** Ask a simple question with a sentence starter if needed
+
+2. If they answer correctly:
+   - **Celebrate:** Acknowledge their success enthusiastically!
+   - **Build on it:** Ask a slightly harder follow-up question to keep practicing
+
+### CRITICAL RULES
+- Speak ONLY in English (use very simple words for beginners)
+- Keep your response to 1-2 sentences MAX
+- Be warm, patient, and encouraging
+- Focus on making them USE English, not just study it
+- Return ONLY a JSON object: {{"en": "your response"}}
+
+Note: NO Portuguese translation needed for learning mode - immersion is key for beginners!
+"""
+    else:
+        # Standard conversation mode - with Portuguese translation
+        full_prompt = f"""{system_prompt}
 
 IMPORTANT: You are also an English teacher. Evaluate the user's grammar and vocabulary.
 
