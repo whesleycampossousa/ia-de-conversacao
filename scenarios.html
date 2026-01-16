@@ -84,6 +84,97 @@
         .container {
             max-width: 600px;
         }
+
+        /* Practice Mode Selection Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 1.5rem;
+            padding: 2.5rem;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .mode-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .mode-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px solid var(--border-color);
+            border-radius: 1rem;
+            padding: 2rem 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text-primary);
+        }
+
+        .mode-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--primary-color);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .mode-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .mode-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .mode-description {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .modal-close-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.75rem 2rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .modal-close-btn:hover {
+            border-color: var(--error-color);
+            color: var(--error-color);
+        }
+
+        @media (max-width: 768px) {
+            .mode-options {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 
@@ -96,6 +187,31 @@
             <h1>Choose Context</h1>
             <p>Where would you like to practice today?</p>
         </header>
+
+        <!-- Practice Mode Selection Modal -->
+        <div id="practice-mode-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <h2>Como você quer praticar?</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 2rem;">Escolha o modo de prática que funciona
+                    melhor para você:</p>
+
+                <div class="mode-options">
+                    <button class="mode-btn" onclick="startPractice('normal')">
+                        <div class="mode-icon">👁️ 📢</div>
+                        <div class="mode-title">Ler + Áudio</div>
+                        <div class="mode-description">Ver o texto e ouvir a pronúncia</div>
+                    </button>
+
+                    <button class="mode-btn" onclick="startPractice('audio-only')">
+                        <div class="mode-icon">🎧</div>
+                        <div class="mode-title">Somente Áudio</div>
+                        <div class="mode-description">Praticar apenas ouvindo (desafio!)</div>
+                    </button>
+                </div>
+
+                <button class="modal-close-btn" onclick="closePracticeModeModal()">Cancelar</button>
+            </div>
+        </div>
 
         <div class="scenarios-grid" id="scenarios-container">
             <!-- Scenarios will be loaded here -->
@@ -228,6 +344,8 @@
             }
         }
 
+        let selectedScenario = { id: '', title: '' };
+
         function selectScenario(id, title) {
             // Check if there's an ongoing conversation
             const hasConversation = localStorage.getItem('conversation_backup');
@@ -241,11 +359,29 @@
                 }
             }
 
+            // Store selected scenario and show mode selection modal
+            selectedScenario = { id, title };
+            showPracticeModeModal();
+        }
+
+        function showPracticeModeModal() {
+            const modal = document.getElementById('practice-mode-modal');
+            modal.style.display = 'flex';
+        }
+
+        function closePracticeModeModal() {
+            const modal = document.getElementById('practice-mode-modal');
+            modal.style.display = 'none';
+        }
+
+        function startPractice(mode) {
             // Get speed from current URL
             const urlParams = new URLSearchParams(window.location.search);
             const speed = urlParams.get('speed') || '1.0';
 
-            window.location.href = `practice.html?context=${id}&title=${encodeURIComponent(title)}&speed=${speed}`;
+            // Navigate to practice with selected mode
+            const { id, title } = selectedScenario;
+            window.location.href = `practice.html?context=${id}&title=${encodeURIComponent(title)}&speed=${speed}&mode=${mode}`;
         }
 
 

@@ -24,6 +24,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const context = urlParams.get('context') || 'coffee_shop';
     const contextName = urlParams.get('title') || 'Practice';
 
+    // Practice Mode Detection (audio-only or normal)
+    const practiceMode = urlParams.get('mode') || 'normal';
+    const isAudioOnly = practiceMode === 'audio-only';
+
+    // Apply audio-only mode if selected
+    if (isAudioOnly) {
+        document.body.classList.add('audio-only-mode');
+        console.log('[AUDIO-ONLY MODE] Text bubbles will be hidden');
+    }
+
     // TTS Speed Logic
     let ttsSpeed = 1.0;
     const urlSpeed = parseFloat(urlParams.get('speed'));

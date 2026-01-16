@@ -340,6 +340,37 @@ h1 {
     animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Audio-Only Mode - Hide text bubbles */
+body.audio-only-mode .message .bubble {
+    display: none !important;
+}
+
+body.audio-only-mode #chat-window {
+    justify-content: center;
+    align-items: center;
+}
+
+body.audio-only-mode .message {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+/* Visual indicator for audio-only mode */
+body.audio-only-mode #chat-window::before {
+    content: '🎧 Modo Somente Áudio';
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    text-align: center;
+    padding: 2rem;
+    background: rgba(37, 99, 235, 0.1);
+    border-radius: 1rem;
+    margin-bottom: 2rem;
+}
+
 .system-message {
     align-self: flex-start;
 }
