@@ -1,31 +1,33 @@
 import requests
 import json
 
-URL = "https://ia-de-conversacao.vercel.app/api/auth/login"
-EMAIL = "everydayconversation1991@gmail.com"
-PASSWORD = "admin" # Guessing password or trying without match to see if we get past the initial crash
+BASE_URL = "https://ia-de-conversacao.vercel.app"
 
-# Note: Admin password might be different, but we just want to see if it Crashes (500)
-# or returns 401 (Invalid password), which would mean the server IS working.
-
-def test_remote_login():
-    print(f"Testing URL: {URL}")
-    payload = {
-        "email": EMAIL,
-        "password": PASSWORD
-    }
-    
+def test_remote():
+    # 1. Test Health (GET)
+    health_url = f"{BASE_URL}/api/health"
+    print(f"Testing GET {health_url}...")
     try:
-        response = requests.post(URL, json=payload, headers={"Content-Type": "application/json"})
-        print(f"Status Code: {response.status_code}")
-        try:
-            print("Response JSON:")
-            print(json.dumps(response.json(), indent=2))
-        except:
-            print("Response Text (Not JSON):")
-            print(response.text)
+        r = requests.get(health_url)
+        print(f"Status: {r.status_code}")
+        print(r.text[:200])
     except Exception as e:
-        print(f"Request failed: {e}")
+        print(f"Health check failed: {e}")
+
+    print("-" * 20)
+
+    # 2. Test Login (POST)
+    login_url = f"{BASE_URL}/api/auth/login"
+    print(f"Testing POST {login_url}...")
+    try:
+        r = requests.post(login_url, json={"email": "test@test.com", "password": "123"})
+        print(f"Status: {r.status_code}")
+        print("Headers:", r.headers)
+        if r.status_code == 405:
+            print("Allow Header:", r.headers.get('Allow'))
+        print("Body:", r.text[:200])
+    except Exception as e:
+        print(f"Login request failed: {e}")
 
 if __name__ == "__main__":
-    test_remote_login()
+    test_remote()
