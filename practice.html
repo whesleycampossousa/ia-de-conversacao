@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversation Practice</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <header>
+            <h1>Practice: Ordering Coffee</h1>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+                <span class="message-counter" id="message-counter">0 exchanges</span>
+                <div id="usage-timer" class="usage-timer timer-normal">
+                    <span class="timer-icon">⏱️</span>
+                    <span id="timer-display">10:00</span>
+                    <span class="timer-label">restantes hoje</span>
+                </div>
+                <label class="translation-toggle">
+                    <input type="checkbox" id="auto-translate-toggle">
+                    <span>Auto-translate</span>
+                </label>
+            </div>
+        </header>
+
+        <main id="chat-window">
+            <!-- Messages will be injected here via JS -->
+            <div class="message system-message" id="start-message">
+                <div class="bubble">
+                    <p>Pronto para começar?</p>
+                    <button id="start-btn" class="action-btn">Iniciar Conversa</button>
+                </div>
+            </div>
+        </main>
+
+        <footer class="controls">
+            <div id="status-indicator"></div>
+            <p class="mic-tip" style="margin: 0.5rem 0; font-size: 0.85rem; color: #94a3b8; text-align: center;">
+                💡 Dica: Fale devagar e claramente para melhor reconhecimento
+            </p>
+            <button id="record-btn" class="record-btn" disabled>
+                <div class="mic-icon"></div>
+                <span id="record-text">🎤 Clique para Falar</span>
+            </button>
+            <p class="disabled-hint" id="mic-hint">Click "Start Conversation" to begin</p>
+            <button id="report-btn" class="action-btn" disabled>Ver relatorio (min. 3 exchanges)</button>
+        </footer>
+    </div>
+
+    <script src="api-client.js"></script>
+    <script src="deepgram-recorder.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>

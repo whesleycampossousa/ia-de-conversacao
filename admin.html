@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Conversation Practice</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="app-container admin-container">
+        <header class="admin-header">
+            <div>
+                <h1>🛠️ Admin Panel</h1>
+                <p id="admin-info">Loading...</p>
+            </div>
+            <button id="logout-btn" class="action-btn" style="margin-top: 0; padding: 0.75rem 1.5rem;">Logout</button>
+        </header>
+
+        <main class="admin-main">
+            <!-- Stats Section -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📧</div>
+                    <div class="stat-value" id="total-emails">0</div>
+                    <div class="stat-label">Authorized Emails</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">👤</div>
+                    <div class="stat-value" id="total-users">0</div>
+                    <div class="stat-label">Active Users Today</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⏱️</div>
+                    <div class="stat-value">10 min</div>
+                    <div class="stat-label">Daily Limit</div>
+                </div>
+            </div>
+
+            <!-- Email Management Section -->
+            <div class="admin-section">
+                <div class="section-header">
+                    <h2>📋 Manage Authorized Emails</h2>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button id="reload-btn" class="action-btn"
+                            style="margin: 0; padding: 0.6rem 1.2rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                            🔄 Reload from File
+                        </button>
+                        <button id="add-email-btn" class="action-btn" style="margin: 0; padding: 0.6rem 1.2rem;">
+                            ➕ Add Email
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Search -->
+                <div class="search-box">
+                    <input type="text" id="search-input" placeholder="🔍 Search emails..." />
+                </div>
+
+                <!-- Email List -->
+                <div id="email-list" class="email-list">
+                    <p style="text-align: center; color: #94a3b8;">Loading emails...</p>
+                </div>
+            </div>
+
+            <!-- Platform Access -->
+            <div class="admin-section">
+                <div class="section-header">
+                    <h2>🚀 Quick Access</h2>
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button onclick="window.location.href='scenarios.html'" class="action-btn"
+                        style="flex: 1; margin: 0;">
+                        Go to Platform
+                    </button>
+                    <button onclick="window.location.href='login.html'" class="action-btn"
+                        style="flex: 1; margin: 0; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+                        Logout & Exit
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Email Modal -->
+    <div id="add-email-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2>Add New Email</h2>
+            <div class="input-group">
+                <label for="new-email">Email Address</label>
+                <input type="email" id="new-email" placeholder="user@example.com">
+            </div>
+            <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
+                <button id="confirm-add-btn" class="primary-btn" style="flex: 1; margin: 0;">Add Email</button>
+                <button id="cancel-add-btn" class="action-btn"
+                    style="flex: 1; margin: 0; background: #64748b;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="api-client.js"></script>
+    <script>
+        // Admin panel logic
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Check if user is admin
+            const user = apiClient.getUser();
+            if (!user || !user.is_admin) {
+                alert('Admin access required');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Set admin info
+            document.getElementById('admin-info').textContent = `Logged in as: ${user.email}`;
+
+            // Load emails
+            await loadEmails();
+
+            // Event listeners
+            document.getElementById('add-email-btn').addEventListener('click', showAddModal);
+            document.getElementById('reload-btn').addEventListener('click', reloadEmails);
+            document.getElementById('confirm-add-btn').addEventListener('click', addEmail);
+            document.getElementById('cancel-add-btn').addEventListener('click', hideAddModal);
+            document.getElementById('search-input').addEventListener('input', filterEmails);
+            document.getElementById('logout-btn').addEventListener('click', () => {
+                apiClient.logout();
+                window.location.href = 'login.html';
+            });
+
+            // Close modal on overlay click
+            document.getElementById('add-email-modal').addEventListener('click', (e) => {
+                if (e.target.id === 'add-email-modal') {
+                    hideAddModal();
+                }
+            });
+        });
+
+        let allEmails = [];
+
+        async function loadEmails() {
+            try {
+                const data = await apiClient.getAuthorizedEmails();
+                allEmails = data.emails || [];
+                document.getElementById('total-emails').textContent = data.total || 0;
+                renderEmails(allEmails);
+            } catch (err) {
+                console.error('Failed to load emails:', err);
+                alert('Failed to load emails. Please try again.');
+            }
+        }
+
+        function renderEmails(emails) {
+            const list = document.getElementById('email-list');
+            if (emails.length === 0) {
+                list.innerHTML = '<p style="text-align: center; color: #94a3b8;">No emails found</p>';
+                return;
+            }
+
+            list.innerHTML = emails.map((email, index) => `
+                <div class="email-item">
+                    <div class="email-info">
+                        <span class="email-index">${index + 1}</span>
+                        <span class="email-address">${email}</span>
+                        ${email === 'everydayconversation1991@gmail.com' ? '<span class="admin-badge">ADMIN</span>' : ''}
+                    </div>
+                    ${email !== 'everydayconversation1991@gmail.com' ?
+                    `<button onclick="removeEmail('${email}')" class="remove-btn">🗑️ Remove</button>` :
+                    '<span style="color: #94a3b8; font-size: 0.85rem;">Cannot remove</span>'}
+                </div>
+            `).join('');
+        }
+
+        function filterEmails() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const filtered = allEmails.filter(email => email.toLowerCase().includes(query));
+            renderEmails(filtered);
+        }
+
+        function showAddModal() {
+            document.getElementById('add-email-modal').style.display = 'flex';
+            document.getElementById('new-email').value = '';
+            document.getElementById('new-email').focus();
+        }
+
+        function hideAddModal() {
+            document.getElementById('add-email-modal').style.display = 'none';
+        }
+
+        async function addEmail() {
+            const email = document.getElementById('new-email').value.trim().toLowerCase();
+
+            if (!email || !email.includes('@')) {
+                alert('Please enter a valid email address');
+                return;
+            }
+
+            try {
+                await apiClient.addAuthorizedEmail(email);
+                alert(`Email ${email} added successfully!`);
+                hideAddModal();
+                await loadEmails();
+            } catch (err) {
+                console.error('Failed to add email:', err);
+                alert(err.message || 'Failed to add email. It may already exist.');
+            }
+        }
+
+        async function removeEmail(email) {
+            if (!confirm(`Are you sure you want to remove ${email}?`)) {
+                return;
+            }
+
+            try {
+                await apiClient.removeAuthorizedEmail(email);
+                alert(`Email ${email} removed successfully!`);
+                await loadEmails();
+            } catch (err) {
+                console.error('Failed to remove email:', err);
+                alert(err.message || 'Failed to remove email.');
+            }
+        }
+
+        async function reloadEmails() {
+            if (!confirm('Reload emails from file? This will refresh the list from the server.')) {
+                return;
+            }
+
+            try {
+                await apiClient.reloadEmails();
+                alert('Emails reloaded successfully!');
+                await loadEmails();
+            } catch (err) {
+                console.error('Failed to reload emails:', err);
+                alert(err.message || 'Failed to reload emails.');
+            }
+        }
+    </script>
+</body>
+
+</html>

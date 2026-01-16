@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(findstr:*)",
+      "Bash(python api/index.py:*)",
+      "Bash(python list_models.py:*)"
+    ]
+  }
+}

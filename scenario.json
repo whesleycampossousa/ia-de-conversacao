@@ -1,0 +1,42 @@
+[
+    {
+        "id": 1,
+        "speaker": "Barista",
+        "text": "Hi there! Welcome to The Daily Grind. What can I get started for you today?",
+        "audio_file": "step_1.mp3",
+        "expected_keywords": ["coffee", "latte", "cappuccino", "tea", "espresso"],
+        "hint": "Try saying: 'I would like a coffee, please.'"
+    },
+    {
+        "id": 2,
+        "speaker": "Barista",
+        "text": "Sure thing. Would you like that hot or iced?",
+        "audio_file": "step_2.mp3",
+        "expected_keywords": ["hot", "iced", "cold", "warm"],
+        "hint": "Say: 'Hot, please' or 'Iced, please.'"
+    },
+    {
+        "id": 3,
+        "speaker": "Barista",
+        "text": "Great choice. Any milk or sugar with that?",
+        "audio_file": "step_3.mp3",
+        "expected_keywords": ["milk", "sugar", "black", "cream", "no"],
+        "hint": "You can say: 'Just a little milk' or 'Black, please.'"
+    },
+    {
+        "id": 4,
+        "speaker": "Barista",
+        "text": "Okay, that'll be three dollars. Can I have your name for the order?",
+        "audio_file": "step_4.mp3",
+        "expected_keywords": ["name", "is", "my"],
+        "hint": "Tell them your name, e.g., 'My name is [Your Name].'"
+    },
+    {
+        "id": 5,
+        "speaker": "Barista",
+        "text": "Thanks! We'll call your name properly when it's ready. Have a seat!",
+        "audio_file": "step_5.mp3",
+        "expected_keywords": ["thank", "thanks"],
+        "hint": "Say: 'Thank you!'"
+    }
+]

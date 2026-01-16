@@ -1,0 +1,14 @@
+.vercel
+.env
+__pycache__/
+*.pyc
+*.pyo
+*.log
+.DS_Store
+debug_error.log
+api/__pycache__/
+venv/
+node_modules/
+.vscode/
+.idea/
+authorized_emails.json
