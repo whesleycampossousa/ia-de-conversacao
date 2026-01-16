@@ -266,23 +266,45 @@ header {
     backdrop-filter: blur(10px);
 }
 
-/* Mobile optimizations */
+/* Mobile optimizations - ULTRA COMPACT */
 @media (max-width: 768px) {
     header {
-        padding: 0.75rem 0.5rem;
+        padding: 0.5rem !important;
     }
 
     header h1 {
-        font-size: 1.1rem !important;
+        font-size: 0.95rem !important;
+        margin-bottom: 0.25rem !important;
     }
 
     header>div {
-        flex-direction: column !important;
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center !important;
         gap: 0.5rem !important;
+        font-size: 0.75rem !important;
+    }
+
+    .message-counter {
+        font-size: 0.75rem !important;
     }
 
     .usage-timer {
-        font-size: 0.85rem !important;
+        font-size: 0.7rem !important;
+        padding: 0.25rem 0.5rem !important;
+    }
+
+    .translation-toggle {
+        font-size: 0.75rem !important;
+    }
+
+    /* Hide timer icon on mobile to save space */
+    .timer-icon {
+        display: none;
+    }
+
+    .timer-label {
+        display: none;
     }
 }
 
@@ -410,6 +432,35 @@ h1 {
     flex-direction: column;
     align-items: center;
     gap: 0.8rem;
+}
+
+/* Mobile footer optimization - ULTRA COMPACT */
+@media (max-width: 768px) {
+    .controls {
+        padding: 0.75rem !important;
+        gap: 0.5rem !important;
+    }
+
+    /* Hide mic tip on mobile to save space */
+    .mic-tip {
+        display: none !important;
+    }
+
+    /* Hide disabled hint text on mobile */
+    .disabled-hint {
+        display: none !important;
+    }
+
+    /* Smaller record button text on mobile */
+    #record-text {
+        font-size: 0.85rem !important;
+    }
+
+    /* Compact report button on mobile */
+    #report-btn {
+        padding: 0.6rem 1rem !important;
+        font-size: 0.85rem !important;
+    }
 }
 
 .record-btn {
