@@ -10,80 +10,98 @@
     <style>
         .levels-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             gap: 1.5rem;
-            max-width: 800px;
+            max-width: 1000px;
             margin: 2rem auto;
             padding: 1rem;
         }
 
         .level-card {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--glass-border);
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
             border-radius: 16px;
             padding: 2rem;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
             text-decoration: none;
-            color: white;
+            color: var(--text-primary);
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 1rem;
+            box-shadow: var(--card-shadow);
         }
 
         .level-card:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateY(-5px);
+            background: var(--surface-hover);
             border-color: var(--accent-color);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
 
-        .level-icon {
-            font-size: 3rem;
+        .level-icon-svg {
+            width: 48px;
+            height: 48px;
+            stroke: var(--accent-color);
+            stroke-width: 1.5;
+            fill: none;
             margin-bottom: 0.5rem;
         }
 
         .level-title {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: 700;
-            color: var(--accent-color);
+            color: var(--text-primary);
         }
 
         .level-desc {
             font-size: 0.9rem;
-            color: #ccc;
+            color: var(--text-secondary);
+            flex-grow: 1;
         }
 
         .level-speed {
-            font-size: 0.8rem;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
+            font-size: 0.75rem;
+            background: rgba(59, 130, 246, 0.1);
+            /* Blue tint */
+            color: #60a5fa;
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
             margin-top: 0.5rem;
+            font-weight: 600;
+            border: 1px solid rgba(59, 130, 246, 0.2);
         }
 
         .back-btn {
-            display: block;
-            width: fit-content;
-            margin: 1rem auto;
-            color: #ccc;
-            text-decoration: none;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             gap: 0.5rem;
+            margin: 1rem auto;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
         }
 
         .back-btn:hover {
-            color: white;
+            color: var(--text-primary);
         }
     </style>
 </head>
 
 <body class="dashboard-body">
     <div class="dashboard-container">
+
         <header class="dashboard-header">
-            <a href="dashboard.html" class="back-btn">← Voltar</a>
+            <a href="dashboard.html" class="back-btn">
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Voltar
+            </a>
             <h1>Qual é o seu nível?</h1>
             <p>Escolha a velocidade ideal para sua prática.</p>
         </header>
@@ -91,33 +109,51 @@
         <div class="levels-container">
             <!-- Iniciante: Speed 0.6 -->
             <a href="javascript:selectLevel(0.6)" class="level-card">
-                <div class="level-icon">🐢</div>
+                <!-- Icon: Slow/Turtle (Clock) -->
+                <svg class="level-icon-svg" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
                 <div class="level-title">Iniciante</div>
-                <div class="level-desc">Velocidade reduzida para melhor compreensão.</div>
+                <div class="level-desc">Falas lentas e pausadas para facilitar a compreensão.</div>
                 <div class="level-speed">Velocidade: 0.6x</div>
             </a>
 
             <!-- Pré Intermediário: Speed 0.8 -->
             <a href="javascript:selectLevel(0.8)" class="level-card">
-                <div class="level-icon">🚶</div>
+                <!-- Icon: Walking -->
+                <svg class="level-icon-svg" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M.5 12h23" stroke-dasharray="2 2" />
+                    <!-- Abstract Path -->
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M12 6v6l4 2" />
+                </svg>
                 <div class="level-title">Pré Intermediário</div>
-                <div class="level-desc">Um pouco mais devagar que o normal.</div>
+                <div class="level-desc">Velocidade moderada, ideal para quem já tem base.</div>
                 <div class="level-speed">Velocidade: 0.8x</div>
             </a>
 
             <!-- Intermediário: Speed 1.0 -->
             <a href="javascript:selectLevel(1.0)" class="level-card">
-                <div class="level-icon">🏃</div>
+                <!-- Icon: Running/Zap -->
+                <svg class="level-icon-svg" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75Z" />
+                </svg>
                 <div class="level-title">Intermediário</div>
-                <div class="level-desc">Velocidade natural de fala.</div>
+                <div class="level-desc">Conversação em velocidade natural do dia a dia.</div>
                 <div class="level-speed">Velocidade: Normal</div>
             </a>
 
-            <!-- Avançado: Speed 1.0 (Same as normal but different intent) -->
+            <!-- Avançado: Speed 1.0 -->
             <a href="javascript:selectLevel(1.0)" class="level-card">
-                <div class="level-icon">🚀</div>
+                <!-- Icon: Star/Rocket -->
+                <svg class="level-icon-svg" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.563.563 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.563.563 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" />
+                </svg>
                 <div class="level-title">Avançado</div>
-                <div class="level-desc">Conversa fluida e natural.</div>
+                <div class="level-desc">Desafios de vocabulário e expressões complexas.</div>
                 <div class="level-speed">Velocidade: Normal</div>
             </a>
         </div>

@@ -7,40 +7,96 @@
     <title>Dashboard - IA de Conversação</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .lang-toggle {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.5rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .lang-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .lang-btn.active {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .dashboard-header {
+            position: relative;
+        }
+
+        /* Icon styling */
+        .icon-svg {
+            width: 48px;
+            height: 48px;
+            stroke: var(--accent-color);
+            stroke-width: 1.5;
+            fill: none;
+            margin-bottom: 1.5rem;
+        }
+    </style>
 </head>
 
 <body class="dashboard-body">
     <div class="dashboard-container">
+
+        <div class="lang-toggle">
+            <button class="lang-btn active" onclick="setLanguage('pt')" id="btn-pt">PT</button>
+            <button class="lang-btn" onclick="setLanguage('en')" id="btn-en">EN</button>
+        </div>
+
         <header class="dashboard-header">
-            <h1>Bem-vindo!</h1>
-            <p>O que você quer praticar hoje?</p>
+            <h1 id="welcome-msg">Bem-vindo!</h1>
+            <p id="subtitle-msg">Selecione um modo para começar sua prática.</p>
         </header>
 
         <div class="mode-cards">
             <!-- Conversation Mode -->
             <a href="levels.html" class="mode-card conversation-mode">
-                <div class="card-icon">🗣️</div>
+                <svg class="icon-svg" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 0 1-.825-.242m9.345-8.334a2.126 2.126 0 0 0-.476-2.281l-9.8-9.8a2.126 2.126 0 0 0-2.281-.476 8.005 8.005 0 0 1-7.148 7.148 2.126 2.126 0 0 0-.476 2.281l9.8 9.8a2.126 2.126 0 0 0 2.281.476 8.005 8.005 0 0 1 7.148-7.148ZM2.25 19.5v-13.5m19.5 0V19.5" />
+                </svg>
                 <div class="card-content">
-                    <h2>Conversação</h2>
-                    <p>Pratique situações reais do dia a dia. Peça comida, faça check-in, converse com estranhos...</p>
-                    <span class="btn-primary">Praticar agora</span>
+                    <h2 id="conv-title">Conversação</h2>
+                    <p id="conv-desc">Pratique situações reais do dia a dia. Melhore sua fluência com conversas
+                        interativas.</p>
+                    <span class="btn-primary" id="conv-btn">Praticar agora</span>
                 </div>
             </a>
 
             <!-- Learning Mode -->
             <a href="learning.html" class="mode-card learning-mode">
-                <div class="card-icon">🎓</div>
+                <svg class="icon-svg" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.57 50.57 0 0 0-5.266-1.425 2.052 2.052 0 0 1 .684-2.766 50.584 50.584 0 0 1 20.916 0 2.052 2.052 0 0 1 .684 2.766 50.571 50.571 0 0 0-5.266 1.425m-15.482 0A50.55 50.55 0 0 1 12 8s.096.002.19.006c.995.043 1.99.11 2.976.202" />
+                </svg>
                 <div class="card-content">
-                    <h2>Aprendizado</h2>
-                    <p>Domine a gramática com 30 tópicos essenciais. Do básico ao intermediário, com um professor
-                        paciente.</p>
-                    <span class="btn-secondary">Começar aulas</span>
+                    <h2 id="learn-title">Aprendizado</h2>
+                    <p id="learn-desc">Aulas estruturadas de gramática e vocabulário. Do zero ao avançado.</p>
+                    <span class="btn-secondary" id="learn-btn">Começar aulas</span>
                 </div>
             </a>
         </div>
 
         <div class="dashboard-footer">
-            <button onclick="logout()" class="btn-logout">Sair</button>
+            <button onclick="logout()" class="btn-logout" id="logout-btn">Sair</button>
         </div>
     </div>
 
@@ -56,6 +112,58 @@
             apiClient.logout();
             window.location.href = 'login.html';
         }
+
+        // Language Logic
+        const translations = {
+            'pt': {
+                welcome: 'Bem-vindo!',
+                subtitle: 'Selecione um modo para começar sua prática.',
+                convTitle: 'Conversação',
+                convDesc: 'Pratique situações reais do dia a dia. Melhore sua fluência com conversas interativas.',
+                convBtn: 'Praticar agora',
+                learnTitle: 'Aprendizado',
+                learnDesc: 'Aulas estruturadas de gramática e vocabulário. Do zero ao avançado.',
+                learnBtn: 'Começar aulas',
+                logout: 'Sair'
+            },
+            'en': {
+                welcome: 'Welcome!',
+                subtitle: 'Select a mode to start practicing.',
+                convTitle: 'Conversation',
+                convDesc: 'Practice real-life situations. Improve fluency with interactive conversations.',
+                convBtn: 'Practice Now',
+                learnTitle: 'Learning',
+                learnDesc: 'Structured grammar and vocabulary lessons. From zero to advanced.',
+                learnBtn: 'Start Lessons',
+                logout: 'Logout'
+            }
+        };
+
+        function setLanguage(lang) {
+            document.getElementById('welcome-msg').innerText = translations[lang].welcome;
+            document.getElementById('subtitle-msg').innerText = translations[lang].subtitle;
+
+            document.getElementById('conv-title').innerText = translations[lang].convTitle;
+            document.getElementById('conv-desc').innerText = translations[lang].convDesc;
+            document.getElementById('conv-btn').innerText = translations[lang].convBtn;
+
+            document.getElementById('learn-title').innerText = translations[lang].learnTitle;
+            document.getElementById('learn-desc').innerText = translations[lang].learnDesc;
+            document.getElementById('learn-btn').innerText = translations[lang].learnBtn;
+
+            document.getElementById('logout-btn').innerText = translations[lang].logout;
+
+            // Update buttons state
+            document.getElementById('btn-pt').className = lang === 'pt' ? 'lang-btn active' : 'lang-btn';
+            document.getElementById('btn-en').className = lang === 'en' ? 'lang-btn active' : 'lang-btn';
+
+            // Persist preference
+            localStorage.setItem('interface_lang', lang);
+        }
+
+        // Initialize language
+        const savedLang = localStorage.getItem('interface_lang') || 'pt';
+        setLanguage(savedLang);
     </script>
 </body>
 
