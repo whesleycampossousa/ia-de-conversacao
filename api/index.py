@@ -101,12 +101,26 @@ app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 # Init CORS
-ALLOWED_ORIGINS = os.environ.get('ALLOWED_ORIGINS', 'http://localhost:4004').split(',')
+ALLOWED_ORIGINS = os.environ.get('ALLOWED_ORIGINS', '')
+# Handle empty or malformed ALLOWED_ORIGINS
+if ALLOWED_ORIGINS and ALLOWED_ORIGINS.strip():
+    origins_list = [o.strip() for o in ALLOWED_ORIGINS.split(',') if o.strip()]
+else:
+    # If no specific origins, allow all (for Vercel)
+    origins_list = '*'
+
 if CORS_AVAILABLE:
     try:
-        CORS(app, origins=ALLOWED_ORIGINS, supports_credentials=True)
-    except Exception:
-        pass
+        CORS(app, origins=origins_list, supports_credentials=True)
+        print(f"[OK] CORS initialized with origins: {origins_list}")
+    except Exception as e:
+        print(f"[WARNING] CORS init failed: {e}")
+        # Fallback to wildcard if specific origins fail
+        try:
+            CORS(app, origins='*', supports_credentials=False)
+            print("[OK] CORS initialized with wildcard fallback")
+        except:
+            pass
 
 # Init Limiter
 try:
