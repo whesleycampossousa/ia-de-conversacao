@@ -374,12 +374,7 @@ def favicon():
     # Return 204 No Content to settle the 404 error silently
     return '', 204
 
-@app.route('/<path:path>')
-def serve_static(path):
-    try:
-        return send_from_directory(BASE_DIR, path)
-    except FileNotFoundError:
-        return jsonify({"error": "File not found"}), 404
+
 
 
 @app.route('/api/chat', methods=['POST'])
@@ -1027,6 +1022,13 @@ def health_check():
         "groq_configured": GROQ_API_KEY is not None,
         "timestamp": datetime.now().isoformat()
     })
+
+@app.route('/<path:path>')
+def serve_static(path):
+    try:
+        return send_from_directory(BASE_DIR, path)
+    except FileNotFoundError:
+        return jsonify({"error": "File not found"}), 404
 
 if __name__ == '__main__':
     # CHANGED: PORT 4004
