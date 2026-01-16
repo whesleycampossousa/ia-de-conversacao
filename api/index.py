@@ -1072,7 +1072,8 @@ def transcribe_audio():
         print(f"Groq API error: {e}")
         return jsonify({
             "error": "Transcription failed",
-            "message": "Could not connect to transcription service"
+            "message": f"Connection error: {str(e)}",
+            "type": type(e).__name__
         }), 500
     except Exception as e:
         print(f"Transcription error: {e}")
