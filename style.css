@@ -256,9 +256,34 @@ body {
 
 /* Header */
 header {
-    padding: 1.5rem;
+    padding: 1rem;
     text-align: center;
     border-bottom: 1px solid var(--glass-border);
+    position: sticky;
+    top: 0;
+    background: var(--surface-color);
+    z-index: 100;
+    backdrop-filter: blur(10px);
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+    header {
+        padding: 0.75rem 0.5rem;
+    }
+
+    header h1 {
+        font-size: 1.1rem !important;
+    }
+
+    header>div {
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+    }
+
+    .usage-timer {
+        font-size: 0.85rem !important;
+    }
 }
 
 h1 {
@@ -1049,6 +1074,36 @@ h1 {
     margin-bottom: 1.5rem;
     font-size: 0.9rem;
     color: #94a3b8;
+}
+
+.action-btn,
+.primary-btn {
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 1rem 2rem;
+    border-radius: 12px;
+    border: none;
+    background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    min-height: 48px;
+    /* Accessibility: Minimum touch target */
+}
+
+/* Mobile-specific button improvements */
+@media (max-width: 768px) {
+
+    .action-btn,
+    .primary-btn {
+        padding: 1.25rem 2rem;
+        font-size: 1.05rem;
+        min-height: 56px;
+        /* Larger touch target for mobile */
+        width: 100%;
+        /* Full width on mobile */
+    }
 }
 
 .usage-exceeded-modal .close-btn {
