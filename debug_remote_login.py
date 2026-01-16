@@ -4,6 +4,26 @@ import json
 BASE_URL = "https://ia-de-conversacao.vercel.app"
 
 def test_remote():
+    # Check root URL content
+    try:
+        print(f"\nTesting GET {BASE_URL}/...")
+        response = requests.get(f"{BASE_URL}/")
+        print(f"Status: {response.status_code}")
+        if response.status_code == 200:
+             # Print title to see what page it is
+             import re
+             title_match = re.search(r'<title>(.*?)</title>', response.text, re.IGNORECASE)
+             if title_match:
+                 print(f"Page Title: {title_match.group(1)}")
+             else:
+                 print("No title found.")
+        else:
+            print("Failed to fetch root.")
+    except Exception as e:
+        print(f"Error: {e}")
+
+    print("-" * 20)
+
     # 0. Test Debug Imports (GET)
     debug_url = f"{BASE_URL}/api/debug_imports"
     print(f"Testing GET {debug_url}...")

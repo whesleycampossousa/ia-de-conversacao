@@ -946,9 +946,9 @@ document.addEventListener('DOMContentLoaded', () => {
         URL.revokeObjectURL(url);
     }
 
-    // Fallback for browsers without Speech Recognition
-    if (!recognition && recordBtn) {
-        recordBtn.style.display = 'none';
+    // Fallback check replaced by Deepgram/Groq logic
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        if (recordBtn) recordBtn.style.display = 'none';
         const fallbackInfo = document.createElement('div');
         fallbackInfo.className = 'message system-message';
         fallbackInfo.innerHTML = `
@@ -957,35 +957,36 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
         chatWindow.appendChild(fallbackInfo);
+    }
 
-        // Add text input fallback
-        const inputContainer = document.createElement('div');
-        inputContainer.style.cssText = 'padding: 1rem; display: flex; gap: 0.5rem;';
-        inputContainer.innerHTML = `
+    // Add text input fallback
+    const inputContainer = document.createElement('div');
+    inputContainer.style.cssText = 'padding: 1rem; display: flex; gap: 0.5rem;';
+    inputContainer.innerHTML = `
             <input type="text" id="text-input" placeholder="Type your message..."
                    style="flex: 1; padding: 0.75rem; border-radius: 12px; border: 1px solid var(--glass-border);
                           background: rgba(0,0,0,0.2); color: white; font-size: 1rem;">
             <button id="send-btn" class="action-btn" style="margin: 0; padding: 0.75rem 1.5rem;">Send</button>
         `;
-        document.querySelector('.controls').appendChild(inputContainer);
+    document.querySelector('.controls').appendChild(inputContainer);
 
-        const textInput = document.getElementById('text-input');
-        const sendBtn = document.getElementById('send-btn');
+    const textInput = document.getElementById('text-input');
+    const sendBtn = document.getElementById('send-btn');
 
-        sendBtn.onclick = () => {
-            const text = textInput.value.trim();
-            if (text && !isProcessing) {
-                processUserResponse(text);
-                textInput.value = '';
-            }
-        };
+    sendBtn.onclick = () => {
+        const text = textInput.value.trim();
+        if (text && !isProcessing) {
+            processUserResponse(text);
+            textInput.value = '';
+        }
+    };
 
-        textInput.onkeypress = (e) => {
-            if (e.key === 'Enter' && !isProcessing) {
-                sendBtn.click();
-            }
-        };
-    }
+    textInput.onkeypress = (e) => {
+        if (e.key === 'Enter' && !isProcessing) {
+            sendBtn.click();
+        }
+    };
+}
 
 
     function finishConversation() {

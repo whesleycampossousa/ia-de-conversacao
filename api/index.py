@@ -799,54 +799,49 @@ def tts():
     text = result
 
     try:
-        # Initialize Google Cloud TTS client with API key
-        # This uses the same GOOGLE_API_KEY from Gemini
-        client = texttospeech.TextToSpeechClient(
-            client_options={"api_key": GOOGLE_API_KEY}
-        )
+        # 1. Fallback: REST API (Invincible Mode)
+        # This works even if 'google-cloud-texttospeech' library fails to import
+        if not TEXTTOSPEECH_AVAILABLE or True: # Force REST for maximum reliability on Vercel
+             url = f"https://texttospeech.googleapis.com/v1/text:synthesize?key={GOOGLE_API_KEY}"
+             payload = {
+                 "input": {"text": text},
+                 "voice": {
+                     "languageCode": "en-US",
+                     "name": "en-US-Studio-O",
+                     "ssmlGender": "FEMALE"
+                 },
+                 "audioConfig": {
+                     "audioEncoding": "MP3",
+                     "speakingRate": speed
+                 }
+             }
 
-        # Configure synthesis input
-        synthesis_input = texttospeech.SynthesisInput(text=text)
+             response = requests.post(url, json=payload, timeout=10)
+             
+             if response.status_code != 200:
+                 print(f"[TTS REST] Error {response.status_code}: {response.text}")
+                 # Try Standard Voice fallback
+                 payload["voice"]["name"] = "en-US-Journey-F" # Standard, cheaper
+                 response = requests.post(url, json=payload, timeout=10)
+                 if response.status_code != 200:
+                    raise Exception(f"REST API failed: {response.text}")
 
-        # Configure voice - using Studio quality (best available)
-        # Studio-O = Most natural and expressive female voice
-        voice = texttospeech.VoiceSelectionParams(
-            language_code="en-US",
-            name="en-US-Studio-O",  # Studio quality - most natural female voice
-            ssml_gender=texttospeech.SsmlVoiceGender.FEMALE
-        )
+             audio_content = response.json().get('audioContent')
+             import base64
+             audio_data = base64.b64decode(audio_content)
 
-        # Configure audio output - MP3 format for compatibility
-        audio_config = texttospeech.AudioConfig(
-            audio_encoding=texttospeech.AudioEncoding.MP3,
-            speaking_rate=speed,
-            pitch=0.0  # Normal pitch
-        )
+             mp3_fp = io.BytesIO(audio_data)
+             mp3_fp.seek(0)
+             
+             return send_file(
+                mp3_fp,
+                mimetype="audio/mpeg",
+                as_attachment=False,
+                download_name="response.mp3"
+             )
 
-        # Perform text-to-speech request
-        response = client.synthesize_speech(
-            input=synthesis_input,
-            voice=voice,
-            audio_config=audio_config
-        )
-
-        # Convert response to BytesIO for Flask send_file
-        mp3_fp = io.BytesIO(response.audio_content)
-        mp3_fp.seek(0)
-
-        return send_file(
-            mp3_fp,
-            mimetype="audio/mpeg",
-            as_attachment=False,
-            download_name="response.mp3"
-        )
     except Exception as e:
-        import traceback
-        error_details = traceback.format_exc()
         print(f"[TTS] Error: {e}")
-        print(f"[TTS] Details: {error_details}")
-
-        # Return empty audio instead of error to not interrupt conversation
         return jsonify({
             "error": "Text-to-speech temporarily unavailable",
             "details": str(e)
