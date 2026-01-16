@@ -81,6 +81,9 @@ except Exception as e:
     REQUESTS_AVAILABLE = False
     REQUESTS_ERROR = str(e)
 
+# 7. Base64 for TTS REST API
+import base64
+
 # Load environment variables
 try:
     from dotenv import load_dotenv
@@ -262,7 +265,6 @@ def check_usage_limit(email):
     remaining = get_remaining_seconds(email)
     return remaining > 0
 
-# Load Scenarios
 # Load Scenarios and Grammar Topics
 SCENARIOS_PATH = os.path.join(BASE_DIR, 'scenarios_db.json')
 GRAMMAR_PATH = os.path.join(BASE_DIR, 'grammar_topics.json')
@@ -283,8 +285,7 @@ GRAMMAR_TOPICS = load_json_file(GRAMMAR_PATH)
 def get_grammar_topics():
     return jsonify(GRAMMAR_TOPICS)
 
-# Retrieve scenarios endpoint (existing logic could be here if needed, but client usually has them)
-# For now, client has scenarios hardcoded or static, but we'll merge prompts
+# Merge prompts
 CONTEXT_PROMPTS = {s['id']: s['prompt'] for s in SCENARIOS}
 CONTEXT_PROMPTS.update({g['id']: g['prompt'] for g in GRAMMAR_TOPICS})
 
@@ -438,16 +439,14 @@ def get_scenarios():
 @app.route('/')
 def serve_index():
     try:
-        return send_file(os.path.join(BASE_DIR, 'scenarios.html'))
+        return send_file(os.path.join(BASE_DIR, 'login.html'))
     except Exception as e:
-        return f"Error serving scenarios.html: {str(e)}", 500
+        return f"Error serving login.html: {str(e)}", 500
 
 @app.route('/favicon.ico')
 def favicon():
     # Return 204 No Content to settle the 404 error silently
     return '', 204
-
-
 
 
 @app.route('/api/chat', methods=['POST'])
@@ -479,7 +478,7 @@ def chat():
     user_text = result
 
     # Get System Prompt based on context
-    system_prompt = CONTEXT_PROMPTS.get(context_key, CONTEXT_PROMPTS['coffee_shop'])
+    system_prompt = CONTEXT_PROMPTS.get(context_key, CONTEXT_PROMPTS.get('coffee_shop', ''))
 
     # Enhanced prompt with grammar correction focus
     full_prompt = f"""{system_prompt}
@@ -546,8 +545,6 @@ Keep responses to 1-2 sentences maximum.
         return jsonify({"error": "Failed to generate response. Please try again."}), 500
 
 
-
-
 @app.route('/api/report', methods=['POST'])
 @limiter.limit("10 per minute")
 @require_auth
@@ -562,7 +559,7 @@ def report():
     if not conversation:
         return jsonify({"error": "No conversation provided"}), 400
 
-    system_prompt = CONTEXT_PROMPTS.get(context_key, CONTEXT_PROMPTS['coffee_shop'])
+    system_prompt = CONTEXT_PROMPTS.get(context_key, CONTEXT_PROMPTS.get('coffee_shop', ''))
 
     transcript_lines = []
     for item in conversation:
@@ -787,7 +784,8 @@ def export_pdf():
 @limiter.limit("60 per minute")
 @require_auth
 def tts():
-    data = request.json
+    """Text-to-Speech endpoint using Google Cloud TTS REST API"""
+    data = request.json or {}
     text = data.get('text')
     speed = float(data.get('speed', 1.0))
 
@@ -798,50 +796,93 @@ def tts():
 
     text = result
 
+    # Check if Google API key is available
+    if not GOOGLE_API_KEY:
+        return jsonify({"error": "TTS service not configured - missing API key"}), 503
+
+    # Check if requests library is available
+    if not REQUESTS_AVAILABLE:
+        return jsonify({"error": "TTS service not available - missing dependencies"}), 503
+
     try:
-        # 1. Fallback: REST API (Invincible Mode)
-        # This works even if 'google-cloud-texttospeech' library fails to import
-        if not TEXTTOSPEECH_AVAILABLE or True: # Force REST for maximum reliability on Vercel
-             url = f"https://texttospeech.googleapis.com/v1/text:synthesize?key={GOOGLE_API_KEY}"
-             payload = {
-                 "input": {"text": text},
-                 "voice": {
-                     "languageCode": "en-US",
-                     "name": "en-US-Studio-O",
-                     "ssmlGender": "FEMALE"
-                 },
-                 "audioConfig": {
-                     "audioEncoding": "MP3",
-                     "speakingRate": speed
-                 }
-             }
+        # Use REST API for maximum compatibility (works even if google-cloud-texttospeech fails)
+        url = f"https://texttospeech.googleapis.com/v1/text:synthesize?key={GOOGLE_API_KEY}"
+        
+        # Try with Studio voice first (best quality)
+        payload = {
+            "input": {"text": text},
+            "voice": {
+                "languageCode": "en-US",
+                "name": "en-US-Studio-O",
+                "ssmlGender": "FEMALE"
+            },
+            "audioConfig": {
+                "audioEncoding": "MP3",
+                "speakingRate": speed
+            }
+        }
 
-             response = requests.post(url, json=payload, timeout=10)
-             
-             if response.status_code != 200:
-                 print(f"[TTS REST] Error {response.status_code}: {response.text}")
-                 # Try Standard Voice fallback
-                 payload["voice"]["name"] = "en-US-Journey-F" # Standard, cheaper
-                 response = requests.post(url, json=payload, timeout=10)
-                 if response.status_code != 200:
-                    raise Exception(f"REST API failed: {response.text}")
+        response = requests.post(url, json=payload, timeout=15)
+        
+        # If Studio voice fails, try Journey voice
+        if response.status_code != 200:
+            print(f"[TTS] Studio voice failed ({response.status_code}), trying Journey voice...")
+            payload["voice"]["name"] = "en-US-Journey-F"
+            response = requests.post(url, json=payload, timeout=15)
+        
+        # If Journey voice fails, try Neural2 voice
+        if response.status_code != 200:
+            print(f"[TTS] Journey voice failed ({response.status_code}), trying Neural2 voice...")
+            payload["voice"]["name"] = "en-US-Neural2-C"
+            response = requests.post(url, json=payload, timeout=15)
+        
+        # If Neural2 fails, try Standard voice (most compatible)
+        if response.status_code != 200:
+            print(f"[TTS] Neural2 voice failed ({response.status_code}), trying Standard voice...")
+            payload["voice"]["name"] = "en-US-Standard-C"
+            response = requests.post(url, json=payload, timeout=15)
+        
+        if response.status_code != 200:
+            error_msg = response.text[:500] if response.text else "Unknown error"
+            print(f"[TTS] All voices failed. Status: {response.status_code}, Error: {error_msg}")
+            return jsonify({
+                "error": "Text-to-speech temporarily unavailable",
+                "details": f"API returned status {response.status_code}"
+            }), 503
 
-             audio_content = response.json().get('audioContent')
-             import base64
-             audio_data = base64.b64decode(audio_content)
+        # Extract audio content from response
+        response_data = response.json()
+        audio_content = response_data.get('audioContent')
+        
+        if not audio_content:
+            return jsonify({"error": "No audio content received from TTS API"}), 503
 
-             mp3_fp = io.BytesIO(audio_data)
-             mp3_fp.seek(0)
-             
-             return send_file(
-                mp3_fp,
-                mimetype="audio/mpeg",
-                as_attachment=False,
-                download_name="response.mp3"
-             )
+        # Decode base64 audio
+        audio_data = base64.b64decode(audio_content)
 
+        mp3_fp = io.BytesIO(audio_data)
+        mp3_fp.seek(0)
+        
+        return send_file(
+            mp3_fp,
+            mimetype="audio/mpeg",
+            as_attachment=False,
+            download_name="response.mp3"
+        )
+
+    except requests.exceptions.Timeout:
+        print("[TTS] Request timeout")
+        return jsonify({"error": "Text-to-speech request timed out"}), 504
+    except requests.exceptions.RequestException as e:
+        print(f"[TTS] Request error: {e}")
+        return jsonify({
+            "error": "Text-to-speech temporarily unavailable",
+            "details": str(e)
+        }), 503
     except Exception as e:
-        print(f"[TTS] Error: {e}")
+        print(f"[TTS] Unexpected error: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({
             "error": "Text-to-speech temporarily unavailable",
             "details": str(e)
@@ -883,26 +924,27 @@ def get_usage_status():
 @require_auth
 def track_usage():
     """Track session usage time"""
-    user_email = request.user_email
-    data = request.json or {}
-    seconds = data.get('seconds', 0)
-    
-    if not isinstance(seconds, (int, float)) or seconds < 0 or seconds > 3600:
-        return jsonify({"error": "Invalid seconds value"}), 400
-    
-    track_usage_time(user_email, int(seconds))
-    remaining = get_remaining_seconds(user_email)
-    
-    return jsonify({
-        "success": True,
-        "remaining_seconds": remaining,
-        "is_blocked": remaining <= 0
-    })
-    return jsonify({
-        "success": True,
-        "remaining_seconds": remaining,
-        "is_blocked": remaining <= 0
-    })
+    try:
+        user_email = request.user_email
+        data = request.json or {}
+        seconds = data.get('seconds', 0)
+        
+        if not isinstance(seconds, (int, float)) or seconds < 0 or seconds > 3600:
+            return jsonify({"error": "Invalid seconds value"}), 400
+        
+        track_usage_time(user_email, int(seconds))
+        remaining = get_remaining_seconds(user_email)
+        
+        return jsonify({
+            "success": True,
+            "remaining_seconds": remaining,
+            "is_blocked": remaining <= 0
+        })
+    except Exception as e:
+        print(f"[USAGE/TRACK] Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": "Failed to track usage", "details": str(e)}), 500
 
 # Admin-only endpoints
 @app.route('/api/admin/emails', methods=['GET'])
@@ -991,6 +1033,9 @@ def transcribe_audio():
     """Transcribe audio using Groq Whisper API"""
     if not GROQ_API_KEY:
         return jsonify({"error": "Transcription service not configured"}), 503
+    
+    if not REQUESTS_AVAILABLE:
+        return jsonify({"error": "Transcription service not available - missing dependencies"}), 503
     
     # Check daily usage limit
     user_email = request.user_email
@@ -1086,7 +1131,12 @@ def transcribe_audio():
 def health_check():
     """Health check endpoint"""
     return jsonify({
-        "timestamp": datetime.now().isoformat()
+        "status": "ok",
+        "timestamp": datetime.now().isoformat(),
+        "google_api_configured": bool(GOOGLE_API_KEY),
+        "groq_api_configured": bool(GROQ_API_KEY),
+        "genai_available": GENAI_AVAILABLE,
+        "requests_available": REQUESTS_AVAILABLE
     })
 
 @app.route('/api/debug_imports', methods=['GET'])
@@ -1115,12 +1165,12 @@ def debug_imports():
         "requests": {
             "available": globals().get('REQUESTS_AVAILABLE'),
             "error": globals().get('REQUESTS_ERROR')
+        },
+        "jwt": {
+            "available": globals().get('JWT_AVAILABLE'),
+            "error": globals().get('JWT_ERROR')
         }
     })
-
-@app.route('/')
-def index():
-    return send_file(os.path.join(BASE_DIR, 'index.html'))
 
 @app.route('/<path:path>')
 def serve_static(path):
