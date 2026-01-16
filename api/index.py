@@ -178,17 +178,30 @@ def check_usage_limit(email):
     return remaining > 0
 
 # Load Scenarios
+# Load Scenarios and Grammar Topics
 SCENARIOS_PATH = os.path.join(BASE_DIR, 'scenarios_db.json')
-def load_scenarios():
+GRAMMAR_PATH = os.path.join(BASE_DIR, 'grammar_topics.json')
+
+def load_json_file(path):
     try:
-        with open(SCENARIOS_PATH, 'r', encoding='utf-8') as f:
+        with open(path, 'r', encoding='utf-8') as f:
             return json.load(f)
     except Exception as e:
-        print(f"Error loading scenarios: {e}")
+        print(f"Error loading {path}: {e}")
         return []
 
-SCENARIOS = load_scenarios()
+SCENARIOS = load_json_file(SCENARIOS_PATH)
+GRAMMAR_TOPICS = load_json_file(GRAMMAR_PATH)
+
+# Retrieve grammar topics endpoint
+@app.route('/api/grammar-topics', methods=['GET'])
+def get_grammar_topics():
+    return jsonify(GRAMMAR_TOPICS)
+
+# Retrieve scenarios endpoint (existing logic could be here if needed, but client usually has them)
+# For now, client has scenarios hardcoded or static, but we'll merge prompts
 CONTEXT_PROMPTS = {s['id']: s['prompt'] for s in SCENARIOS}
+CONTEXT_PROMPTS.update({g['id']: g['prompt'] for g in GRAMMAR_TOPICS})
 
 # Email whitelist configuration
 AUTHORIZED_EMAILS_FILE = os.path.join(BASE_DIR, 'authorized_emails.json')

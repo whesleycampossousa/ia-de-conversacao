@@ -1116,7 +1116,7 @@ function handleLogin() {
             if (data.user && data.user.is_admin) {
                 window.location.href = 'admin.html';
             } else {
-                window.location.href = 'scenarios.html';
+                window.location.href = 'dashboard.html';
             }
         } catch (err) {
             console.error('Login error:', err);

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modo Aprendizado - IA de Conversação</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <header class="main-header">
+            <div class="header-content">
+                <button onclick="window.location.href='dashboard.html'" class="btn-back">
+                    ⬅ Voltar
+                </button>
+                <h1>🎓 Modo Aprendizado</h1>
+            </div>
+            <div class="header-actions">
+                <div class="user-profile" id="user-profile">
+                    <span class="avatar">👤</span>
+                    <span class="username">Carregando...</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="scenarios-grid" id="topics-grid">
+            <!-- Topics will be loaded here -->
+            <div class="loading-state">
+                <div class="spinner"></div>
+                Starting classes...
+            </div>
+        </main>
+    </div>
+
+    <script src="api-client.js"></script>
+    <script>
+        const apiClient = new APIClient();
+        const grid = document.getElementById('topics-grid');
+        const userProfile = document.getElementById('user-profile');
+
+        // Verify auth
+        if (!localStorage.getItem('auth_token')) {
+            window.location.href = 'login.html';
+        }
+
+        // Set user info
+        if (apiClient.user) {
+            userProfile.querySelector('.username').textContent = apiClient.user.name;
+        }
+
+        async function loadTopics() {
+            try {
+                // Fetch topics from backend
+                const response = await fetch(`${apiClient.baseURL}/api/grammar-topics`, {
+                    headers: apiClient.getHeaders()
+                });
+
+                if (!response.ok) throw new Error('Failed to load topics');
+
+                const topics = await response.json();
+                renderTopics(topics);
+            } catch (err) {
+                console.error('Error:', err);
+                grid.innerHTML = '<p class="error-msg">Não foi possível carregar as aulas. Tente recarregar a página.</p>';
+            }
+        }
+
+        function renderTopics(topics) {
+            grid.innerHTML = '';
+
+            topics.forEach(topic => {
+                const card = document.createElement('div');
+                card.className = 'scenario-card learning-card';
+                card.onclick = () => startLesson(topic.id, topic.title);
+
+                card.innerHTML = `
+                    <div class="scenario-icon">${topic.icon}</div>
+                    <h3>${topic.title}</h3>
+                    <p>${topic.description}</p>
+                    <div class="card-footer">
+                        <span class="level-tag">Iniciante</span>
+                    </div>
+                `;
+
+                grid.appendChild(card);
+            });
+        }
+
+        function startLesson(id, title) {
+            const encodedTitle = encodeURIComponent(title);
+            // We reuse practice.html but with grammar context
+            window.location.href = `practice.html?context=${id}&title=${encodedTitle}&type=grammar`;
+        }
+
+        // Initialize
+        loadTopics();
+    </script>
+</body>
+
+</html>

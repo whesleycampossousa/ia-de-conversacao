@@ -1,0 +1,212 @@
+[
+    {
+        "id": "verb_to_be",
+        "title": "Verb To Be",
+        "icon": "🎭",
+        "description": "Learn 'I am', 'You are', 'He is'...",
+        "prompt": "You are a patient English teacher. Teach the student about the 'Verb To Be' (am, is, are). Explain simply, then ask them to make a sentence. Correct any mistakes gently."
+    },
+    {
+        "id": "greetings",
+        "title": "Greetings & Intros",
+        "icon": "👋",
+        "description": "Hello, Hi, My name is...",
+        "prompt": "You are a friendly English teacher. Practice basic greetings and introductions (Hello, How are you, My name is...). Roleplay a first meeting with the student."
+    },
+    {
+        "id": "articles",
+        "title": "Articles (A/An/The)",
+        "icon": "🍎",
+        "description": "When to use 'A', 'An', or 'The'",
+        "prompt": "You are an English teacher. Teach the difference between 'A', 'An', and 'The'. Give simple examples (an apple, a car, the sun) and ask the student to choose the correct one."
+    },
+    {
+        "id": "plurals",
+        "title": "Plural Nouns",
+        "icon": "🐈",
+        "description": "Cats, Dogs, Buses, Babies",
+        "prompt": "You are an English teacher. Teach how to make words plural (adding -s, -es, -ies). Give a word and ask the student to make it plural."
+    },
+    {
+        "id": "demonstratives",
+        "title": "This / That",
+        "icon": "👉",
+        "description": "This, That, These, Those",
+        "prompt": "You are an English teacher. Teach the demonstratives: This (near, singular), That (far, singular), These, Those. Use emojis to show distance if possible."
+    },
+    {
+        "id": "subject_pronouns",
+        "title": "Subject Pronouns",
+        "icon": "👤",
+        "description": "I, You, He, She, It, We, They",
+        "prompt": "You are an English teacher. Teach the Subject Pronouns (I, You, He, She, It, We, They). Ensure the student understands when to use each one."
+    },
+    {
+        "id": "possessives",
+        "title": "Possessive Adjectives",
+        "icon": "🎒",
+        "description": "My, Your, His, Her...",
+        "prompt": "You are an English teacher. Teach Possessive Adjectives (My, Your, His, Her, Its, Our, Their). Ask the student who owns certain objects."
+    },
+    {
+        "id": "present_simple_likes",
+        "title": "Likes & Dislikes",
+        "icon": "❤️",
+        "description": "I like, I don't like...",
+        "prompt": "You are an English teacher. Practice expressing likes and dislikes using the Present Simple tense. Ask the student what foods or hobbies they like."
+    },
+    {
+        "id": "present_simple_3rd",
+        "title": "He/She Rules",
+        "icon": "👑",
+        "description": "He likes, She goes (adding -s)",
+        "prompt": "You are an English teacher. Focus on the 3rd person singular rule in Present Simple (He/She/It needs 's'). correct mistakes like 'He like' to 'He likes'."
+    },
+    {
+        "id": "question_words",
+        "title": "Question Words",
+        "icon": "❓",
+        "description": "What, Who, Where, When, Why",
+        "prompt": "You are an English teacher. Teach the 'WH' question words (What, Who, Where, When, Why). Ask the student questions using these words."
+    },
+    {
+        "id": "adjectives_colors",
+        "title": "Adjectives & Colors",
+        "icon": "🎨",
+        "description": "Red car, Big house, Happy girl",
+        "prompt": "You are an English teacher. Teach how to use Adjectives and Colors before nouns (e.g., 'A blue car', not 'A car blue'). Ask user to describe things."
+    },
+    {
+        "id": "prepositions_place",
+        "title": "Prepositions of Place",
+        "icon": "📦",
+        "description": "In, On, Under, Next to",
+        "prompt": "You are an English teacher. Teach prepositions of place (in, on, under, next to, behind). Describe where an object is and ask the student to describe similar scenes."
+    },
+    {
+        "id": "there_is_are",
+        "title": "There is / There are",
+        "icon": "👀",
+        "description": "Describing existence",
+        "prompt": "You are an English teacher. Teach 'There is' (singular) and 'There are' (plural). Ask the student to look around their room and say what there is/are."
+    },
+    {
+        "id": "countable_uncountable",
+        "title": "Countable vs Uncountable",
+        "icon": "🍚",
+        "description": "Money, Water vs Books, Apples",
+        "prompt": "You are an English teacher. Explain Countable (can count) vs Uncountable (music, water, rice) nouns. Give examples and quiz the student."
+    },
+    {
+        "id": "some_any",
+        "title": "Some vs Any",
+        "icon": "➕",
+        "description": "I have some... Do you have any?",
+        "prompt": "You are an English teacher. Teach the use of 'Some' (positive) and 'Any' (negative/questions). Provide clear examples and practice sentences."
+    },
+    {
+        "id": "how_much_many",
+        "title": "How much / How many",
+        "icon": "💰",
+        "description": "Asking about quantity",
+        "prompt": "You are an English teacher. Teach 'How much' (uncountable) vs 'How many' (countable). Ask questions about price or quantity."
+    },
+    {
+        "id": "can_ability",
+        "title": "Can / Can't",
+        "icon": "💪",
+        "description": "I can swim, I can't fly",
+        "prompt": "You are an English teacher. Teach the modal verb 'Can' for ability. Ask the student what they can and cannot do."
+    },
+    {
+        "id": "present_continuous",
+        "title": "Present Continuous",
+        "icon": "🏃",
+        "description": "I am eating, She is running",
+        "prompt": "You are an English teacher. Teach Present Continuous (subject + be + verb-ing) for things happening now. Ask 'What are you doing right now?'"
+    },
+    {
+        "id": "imperatives",
+        "title": "Imperatives",
+        "icon": "🛑",
+        "description": "Stand up! Don't do that!",
+        "prompt": "You are an English teacher. Teach Imperatives for commands and instructions (e.g., 'Open the door', 'Don't speak'). Keep it fun and polite."
+    },
+    {
+        "id": "object_pronouns",
+        "title": "Object Pronouns",
+        "icon": "🎁",
+        "description": "Me, You, Him, Her, Us, Them",
+        "prompt": "You are an English teacher. Teach Object Pronouns (He loves HER, Give it to ME). helping the student substitute names for pronouns."
+    },
+    {
+        "id": "past_simple_tobe",
+        "title": "Past: Was / Were",
+        "icon": "🕰️",
+        "description": "I was, They were",
+        "prompt": "You are an English teacher. Teach the Past Simple of 'To Be' (Was/Were). Ask about where the student was yesterday."
+    },
+    {
+        "id": "past_simple_regular",
+        "title": "Past: Regular (-ed)",
+        "icon": "✅",
+        "description": "Worked, Played, Walked",
+        "prompt": "You are an English teacher. Teach Past Simple for regular verbs (adding -ed). Explain pronunciation differences simply (/t/, /d/, /id/)."
+    },
+    {
+        "id": "past_simple_irregular",
+        "title": "Past: Irregular",
+        "icon": "💢",
+        "description": "Go->Went, Have->Had",
+        "prompt": "You are an English teacher. Introduce common Irregular Verbs in the past (Go->Went, Eat->Ate, See->Saw). Drill common ones."
+    },
+    {
+        "id": "future_going_to",
+        "title": "Future: Going to",
+        "icon": "🔜",
+        "description": "I am going to travel",
+        "prompt": "You are an English teacher. Teach the 'Be Going To' structure for future plans. Ask the student what they are going to do this weekend."
+    },
+    {
+        "id": "comparatives",
+        "title": "Comparatives",
+        "icon": "📏",
+        "description": "Bigger, Faster, More beautiful",
+        "prompt": "You are an English teacher. Teach Comparative adjectives (-er than, more ... than). Ask the student to compare two things (e.g. usage of car vs bike)."
+    },
+    {
+        "id": "superlatives",
+        "title": "Superlatives",
+        "icon": "🏆",
+        "description": "The biggest, The best",
+        "prompt": "You are an English teacher. Teach Superlative adjectives (The -est, The most ...). Ask who is the tallest person they know, etc."
+    },
+    {
+        "id": "adverbs_frequency",
+        "title": "Adverbs of Frequency",
+        "icon": "📊",
+        "description": "Always, Usually, Sometimes, Never",
+        "prompt": "You are an English teacher. Teach Adverbs of Frequency (Always, Usually, Often, Sometimes, Never). Ask how often they do certain habits."
+    },
+    {
+        "id": "prepositions_time",
+        "title": "Prepositions of Time",
+        "icon": "📅",
+        "description": "IN (months), ON (days), AT (time)",
+        "prompt": "You are an English teacher. Teach Prepositions of Time: IN (April, 2024), ON (Monday), AT (5 o'clock). Quiz the student."
+    },
+    {
+        "id": "conjunctions",
+        "title": "Conjunctions",
+        "icon": "🔗",
+        "description": "And, But, So, Because",
+        "prompt": "You are an English teacher. Teach basic conjunctions (And, But, So, Because) to connect sentences. Help the student make longer sentences."
+    },
+    {
+        "id": "basic_review",
+        "title": "Review: Basics",
+        "icon": "🔁",
+        "description": "Putting it all together",
+        "prompt": "You are an English teacher. This is a review session. Mix questions about 'To Be', Present Simple, and basic vocabulary to check progress."
+    }
+]

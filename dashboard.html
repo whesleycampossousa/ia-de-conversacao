@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - IA de Conversação</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body class="dashboard-body">
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <h1>Bem-vindo!</h1>
+            <p>O que você quer praticar hoje?</p>
+        </header>
+
+        <div class="mode-cards">
+            <!-- Conversation Mode -->
+            <a href="scenarios.html" class="mode-card conversation-mode">
+                <div class="card-icon">🗣️</div>
+                <div class="card-content">
+                    <h2>Conversação</h2>
+                    <p>Pratique situações reais do dia a dia. Peça comida, faça check-in, converse com estranhos...</p>
+                    <span class="btn-primary">Praticar agora</span>
+                </div>
+            </a>
+
+            <!-- Learning Mode -->
+            <a href="learning.html" class="mode-card learning-mode">
+                <div class="card-icon">🎓</div>
+                <div class="card-content">
+                    <h2>Aprendizado</h2>
+                    <p>Domine a gramática com 30 tópicos essenciais. Do básico ao intermediário, com um professor
+                        paciente.</p>
+                    <span class="btn-secondary">Começar aulas</span>
+                </div>
+            </a>
+        </div>
+
+        <div class="dashboard-footer">
+            <button onclick="logout()" class="btn-logout">Sair</button>
+        </div>
+    </div>
+
+    <script src="api-client.js"></script>
+    <script>
+        // Check auth on load
+        const apiClient = new APIClient();
+        if (!localStorage.getItem('auth_token')) {
+            window.location.href = 'login.html';
+        }
+
+        function logout() {
+            apiClient.logout();
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+
+</html>
