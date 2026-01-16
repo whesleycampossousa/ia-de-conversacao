@@ -654,9 +654,26 @@ document.addEventListener('DOMContentLoaded', () => {
             wrapper.appendChild(rawNote);
         }
 
-        chatWindow.appendChild(wrapper);
-        chatWindow.scrollTop = chatWindow.scrollHeight;
+        // Show report in fullscreen modal instead of chat window
+        const modalBody = document.getElementById('report-modal-body');
+        const reportModal = document.getElementById('report-modal');
+        if (modalBody && reportModal) {
+            modalBody.innerHTML = '';
+            modalBody.appendChild(wrapper);
+            reportModal.style.display = 'flex';
+        }
     }
+
+    // Function to close report modal
+    function closeReportModal() {
+        const reportModal = document.getElementById('report-modal');
+        if (reportModal) {
+            reportModal.style.display = 'none';
+        }
+    }
+
+    // Make closeReportModal available globally
+    window.closeReportModal = closeReportModal;
 
     function normalizeReportData(payload) {
         const base = {
