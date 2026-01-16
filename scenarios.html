@@ -359,29 +359,12 @@
                 }
             }
 
-            // Store selected scenario and show mode selection modal
-            selectedScenario = { id, title };
-            showPracticeModeModal();
-        }
-
-        function showPracticeModeModal() {
-            const modal = document.getElementById('practice-mode-modal');
-            modal.style.display = 'flex';
-        }
-
-        function closePracticeModeModal() {
-            const modal = document.getElementById('practice-mode-modal');
-            modal.style.display = 'none';
-        }
-
-        function startPractice(mode) {
             // Get speed from current URL
             const urlParams = new URLSearchParams(window.location.search);
             const speed = urlParams.get('speed') || '1.0';
 
-            // Navigate to practice with selected mode
-            const { id, title } = selectedScenario;
-            window.location.href = `practice.html?context=${id}&title=${encodeURIComponent(title)}&speed=${speed}&mode=${mode}`;
+            // Navigate directly to practice with audio-only mode as default
+            window.location.href = `practice.html?context=${id}&title=${encodeURIComponent(title)}&speed=${speed}&mode=audio-only`;
         }
 
 

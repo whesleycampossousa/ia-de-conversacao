@@ -24,15 +24,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const context = urlParams.get('context') || 'coffee_shop';
     const contextName = urlParams.get('title') || 'Practice';
 
-    // Practice Mode Detection (audio-only or normal)
-    const practiceMode = urlParams.get('mode') || 'normal';
-    const isAudioOnly = practiceMode === 'audio-only';
+    // Practice Mode - ALWAYS defaults to audio-only
+    // User can toggle text visibility with button
+    let isAudioOnly = true;  // Always start with audio-only mode
 
-    // Apply audio-only mode if selected
-    if (isAudioOnly) {
-        document.body.classList.add('audio-only-mode');
-        console.log('[AUDIO-ONLY MODE] Text bubbles will be hidden');
-    }
+    // Apply audio-only mode by default
+    document.body.classList.add('audio-only-mode');
+    console.log('[AUDIO-ONLY MODE] Text bubbles hidden by default. Use toggle button to show.');
+
+    // Function to toggle text visibility
+    window.toggleTextVisibility = function () {
+        const toggleBtn = document.getElementById('text-toggle-btn');
+        isAudioOnly = !isAudioOnly;
+
+        if (isAudioOnly) {
+            document.body.classList.add('audio-only-mode');
+            toggleBtn.innerHTML = '👁️ Ver o texto da conversa';
+            console.log('[AUDIO-ONLY MODE] Text hidden');
+        } else {
+            document.body.classList.remove('audio-only-mode');
+            toggleBtn.innerHTML = '🙈 Esconder o texto da conversa';
+            console.log('[TEXT MODE] Text visible');
+        }
+    };
 
     // TTS Speed Logic
     let ttsSpeed = 1.0;

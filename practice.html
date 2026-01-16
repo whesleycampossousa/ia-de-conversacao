@@ -36,6 +36,15 @@
             </div>
         </main>
 
+        <!-- Text Visibility Toggle (above footer) -->
+        <div
+            style="text-align: center; padding: 0.75rem; background: rgba(15, 23, 42, 0.6); border-top: 1px solid var(--glass-border);">
+            <button id="text-toggle-btn" class="action-btn"
+                style="margin: 0; padding: 0.75rem 1.5rem; font-size: 0.95rem;" onclick="toggleTextVisibility()">
+                👁️ Ver o texto da conversa
+            </button>
+        </div>
+
         <footer class="controls">
             <div id="status-indicator"></div>
             <p class="mic-tip" style="margin: 0.5rem 0; font-size: 0.85rem; color: #94a3b8; text-align: center;">
@@ -46,7 +55,7 @@
                 <span id="record-text">🎤 Clique para Falar</span>
             </button>
             <p class="disabled-hint" id="mic-hint">Click "Start Conversation" to begin</p>
-            <button id="report-btn" class="action-btn" disabled>Ver relatorio (min. 3 exchanges)</button>
+            <button id="report-btn" class="action-btn" disabled>Ver Relatório</button>
         </footer>
     </div>
 

@@ -827,6 +827,39 @@ def export_pdf():
         print(f"[PDF] Error: {e}")
         return jsonify({"error": "Failed to generate PDF"}), 500
 
+# Helper function to clean text for TTS (remove emojis, asterisks, symbols)
+def clean_text_for_tts(text):
+    """Remove emojis, asterisks, and other symbols from text for natural TTS"""
+    import re
+    
+    # Remove emojis using regex
+    emoji_pattern = re.compile("["
+        u"\U0001F600-\U0001F64F"  # emoticons
+        u"\U0001F300-\U0001F5FF"  # symbols & pictographs
+        u"\U0001F680-\U0001F6FF"  # transport & map symbols
+        u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
+        u"\U00002702-\U000027B0"
+        u"\U000024C2-\U0001F251"
+        "]+", flags=re.UNICODE)
+    text = emoji_pattern.sub('', text)
+    
+    # Remove asterisks and common formatting symbols
+    text = text.replace('*', '')
+    text = text.replace('_', '')
+    text = text.replace('~', '')
+    text = text.replace('`', '')
+    
+    # Remove markdown bold/italic markers
+    text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)  # **bold**
+    text = re.sub(r'\*(.+?)\*', r'\1', text)  # *italic*
+    text = re.sub(r'__(.+?)__', r'\1', text)  # __bold__
+    text = re.sub(r'_(.+?)_', r'\1', text)  # _italic_
+    
+    # Clean up extra whitespace
+    text = ' '.join(text.split())
+    
+    return text.strip()
+
 @app.route('/api/tts', methods=['POST'])
 @limiter.limit("60 per minute")
 @require_auth
