@@ -26,6 +26,15 @@
             </div>
         </header>
 
+        <!-- Text Visibility Toggle (above chat window) -->
+        <div
+            style="text-align: center; padding: 1rem; background: rgba(15, 23, 42, 0.8); border-bottom: 1px solid var(--border-color);">
+            <button id="text-toggle-btn" class="action-btn"
+                style="margin: 0; padding: 0.75rem 1.5rem; font-size: 0.95rem;" onclick="toggleTextVisibility()">
+                👁️ Ver o texto da conversa
+            </button>
+        </div>
+
         <main id="chat-window">
             <!-- Messages will be injected here via JS -->
             <div class="message system-message" id="start-message">
@@ -35,15 +44,6 @@
                 </div>
             </div>
         </main>
-
-        <!-- Text Visibility Toggle (above footer) -->
-        <div
-            style="text-align: center; padding: 0.75rem; background: rgba(15, 23, 42, 0.6); border-top: 1px solid var(--glass-border);">
-            <button id="text-toggle-btn" class="action-btn"
-                style="margin: 0; padding: 0.75rem 1.5rem; font-size: 0.95rem;" onclick="toggleTextVisibility()">
-                👁️ Ver o texto da conversa
-            </button>
-        </div>
 
         <footer class="controls">
             <div id="status-indicator"></div>
