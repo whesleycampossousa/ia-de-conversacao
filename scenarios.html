@@ -110,7 +110,8 @@
             <div class="tutorial-steps">
                 <div class="tutorial-step">
                     <span class="step-icon">1️⃣</span>
-                    <p><strong>Choose a scenario</strong> - Pick a situation you want to practice (coffee shop, airport, etc.)</p>
+                    <p><strong>Choose a scenario</strong> - Pick a situation you want to practice (coffee shop, airport,
+                        etc.)</p>
                 </div>
                 <div class="tutorial-step">
                     <span class="step-icon">2️⃣</span>
@@ -125,7 +126,8 @@
                     <p><strong>Generate a report</strong> after 3+ exchanges to see corrections and tips</p>
                 </div>
             </div>
-            <button id="start-tutorial-btn" class="action-btn" style="width: 100%; margin-top: 1rem;">Got it! Let's start</button>
+            <button id="start-tutorial-btn" class="action-btn" style="width: 100%; margin-top: 1rem;">Got it! Let's
+                start</button>
         </div>
     </div>
 
@@ -239,7 +241,11 @@
                 }
             }
 
-            window.location.href = `practice.html?context=${id}&title=${encodeURIComponent(title)}`;
+            // Get speed from current URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const speed = urlParams.get('speed') || '1.0';
+
+            window.location.href = `practice.html?context=${id}&title=${encodeURIComponent(title)}&speed=${speed}`;
         }
 
 

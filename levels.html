@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sellecione seu Nível - IA de Conversação</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .levels-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 1rem;
+        }
+
+        .level-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .level-card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-5px);
+            border-color: var(--accent-color);
+        }
+
+        .level-icon {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .level-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        .level-desc {
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+
+        .level-speed {
+            font-size: 0.8rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+        }
+
+        .back-btn {
+            display: block;
+            width: fit-content;
+            margin: 1rem auto;
+            color: #ccc;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .back-btn:hover {
+            color: white;
+        }
+    </style>
+</head>
+
+<body class="dashboard-body">
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <a href="dashboard.html" class="back-btn">← Voltar</a>
+            <h1>Qual é o seu nível?</h1>
+            <p>Escolha a velocidade ideal para sua prática.</p>
+        </header>
+
+        <div class="levels-container">
+            <!-- Iniciante: Speed 0.6 -->
+            <a href="javascript:selectLevel(0.6)" class="level-card">
+                <div class="level-icon">🐢</div>
+                <div class="level-title">Iniciante</div>
+                <div class="level-desc">Velocidade reduzida para melhor compreensão.</div>
+                <div class="level-speed">Velocidade: 0.6x</div>
+            </a>
+
+            <!-- Pré Intermediário: Speed 0.8 -->
+            <a href="javascript:selectLevel(0.8)" class="level-card">
+                <div class="level-icon">🚶</div>
+                <div class="level-title">Pré Intermediário</div>
+                <div class="level-desc">Um pouco mais devagar que o normal.</div>
+                <div class="level-speed">Velocidade: 0.8x</div>
+            </a>
+
+            <!-- Intermediário: Speed 1.0 -->
+            <a href="javascript:selectLevel(1.0)" class="level-card">
+                <div class="level-icon">🏃</div>
+                <div class="level-title">Intermediário</div>
+                <div class="level-desc">Velocidade natural de fala.</div>
+                <div class="level-speed">Velocidade: Normal</div>
+            </a>
+
+            <!-- Avançado: Speed 1.0 (Same as normal but different intent) -->
+            <a href="javascript:selectLevel(1.0)" class="level-card">
+                <div class="level-icon">🚀</div>
+                <div class="level-title">Avançado</div>
+                <div class="level-desc">Conversa fluida e natural.</div>
+                <div class="level-speed">Velocidade: Normal</div>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        function selectLevel(speed) {
+            // Redirect to scenarios with speed parameter
+            window.location.href = `scenarios.html?speed=${speed}`;
+        }
+    </script>
+</body>
+
+</html>

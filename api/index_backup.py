@@ -1,19 +1,7 @@
 import os
 import io
 import json
-try:
-    import jwt
-    JWT_AVAILABLE = True
-except Exception as e:
-    JWT_AVAILABLE = False
-    JWT_ERROR = str(e)
-    # Dummy jwt
-    class jwt:
-        def encode(self, *args, **kwargs): return "dummy_token"
-        def decode(self, *args, **kwargs): return {"user_id": "dummy", "email": "dummy", "is_admin": False}
-        class ExpiredSignatureError(Exception): pass
-        class InvalidTokenError(Exception): pass
-
+import jwt
 from datetime import datetime, timedelta
 from functools import wraps
 from flask import Flask, request, jsonify, send_file, send_from_directory, session
@@ -26,7 +14,7 @@ app = Flask(__name__, static_folder=os.path.abspath(os.path.join(os.path.dirname
 try:
     from flask_cors import CORS
     CORS_AVAILABLE = True
-except Exception as e:
+except ImportError as e:
     CORS_AVAILABLE = False
     CORS_ERROR = str(e)
     # Dummy CORS to prevent crash
@@ -37,7 +25,7 @@ try:
     from flask_limiter import Limiter
     from flask_limiter.util import get_remote_address
     LIMITER_AVAILABLE = True
-except Exception as e:
+except ImportError as e:
     LIMITER_AVAILABLE = False
     LIMITER_ERROR = str(e)
     # Dummy Limiter
@@ -52,7 +40,7 @@ except Exception as e:
 try:
     import google.generativeai as genai
     GENAI_AVAILABLE = True
-except Exception as e:
+except ImportError as e:
     GENAI_AVAILABLE = False
     GENAI_ERROR = str(e)
 
@@ -60,7 +48,7 @@ except Exception as e:
 try:
     from google.cloud import texttospeech
     TEXTTOSPEECH_AVAILABLE = True
-except Exception as e:
+except ImportError as e:
     TEXTTOSPEECH_AVAILABLE = False
     TEXTTOSPEECH_ERROR = str(e)
 
@@ -69,7 +57,7 @@ try:
     from reportlab.lib.pagesizes import letter
     from reportlab.pdfgen import canvas
     REPORTLAB_AVAILABLE = True
-except Exception as e:
+except ImportError as e:
     REPORTLAB_AVAILABLE = False
     REPORTLAB_ERROR = str(e)
 
@@ -77,18 +65,13 @@ except Exception as e:
 try:
     import requests
     REQUESTS_AVAILABLE = True
-except Exception as e:
+except ImportError as e:
     REQUESTS_AVAILABLE = False
     REQUESTS_ERROR = str(e)
 
 # Load environment variables
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-    DOTENV_AVAILABLE = True
-except Exception as e:
-    DOTENV_AVAILABLE = False
-    DOTENV_ERROR = str(e)
+from dotenv import load_dotenv
+load_dotenv()
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
@@ -100,28 +83,15 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 # Init CORS
 ALLOWED_ORIGINS = os.environ.get('ALLOWED_ORIGINS', 'http://localhost:4004').split(',')
 if CORS_AVAILABLE:
-    try:
-        CORS(app, origins=ALLOWED_ORIGINS, supports_credentials=True)
-    except Exception:
-        pass
+    CORS(app, origins=ALLOWED_ORIGINS, supports_credentials=True)
 
 # Init Limiter
-try:
-    limiter = Limiter(
-        app=app,
-        key_func=get_remote_address,
-        default_limits=[f"{os.environ.get('RATE_LIMIT_REQUESTS', 30)} per {os.environ.get('RATE_LIMIT_WINDOW', 60)} seconds"],
-        storage_uri="memory://"
-    )
-except Exception as e:
-    print(f"Limiter Init Error: {e}")
-    # Fallback to dummy
-    class LimiterDummy:
-        def __init__(self, *args, **kwargs): pass
-        def limit(self, *args, **kwargs):
-            def decorator(f): return f
-            return decorator
-    limiter = LimiterDummy()
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,
+    default_limits=[f"{os.environ.get('RATE_LIMIT_REQUESTS', 30)} per {os.environ.get('RATE_LIMIT_WINDOW', 60)} seconds"],
+    storage_uri="memory://"
+)
 
 # Configure Gemini
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
@@ -135,6 +105,8 @@ if GOOGLE_API_KEY and GENAI_AVAILABLE:
         print(f"Gemini Init Error: {e}")
 elif not GENAI_AVAILABLE:
     print(f"WARNING: Google GenAI not available: {globals().get('GENAI_ERROR')}")
+else:
+    print("WARNING: GOOGLE_API_KEY not set!")
 else:
     print("WARNING: GOOGLE_API_KEY not set!")
 
@@ -429,6 +401,18 @@ def login():
             "details": str(e),
             "trace": traceback.format_exc()
         }), 500
+            "user_id": user_id,
+            "name": name,
+            "email": email,
+            "is_admin": is_admin
+        },
+        "usage": {
+            "seconds_used": usage_data['seconds_used'],
+            "remaining_seconds": remaining,
+            "daily_limit_seconds": DAILY_LIMIT_SECONDS,
+            "is_blocked": remaining <= 0
+        }
+    })
 
 @app.route('/api/scenarios', methods=['GET'])
 def get_scenarios():

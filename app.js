@@ -18,6 +18,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const context = urlParams.get('context') || 'coffee_shop';
     const contextName = urlParams.get('title') || 'Practice';
 
+    // TTS Speed Logic
+    let ttsSpeed = 1.0;
+    const urlSpeed = parseFloat(urlParams.get('speed'));
+    if (urlSpeed && !isNaN(urlSpeed)) {
+        ttsSpeed = urlSpeed;
+    } else if (urlParams.get('type') === 'grammar') {
+        ttsSpeed = 0.7;
+    }
+
     // Auto-clear conversation when switching scenarios
     const lastContext = localStorage.getItem('last_context');
     if (lastContext && lastContext !== context) {
@@ -460,7 +469,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Generate Audio - try TTS, but don't block if it fails
         try {
-            const blob = await apiClient.getTTS(text);
+            const blob = await apiClient.getTTS(text, ttsSpeed);
 
             // Validate blob before creating audio
             if (blob && blob.size > 0) {
