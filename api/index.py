@@ -1124,7 +1124,7 @@ def debug_imports():
 
 @app.route('/')
 def index():
-    return send_file(os.path.join(BASE_DIR, 'login.html'))
+    return send_file(os.path.join(BASE_DIR, 'index.html'))
 
 @app.route('/<path:path>')
 def serve_static(path):

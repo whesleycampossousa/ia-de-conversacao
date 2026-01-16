@@ -40,7 +40,7 @@ class APIClient {
         if (response.status === 401) {
             // Token expired or invalid
             this.logout();
-            window.location.href = 'login.html';
+            window.location.href = '/';
             throw new Error('Session expired. Please login again.');
         }
 
