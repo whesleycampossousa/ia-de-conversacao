@@ -439,9 +439,9 @@ def get_scenarios():
 @app.route('/')
 def serve_index():
     try:
-        return send_file(os.path.join(BASE_DIR, 'login.html'))
+        return send_file(os.path.join(BASE_DIR, 'index.html'))
     except Exception as e:
-        return f"Error serving login.html: {str(e)}", 500
+        return f"Error serving index.html: {str(e)}", 500
 
 @app.route('/favicon.ico')
 def favicon():
@@ -1180,5 +1180,5 @@ def serve_static(path):
         return jsonify({"error": "File not found"}), 404
 
 if __name__ == '__main__':
-    # CHANGED: PORT 4004
-    app.run(debug=True, port=4004)
+    # CHANGED: PORT 7910
+    app.run(debug=True, port=7910)
