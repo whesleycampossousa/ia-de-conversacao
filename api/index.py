@@ -124,7 +124,7 @@ except Exception as e:
     limiter = LimiterDummy()
 
 # Configure Gemini
-GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "").strip()
 model = None
 if GOOGLE_API_KEY and GENAI_AVAILABLE:
     try:
@@ -139,7 +139,7 @@ else:
     print("WARNING: GOOGLE_API_KEY not set!")
 
 # Configure Groq Whisper for speech-to-text
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "").strip()
 GROQ_API_URL = "https://api.groq.com/openai/v1/audio/transcriptions"
 
 if GROQ_API_KEY:
