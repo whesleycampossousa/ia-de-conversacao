@@ -394,6 +394,28 @@ header {
         margin-bottom: 0.25rem !important;
     }
 
+    /* Mobile Record Button - Smaller and RED */
+    #record-btn,
+    .record-btn {
+        min-height: 48px !important;
+        padding: 0.6rem 1rem !important;
+        font-size: 0.9rem !important;
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+        border: 2px solid #f87171 !important;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4) !important;
+    }
+
+    #record-btn:hover:not(:disabled),
+    .record-btn:hover:not(:disabled) {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+        box-shadow: 0 6px 16px rgba(239, 68, 68, 0.6) !important;
+    }
+
+    #report-btn {
+        font-size: 0.85rem !important;
+        padding: 0.6rem 1rem !important;
+    }
+
     header>div {
         flex-direction: row !important;
         justify-content: space-between !important;
@@ -457,8 +479,8 @@ h1 {
     animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Audio-Only Mode - Hide ONLY non-system message bubbles */
-body.audio-only-mode .message:not(.system-message) .bubble {
+/* Audio-Only Mode - Hide ALL messages (user AND AI), keep only system UI */
+body.audio-only-mode .message:not(.system-message) {
     display: none !important;
 }
 
