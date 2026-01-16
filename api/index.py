@@ -4,12 +4,47 @@ import json
 import jwt
 from datetime import datetime, timedelta
 from functools import wraps
-import google.generativeai as genai
 from flask import Flask, request, jsonify, send_file, send_from_directory, session
-from flask_cors import CORS
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
-from dotenv import load_dotenv
+
+# Safe Imports Pattern
+# This prevents the entire app from crashing if a dependency is missing/failed on Vercel
+app = Flask(__name__, static_folder=os.path.abspath(os.path.join(os.path.dirname(__file__), '..')), static_url_path='/')
+
+# 1. CORS
+try:
+    from flask_cors import CORS
+    CORS_AVAILABLE = True
+except ImportError as e:
+    CORS_AVAILABLE = False
+    CORS_ERROR = str(e)
+    # Dummy CORS to prevent crash
+    def CORS(*args, **kwargs): pass
+
+# 2. Limiter
+try:
+    from flask_limiter import Limiter
+    from flask_limiter.util import get_remote_address
+    LIMITER_AVAILABLE = True
+except ImportError as e:
+    LIMITER_AVAILABLE = False
+    LIMITER_ERROR = str(e)
+    # Dummy Limiter
+    class Limiter:
+        def __init__(self, *args, **kwargs): pass
+        def limit(self, *args, **kwargs):
+            def decorator(f): return f
+            return decorator
+    def get_remote_address(): return "127.0.0.1"
+
+# 3. Google GenAI
+try:
+    import google.generativeai as genai
+    GENAI_AVAILABLE = True
+except ImportError as e:
+    GENAI_AVAILABLE = False
+    GENAI_ERROR = str(e)
+
+# 4. TextToSpeech
 try:
     from google.cloud import texttospeech
     TEXTTOSPEECH_AVAILABLE = True
@@ -17,6 +52,7 @@ except ImportError as e:
     TEXTTOSPEECH_AVAILABLE = False
     TEXTTOSPEECH_ERROR = str(e)
 
+# 5. ReportLab
 try:
     from reportlab.lib.pagesizes import letter
     from reportlab.pdfgen import canvas
@@ -25,25 +61,31 @@ except ImportError as e:
     REPORTLAB_AVAILABLE = False
     REPORTLAB_ERROR = str(e)
 
-import requests
+# 6. Requests
+try:
+    import requests
+    REQUESTS_AVAILABLE = True
+except ImportError as e:
+    REQUESTS_AVAILABLE = False
+    REQUESTS_ERROR = str(e)
 
 # Load environment variables
+from dotenv import load_dotenv
 load_dotenv()
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-
-app = Flask(__name__, static_folder=BASE_DIR, static_url_path='/')
 
 # Security Configuration
 app.config['SECRET_KEY'] = os.environ.get('SESSION_SECRET', 'dev-secret-change-in-production')
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
-# CORS Configuration - Only allow specific origins
+# Init CORS
 ALLOWED_ORIGINS = os.environ.get('ALLOWED_ORIGINS', 'http://localhost:4004').split(',')
-CORS(app, origins=ALLOWED_ORIGINS, supports_credentials=True)
+if CORS_AVAILABLE:
+    CORS(app, origins=ALLOWED_ORIGINS, supports_credentials=True)
 
-# Rate Limiting Configuration
+# Init Limiter
 limiter = Limiter(
     app=app,
     key_func=get_remote_address,
@@ -54,14 +96,17 @@ limiter = Limiter(
 # Configure Gemini
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
 model = None
-if GOOGLE_API_KEY:
+if GOOGLE_API_KEY and GENAI_AVAILABLE:
     try:
         genai.configure(api_key=GOOGLE_API_KEY)
-        # Using gemini-2.0-flash (fastest and most stable)
         model = genai.GenerativeModel('gemini-2.0-flash')
-        print("[OK] Gemini model initialized successfully (gemini-2.0-flash)")
+        print("[OK] Gemini model initialized successfully")
     except Exception as e:
         print(f"Gemini Init Error: {e}")
+elif not GENAI_AVAILABLE:
+    print(f"WARNING: Google GenAI not available: {globals().get('GENAI_ERROR')}")
+else:
+    print("WARNING: GOOGLE_API_KEY not set!")
 else:
     print("WARNING: GOOGLE_API_KEY not set!")
 
@@ -1042,6 +1087,22 @@ def debug_imports():
         "reportlab": {
             "available": globals().get('REPORTLAB_AVAILABLE'),
             "error": globals().get('REPORTLAB_ERROR')
+        },
+        "flask-cors": {
+            "available": globals().get('CORS_AVAILABLE'),
+            "error": globals().get('CORS_ERROR')
+        },
+        "flask-limiter": {
+            "available": globals().get('LIMITER_AVAILABLE'),
+            "error": globals().get('LIMITER_ERROR')
+        },
+        "google-generativeai": {
+            "available": globals().get('GENAI_AVAILABLE'),
+            "error": globals().get('GENAI_ERROR')
+        },
+        "requests": {
+            "available": globals().get('REQUESTS_AVAILABLE'),
+            "error": globals().get('REQUESTS_ERROR')
         }
     })
 
