@@ -457,8 +457,8 @@ h1 {
     animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Audio-Only Mode - Hide text bubbles */
-body.audio-only-mode .message .bubble {
+/* Audio-Only Mode - Hide ONLY non-system message bubbles */
+body.audio-only-mode .message:not(.system-message) .bubble {
     display: none !important;
 }
 
@@ -467,16 +467,18 @@ body.audio-only-mode #chat-window {
     align-items: center;
 }
 
-body.audio-only-mode .message {
-    position: relative;
-    width: 100%;
-    max-width: 400px;
-    margin: 0 auto;
+/* Ensure system messages (like start button) stay visible */
+body.audio-only-mode .message.system-message {
+    display: flex !important;
+}
+
+body.audio-only-mode .message.system-message .bubble {
+    display: block !important;
 }
 
 /* Visual indicator for audio-only mode */
 body.audio-only-mode #chat-window::before {
-    content: '🎧 Modo Somente Áudio';
+    content: '🎧 Modo Somente Áudio - Pratique ouvindo!';
     display: block;
     font-size: 1.5rem;
     font-weight: 600;
