@@ -1,140 +1,55 @@
 import os
 import io
 import json
-try:
-    import jwt
-    JWT_AVAILABLE = True
-except Exception as e:
-    JWT_AVAILABLE = False
-    JWT_ERROR = str(e)
-    # Dummy jwt
-    class jwt:
-        def encode(self, *args, **kwargs): return "dummy_token"
-        def decode(self, *args, **kwargs): return {"user_id": "dummy", "email": "dummy", "is_admin": False}
-        class ExpiredSignatureError(Exception): pass
-        class InvalidTokenError(Exception): pass
-
+import jwt
 from datetime import datetime, timedelta
 from functools import wraps
+import google.generativeai as genai
 from flask import Flask, request, jsonify, send_file, send_from_directory, session
-
-# Safe Imports Pattern
-# This prevents the entire app from crashing if a dependency is missing/failed on Vercel
-app = Flask(__name__, static_folder=os.path.abspath(os.path.join(os.path.dirname(__file__), '..')), static_url_path='/')
-
-# 1. CORS
-try:
-    from flask_cors import CORS
-    CORS_AVAILABLE = True
-except Exception as e:
-    CORS_AVAILABLE = False
-    CORS_ERROR = str(e)
-    # Dummy CORS to prevent crash
-    def CORS(*args, **kwargs): pass
-
-# 2. Limiter
-try:
-    from flask_limiter import Limiter
-    from flask_limiter.util import get_remote_address
-    LIMITER_AVAILABLE = True
-except Exception as e:
-    LIMITER_AVAILABLE = False
-    LIMITER_ERROR = str(e)
-    # Dummy Limiter
-    class Limiter:
-        def __init__(self, *args, **kwargs): pass
-        def limit(self, *args, **kwargs):
-            def decorator(f): return f
-            return decorator
-    def get_remote_address(): return "127.0.0.1"
-
-# 3. Google GenAI
-try:
-    import google.generativeai as genai
-    GENAI_AVAILABLE = True
-except Exception as e:
-    GENAI_AVAILABLE = False
-    GENAI_ERROR = str(e)
-
-# 4. TextToSpeech
-try:
-    from google.cloud import texttospeech
-    TEXTTOSPEECH_AVAILABLE = True
-except Exception as e:
-    TEXTTOSPEECH_AVAILABLE = False
-    TEXTTOSPEECH_ERROR = str(e)
-
-# 5. ReportLab
-try:
-    from reportlab.lib.pagesizes import letter
-    from reportlab.pdfgen import canvas
-    REPORTLAB_AVAILABLE = True
-except Exception as e:
-    REPORTLAB_AVAILABLE = False
-    REPORTLAB_ERROR = str(e)
-
-# 6. Requests
-try:
-    import requests
-    REQUESTS_AVAILABLE = True
-except Exception as e:
-    REQUESTS_AVAILABLE = False
-    REQUESTS_ERROR = str(e)
+from flask_cors import CORS
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from dotenv import load_dotenv
+from google.cloud import texttospeech
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+import requests
 
 # Load environment variables
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-    DOTENV_AVAILABLE = True
-except Exception as e:
-    DOTENV_AVAILABLE = False
-    DOTENV_ERROR = str(e)
+load_dotenv()
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+
+app = Flask(__name__, static_folder=BASE_DIR, static_url_path='/')
 
 # Security Configuration
 app.config['SECRET_KEY'] = os.environ.get('SESSION_SECRET', 'dev-secret-change-in-production')
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
-# Init CORS
+# CORS Configuration - Only allow specific origins
 ALLOWED_ORIGINS = os.environ.get('ALLOWED_ORIGINS', 'http://localhost:4004').split(',')
-if CORS_AVAILABLE:
-    try:
-        CORS(app, origins=ALLOWED_ORIGINS, supports_credentials=True)
-    except Exception:
-        pass
+CORS(app, origins=ALLOWED_ORIGINS, supports_credentials=True)
 
-# Init Limiter
-try:
-    limiter = Limiter(
-        app=app,
-        key_func=get_remote_address,
-        default_limits=[f"{os.environ.get('RATE_LIMIT_REQUESTS', 30)} per {os.environ.get('RATE_LIMIT_WINDOW', 60)} seconds"],
-        storage_uri="memory://"
-    )
-except Exception as e:
-    print(f"Limiter Init Error: {e}")
-    # Fallback to dummy
-    class LimiterDummy:
-        def __init__(self, *args, **kwargs): pass
-        def limit(self, *args, **kwargs):
-            def decorator(f): return f
-            return decorator
-    limiter = LimiterDummy()
+# Rate Limiting Configuration
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,
+    default_limits=[f"{os.environ.get('RATE_LIMIT_REQUESTS', 30)} per {os.environ.get('RATE_LIMIT_WINDOW', 60)} seconds"],
+    storage_uri="memory://"
+)
 
 # Configure Gemini
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
 model = None
-if GOOGLE_API_KEY and GENAI_AVAILABLE:
+if GOOGLE_API_KEY:
     try:
         genai.configure(api_key=GOOGLE_API_KEY)
+        # Using gemini-2.0-flash (fastest and most stable)
         model = genai.GenerativeModel('gemini-2.0-flash')
-        print("[OK] Gemini model initialized successfully")
+        print("[OK] Gemini model initialized successfully (gemini-2.0-flash)")
     except Exception as e:
         print(f"Gemini Init Error: {e}")
-elif not GENAI_AVAILABLE:
-    print(f"WARNING: Google GenAI not available: {globals().get('GENAI_ERROR')}")
 else:
     print("WARNING: GOOGLE_API_KEY not set!")
 
@@ -263,30 +178,17 @@ def check_usage_limit(email):
     return remaining > 0
 
 # Load Scenarios
-# Load Scenarios and Grammar Topics
 SCENARIOS_PATH = os.path.join(BASE_DIR, 'scenarios_db.json')
-GRAMMAR_PATH = os.path.join(BASE_DIR, 'grammar_topics.json')
-
-def load_json_file(path):
+def load_scenarios():
     try:
-        with open(path, 'r', encoding='utf-8') as f:
+        with open(SCENARIOS_PATH, 'r', encoding='utf-8') as f:
             return json.load(f)
     except Exception as e:
-        print(f"Error loading {path}: {e}")
+        print(f"Error loading scenarios: {e}")
         return []
 
-SCENARIOS = load_json_file(SCENARIOS_PATH)
-GRAMMAR_TOPICS = load_json_file(GRAMMAR_PATH)
-
-# Retrieve grammar topics endpoint
-@app.route('/api/grammar-topics', methods=['GET'])
-def get_grammar_topics():
-    return jsonify(GRAMMAR_TOPICS)
-
-# Retrieve scenarios endpoint (existing logic could be here if needed, but client usually has them)
-# For now, client has scenarios hardcoded or static, but we'll merge prompts
+SCENARIOS = load_scenarios()
 CONTEXT_PROMPTS = {s['id']: s['prompt'] for s in SCENARIOS}
-CONTEXT_PROMPTS.update({g['id']: g['prompt'] for g in GRAMMAR_TOPICS})
 
 # Email whitelist configuration
 AUTHORIZED_EMAILS_FILE = os.path.join(BASE_DIR, 'authorized_emails.json')
@@ -425,9 +327,8 @@ def login():
         print(f"LOGIN CRASH: {str(e)}")
         print(traceback.format_exc())
         return jsonify({
-            "error": "Internal Server Error (Debug Mode)",
-            "details": str(e),
-            "trace": traceback.format_exc()
+            "error": "Internal Server Error",
+            "details": str(e)
         }), 500
 
 @app.route('/api/scenarios', methods=['GET'])
@@ -447,7 +348,12 @@ def favicon():
     # Return 204 No Content to settle the 404 error silently
     return '', 204
 
-
+@app.route('/<path:path>')
+def serve_static(path):
+    try:
+        return send_from_directory(BASE_DIR, path)
+    except FileNotFoundError:
+        return jsonify({"error": "File not found"}), 404
 
 
 @app.route('/api/chat', methods=['POST'])
@@ -789,7 +695,6 @@ def export_pdf():
 def tts():
     data = request.json
     text = data.get('text')
-    speed = float(data.get('speed', 1.0))
 
     # Validate input
     is_valid, result = validate_text_input(text, max_length=500)
@@ -819,7 +724,7 @@ def tts():
         # Configure audio output - MP3 format for compatibility
         audio_config = texttospeech.AudioConfig(
             audio_encoding=texttospeech.AudioEncoding.MP3,
-            speaking_rate=speed,
+            speaking_rate=1.0,  # Normal speed
             pitch=0.0  # Normal pitch
         )
 
@@ -898,11 +803,6 @@ def track_usage():
     track_usage_time(user_email, int(seconds))
     remaining = get_remaining_seconds(user_email)
     
-    return jsonify({
-        "success": True,
-        "remaining_seconds": remaining,
-        "is_blocked": remaining <= 0
-    })
     return jsonify({
         "success": True,
         "remaining_seconds": remaining,
@@ -1090,48 +990,11 @@ def transcribe_audio():
 def health_check():
     """Health check endpoint"""
     return jsonify({
+        "status": "ok",
+        "ai_configured": GOOGLE_API_KEY is not None and model is not None,
+        "groq_configured": GROQ_API_KEY is not None,
         "timestamp": datetime.now().isoformat()
     })
-
-@app.route('/api/debug_imports', methods=['GET'])
-def debug_imports():
-    return jsonify({
-        "google-cloud-texttospeech": {
-            "available": globals().get('TEXTTOSPEECH_AVAILABLE'),
-            "error": globals().get('TEXTTOSPEECH_ERROR')
-        },
-        "reportlab": {
-            "available": globals().get('REPORTLAB_AVAILABLE'),
-            "error": globals().get('REPORTLAB_ERROR')
-        },
-        "flask-cors": {
-            "available": globals().get('CORS_AVAILABLE'),
-            "error": globals().get('CORS_ERROR')
-        },
-        "flask-limiter": {
-            "available": globals().get('LIMITER_AVAILABLE'),
-            "error": globals().get('LIMITER_ERROR')
-        },
-        "google-generativeai": {
-            "available": globals().get('GENAI_AVAILABLE'),
-            "error": globals().get('GENAI_ERROR')
-        },
-        "requests": {
-            "available": globals().get('REQUESTS_AVAILABLE'),
-            "error": globals().get('REQUESTS_ERROR')
-        }
-    })
-
-@app.route('/')
-def index():
-    return send_file(os.path.join(BASE_DIR, 'login.html'))
-
-@app.route('/<path:path>')
-def serve_static(path):
-    try:
-        return send_from_directory(BASE_DIR, path)
-    except FileNotFoundError:
-        return jsonify({"error": "File not found"}), 404
 
 if __name__ == '__main__':
     # CHANGED: PORT 4004

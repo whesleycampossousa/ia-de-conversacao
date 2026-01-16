@@ -1,0 +1,33 @@
+# PATCH PARA RESTAURAR TELA DE LOGIN
+
+## O que precisa ser mudado no arquivo api/index.py:
+
+### Linha ~265 - Trocar scenarios.html por login.html
+
+**ANTES:**
+```python
+@app.route('/')
+def serve_index():
+    try:
+        return send_file(os.path.join(BASE_DIR, 'scenarios.html'))
+    except Exception as e:
+        return f"Error serving scenarios.html: {str(e)}", 500
+```
+
+**DEPOIS:**
+```python
+@app.route('/')
+def serve_index():
+    try:
+        return send_file(os.path.join(BASE_DIR, 'login.html'))
+    except Exception as e:
+        return f"Error serving login.html: {str(e)}", 500
+```
+
+## Como aplicar:
+
+1. Abra api/index.py no seu editor
+2. Procure por: `def serve_index():`
+3. Mude `scenarios.html` para `login.html` (2 lugares)
+4. Salve o arquivo
+5. Reinicie o servidor: python api/index.py

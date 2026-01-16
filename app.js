@@ -1,6 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Auth Check with JWT
-    const isLoginPage = window.location.href.includes('login.html');
+    const isLoginPage = document.body.classList.contains('login-page') || window.location.href.includes('login.html');
+
+    // If on login page but already authenticated, redirect to dashboard
+    if (isLoginPage && apiClient.isAuthenticated()) {
+        window.location.href = 'dashboard.html';
+        return;
+    }
 
     if (!apiClient.isAuthenticated() && !isLoginPage) {
         window.location.href = 'login.html';
