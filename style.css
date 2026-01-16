@@ -607,10 +607,25 @@ body.audio-only-mode #chat-window::before {
 }
 
 /* Mobile footer optimization - ULTRA COMPACT */
+/* Mobile footer optimization - ULTRA COMPACT & SIDE-BY-SIDE */
 @media (max-width: 768px) {
     .controls {
         padding: 0.75rem !important;
         gap: 0.5rem !important;
+        display: grid !important;
+        grid-template-columns: 1fr 1fr;
+        grid-template-areas:
+            "status status"
+            "mic report"
+            "hint hint";
+        justify-items: center;
+    }
+
+    #status-indicator {
+        grid-area: status;
+        width: 100%;
+        display: flex;
+        justify-content: center;
     }
 
     /* Hide mic tip on mobile to save space */
@@ -618,20 +633,67 @@ body.audio-only-mode #chat-window::before {
         display: none !important;
     }
 
-    /* Hide disabled hint text on mobile */
+    /* Compact hint text */
     .disabled-hint {
-        display: none !important;
+        grid-area: hint;
+        font-size: 0.75rem !important;
+        margin: 0 !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
     }
 
-    /* Smaller record button text on mobile */
+    /* Record Button - RED RECTANGLE (Side-by-Side) */
+    #record-btn,
+    .record-btn {
+        grid-area: mic;
+        width: 100% !important;
+        height: auto !important;
+        min-height: 48px !important;
+        border-radius: 14px !important;
+        /* Match action-btn */
+        padding: 0 0.5rem !important;
+        /* Compact padding */
+
+        /* Force rectangle shape override */
+        aspect-ratio: auto !important;
+
+        /* Red Style */
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+        border: 2px solid #f87171 !important;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4) !important;
+
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 0.5rem !important;
+    }
+
     #record-text {
-        font-size: 0.85rem !important;
+        font-size: 0.8rem !important;
+        display: inline-block !important;
+        /* Show text */
+        white-space: nowrap;
     }
 
-    /* Compact report button on mobile */
+    .mic-icon {
+        width: 20px !important;
+        height: 20px !important;
+    }
+
+    /* Hover state for Red Button */
+    #record-btn:not(:disabled):active {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+    }
+
+    /* Report Button (Side-by-Side) */
     #report-btn {
-        padding: 0.6rem 1rem !important;
-        font-size: 0.85rem !important;
+        grid-area: report;
+        width: 100% !important;
+        min-height: 48px !important;
+        margin: 0 !important;
+        padding: 0 0.5rem !important;
+        font-size: 0.8rem !important;
     }
 }
 

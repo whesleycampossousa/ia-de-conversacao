@@ -1065,10 +1065,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (reportBtn) {
             if (userMessageCount >= 3) {
                 reportBtn.disabled = false;
-                reportBtn.textContent = 'Ver relatório';
+                // Keep static text "Ver Relatório"
             } else {
                 reportBtn.disabled = true;
-                reportBtn.textContent = `Ver relatório (${userMessageCount}/3 exchanges)`;
+                // Keep static text
             }
         }
     }

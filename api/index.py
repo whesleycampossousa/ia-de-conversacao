@@ -552,49 +552,51 @@ Keep responses to 1-2 sentences maximum.
         except (AttributeError, ValueError):
             raw_text = "I'm sorry, I couldn't process that. Could you say it again?"
 
-        # Clean asterisks and other markdown symbols from AI response
-        raw_text = raw_text.replace('*', '').replace('_', '').replace('~', '').replace('`', '')
-        # Also clean up extra whitespace that might result
-        raw_text = ' '.join(raw_text.split())
-
-        ai_text = raw_text
-        ai_trans = ""
-
+        # JSON parsing attempts first
         try:
             # Robust JSON extraction
+            # First try standard markdown block removal
             cleaned = raw_text.replace('```json', '').replace('```', '').strip()
+            # If that failed to find JSON structure, try regex
+            if not (cleaned.startswith('{') and cleaned.endswith('}')):
+                json_match = re.search(r'\{.*\}', raw_text, re.DOTALL)
+                if json_match:
+                    cleaned = json_match.group(0)
+
             parsed = json.loads(cleaned)
             ai_text = parsed.get('en', raw_text)
             ai_trans = parsed.get('pt', '')
             
-            # Clean asterisks from extracted JSON fields too
-            ai_text = ai_text.replace('*', '').replace('_', '').replace('~', '').replace('`', '')
+            # NOW clean asterisks from the extracted content
+            if ai_text:
+                ai_text = ai_text.replace('*', '').replace('_', '').replace('~', '').replace('`', '')
+                ai_text = ' '.join(ai_text.split())
             if ai_trans:
                 ai_trans = ai_trans.replace('*', '').replace('_', '').replace('~', '').replace('`', '')
-            
-            # Clean up whitespace
-            ai_text = ' '.join(ai_text.split())
-            if ai_trans:
                 ai_trans = ' '.join(ai_trans.split())
                 
-        except json.JSONDecodeError:
-            if "{" in cleaned or "}" in cleaned:
-                try:
-                    en_match = re.search(r'"en"\s*:\s*"([^"]*)"', cleaned)
-                    pt_match = re.search(r'"pt"\s*:\s*"([^"]*)"', cleaned)
-                    if en_match:
-                        ai_text = en_match.group(1)
-                        ai_text = ai_text.replace('*', '').replace('_', '').replace('~', '').replace('`', '')
-                        ai_text = ' '.join(ai_text.split())
-                    if pt_match:
-                        ai_trans = pt_match.group(1)
-                        ai_trans = ai_trans.replace('*', '').replace('_', '').replace('~', '').replace('`', '')
-                        ai_trans = ' '.join(ai_trans.split())
-                except Exception:
-                    pass
-            print(f"[CHAT] JSON Parse Error: {parse_err}")
+        except (json.JSONDecodeError, AttributeError):
+            # Fallback: regex extraction or raw text
             ai_text = raw_text
             ai_trans = ""
+            
+            # Try to rescue via regex if JSON parse failed
+            try:
+                en_match = re.search(r'"en"\s*:\s*"([^"]*)"', raw_text)
+                pt_match = re.search(r'"pt"\s*:\s*"([^"]*)"', raw_text)
+                if en_match:
+                    ai_text = en_match.group(1)
+                if pt_match:
+                    ai_trans = pt_match.group(1)
+            except:
+                pass
+
+            # Clean the fallback text
+            if ai_text:
+                ai_text = ai_text.replace('*', '').replace('_', '').replace('~', '').replace('`', '')
+                # Remove markdown json artifacts if they remain in raw text
+                ai_text = ai_text.replace('```json', '').replace('```', '').replace('{', '').replace('}', '')
+                ai_text = ' '.join(ai_text.split())
 
         # Store conversation for the user
         user_id = request.user_id
