@@ -721,6 +721,7 @@ def export_pdf():
 def tts():
     data = request.json
     text = data.get('text')
+    speed = float(data.get('speed', 1.0))
 
     # Validate input
     is_valid, result = validate_text_input(text, max_length=500)
@@ -750,7 +751,7 @@ def tts():
         # Configure audio output - MP3 format for compatibility
         audio_config = texttospeech.AudioConfig(
             audio_encoding=texttospeech.AudioEncoding.MP3,
-            speaking_rate=1.0,  # Normal speed
+            speaking_rate=speed,
             pitch=0.0  # Normal pitch
         )
 

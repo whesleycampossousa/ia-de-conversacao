@@ -119,11 +119,11 @@ class APIClient {
     /**
      * Get TTS audio
      */
-    async getTTS(text) {
+    async getTTS(text, speed = 1.0) {
         const response = await fetch(`${this.baseURL}/api/tts`, {
             method: 'POST',
             headers: this.getHeaders(),
-            body: JSON.stringify({ text })
+            body: JSON.stringify({ text, speed })
         });
 
         await this.handleResponse(response);
