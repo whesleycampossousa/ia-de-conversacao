@@ -1,6 +1,7 @@
 import os
 import io
 import json
+import re
 try:
     import jwt
     JWT_AVAILABLE = True
