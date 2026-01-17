@@ -471,6 +471,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (transcribeResult.success) {
                     processUserResponse(transcribeResult.transcript);
+                } else if (transcribeResult.retry) {
+                    // Friendly retry for hallucinations
+                    recordText.innerText = "🤔 Não entendi, tente de novo";
+                    setTimeout(() => {
+                        recordText.innerText = "🎤 Clique para Falar";
+                        recordBtn.disabled = false;
+                    }, 2500);
                 } else {
                     throw new Error(transcribeResult.error);
                 }

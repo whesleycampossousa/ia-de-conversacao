@@ -1370,6 +1370,23 @@ def transcribe_audio():
             
         if not transcript:
             return jsonify({"error": "Could not transcribe audio - no speech detected"}), 400
+            
+        # Filter known hallucinations
+        hallucinations = [
+            "Obrigado.", "Obrigado", "Thank you.", "Thank you", 
+            "Legenda", "Legendas", "Subtitles", "Subtitle",
+            "Amara.org", "Sous-titres"
+        ]
+        
+        # Check if transcript is exactly one of the hallucinations (case insensitive)
+        clean_text = transcript.strip()
+        if clean_text in hallucinations or any(h in clean_text for h in ["Legenda por", "Subtitle by"]):
+            print(f"[Transcription] Rejected hallucination: '{clean_text}'")
+            return jsonify({
+                "error": "Transcription unclear", 
+                "message": "Speech not detected accurately (hallucination)",
+                "retry": True
+            }), 422
         
         return jsonify({
             "transcript": transcript,

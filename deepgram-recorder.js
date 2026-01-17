@@ -128,6 +128,14 @@ async function transcribeWithDeepgram(audioBlob, token, language = null) {
         const data = await response.json();
 
         if (!response.ok) {
+            // Check if backend suggests a retry (e.g. for hallucinations)
+            if (data.retry) {
+                return {
+                    success: false,
+                    error: data.message || 'Please try again',
+                    retry: true
+                };
+            }
             throw new Error(data.error || data.message || 'Transcription failed');
         }
 
