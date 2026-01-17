@@ -1011,7 +1011,7 @@ def tts():
                 "input": {"ssml": ssml_text},
                 "voice": {
                     "languageCode": "pt-BR",
-                    "name": "pt-BR-Neural2-A",  # Portuguese female voice
+                    "name": "pt-BR-Journey-F",  # Chirp HD/Journey - most natural voice
                     "ssmlGender": "FEMALE"
                 },
                 "audioConfig": {
@@ -1025,7 +1025,7 @@ def tts():
                 "input": {"text": clean_text_for_tts(text)},
                 "voice": {
                     "languageCode": "pt-BR",
-                    "name": "pt-BR-Neural2-A",
+                    "name": "pt-BR-Journey-F",  # Chirp HD/Journey - most natural voice
                     "ssmlGender": "FEMALE"
                 },
                 "audioConfig": {
