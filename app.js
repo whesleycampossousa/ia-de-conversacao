@@ -1154,15 +1154,27 @@ function handleLogin() {
     const passwordInput = document.getElementById('password');
 
     // Show password field when admin email is detected
+    // Show password field when admin email is detected
     if (emailInput) {
-        emailInput.addEventListener('input', () => {
+        const checkAdminEmail = () => {
             const email = emailInput.value.trim().toLowerCase();
             if (email === 'everydayconversation1991@gmail.com' && passwordGroup) {
                 passwordGroup.style.display = 'block';
             } else if (passwordGroup) {
+                // Only hide if it's NOT the admin email (and maybe empty)
+                // But for safety, let's keep hiding it if mismatch
                 passwordGroup.style.display = 'none';
             }
+        };
+
+        // Listen to multiple events to catch autofill, paste, etc.
+        ['input', 'change', 'blur', 'keyup', 'paste'].forEach(evt => {
+            emailInput.addEventListener(evt, checkAdminEmail);
         });
+
+        // Check immediately and after a short delay for autofill
+        checkAdminEmail();
+        setTimeout(checkAdminEmail, 500);
     }
 
     form.addEventListener('submit', async (e) => {
