@@ -870,7 +870,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function addMessage(sender, text, isAI = false, logMessage = true, translation = "") {
         if (!chatWindow) return;
         const msgDiv = document.createElement('div');
-        msgDiv.className = `message ${isAI ? 'system-message' : 'user-message'}`;
+        // Use 'ai-message' for AI conversation replies, 'user-message' for user
+        // 'system-message' should only be used for actual system UI (errors, buttons, loading)
+        msgDiv.className = `message ${isAI ? 'ai-message' : 'user-message'}`;
 
         const bubble = document.createElement('div');
         bubble.className = 'bubble';
