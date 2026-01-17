@@ -90,13 +90,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (existingP) existingP.innerText = `Welcome, ${user.name}`;
     }
 
-    const chatWindow = document.getElementById('chat-window');
     const startBtn = document.getElementById('start-btn');
-    const recordBtn = document.getElementById('record-btn');
-    const recordText = document.getElementById('record-text');
-    const reportBtn = document.getElementById('report-btn');
     const messageCounter = document.getElementById('message-counter');
-    const micHint = document.getElementById('mic-hint');
     const autoTranslateToggle = document.getElementById('auto-translate-toggle');
 
     let isRecording = false;
