@@ -352,8 +352,29 @@ document.addEventListener('DOMContentLoaded', () => {
             const isGrammarTopic = grammarGreetings.hasOwnProperty(context);
 
             if (isGrammarTopic) {
-                greeting = grammarGreetings[context].en;
-                translation = grammarGreetings[context].pt;
+                if (lessonLang === 'pt') {
+                    // PT MODE: Create bilingual greeting with [EN] tags for English phrases
+                    // This will be read by PT voice with EN voice for tagged parts
+                    const bilingualGreetings = {
+                        'verb_to_be': "Bem-vindo à nossa aula sobre o verbo [EN]To Be[/EN]! 🎭 Este é um dos principais blocos de construção do inglês. Você vai aprender a dizer coisas como [EN]I am happy[/EN] e [EN]You are wonderful[/EN]. Antes de começarmos, me conte: você já estudou o [EN]verb to be[/EN] antes, ou é completamente novo?",
+                        'greetings': "Olá! Bem-vindo à nossa aula sobre Saudações! 👋 Vamos aprender a dizer [EN]Hello, how are you?[/EN] e [EN]Nice to meet you![/EN]. Me conta, você já sabe cumprimentar alguém em inglês?",
+                        'articles': "Bem-vindo à nossa aula sobre Artigos! 🍎 Vamos aprender quando usar [EN]a[/EN], [EN]an[/EN] e [EN]the[/EN]. Por exemplo: [EN]I have a dog[/EN] e [EN]I ate an apple[/EN]. Qual é sua experiência com artigos em inglês?",
+                        'plurals': "Bem-vindo à nossa aula sobre Plurais! 🐈 Vamos aprender como transformar [EN]cat[/EN] em [EN]cats[/EN] e [EN]baby[/EN] em [EN]babies[/EN]. Você já conhece algumas regras de plural?",
+                        'demonstratives': "Bem-vindo à nossa aula sobre Demonstrativos! 👉 Vamos aprender [EN]this[/EN] (isso aqui), [EN]that[/EN] (aquilo lá), [EN]these[/EN] (estes) e [EN]those[/EN] (aqueles). Você já sabe a diferença entre eles?",
+                        'subject_pronouns': "Bem-vindo à nossa aula sobre Pronomes! 👤 Vamos aprender [EN]I, you, he, she, it, we, they[/EN]. Por exemplo: [EN]I am Brazilian[/EN] e [EN]She is my friend[/EN]. Quais pronomes você já conhece?",
+                        'possessives': "Bem-vindo à nossa aula sobre Possessivos! 🎒 Vamos aprender [EN]my, your, his, her, our, their[/EN]. Por exemplo: [EN]This is my book[/EN] e [EN]That is your phone[/EN]. Você já sabe dizer 'meu' e 'seu' em inglês?",
+                        'present_simple': "Bem-vindo à nossa aula sobre [EN]Present Simple[/EN]! ⏰ Este tempo verbal é para hábitos e rotinas. Por exemplo: [EN]I work every day[/EN] e [EN]He works at night[/EN]. Você sabe a diferença entre [EN]I work[/EN] e [EN]He works[/EN]?",
+                        'present_continuous': "Bem-vindo à nossa aula sobre [EN]Present Continuous[/EN]! 🏃 Este tempo é para ações acontecendo AGORA. Por exemplo: [EN]I am learning English right now[/EN]. Você já sabe formar frases com [EN]am, is, are[/EN] mais [EN]ing[/EN]?",
+                        'basic_questions': "Bem-vindo à nossa aula sobre Perguntas! ❓ Vamos aprender as palavras mágicas: [EN]What, Where, When, Who, Why, How[/EN]. Por exemplo: [EN]What is your name?[/EN] e [EN]Where do you live?[/EN]. Você já sabe fazer perguntas em inglês?",
+                        'basic_structures': "Bem-vindo à prática de expressões educadas! 🎓 Vamos aprender a usar [EN]please[/EN], [EN]thank you[/EN] e [EN]excuse me[/EN]. Por exemplo: [EN]Excuse me, can you help me please?[/EN]. Me conte como você está com essas expressões!"
+                    };
+                    greeting = bilingualGreetings[context] || grammarGreetings[context].pt;
+                    translation = '';  // No separate translation in PT mode
+                } else {
+                    // EN MODE: Full English immersion
+                    greeting = grammarGreetings[context].en;
+                    translation = grammarGreetings[context].pt;
+                }
             } else {
                 // For conversation scenarios, start with context-appropriate greeting
                 const contextGreetings = {

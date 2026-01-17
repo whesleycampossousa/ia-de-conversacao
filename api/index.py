@@ -597,10 +597,18 @@ Keep responses to 1-2 sentences maximum.
                     cleaned = json_match.group(0)
 
             parsed = json.loads(cleaned)
-            ai_text = parsed.get('en', raw_text)
-            ai_trans = parsed.get('pt', '')
             
-            # NOW clean asterisks from the extracted content
+            # Handle response based on lesson language mode
+            if lesson_lang == 'pt' and is_grammar_topic:
+                # PT mode: Use Portuguese text as primary (contains [EN] tags for English examples)
+                ai_text = parsed.get('pt', raw_text)
+                ai_trans = ''  # No separate translation needed in PT mode
+            else:
+                # EN mode: Use English as primary, Portuguese as translation
+                ai_text = parsed.get('en', raw_text)
+                ai_trans = parsed.get('pt', '')
+            
+            # NOW clean asterisks from the extracted content (but preserve [EN][/EN] tags)
             if ai_text:
                 ai_text = ai_text.replace('*', '').replace('_', '').replace('~', '').replace('`', '')
                 ai_text = ' '.join(ai_text.split())
@@ -615,12 +623,19 @@ Keep responses to 1-2 sentences maximum.
             
             # Try to rescue via regex if JSON parse failed
             try:
-                en_match = re.search(r'"en"\s*:\s*"([^"]*)"', raw_text)
-                pt_match = re.search(r'"pt"\s*:\s*"([^"]*)"', raw_text)
-                if en_match:
-                    ai_text = en_match.group(1)
-                if pt_match:
-                    ai_trans = pt_match.group(1)
+                if lesson_lang == 'pt' and is_grammar_topic:
+                    # PT mode: look for pt field first
+                    pt_match = re.search(r'"pt"\s*:\s*"([^"]*)"', raw_text)
+                    if pt_match:
+                        ai_text = pt_match.group(1)
+                else:
+                    # EN mode: look for en field, then pt for translation
+                    en_match = re.search(r'"en"\s*:\s*"([^"]*)"', raw_text)
+                    pt_match = re.search(r'"pt"\s*:\s*"([^"]*)"', raw_text)
+                    if en_match:
+                        ai_text = en_match.group(1)
+                    if pt_match:
+                        ai_trans = pt_match.group(1)
             except:
                 pass
 
@@ -643,7 +658,7 @@ Keep responses to 1-2 sentences maximum.
             "context": context_key
         })
 
-        return jsonify({"text": ai_text, "translation": ai_trans})
+        return jsonify({"text": ai_text, "translation": ai_trans, "lessonLang": lesson_lang})
     except Exception as e:
         print(f"[CHAT] Error: {e}")
         return jsonify({"error": "Failed to generate response. Please try again."}), 500
