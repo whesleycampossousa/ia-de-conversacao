@@ -1277,9 +1277,9 @@ def transcribe_audio():
         }
         
         data = {
-            'model': 'whisper-large-v3',  # Best Whisper model
-            'language': 'en',
-            'response_format': 'verbose_json',  # Get confidence scores
+            'model': 'whisper-large-v3',  # Best Whisper model - supports auto language detection
+            # 'language' omitted to enable automatic detection (supports Portuguese + English)
+            'response_format': 'verbose_json',  # Get confidence scores and detected language
             'temperature': 0.0  # More deterministic
         }
         
