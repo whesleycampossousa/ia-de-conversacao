@@ -1000,6 +1000,9 @@ def tts():
         # Check if text contains [EN]...[/EN] tags (bilingual mode)
         has_bilingual_tags = '[EN]' in text and '[/EN]' in text
         
+        # Portuguese always uses natural 1.0x speed (native speakers)
+        pt_speed = 1.0
+        
         if has_bilingual_tags:
             # BILINGUAL MODE: Convert to SSML with language switching
             ssml_text = convert_to_bilingual_ssml(text)
@@ -1013,7 +1016,7 @@ def tts():
                 },
                 "audioConfig": {
                     "audioEncoding": "MP3",
-                    "speakingRate": speed
+                    "speakingRate": pt_speed  # Always 1.0x for Portuguese
                 }
             }
         elif lesson_lang == 'pt':
@@ -1027,7 +1030,7 @@ def tts():
                 },
                 "audioConfig": {
                     "audioEncoding": "MP3",
-                    "speakingRate": speed
+                    "speakingRate": pt_speed  # Always 1.0x for Portuguese
                 }
             }
         else:
