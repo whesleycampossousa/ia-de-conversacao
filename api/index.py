@@ -1331,7 +1331,7 @@ def transcribe_audio():
             'model': 'whisper-large-v3',  # Best Whisper model
             'response_format': 'verbose_json',
             'temperature': 0.0,
-            'prompt': "Uma conversa em português e inglês sobre aprendizado de idiomas. O usuário está praticando frases e pedindo ajuda no modo bilíngue." # Prevents "Legenda Adriana Zanotto" hallucinations
+            'prompt': "Transcreva a fala do usuário exatamente. Apenas o texto falado, sem acréscimos." # Strict transcription prompt
         }
         
         # Add language hint if provided
