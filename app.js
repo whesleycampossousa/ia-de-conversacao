@@ -1175,6 +1175,20 @@ function handleLogin() {
         // Check immediately and after a short delay for autofill
         checkAdminEmail();
         setTimeout(checkAdminEmail, 500);
+
+        // Manual toggle for safety
+        const adminToggle = document.getElementById('admin-toggle');
+        if (adminToggle) {
+            adminToggle.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (passwordGroup.style.display === 'none') {
+                    passwordGroup.style.display = 'block';
+                    passwordInput.focus();
+                } else {
+                    passwordGroup.style.display = 'none';
+                }
+            });
+        }
     }
 
     form.addEventListener('submit', async (e) => {
