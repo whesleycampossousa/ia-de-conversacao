@@ -970,27 +970,7 @@ def convert_to_bilingual_ssml(text):
     
     return ''.join(ssml_parts)
 
-@app.route('/api/tts', methods=['POST'])
-@limiter.limit("60 per minute")
-@require_auth
-def tts():
-    """Text-to-Speech endpoint using Google Cloud TTS REST API with bilingual SSML support"""
-    data = request.json or {}
-    text = data.get('text')
-    speed = float(data.get('speed', 1.0))
-    lesson_lang = data.get('lessonLang', 'en')  # 'en', 'pt', or auto-detect
 
-    # Validate input
-    is_valid, result = validate_text_input(text, max_length=500)
-    if not is_valid:
-        return jsonify({"error": result}), 400
-
-    text = result
-# Check if Google API key is available
-    if not GOOGLE_API_KEY:
-        return jsonify({"error": "TTS service not configured - missing API key"}), 503
-
-    # Check if # Edge TTS Implementation (Free)
 import edge_tts
 import asyncio
 
