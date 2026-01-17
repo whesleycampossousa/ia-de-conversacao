@@ -157,13 +157,20 @@ else:
     print("WARNING: GOOGLE_API_KEY not set!")
 
 # Configure Groq Whisper for speech-to-text
+# Configure Groq Whisper for speech-to-text
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "").strip()
 GROQ_API_URL = "https://api.groq.com/openai/v1/audio/transcriptions"
 
-if GROQ_API_KEY:
-    print("[OK] Groq API key configured for speech-to-text")
+# Configure Deepgram Nova-2 (Cheaper & Fast)
+DEEPGRAM_API_KEY = os.environ.get("DEEPGRAM_API_KEY", "").strip()
+DEEPGRAM_API_URL = "https://api.deepgram.com/v1/listen?model=nova-2-general&smart_format=true&language=pt-BR"
+
+if DEEPGRAM_API_KEY:
+    print("[OK] Deepgram API key configured (Nova-2)")
+elif GROQ_API_KEY:
+    print("[OK] Groq API key configured (Whisper)")
 else:
-    print("[WARNING] GROQ_API_KEY not set - transcription will not be available")
+    print("[WARNING] No Transcription API key set (Deepgram/Groq) - transcription will not be available")
 
 # Session storage (in production, use Redis or database)
 user_sessions = {}
@@ -1242,8 +1249,8 @@ def reload_authorized_emails():
 @limiter.limit("30 per minute")
 @require_auth
 def transcribe_audio():
-    """Transcribe audio using Groq Whisper API"""
-    if not GROQ_API_KEY:
+    """Transcribe audio using Deepgram Nova-2 or Groq Whisper"""
+    if not (DEEPGRAM_API_KEY or GROQ_API_KEY):
         return jsonify({"error": "Transcription service not configured"}), 503
     
     if not REQUESTS_AVAILABLE:
@@ -1264,7 +1271,7 @@ def transcribe_audio():
         return jsonify({"error": "No audio file provided"}), 400
     
     audio_file = request.files['audio']
-    language_hint = request.form.get('language')  # Optional language hint ('pt', 'en', etc.)
+    language_hint = request.form.get('language', 'pt-BR')  # Default to PT for Nova-2 if not specified
     
     if audio_file.filename == '':
         return jsonify({"error": "Empty audio file"}), 400
@@ -1276,96 +1283,102 @@ def transcribe_audio():
         if len(audio_data) == 0:
             return jsonify({"error": "Audio file is empty"}), 400
         
-        print(f"[Transcription] Received audio: {len(audio_data)} bytes, language hint: {language_hint or 'auto'}")
+        print(f"[Transcription] Received audio: {len(audio_data)} bytes, hint: {language_hint}")
         
-        # Prepare request to Groq
-        files = {
-            'file': ('audio.webm', audio_data, 'audio/webm')
-        }
-        
-        data = {
-            'model': 'whisper-large-v3',  # Best Whisper model
-            'response_format': 'verbose_json',
-            'temperature': 0.0,
-            'prompt': "Transcreva a fala do usuário exatamente. Apenas o texto falado, sem acréscimos." # Strict transcription prompt
-        }
-        
-        # Add language hint if provided
-        if language_hint:
-            data['language'] = language_hint
-        
-        headers = {
-            'Authorization': f'Bearer {GROQ_API_KEY}'
-        }
-        
-        # Call Groq API
-        response = requests.post(
-            GROQ_API_URL,
-            files=files,
-            data=data,
-            headers=headers,
-            timeout=30
-        )
-        
-        if response.status_code != 200:
-            error_msg = response.text[:500] if response.text else "Groq transcription failed"
-            print(f"[Transcription] Groq Error {response.status_code}: {error_msg}")
-            return jsonify({"error": "Transcription service error"}), response.status_code
-        
-        result = response.json()
-        transcript = result.get('text', '')
-        
-        # Log metadata for debugging hallucinations
-        detected_lang = result.get('language', 'unknown')
-        if isinstance(result, dict) and 'segments' in result:
-            # verbose_json has confidence scores
-            avg_logprob = result.get('avg_logprob', 0)
-            print(f"[Transcription] Result: '{transcript[:50]}...', Language: {detected_lang}, LogProb: {avg_logprob}")
-        else:
-            print(f"[Transcription] Result: '{transcript[:50]}...', Language: {detected_lang}")
+        # --- STRATEGY: DEEPGRAM (Priority) ---
+        if DEEPGRAM_API_KEY:
+            # Deepgram Nova-2 Implementation
+            headers = {
+                'Authorization': f'Token {DEEPGRAM_API_KEY}',
+                'Content-Type': 'audio/webm' # Assuming webm from browser, Deepgram auto-detects usually
+            }
             
-        if not transcript:
-            return jsonify({"error": "Could not transcribe audio - no speech detected"}), 400
+            # Construct URL with params
+            # Note: We can override language if hint is different, but for now we default to the env URL or pt-BR
+            # If language_hint is 'en', we should probably switch?
+            # Deepgram supports 'detect_language=true' but 'language=pt-BR' is safer for accuracy.
             
-        # Filter known hallucinations
-        hallucinations = [
-            "Obrigado.", "Obrigado", "Thank you.", "Thank you", 
-            "Legenda", "Legendas", "Subtitles", "Subtitle",
-            "Amara.org", "Sous-titres"
-        ]
-        
-        # Check if transcript is exactly one of the hallucinations (case insensitive)
-        clean_text = transcript.strip()
-        if clean_text in hallucinations or any(h in clean_text for h in ["Legenda por", "Subtitle by"]):
-            print(f"[Transcription] Rejected hallucination: '{clean_text}'")
+            dg_url = DEEPGRAM_API_URL
+            if language_hint and language_hint.startswith('en'):
+                 dg_url = dg_url.replace('language=pt-BR', 'language=en-US')
+            
+            response = requests.post(
+                dg_url,
+                data=audio_data, # Send raw body
+                headers=headers,
+                timeout=10
+            )
+            
+            if response.status_code != 200:
+                print(f"[Deepgram] Error {response.status_code}: {response.text}")
+                # Fallback to Groq if Deepgram fails? Or just error?
+                # Let's error for now to confirm it's trying Deepgram.
+                return jsonify({"error": "Deepgram transcription failed"}), response.status_code
+                
+            result = response.json()
+            # Parse Deepgram response
+            # { results: { channels: [ { alternatives: [ { transcript: "..." } ] } ] } }
+            try:
+                transcript = result['results']['channels'][0]['alternatives'][0]['transcript']
+                confidence = result['results']['channels'][0]['alternatives'][0]['confidence']
+                print(f"[Deepgram] Transcript: '{transcript[:50]}...', Conf: {confidence}")
+            except (KeyError, IndexError):
+                transcript = ""
+                
+            if not transcript:
+                 return jsonify({"error": "No speech detected"}), 400
+                 
             return jsonify({
-                "error": "Transcription unclear", 
-                "message": "Speech not detected accurately (hallucination)",
-                "retry": True
-            }), 422
-        
-        return jsonify({
-            "transcript": transcript,
-            "confidence": 0.95,
-            "success": True,
-            "language": detected_lang
-        })
-        
-    except requests.exceptions.Timeout:
-        return jsonify({"error": "Transcription timeout - please try again"}), 504
-    except requests.exceptions.RequestException as e:
-        print(f"Groq API error: {e}")
-        return jsonify({
-            "error": "Transcription failed",
-            "message": f"Connection error: {str(e)}",
-            "type": type(e).__name__
-        }), 500
+                "text": transcript,
+                "confidence": confidence,
+                "provider": "deepgram-nova-2"
+            })
+
+        # --- STRATEGY: GROQ (Fallback) ---
+        else:
+            files = {
+                'file': ('audio.webm', audio_data, 'audio/webm')
+            }
+            
+            data = {
+                'model': 'whisper-large-v3',
+                'response_format': 'verbose_json',
+                'temperature': 0.0,
+                'prompt': "Transcreva a fala do usuário exatamente."
+            }
+            
+            if language_hint:
+                data['language'] = language_hint
+            
+            headers = {
+                'Authorization': f'Bearer {GROQ_API_KEY}'
+            }
+            
+            response = requests.post(
+                GROQ_API_URL,
+                files=files,
+                data=data,
+                headers=headers,
+                timeout=30
+            )
+            
+            if response.status_code != 200:
+                print(f"[Groq] Error {response.status_code}: {response.text}")
+                return jsonify({"error": "Transcription service error"}), response.status_code
+            
+            result = response.json()
+            transcript = result.get('text', '')
+            
+            return jsonify({
+                "text": transcript,
+                "confidence": 1.0, # Groq verbose might have it, but consistent return
+                "provider": "groq-whisper"
+            })
+            
     except Exception as e:
-        print(f"Transcription error: {e}")
-        return jsonify({
-            "error": "Transcription failed",
-            "message": str(e)
-        }), 500
+        print(f"Transcription Error: {e}")
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
