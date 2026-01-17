@@ -27,6 +27,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Check for audio-only mode URL param
     const urlParams = new URLSearchParams(window.location.search);
     const mode = urlParams.get('mode');
+    const context = urlParams.get('context') || 'coffee_shop';
+    const contextName = urlParams.get('title') || 'Practice';
+    const user = apiClient.getUser();
 
     // Default: Audio-First (Subtitles OFF)
     // We do NOT add 'subtitles-on' class by default.
