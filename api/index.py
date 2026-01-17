@@ -1000,8 +1000,16 @@ def tts():
         # Check if text contains [EN]...[/EN] tags (bilingual mode)
         has_bilingual_tags = '[EN]' in text and '[/EN]' in text
         
+        # Debug logging
+        print(f"[TTS] lessonLang: {lesson_lang}, has_bilingual_tags: {has_bilingual_tags}")
+        print(f"[TTS] Text preview: {text[:100]}...")
+        
         # Portuguese always uses natural 1.0x speed (native speakers)
         pt_speed = 1.0
+        
+        # Determine if we should use Portuguese voice
+        # Use PT voice if: has bilingual tags OR lessonLang is 'pt'
+        use_portuguese = has_bilingual_tags or lesson_lang == 'pt'
         
         if has_bilingual_tags:
             # BILINGUAL MODE: Convert to SSML with language switching
