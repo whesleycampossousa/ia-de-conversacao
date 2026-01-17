@@ -1058,23 +1058,38 @@ def tts():
 
         response = requests.post(url, json=payload, timeout=15)
         
-        # Fallback voice hierarchy for English mode only
-        if response.status_code != 200 and not has_bilingual_tags and lesson_lang != 'pt':
-            print(f"[TTS] Studio voice failed ({response.status_code}), trying Journey voice...")
-            payload["voice"]["name"] = "en-US-Journey-F"
-            response = requests.post(url, json=payload, timeout=15)
-        
-        # If Journey voice fails, try Neural2 voice
-        if response.status_code != 200:
-            print(f"[TTS] Journey voice failed ({response.status_code}), trying Neural2 voice...")
-            payload["voice"]["name"] = "en-US-Neural2-C"
-            response = requests.post(url, json=payload, timeout=15)
-        
-        # If Neural2 fails, try Standard voice (most compatible)
-        if response.status_code != 200:
-            print(f"[TTS] Neural2 voice failed ({response.status_code}), trying Standard voice...")
-            payload["voice"]["name"] = "en-US-Standard-C"
-            response = requests.post(url, json=payload, timeout=15)
+        # Separate fallback hierarchies for PT and EN
+        if use_portuguese:
+            # Portuguese fallback hierarchy: Journey → Neural2 → Standard
+            if response.status_code != 200:
+                print(f"[TTS] PT Journey voice failed ({response.status_code}), trying PT Neural2 voice...")
+                payload["voice"]["name"] = "pt-BR-Neural2-C"  # PT-BR Neural2 female
+                payload["voice"]["languageCode"] = "pt-BR"
+                if has_bilingual_tags:
+                    # For bilingual, we need to use plain text fallback (SSML might be the issue)
+                    payload["input"] = {"text": clean_text_for_tts(text.replace('[EN]', '').replace('[/EN]', ''))}
+                response = requests.post(url, json=payload, timeout=15)
+            
+            if response.status_code != 200:
+                print(f"[TTS] PT Neural2 voice failed ({response.status_code}), trying PT Standard voice...")
+                payload["voice"]["name"] = "pt-BR-Standard-A"  # PT-BR Standard female
+                response = requests.post(url, json=payload, timeout=15)
+        else:
+            # English fallback hierarchy: Studio → Journey → Neural2 → Standard
+            if response.status_code != 200:
+                print(f"[TTS] EN Studio voice failed ({response.status_code}), trying EN Journey voice...")
+                payload["voice"]["name"] = "en-US-Journey-F"
+                response = requests.post(url, json=payload, timeout=15)
+            
+            if response.status_code != 200:
+                print(f"[TTS] EN Journey voice failed ({response.status_code}), trying EN Neural2 voice...")
+                payload["voice"]["name"] = "en-US-Neural2-C"
+                response = requests.post(url, json=payload, timeout=15)
+            
+            if response.status_code != 200:
+                print(f"[TTS] EN Neural2 voice failed ({response.status_code}), trying EN Standard voice...")
+                payload["voice"]["name"] = "en-US-Standard-C"
+                response = requests.post(url, json=payload, timeout=15)
         
         if response.status_code != 200:
             error_msg = response.text[:500] if response.text else "Unknown error"
