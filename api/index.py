@@ -1286,56 +1286,54 @@ def transcribe_audio():
         print(f"[Transcription] Received audio: {len(audio_data)} bytes, hint: {language_hint}")
         
         # --- STRATEGY: DEEPGRAM (Priority) ---
-        if DEEPGRAM_API_KEY:
-            # Deepgram Nova-2 Implementation
-            headers = {
-                'Authorization': f'Token {DEEPGRAM_API_KEY}',
-                'Content-Type': 'audio/webm' # Assuming webm from browser, Deepgram auto-detects usually
-            }
-            
-            # Construct URL with params
-            # Note: We can override language if hint is different, but for now we default to the env URL or pt-BR
-            # If language_hint is 'en', we should probably switch?
-            # Deepgram supports 'detect_language=true' but 'language=pt-BR' is safer for accuracy.
-            
-            dg_url = DEEPGRAM_API_URL
-            if language_hint and language_hint.startswith('en'):
-                 dg_url = dg_url.replace('language=pt-BR', 'language=en-US')
-            
-            response = requests.post(
-                dg_url,
-                data=audio_data, # Send raw body
-                headers=headers,
-                timeout=10
-            )
-            
-            if response.status_code != 200:
-                print(f"[Deepgram] Error {response.status_code}: {response.text}")
-                # Fallback to Groq if Deepgram fails? Or just error?
-                # Let's error for now to confirm it's trying Deepgram.
-                return jsonify({"error": "Deepgram transcription failed"}), response.status_code
-                
-            result = response.json()
-            # Parse Deepgram response
-            # { results: { channels: [ { alternatives: [ { transcript: "..." } ] } ] } }
-            try:
-                transcript = result['results']['channels'][0]['alternatives'][0]['transcript']
-                confidence = result['results']['channels'][0]['alternatives'][0]['confidence']
-                print(f"[Deepgram] Transcript: '{transcript[:50]}...', Conf: {confidence}")
-            except (KeyError, IndexError):
-                transcript = ""
-                
-            if not transcript:
-                 return jsonify({"error": "No speech detected"}), 400
-                 
-            return jsonify({
-                "text": transcript,
-                "confidence": confidence,
-                "provider": "deepgram-nova-2"
-            })
+        transcript = None
+        confidence = 0.0
+        provider = "none"
 
+        if DEEPGRAM_API_KEY:
+            try:
+                # Deepgram Nova-2 Implementation
+                headers = {
+                    'Authorization': f'Token {DEEPGRAM_API_KEY}',
+                    'Content-Type': 'audio/webm'
+                }
+                
+                dg_url = DEEPGRAM_API_URL + "&punctuate=true" # Add punctuation
+                if language_hint and language_hint.startswith('en'):
+                     dg_url = dg_url.replace('language=pt-BR', 'language=en-US')
+                
+                response = requests.post(
+                    dg_url,
+                    data=audio_data,
+                    headers=headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    try:
+                        alternatives = result['results']['channels'][0]['alternatives'][0]
+                        transcript = alternatives['transcript']
+                        confidence = alternatives['confidence']
+                        if transcript:
+                            provider = "deepgram-nova-2"
+                            print(f"[Deepgram] Success: '{transcript[:50]}...', Conf: {confidence}")
+                        else:
+                            print("[Deepgram] Returned empty transcript (Silence/Noise?)")
+                    except (KeyError, IndexError):
+                        print("[Deepgram] Error parsing response structure")
+                else:
+                    print(f"[Deepgram] Request failed: {response.status_code} - {response.text[:200]}")
+
+            except Exception as e:
+                print(f"[Deepgram] Exception: {e}")
+        
         # --- STRATEGY: GROQ (Fallback) ---
-        else:
+        # Execute if Deepgram failed (transcript is None or empty) AND Groq key exists
+        if not transcript and GROQ_API_KEY:
+            if DEEPGRAM_API_KEY:
+                print("[Transcription] Falling back to Groq Whisper...")
+                
             files = {
                 'file': ('audio.webm', audio_data, 'audio/webm')
             }
@@ -1362,18 +1360,24 @@ def transcribe_audio():
                 timeout=30
             )
             
-            if response.status_code != 200:
+            if response.status_code == 200:
+                result = response.json()
+                transcript = result.get('text', '')
+                confidence = 1.0
+                provider = "groq-whisper"
+                print(f"[Groq] Success: '{transcript[:50]}...'")
+            else:
                 print(f"[Groq] Error {response.status_code}: {response.text}")
-                return jsonify({"error": "Transcription service error"}), response.status_code
-            
-            result = response.json()
-            transcript = result.get('text', '')
-            
-            return jsonify({
-                "text": transcript,
-                "confidence": 1.0, # Groq verbose might have it, but consistent return
-                "provider": "groq-whisper"
-            })
+        
+        # --- FINAL CHECK ---
+        if not transcript:
+             return jsonify({"error": "No speech detected"}), 400
+             
+        return jsonify({
+            "text": transcript,
+            "confidence": confidence,
+            "provider": provider
+        })
             
     except Exception as e:
         print(f"Transcription Error: {e}")
