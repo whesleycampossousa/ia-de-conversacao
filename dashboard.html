@@ -64,6 +64,11 @@
         <header class="dashboard-header">
             <h1 id="welcome-msg">Bem-vindo!</h1>
             <p id="subtitle-msg">Selecione um modo para começar sua prática.</p>
+            <button id="admin-panel-btn" class="action-btn"
+                style="display: none; margin: 1rem auto 0; padding: 0.5rem 1rem; font-size: 0.9rem; background: #475569;"
+                onclick="window.location.href='admin.html'">
+                🛠️ Painel Admin
+            </button>
         </header>
 
         <div class="mode-cards">
@@ -106,6 +111,12 @@
         const apiClient = new APIClient();
         if (!localStorage.getItem('auth_token')) {
             window.location.href = 'login.html';
+        } else {
+            const user = apiClient.getUser();
+            if (user && user.is_admin) {
+                const adminBtn = document.getElementById('admin-panel-btn');
+                if (adminBtn) adminBtn.style.display = 'inline-block';
+            }
         }
 
         function logout() {
