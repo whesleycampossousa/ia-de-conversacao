@@ -433,50 +433,198 @@ header {
         padding: 0.25rem 0.5rem !important;
     }
 
-    .translation-toggle {
-        font-size: 0.75rem !important;
-    }
-
-    /* Hide timer icon on mobile to save space */
-    .timer-icon {
-        display: none;
-    }
-
-    .timer-label {
-        display: none;
-    }
+    font-size: 0.75rem !important;
 }
 
-h1 {
-    font-size: 1.5rem;
+/* Hide timer icon on mobile to save space */
+/* --- Visual Refinement & Audio-First UX --- */
+
+/* Header Redesign */
+.compact-header {
+    height: 60px;
+    padding: 0 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(15, 23, 42, 0.95);
+    /* Deep Slate */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    z-index: 100;
+    backdrop-filter: blur(12px);
+}
+
+.header-left,
+.header-right {
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.header-center {
+    flex: 2;
+    display: flex;
+    justify-content: center;
+}
+
+.header-right {
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+/* Icon Buttons */
+.icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 0.5rem;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* CC Toggle Specifics */
+.cc-btn {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    width: 36px;
+    height: 36px;
+}
+
+.cc-btn.active {
+    background: var(--text-primary);
+    color: var(--bg-color);
+    border-color: var(--text-primary);
+    font-weight: 800;
+}
+
+.cc-icon {
+    font-size: 0.75rem;
     font-weight: 700;
-    margin-bottom: 0.3rem;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.5px;
 }
 
-.subtitle {
-    font-size: 0.85rem;
-    color: #94a3b8;
+/* Minimalist Usage Timer */
+.usage-timer {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 0.35rem 0.85rem;
+    font-family: 'Inter', monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    letter-spacing: 0.5px;
 }
 
-/* Chat Window */
+/* Mini Toggle (Translation) */
+.mini-toggle {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    gap: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+
+.mini-toggle:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.mini-toggle input {
+    display: none;
+}
+
+.toggle-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    opacity: 0.5;
+    transition: all 0.2s;
+}
+
+.mini-toggle input:checked+.toggle-label {
+    color: var(--accent-color);
+    opacity: 1;
+    text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+/* --- Main Chat Window (Audio-First) --- */
 #chat-window {
     flex: 1;
     overflow-y: auto;
     padding: 1.5rem;
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 1.5rem;
     scrollbar-width: thin;
-    scrollbar-color: var(--glass-border) transparent;
+
+    /* Center "Start" button visually */
+    justify-content: flex-start;
 }
 
-/* Messages */
-.message {
-    display: flex;
-    flex-direction: column;
-    max-width: 85%;
-    animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+/* Hidden Text Behavior (Default) */
+.message:not(.system-message) .bubble {
+    opacity: 0.2;
+    /* Ghosted by default in Audio-First? Or Hidden? */
+    filter: blur(4px);
+    transition: all 0.4s ease;
+    user-select: none;
+}
+
+/* Subtitles ON state */
+body.subtitles-on .message .bubble {
+    opacity: 1 !important;
+    filter: blur(0) !important;
+    user-select: text;
+}
+
+/* Audio-Only Mode Specifics (Stricter) */
+/* When strict audio-only mode is active via URL params, we might want to hide entirely to save space? 
+   User request says "Audio-First... where text is optional". 
+   Let's keep the blur/opacity approach as it feels more "Audio-First" (text is there but not focus).
+   OR, if user strictly wants "Show nothing", we use visibility: hidden.
+*/
+
+/* Refined Bubble Styles */
+.bubble {
+    padding: 1rem 1.25rem;
+    border-radius: 18px;
+    font-size: 1rem;
+    line-height: 1.6;
+    position: relative;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    max-width: 100%;
+}
+
+.system-message .bubble {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-top-left-radius: 4px;
+    /* Always visible */
+    opacity: 1 !important;
+    filter: none !important;
+}
+
+.user-message .bubble {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: white;
+    border-bottom-right-radius: 4px;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+
+.ai-message .bubble {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-top-left-radius: 4px;
 }
 
 /* Audio-Only Mode - Hide ALL messages (user AND AI), keep only system UI */

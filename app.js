@@ -19,32 +19,40 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 2. Main App Logic
-    const user = apiClient.getUser();
+    // Check for audio-only mode URL param
     const urlParams = new URLSearchParams(window.location.search);
-    const context = urlParams.get('context') || 'coffee_shop';
-    const contextName = urlParams.get('title') || 'Practice';
+    const mode = urlParams.get('mode');
 
-    // Practice Mode - ALWAYS defaults to audio-only
-    // User can toggle text visibility with button
-    let isAudioOnly = true;  // Always start with audio-only mode
+    // Default: Audio-First (Subtitles OFF)
+    // We do NOT add 'subtitles-on' class by default.
+    // User must click CC to see text.
 
-    // Apply audio-only mode by default
-    document.body.classList.add('audio-only-mode');
-    console.log('[AUDIO-ONLY MODE] Text bubbles hidden by default. Use toggle button to show.');
+    if (mode === 'audio-only') {
+        document.body.classList.add('audio-only-mode');
+        // In strict audio-only, we might want to also hide the CC button? 
+        // Or just let it be strictly off initially.
+        // Let's keep it consistent: user can always toggle CC if they get stuck.
+    }
 
-    // Function to toggle text visibility
-    window.toggleTextVisibility = function () {
-        const toggleBtn = document.getElementById('text-toggle-btn');
-        isAudioOnly = !isAudioOnly;
+    // Initialize UI
+    const recordBtn = document.getElementById('record-btn');
+    const recordText = document.getElementById('record-text');
+    const reportBtn = document.getElementById('report-btn');
+    const micHint = document.getElementById('mic-hint');
+    const chatWindow = document.getElementById('chat-window');
 
-        if (isAudioOnly) {
-            document.body.classList.add('audio-only-mode');
-            toggleBtn.innerHTML = '👁️ Ver o texto da conversa';
-            console.log('[AUDIO-ONLY MODE] Text hidden');
-        } else {
-            document.body.classList.remove('audio-only-mode');
-            toggleBtn.innerHTML = '🙈 Esconder o texto da conversa';
-            console.log('[TEXT MODE] Text visible');
+    // Subtitle Toggle Logic
+    window.toggleSubtitles = function () {
+        document.body.classList.toggle('subtitles-on');
+        const ccBtn = document.getElementById('cc-toggle-btn');
+        if (ccBtn) {
+            if (document.body.classList.contains('subtitles-on')) {
+                ccBtn.classList.add('active');
+                ccBtn.title = "Ocultar Legendas";
+            } else {
+                ccBtn.classList.remove('active');
+                ccBtn.title = "Mostrar Legendas";
+            }
         }
     };
 

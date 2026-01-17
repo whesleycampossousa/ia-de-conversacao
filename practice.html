@@ -5,37 +5,49 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Conversation Practice</title>
+    <!-- Import Inter Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
     <div class="app-container">
-        <header>
-            <h1>Practice: Ordering Coffee</h1>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
-                <span class="message-counter" id="message-counter">0 exchanges</span>
+        <header class="compact-header">
+            <div class="header-left">
+                <button id="exit-btn" class="icon-btn" onclick="window.location.href='dashboard.html'" title="Sair">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="header-center">
+                <!-- Usage Timer (Minimalist) -->
                 <div id="usage-timer" class="usage-timer timer-normal">
-                    <span class="timer-icon">⏱️</span>
                     <span id="timer-display">10:00</span>
-                    <span class="timer-label">restantes hoje</span>
                 </div>
-                <label class="translation-toggle">
+            </div>
+
+            <div class="header-right">
+                <!-- Translation Toggle (Mini) -->
+                <label class="mini-toggle" title="Tradução Automática">
                     <input type="checkbox" id="auto-translate-toggle">
-                    <span>Auto-translate</span>
+                    <span class="toggle-label">PT</span>
                 </label>
+
+                <!-- CC Toggle (Subtitles) -->
+                <button id="cc-toggle-btn" class="icon-btn cc-btn" onclick="toggleSubtitles()" title="Legendas (CC)">
+                    <span class="cc-icon">CC</span>
+                </button>
             </div>
         </header>
 
-        <!-- Text Visibility Toggle (above chat window) -->
-        <div
-            style="text-align: center; padding: 1rem; background: rgba(15, 23, 42, 0.8); border-bottom: 1px solid var(--border-color);">
-            <button id="text-toggle-btn" class="action-btn"
-                style="margin: 0; padding: 0.75rem 1.5rem; font-size: 0.95rem;" onclick="toggleTextVisibility()">
-                👁️ Ver o texto da conversa
-            </button>
-        </div>
-
-        <main id="chat-window">
+        <!-- Main Chat Area (Dominant) -->
+        <main id="chat-window" class="audio-focused">
             <!-- Messages will be injected here via JS -->
             <div class="message system-message" id="start-message">
                 <div class="bubble">
@@ -45,6 +57,7 @@
             </div>
         </main>
 
+        <!-- Footer Controls (Compact Grid) -->
         <footer class="controls">
             <div id="status-indicator"></div>
             <p class="mic-tip" style="margin: 0.5rem 0; font-size: 0.85rem; color: #94a3b8; text-align: center;">
