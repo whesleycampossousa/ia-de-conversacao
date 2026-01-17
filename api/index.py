@@ -483,6 +483,7 @@ def chat():
     data = request.json
     user_text = data.get('text')
     context_key = data.get('context', 'coffee_shop')
+    lesson_lang = data.get('lessonLang', 'en')  # 'en' or 'pt'
 
     # Validate input
     is_valid, result = validate_text_input(user_text, max_length=500)
@@ -500,8 +501,40 @@ def chat():
                                         'present_simple', 'present_continuous', 'basic_questions']
 
     if is_grammar_topic:
-        # Beginner-friendly learning mode - English only, empathetic scaffolding
-        full_prompt = f"""{system_prompt}
+        if lesson_lang == 'pt':
+            # PORTUGUESE MODE: Explanations in PT-BR with English examples marked
+            full_prompt = f"""{system_prompt}
+
+### MODO PORTUGUÊS-INGLÊS (BILINGUAL)
+Você é uma professora de inglês carismática e acolhedora. Você fala em PORTUGUÊS BRASILEIRO, mas sempre que mostrar exemplos em inglês, você envolve eles em tags: [EN]exemplo em inglês[/EN]
+
+### SITUAÇÃO ATUAL
+O aluno disse: "{user_text}"
+
+### ESTRATÉGIA DE RESPOSTA
+1. Se o aluno mostrar confusão ou cometer um erro:
+   - **Valide:** Tranquilize ele carinhosamente ("Isso é super normal! 😊")
+   - **Micro-Explique:** Uma frase simples explicando o conceito EM PORTUGUÊS
+   - **Exemplo:** Dê um exemplo em inglês: [EN]I am happy[/EN] significa "eu estou feliz"
+   - **Prática Guiada:** Peça para ele tentar algo simples
+
+2. Se o aluno acertar:
+   - **Celebre:** Reconheça o sucesso com entusiasmo!
+   - **Avance:** Faça uma pergunta um pouco mais desafiadora
+
+### REGRAS CRÍTICAS
+- Fale PORTUGUÊS para explicações
+- Envolva TODAS as frases/palavras em inglês em [EN]...[/EN]
+- Seja acolhedor(a), paciente e motivador(a)
+- Mantenha respostas curtas (1-2 frases no máximo)
+- Retorne APENAS um JSON: {{"pt": "sua resposta com [EN]exemplos[/EN]"}}
+
+EXEMPLO DE RESPOSTA:
+{{"pt": "Muito bem! Agora tente dizer como você está se sentindo. Por exemplo: [EN]I am excited[/EN] significa 'estou animado'. Como você está agora?"}}
+"""
+        else:
+            # ENGLISH MODE: Original immersion-based approach
+            full_prompt = f"""{system_prompt}
 
 ### CURRENT SITUATION
 The student just said: "{user_text}"
@@ -884,14 +917,52 @@ def clean_text_for_tts(text):
     
     return text.strip()
 
+def convert_to_bilingual_ssml(text):
+    """Convert text with [EN]...[/EN] tags to SSML with language switching"""
+    import re
+    
+    # First clean the text of emojis and formatting
+    text = clean_text_for_tts(text)
+    
+    # Start building SSML
+    ssml_parts = ['<speak>']
+    
+    # Split text by [EN]...[/EN] tags
+    # Pattern matches [EN]content[/EN] and captures the content
+    pattern = r'\[EN\](.*?)\[/EN\]'
+    
+    last_end = 0
+    for match in re.finditer(pattern, text):
+        # Add Portuguese text before this match
+        pt_text = text[last_end:match.start()].strip()
+        if pt_text:
+            ssml_parts.append(f'<lang xml:lang="pt-BR">{pt_text}</lang>')
+        
+        # Add English text (the matched content)
+        en_text = match.group(1).strip()
+        if en_text:
+            ssml_parts.append(f'<lang xml:lang="en-US">{en_text}</lang>')
+        
+        last_end = match.end()
+    
+    # Add any remaining Portuguese text after the last match
+    remaining = text[last_end:].strip()
+    if remaining:
+        ssml_parts.append(f'<lang xml:lang="pt-BR">{remaining}</lang>')
+    
+    ssml_parts.append('</speak>')
+    
+    return ''.join(ssml_parts)
+
 @app.route('/api/tts', methods=['POST'])
 @limiter.limit("60 per minute")
 @require_auth
 def tts():
-    """Text-to-Speech endpoint using Google Cloud TTS REST API"""
+    """Text-to-Speech endpoint using Google Cloud TTS REST API with bilingual SSML support"""
     data = request.json or {}
     text = data.get('text')
     speed = float(data.get('speed', 1.0))
+    lesson_lang = data.get('lessonLang', 'en')  # 'en', 'pt', or auto-detect
 
     # Validate input
     is_valid, result = validate_text_input(text, max_length=500)
@@ -909,27 +980,60 @@ def tts():
         return jsonify({"error": "TTS service not available - missing dependencies"}), 503
 
     try:
-        # Use REST API for maximum compatibility (works even if google-cloud-texttospeech fails)
         url = f"https://texttospeech.googleapis.com/v1/text:synthesize?key={GOOGLE_API_KEY}"
         
-        # Try with Studio voice first (best quality)
-        payload = {
-            "input": {"text": text},
-            "voice": {
-                "languageCode": "en-US",
-                "name": "en-US-Studio-O",
-                "ssmlGender": "FEMALE"
-            },
-            "audioConfig": {
-                "audioEncoding": "MP3",
-                "speakingRate": speed
+        # Check if text contains [EN]...[/EN] tags (bilingual mode)
+        has_bilingual_tags = '[EN]' in text and '[/EN]' in text
+        
+        if has_bilingual_tags:
+            # BILINGUAL MODE: Convert to SSML with language switching
+            ssml_text = convert_to_bilingual_ssml(text)
+            
+            payload = {
+                "input": {"ssml": ssml_text},
+                "voice": {
+                    "languageCode": "pt-BR",
+                    "name": "pt-BR-Neural2-A",  # Portuguese female voice
+                    "ssmlGender": "FEMALE"
+                },
+                "audioConfig": {
+                    "audioEncoding": "MP3",
+                    "speakingRate": speed
+                }
             }
-        }
+        elif lesson_lang == 'pt':
+            # Pure Portuguese (no tags, but PT mode selected)
+            payload = {
+                "input": {"text": clean_text_for_tts(text)},
+                "voice": {
+                    "languageCode": "pt-BR",
+                    "name": "pt-BR-Neural2-A",
+                    "ssmlGender": "FEMALE"
+                },
+                "audioConfig": {
+                    "audioEncoding": "MP3",
+                    "speakingRate": speed
+                }
+            }
+        else:
+            # ENGLISH MODE (default): Use English voice
+            payload = {
+                "input": {"text": clean_text_for_tts(text)},
+                "voice": {
+                    "languageCode": "en-US",
+                    "name": "en-US-Studio-O",
+                    "ssmlGender": "FEMALE"
+                },
+                "audioConfig": {
+                    "audioEncoding": "MP3",
+                    "speakingRate": speed
+                }
+            }
 
         response = requests.post(url, json=payload, timeout=15)
         
-        # If Studio voice fails, try Journey voice
-        if response.status_code != 200:
+        # Fallback voice hierarchy for English mode only
+        if response.status_code != 200 and not has_bilingual_tags and lesson_lang != 'pt':
             print(f"[TTS] Studio voice failed ({response.status_code}), trying Journey voice...")
             payload["voice"]["name"] = "en-US-Journey-F"
             response = requests.post(url, json=payload, timeout=15)

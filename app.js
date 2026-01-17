@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const mode = urlParams.get('mode');
     const context = urlParams.get('context') || 'coffee_shop';
     const contextName = urlParams.get('title') || 'Practice';
+    const lessonLang = urlParams.get('lessonLang') || 'en'; // 'en' or 'pt' for bilingual
     const user = apiClient.getUser();
 
     // Default: Audio-First (Subtitles OFF)
@@ -510,8 +511,8 @@ document.addEventListener('DOMContentLoaded', () => {
         showLoadingIndicator();
 
         try {
-            // 2. Call AI Backend with new API client
-            const data = await apiClient.chat(text, context);
+            // 2. Call AI Backend with new API client (pass lessonLang for bilingual mode)
+            const data = await apiClient.chat(text, context, lessonLang);
 
             // Hide loading indicator
             hideLoadingIndicator();
@@ -561,7 +562,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Generate Audio - try TTS, but don't block if it fails
         try {
-            const blob = await apiClient.getTTS(text, ttsSpeed);
+            const blob = await apiClient.getTTS(text, ttsSpeed, lessonLang);
 
             // Validate blob before creating audio
             if (blob && blob.size > 0) {

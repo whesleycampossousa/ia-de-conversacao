@@ -91,11 +91,11 @@ class APIClient {
     /**
      * Send chat message
      */
-    async chat(text, context) {
+    async chat(text, context, lessonLang = 'en') {
         const response = await fetch(`${this.baseURL}/api/chat`, {
             method: 'POST',
             headers: this.getHeaders(),
-            body: JSON.stringify({ text, context })
+            body: JSON.stringify({ text, context, lessonLang })
         });
 
         await this.handleResponse(response);
@@ -119,11 +119,11 @@ class APIClient {
     /**
      * Get TTS audio
      */
-    async getTTS(text, speed = 1.0) {
+    async getTTS(text, speed = 1.0, lessonLang = 'en') {
         const response = await fetch(`${this.baseURL}/api/tts`, {
             method: 'POST',
             headers: this.getHeaders(),
-            body: JSON.stringify({ text, speed })
+            body: JSON.stringify({ text, speed, lessonLang })
         });
 
         await this.handleResponse(response);

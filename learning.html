@@ -7,6 +7,118 @@
     <title>Modo Aprendizado - IA de Conversação</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Language Selection Modal */
+        .lang-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .lang-modal-overlay.active {
+            display: flex;
+        }
+
+        .lang-modal {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .lang-modal h2 {
+            margin-bottom: 0.5rem;
+            font-size: 1.5rem;
+        }
+
+        .lang-modal p {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+        }
+
+        .lang-topic-title {
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        .lang-options {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .lang-option {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.25rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px solid transparent;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+
+        .lang-option:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--accent-color);
+        }
+
+        .lang-option .flag {
+            font-size: 2rem;
+        }
+
+        .lang-option .lang-info h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .lang-option .lang-info p {
+            font-size: 0.85rem;
+            margin: 0;
+            color: var(--text-secondary);
+        }
+
+        .lang-cancel {
+            margin-top: 1rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 0.5rem;
+        }
+
+        .lang-cancel:hover {
+            color: var(--text-primary);
+        }
+    </style>
 </head>
 
 <body>
@@ -35,11 +147,44 @@
         </main>
     </div>
 
+    <!-- Language Selection Modal -->
+    <div class="lang-modal-overlay" id="lang-modal">
+        <div class="lang-modal">
+            <h2>🌐 Escolha o Idioma da Aula</h2>
+            <p>Como você prefere aprender <span class="lang-topic-title" id="modal-topic-title">este tópico</span>?</p>
+
+            <div class="lang-options">
+                <div class="lang-option" onclick="selectLessonLanguage('en')">
+                    <span class="flag">🇺🇸</span>
+                    <div class="lang-info">
+                        <h3>100% English</h3>
+                        <p>Aula totalmente em inglês. Recomendado para prática de imersão.</p>
+                    </div>
+                </div>
+
+                <div class="lang-option" onclick="selectLessonLanguage('pt')">
+                    <span class="flag">🇧🇷</span>
+                    <div class="lang-info">
+                        <h3>Português + Inglês</h3>
+                        <p>Explicações em português com pronúncias em inglês. Ideal para iniciantes.</p>
+                    </div>
+                </div>
+            </div>
+
+            <button class="lang-cancel" onclick="closeLangModal()">Cancelar</button>
+        </div>
+    </div>
+
     <script src="api-client.js"></script>
     <script>
         // Note: apiClient is already declared in api-client.js, no need to redeclare
         const grid = document.getElementById('topics-grid');
         const userProfile = document.getElementById('user-profile');
+        const langModal = document.getElementById('lang-modal');
+        const modalTopicTitle = document.getElementById('modal-topic-title');
+
+        // Store selected topic for language modal
+        let selectedTopic = null;
 
         // Verify auth
         if (!localStorage.getItem('auth_token')) {
@@ -74,7 +219,7 @@
             topics.forEach(topic => {
                 const card = document.createElement('div');
                 card.className = 'scenario-card learning-card';
-                card.onclick = () => startLesson(topic.id, topic.title);
+                card.onclick = () => showLangModal(topic.id, topic.title);
 
                 card.innerHTML = `
                     <div class="scenario-icon">${topic.icon}</div>
@@ -89,11 +234,31 @@
             });
         }
 
-        function startLesson(id, title) {
-            const encodedTitle = encodeURIComponent(title);
-            // We reuse practice.html but with grammar context
-            window.location.href = `practice.html?context=${id}&title=${encodedTitle}&type=grammar`;
+        function showLangModal(id, title) {
+            selectedTopic = { id, title };
+            modalTopicTitle.textContent = title;
+            langModal.classList.add('active');
         }
+
+        function closeLangModal() {
+            langModal.classList.remove('active');
+            selectedTopic = null;
+        }
+
+        function selectLessonLanguage(lang) {
+            if (!selectedTopic) return;
+
+            const encodedTitle = encodeURIComponent(selectedTopic.title);
+            // Navigate to practice with lesson language parameter
+            window.location.href = `practice.html?context=${selectedTopic.id}&title=${encodedTitle}&type=grammar&lessonLang=${lang}`;
+        }
+
+        // Close modal on overlay click
+        langModal.addEventListener('click', (e) => {
+            if (e.target === langModal) {
+                closeLangModal();
+            }
+        });
 
         // Initialize
         loadTopics();
