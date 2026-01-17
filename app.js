@@ -466,8 +466,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 isRecording = false;
                 recordBtn.classList.remove('recording');
 
-                // Transcribe with Groq
-                const transcribeResult = await transcribeWithDeepgram(audioBlob, apiClient.token);
+                // Transcribe with Groq (pass lessonLang as hint)
+                const transcribeResult = await transcribeWithDeepgram(audioBlob, apiClient.token, lessonLang);
 
                 if (transcribeResult.success) {
                     processUserResponse(transcribeResult.transcript);

@@ -103,14 +103,19 @@ class DeepgramRecorder {
 }
 
 /**
- * Transcribe audio blob using Deepgram API
+ * Transcribe audio blob using Whisper API through our backend
  */
-async function transcribeWithDeepgram(audioBlob, token) {
+async function transcribeWithDeepgram(audioBlob, token, language = null) {
     const formData = new FormData();
     formData.append('audio', audioBlob, 'recording.webm');
 
+    // Add language hint if provided
+    if (language) {
+        formData.append('language', language);
+    }
+
     try {
-        console.log('[Deepgram] Sending audio for transcription...');
+        console.log(`[Deepgram] Sending audio for transcription${language ? ' with language hint: ' + language : ''}...`);
 
         const response = await fetch('/api/transcribe', {
             method: 'POST',

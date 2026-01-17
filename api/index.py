@@ -1308,6 +1308,7 @@ def transcribe_audio():
         return jsonify({"error": "No audio file provided"}), 400
     
     audio_file = request.files['audio']
+    language_hint = request.form.get('language')  # Optional language hint ('pt', 'en', etc.)
     
     if audio_file.filename == '':
         return jsonify({"error": "Empty audio file"}), 400
@@ -1325,11 +1326,15 @@ def transcribe_audio():
         }
         
         data = {
-            'model': 'whisper-large-v3',  # Best Whisper model - supports auto language detection
-            # 'language' omitted to enable automatic detection (supports Portuguese + English)
-            'response_format': 'verbose_json',  # Get confidence scores and detected language
-            'temperature': 0.0  # More deterministic
+            'model': 'whisper-large-v3',  # Best Whisper model
+            'response_format': 'verbose_json',
+            'temperature': 0.0
         }
+        
+        # Add language hint if provided
+        if language_hint:
+            data['language'] = language_hint
+            print(f"[Transcription] Using language hint: {language_hint}")
         
         headers = {
             'Authorization': f'Bearer {GROQ_API_KEY}'
