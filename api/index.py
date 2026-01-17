@@ -1019,7 +1019,7 @@ def tts():
                 "input": {"ssml": ssml_text},
                 "voice": {
                     "languageCode": "pt-BR",
-                    "name": "pt-BR-Journey-F",  # Chirp HD/Journey - most natural voice
+                    "name": "pt-BR-Chirp3-HD-Aoede",  # Correct Chirp3 HD voice name
                     "ssmlGender": "FEMALE"
                 },
                 "audioConfig": {
@@ -1033,7 +1033,7 @@ def tts():
                 "input": {"text": clean_text_for_tts(text)},
                 "voice": {
                     "languageCode": "pt-BR",
-                    "name": "pt-BR-Journey-F",  # Chirp HD/Journey - most natural voice
+                    "name": "pt-BR-Chirp3-HD-Aoede",
                     "ssmlGender": "FEMALE"
                 },
                 "audioConfig": {
@@ -1060,40 +1060,46 @@ def tts():
         
         # Separate fallback hierarchies for PT and EN
         if use_portuguese:
-            # Portuguese fallback hierarchy: Journey → Neural2 → Standard
+            # Portuguese fallback hierarchy: Chirp3-HD → Neural2 → Wavenet → Standard
             if response.status_code != 200:
-                print(f"[TTS] PT Journey voice failed ({response.status_code}), trying PT Neural2 voice...")
-                payload["voice"]["name"] = "pt-BR-Neural2-C"  # PT-BR Neural2 female
-                payload["voice"]["languageCode"] = "pt-BR"
-                if has_bilingual_tags:
-                    # For bilingual, we need to use plain text fallback (SSML might be the issue)
-                    payload["input"] = {"text": clean_text_for_tts(text.replace('[EN]', '').replace('[/EN]', ''))}
+                print(f"[TTS] PT Chirp3 voice failed ({response.status_code}). Error: {response.text[:200]}")
+                print(f"[TTS] Trying PT Neural2 voice with plain text...")
+                payload["voice"]["name"] = "pt-BR-Neural2-C"
+                # Strictly use plain text for fallback to avoid SSML issues
+                clean_pt_text = clean_text_for_tts(text.replace('[EN]', '').replace('[/EN]', ''))
+                payload["input"] = {"text": clean_pt_text}
                 response = requests.post(url, json=payload, timeout=15)
             
             if response.status_code != 200:
-                print(f"[TTS] PT Neural2 voice failed ({response.status_code}), trying PT Standard voice...")
-                payload["voice"]["name"] = "pt-BR-Standard-A"  # PT-BR Standard female
+                print(f"[TTS] PT Neural2 voice failed ({response.status_code}). Trying PT Wavenet voice...")
+                payload["voice"]["name"] = "pt-BR-Wavenet-A"
+                response = requests.post(url, json=payload, timeout=15)
+                
+            if response.status_code != 200:
+                print(f"[TTS] PT Wavenet voice failed ({response.status_code}). Trying PT Standard voice...")
+                payload["voice"]["name"] = "pt-BR-Standard-A"
                 response = requests.post(url, json=payload, timeout=15)
         else:
             # English fallback hierarchy: Studio → Journey → Neural2 → Standard
             if response.status_code != 200:
-                print(f"[TTS] EN Studio voice failed ({response.status_code}), trying EN Journey voice...")
+                print(f"[TTS] EN Studio voice failed ({response.status_code}). Trying EN Journey voice...")
                 payload["voice"]["name"] = "en-US-Journey-F"
                 response = requests.post(url, json=payload, timeout=15)
             
             if response.status_code != 200:
-                print(f"[TTS] EN Journey voice failed ({response.status_code}), trying EN Neural2 voice...")
+                print(f"[TTS] EN Journey voice failed ({response.status_code}). Trying EN Neural2 voice...")
                 payload["voice"]["name"] = "en-US-Neural2-C"
                 response = requests.post(url, json=payload, timeout=15)
             
             if response.status_code != 200:
-                print(f"[TTS] EN Neural2 voice failed ({response.status_code}), trying EN Standard voice...")
+                print(f"[TTS] EN Neural2 voice failed ({response.status_code}). Trying EN Standard voice...")
                 payload["voice"]["name"] = "en-US-Standard-C"
                 response = requests.post(url, json=payload, timeout=15)
         
         if response.status_code != 200:
             error_msg = response.text[:500] if response.text else "Unknown error"
-            print(f"[TTS] All voices failed. Status: {response.status_code}, Error: {error_msg}")
+            print(f"[TTS] All voices failed. Final Status: {response.status_code}, Error: {error_msg}")
+            print(f"[TTS] Failed Payload: {payload}")
             return jsonify({
                 "error": "Text-to-speech temporarily unavailable",
                 "details": f"API returned status {response.status_code}"
