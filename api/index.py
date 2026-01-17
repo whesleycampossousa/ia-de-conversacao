@@ -1298,9 +1298,10 @@ def transcribe_audio():
                     'Content-Type': 'audio/webm'
                 }
                 
-                dg_url = DEEPGRAM_API_URL + "&punctuate=true" # Add punctuation
-                if language_hint and language_hint.startswith('en'):
-                     dg_url = dg_url.replace('language=pt-BR', 'language=en-US')
+                # Use Detect Language for "Smart" recognition (En/Pt)
+                dg_url = "https://api.deepgram.com/v1/listen?model=nova-2-general&smart_format=true&punctuate=true&detect_language=true"
+                if language_hint and language_hint == 'en': # Only force if STRICTLY English mode requested
+                     dg_url = dg_url + "&language=en-US"
                 
                 response = requests.post(
                     dg_url,
