@@ -1320,6 +1320,8 @@ def transcribe_audio():
         if len(audio_data) == 0:
             return jsonify({"error": "Audio file is empty"}), 400
         
+        print(f"[Transcription] Received audio: {len(audio_data)} bytes, language hint: {language_hint or 'auto'}")
+        
         # Prepare request to Groq
         files = {
             'file': ('audio.webm', audio_data, 'audio/webm')
@@ -1328,13 +1330,13 @@ def transcribe_audio():
         data = {
             'model': 'whisper-large-v3',  # Best Whisper model
             'response_format': 'verbose_json',
-            'temperature': 0.0
+            'temperature': 0.0,
+            'prompt': "Uma conversa em português e inglês sobre aprendizado de idiomas. O usuário está praticando frases e pedindo ajuda no modo bilíngue." # Prevents "Legenda Adriana Zanotto" hallucinations
         }
         
         # Add language hint if provided
         if language_hint:
             data['language'] = language_hint
-            print(f"[Transcription] Using language hint: {language_hint}")
         
         headers = {
             'Authorization': f'Bearer {GROQ_API_KEY}'
@@ -1349,27 +1351,31 @@ def transcribe_audio():
             timeout=30
         )
         
-        response.raise_for_status()
+        if response.status_code != 200:
+            error_msg = response.text[:500] if response.text else "Groq transcription failed"
+            print(f"[Transcription] Groq Error {response.status_code}: {error_msg}")
+            return jsonify({"error": "Transcription service error"}), response.status_code
+        
         result = response.json()
+        transcript = result.get('text', '')
         
-        # Extract transcript
-        transcript = result.get('text', '').strip()
-        
+        # Log metadata for debugging hallucinations
+        detected_lang = result.get('language', 'unknown')
+        if isinstance(result, dict) and 'segments' in result:
+            # verbose_json has confidence scores
+            avg_logprob = result.get('avg_logprob', 0)
+            print(f"[Transcription] Result: '{transcript[:50]}...', Language: {detected_lang}, LogProb: {avg_logprob}")
+        else:
+            print(f"[Transcription] Result: '{transcript[:50]}...', Language: {detected_lang}")
+            
         if not transcript:
             return jsonify({"error": "Could not transcribe audio - no speech detected"}), 400
         
-        # Calculate average confidence if available
-        confidence = 0.95  # Groq doesn't provide per-word confidence, use default high value
-        if 'segments' in result and result['segments']:
-            # If segments are available, we could calculate from them
-            # but for simplicity, we'll use a default high confidence
-            confidence = 0.95
-        
         return jsonify({
             "transcript": transcript,
-            "confidence": confidence,
+            "confidence": 0.95,
             "success": True,
-            "language": result.get('language', 'en')
+            "language": detected_lang
         })
         
     except requests.exceptions.Timeout:
