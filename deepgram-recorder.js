@@ -142,7 +142,7 @@ async function transcribeWithDeepgram(audioBlob, token, language = null) {
         console.log(`[Deepgram] Transcription success. Confidence: ${data.confidence}`);
         return {
             success: true,
-            transcript: data.transcript,
+            transcript: data.text || data.transcript,
             confidence: data.confidence
         };
 
