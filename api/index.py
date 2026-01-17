@@ -1051,7 +1051,7 @@ def tts_endpoint():
                     "input": {"text": clean_text_for_tts(text)},
                     "voice": {
                         "languageCode": "en-US",
-                        "name": "en-US-Studio-O",
+                        "name": "en-US-Journey-F", # Journey Voice (Much cheaper than Studio, high quality)
                         "ssmlGender": "FEMALE"
                     },
                     "audioConfig": {
