@@ -1285,12 +1285,20 @@ def transcribe_audio():
         
         print(f"[Transcription] Received audio: {len(audio_data)} bytes, hint: {language_hint}")
         
-        # --- STRATEGY: DEEPGRAM (Priority) ---
+        # --- INTELLIGENT ROUTING ---
+        # "Portuguese Mode" (Bilingual) -> Groq Whisper (Best for mixed En/Pt)
+        # "English Mode" (Immersion) -> Deepgram Nova-2 (Best for speed/cost)
+        
+        prefer_groq_for_mixed = (language_hint != 'en') # True if PT or default
+        
         transcript = None
         confidence = 0.0
         provider = "none"
 
-        if DEEPGRAM_API_KEY:
+        # 1. Try DEEPGRAM if it's the preferred strategy checks out (English Mode) OR if it's the only option
+        should_use_deepgram = DEEPGRAM_API_KEY and (not prefer_groq_for_mixed or not GROQ_API_KEY)
+        
+        if should_use_deepgram:
             try:
                 # Deepgram Nova-2 Implementation
                 headers = {
@@ -1298,10 +1306,12 @@ def transcribe_audio():
                     'Content-Type': 'audio/webm'
                 }
                 
-                # Use Detect Language for "Smart" recognition (En/Pt)
-                dg_url = "https://api.deepgram.com/v1/listen?model=nova-2-general&smart_format=true&punctuate=true&detect_language=true"
-                if language_hint and language_hint == 'en': # Only force if STRICTLY English mode requested
-                     dg_url = dg_url + "&language=en-US"
+                # If we are here, we are likely in EN mode or forced to use Deepgram
+                if language_hint == 'en':
+                    dg_url = "https://api.deepgram.com/v1/listen?model=nova-2-general&smart_format=true&punctuate=true&language=en-US"
+                else:
+                    # Fallback for PT if Groq missing: Use auto-detect
+                    dg_url = "https://api.deepgram.com/v1/listen?model=nova-2-general&smart_format=true&punctuate=true&detect_language=true"
                 
                 response = requests.post(
                     dg_url,
@@ -1320,24 +1330,28 @@ def transcribe_audio():
                             provider = "deepgram-nova-2"
                             print(f"[Deepgram] Success: '{transcript[:50]}...', Conf: {confidence}")
                         else:
-                            print("[Deepgram] Returned empty transcript (Silence/Noise?)")
+                            print("[Deepgram] Returned empty transcript")
                     except (KeyError, IndexError):
-                        print("[Deepgram] Error parsing response structure")
+                        print("[Deepgram] Error parsing response")
                 else:
-                    print(f"[Deepgram] Request failed: {response.status_code} - {response.text[:200]}")
+                    print(f"[Deepgram] Request failed: {response.status_code}")
 
             except Exception as e:
                 print(f"[Deepgram] Exception: {e}")
         
-        # --- STRATEGY: GROQ (Fallback) ---
-        # Execute if Deepgram failed (transcript is None or empty) AND Groq key exists
+        # 2. Try GROQ if needed (Preferred for PT, or Fallback for Deepgram failure)
+        # Condition: (Prefer Groq AND Groq exists) OR (Deepgram failed/skipped AND Groq exists)
         if not transcript and GROQ_API_KEY:
-            if DEEPGRAM_API_KEY:
-                print("[Transcription] Falling back to Groq Whisper...")
-                
-            files = {
+             # Just logs to see why we are here
+             if prefer_groq_for_mixed and not transcript:
+                 print("[Transcription] Using Groq Whisper for Mixed/Bilingual mode...")
+             elif DEEPGRAM_API_KEY:
+                 print("[Transcription] Falling back to Groq Whisper after Deepgram failure...")
+                 
+             files = {
                 'file': ('audio.webm', audio_data, 'audio/webm')
             }
+            # ... rest of Groq logic follows in existing code (we just flow into it)
             
             data = {
                 'model': 'whisper-large-v3',
