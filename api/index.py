@@ -986,163 +986,114 @@ def tts():
         return jsonify({"error": result}), 400
 
     text = result
-
-    # Check if Google API key is available
+# Check if Google API key is available
     if not GOOGLE_API_KEY:
         return jsonify({"error": "TTS service not configured - missing API key"}), 503
 
-    # Check if requests library is available
-    if not REQUESTS_AVAILABLE:
-        return jsonify({"error": "TTS service not available - missing dependencies"}), 503
+    # Check if # Edge TTS Implementation (Free)
+import edge_tts
+import asyncio
 
+async def generate_audio_chunk(text, voice, rate_str):
+    communicate = edge_tts.Communicate(text, voice, rate=rate_str)
+    audio_data = b""
+    async for chunk in communicate.stream():
+        if chunk["type"] == "audio":
+            audio_data += chunk["data"]
+    return audio_data
+
+def get_edge_voice(lang, gender='FEMALE'):
+    # Premium Neural Voices (Free via Edge)
+    if lang == 'en':
+        return "en-US-EricNeural" if gender == 'MALE' else "en-US-JennyNeural"
+    elif lang == 'pt':
+        return "pt-BR-AntonioNeural" if gender == 'MALE' else "pt-BR-FranciscaNeural"
+    return "en-US-JennyNeural"
+
+@app.route('/api/tts', methods=['POST'])
+@limiter.limit("50 per minute")
+@require_auth
+def tts_endpoint():
+    """Text-to-Speech endpoint using Edge TTS with bilingual SSML support"""
     try:
-        url = f"https://texttospeech.googleapis.com/v1/text:synthesize?key={GOOGLE_API_KEY}"
-        
-        # Check if text contains [EN]...[/EN] tags (bilingual mode)
-        has_bilingual_tags = '[EN]' in text and '[/EN]' in text
-        
-        # Debug logging
-        print(f"[TTS] lessonLang: {lesson_lang}, has_bilingual_tags: {has_bilingual_tags}")
-        print(f"[TTS] Text preview: {text[:100]}...")
-        
-        # Portuguese always uses natural 1.0x speed (native speakers)
-        pt_speed = 1.0
-        
-        # Determine if we should use Portuguese voice
-        # Use PT voice if: has bilingual tags OR lessonLang is 'pt'
-        use_portuguese = has_bilingual_tags or lesson_lang == 'pt'
-        
-        if has_bilingual_tags:
-            # BILINGUAL MODE: Convert to SSML with language switching
-            ssml_text = convert_to_bilingual_ssml(text)
-            
-            payload = {
-                "input": {"ssml": ssml_text},
-                "voice": {
-                    "languageCode": "pt-BR",
-                    "name": "pt-BR-Chirp3-HD-Aoede",  # Correct Chirp3 HD voice name
-                    "ssmlGender": "FEMALE"
-                },
-                "audioConfig": {
-                    "audioEncoding": "MP3",
-                    "speakingRate": pt_speed  # Always 1.0x for Portuguese
-                }
-            }
-        elif lesson_lang == 'pt':
-            # Pure Portuguese (no tags, but PT mode selected)
-            payload = {
-                "input": {"text": clean_text_for_tts(text)},
-                "voice": {
-                    "languageCode": "pt-BR",
-                    "name": "pt-BR-Chirp3-HD-Aoede",
-                    "ssmlGender": "FEMALE"
-                },
-                "audioConfig": {
-                    "audioEncoding": "MP3",
-                    "speakingRate": pt_speed  # Always 1.0x for Portuguese
-                }
-            }
-        else:
-            # ENGLISH MODE (default): Use English voice
-            payload = {
-                "input": {"text": clean_text_for_tts(text)},
-                "voice": {
-                    "languageCode": "en-US",
-                    "name": "en-US-Studio-O",
-                    "ssmlGender": "FEMALE"
-                },
-                "audioConfig": {
-                    "audioEncoding": "MP3",
-                    "speakingRate": speed
-                }
-            }
+        data = request.json
+        text = data.get('text')
+        # speed is now largely handled by rate string in Edge TTS, but we keep the parameter
+        # to decide between normal/slow if needed, though usually fixed 1.0 needed.
+        lesson_lang = data.get('lessonLang', 'en')
 
-        response = requests.post(url, json=payload, timeout=15)
+        # Validate input
+        is_valid, result = validate_text_input(text, max_length=500)
+        if not is_valid:
+            return jsonify({"error": result}), 400
+        text = result
+
+        if not text:
+            return jsonify({"error": "No text provided"}), 400
+
+        print(f"[TTS] Request: {text[:50]}... | Lang: {lesson_lang}")
+
+        # Bilingual tag processing
+        # We manually split string by [EN] tags to switch voices
+        segments = []
         
-        # Separate fallback hierarchies for PT and EN
-        if use_portuguese:
-            # Portuguese fallback hierarchy: Chirp3-HD → Neural2 → Wavenet → Standard
-            if response.status_code != 200:
-                print(f"[TTS] PT Chirp3 voice failed ({response.status_code}). Error: {response.text[:200]}")
-                print(f"[TTS] Trying PT Neural2 voice with plain text...")
-                payload["voice"]["name"] = "pt-BR-Neural2-C"
-                # Strictly use plain text for fallback to avoid SSML issues
-                clean_pt_text = clean_text_for_tts(text.replace('[EN]', '').replace('[/EN]', ''))
-                payload["input"] = {"text": clean_pt_text}
-                response = requests.post(url, json=payload, timeout=15)
+        # Simple parser for [EN]...[/EN] tags
+        # Logic: Split by tags, identify if segment was inside tags
+        # Example: "Olá [EN]Hello[/EN] tudo bem" -> ["Olá ", "Hello", " tudo bem"]
+        # We need to preserve order and content.
+        
+        parts = re.split(r'(\[EN\].*?\[/EN\])', text)
+        
+        audio_segments = []
+        
+        # Async runner for the loop
+        async def process_segments():
+            final_audio = b""
             
-            if response.status_code != 200:
-                print(f"[TTS] PT Neural2 voice failed ({response.status_code}). Trying PT Wavenet voice...")
-                payload["voice"]["name"] = "pt-BR-Wavenet-A"
-                response = requests.post(url, json=payload, timeout=15)
+            for part in parts:
+                if not part.strip():
+                    continue
                 
-            if response.status_code != 200:
-                print(f"[TTS] PT Wavenet voice failed ({response.status_code}). Trying PT Standard voice...")
-                payload["voice"]["name"] = "pt-BR-Standard-A"
-                response = requests.post(url, json=payload, timeout=15)
-        else:
-            # English fallback hierarchy: Studio → Journey → Neural2 → Standard
-            if response.status_code != 200:
-                print(f"[TTS] EN Studio voice failed ({response.status_code}). Trying EN Journey voice...")
-                payload["voice"]["name"] = "en-US-Journey-F"
-                response = requests.post(url, json=payload, timeout=15)
+                is_english_block = part.startswith('[EN]') and part.endswith('[/EN]')
+                
+                clean_part = part.replace('[EN]', '').replace('[/EN]', '').strip()
+                if not clean_part:
+                    continue
+                    
+                if is_english_block:
+                    # English Voice
+                    voice = get_edge_voice('en', 'MALE') # Eric
+                    # English speed can be adjustable, but let's stick to normal for now
+                    rate = "+0%" 
+                    print(f"Generating EN ({voice}): {clean_part[:20]}")
+                    chunk = await generate_audio_chunk(clean_part, voice, rate)
+                    final_audio += chunk
+                else:
+                    # Portuguese/Default Voice
+                    # If lesson_lang is 'en' but no tags, it's English. 
+                    # If lesson_lang is 'pt', it's PT.
+                    lang_code = 'pt' if lesson_lang == 'pt' else 'en'
+                    voice = get_edge_voice(lang_code, 'FEMALE') # Francisca or Jenny
+                    rate = "+0%"
+                    print(f"Generating {lang_code.upper()} ({voice}): {clean_part[:20]}")
+                    chunk = await generate_audio_chunk(clean_part, voice, rate)
+                    final_audio += chunk
             
-            if response.status_code != 200:
-                print(f"[TTS] EN Journey voice failed ({response.status_code}). Trying EN Neural2 voice...")
-                payload["voice"]["name"] = "en-US-Neural2-C"
-                response = requests.post(url, json=payload, timeout=15)
-            
-            if response.status_code != 200:
-                print(f"[TTS] EN Neural2 voice failed ({response.status_code}). Trying EN Standard voice...")
-                payload["voice"]["name"] = "en-US-Standard-C"
-                response = requests.post(url, json=payload, timeout=15)
-        
-        if response.status_code != 200:
-            error_msg = response.text[:500] if response.text else "Unknown error"
-            print(f"[TTS] All voices failed. Final Status: {response.status_code}, Error: {error_msg}")
-            print(f"[TTS] Failed Payload: {payload}")
-            return jsonify({
-                "error": "Text-to-speech temporarily unavailable",
-                "details": f"API returned status {response.status_code}"
-            }), 503
+            return final_audio
 
-        # Extract audio content from response
-        response_data = response.json()
-        audio_content = response_data.get('audioContent')
-        
-        if not audio_content:
-            return jsonify({"error": "No audio content received from TTS API"}), 503
+        # Run async generation
+        full_audio = asyncio.run(process_segments())
 
-        # Decode base64 audio
-        audio_data = base64.b64decode(audio_content)
-
-        mp3_fp = io.BytesIO(audio_data)
-        mp3_fp.seek(0)
-        
         return send_file(
-            mp3_fp,
-            mimetype="audio/mpeg",
+            io.BytesIO(full_audio),
+            mimetype="audio/mp3",
             as_attachment=False,
-            download_name="response.mp3"
+            download_name="tts.mp3"
         )
 
-    except requests.exceptions.Timeout:
-        print("[TTS] Request timeout")
-        return jsonify({"error": "Text-to-speech request timed out"}), 504
-    except requests.exceptions.RequestException as e:
-        print(f"[TTS] Request error: {e}")
-        return jsonify({
-            "error": "Text-to-speech temporarily unavailable",
-            "details": str(e)
-        }), 503
     except Exception as e:
-        print(f"[TTS] Unexpected error: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({
-            "error": "Text-to-speech temporarily unavailable",
-            "details": str(e)
-        }), 503
+        print(f"TTS Error: {e}")
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/conversations', methods=['GET'])
 @require_auth
