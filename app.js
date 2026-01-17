@@ -298,10 +298,61 @@ document.addEventListener('DOMContentLoaded', () => {
             let greeting = "";
             let translation = "";
 
-            // Special greetings for training scenarios
-            if (context === 'basic_structures') {
-                greeting = "Hello! Let's practice polite expressions. How would you politely ask someone for directions to the train station?";
-                translation = "Olá! Vamos praticar expressões educadas. Como você pediria educadamente a alguém direções para a estação de trem?";
+            // Educational greetings for Learning/Grammar topics
+            const grammarGreetings = {
+                'verb_to_be': {
+                    en: "Welcome to our lesson on the verb 'To Be'! 🎭 This is one of the most important building blocks in English. Before we start, tell me: what's your experience with 'to be'? Have you studied it before, or is this completely new for you?",
+                    pt: "Bem-vindo à nossa aula sobre o verbo 'To Be'! 🎭 Este é um dos principais blocos de construção do inglês. Antes de começarmos, me conte: qual é sua experiência com 'to be'? Você já estudou antes ou é completamente novo para você?"
+                },
+                'greetings': {
+                    en: "Hey there! Welcome to our lesson on Greetings & Introductions! 👋 Learning how to greet people is the first step to any conversation. So tell me, do you already know some ways to say 'hello' in English, or should we start from the basics?",
+                    pt: "Olá! Bem-vindo à nossa aula sobre Saudações e Apresentações! 👋 Aprender a cumprimentar pessoas é o primeiro passo para qualquer conversa. Me conta, você já sabe algumas formas de dizer 'olá' em inglês, ou devemos começar do básico?"
+                },
+                'articles': {
+                    en: "Welcome to our lesson on Articles - A, An, and The! 🍎 These little words can be tricky, but they're super important. Quick question before we dive in: have you noticed when English uses 'a' versus 'an'? What's your current understanding?",
+                    pt: "Bem-vindo à nossa aula sobre Artigos - A, An e The! 🍎 Essas pequenas palavras podem ser complicadas, mas são super importantes. Pergunta rápida antes de começarmos: você já notou quando o inglês usa 'a' versus 'an'? Qual é seu entendimento atual?"
+                },
+                'plurals': {
+                    en: "Welcome to our lesson on Plural Nouns! 🐈 From cats to babies, English has some interesting patterns for making things plural. Tell me, do you already know some plural rules, or is this your first time learning about them?",
+                    pt: "Bem-vindo à nossa aula sobre Substantivos no Plural! 🐈 De gatos a bebês, o inglês tem alguns padrões interessantes para formar plurais. Me conta, você já conhece algumas regras de plural, ou é sua primeira vez aprendendo sobre elas?"
+                },
+                'demonstratives': {
+                    en: "Welcome to our lesson on Demonstratives - This, That, These, Those! 👉 These words help us point to things near and far. Before we start, can you tell me: do you know the difference between 'this' and 'that'? I'd love to know where you're starting from!",
+                    pt: "Bem-vindo à nossa aula sobre Demonstrativos - This, That, These, Those! 👉 Essas palavras nos ajudam a apontar para coisas perto e longe. Antes de começarmos, você sabe a diferença entre 'this' e 'that'? Adoraria saber de onde você está começando!"
+                },
+                'subject_pronouns': {
+                    en: "Welcome to our lesson on Subject Pronouns! 👤 I, You, He, She, It, We, They - these are the stars of every sentence! So tell me, which pronouns do you already feel comfortable with, and which ones still confuse you?",
+                    pt: "Bem-vindo à nossa aula sobre Pronomes Pessoais! 👤 I, You, He, She, It, We, They - estes são as estrelas de toda frase! Me conta, quais pronomes você já se sente confortável, e quais ainda te confundem?"
+                },
+                'possessives': {
+                    en: "Welcome to our lesson on Possessive Adjectives! 🎒 My, Your, His, Her, Our, Their - these show who owns what. Before we begin, do you know how to say 'my book' and 'your phone' in English? What's your level with possessives?",
+                    pt: "Bem-vindo à nossa aula sobre Adjetivos Possessivos! 🎒 My, Your, His, Her, Our, Their - estes mostram quem possui o quê. Antes de começarmos, você sabe dizer 'meu livro' e 'seu telefone' em inglês? Qual é seu nível com possessivos?"
+                },
+                'present_simple': {
+                    en: "Welcome to our lesson on Present Simple! ⏰ This tense is all about habits, routines, and facts. Quick question: do you know the difference between 'I work' and 'He works'? Tell me about your experience with this tense!",
+                    pt: "Bem-vindo à nossa aula sobre Present Simple! ⏰ Este tempo verbal é sobre hábitos, rotinas e fatos. Pergunta rápida: você sabe a diferença entre 'I work' e 'He works'? Me conta sobre sua experiência com este tempo verbal!"
+                },
+                'present_continuous': {
+                    en: "Welcome to our lesson on Present Continuous! 🏃 This is about what's happening RIGHT NOW. For example, right now you are learning English! 😊 Tell me, do you already know how to form sentences with 'am/is/are + ing'? What's your current level?",
+                    pt: "Bem-vindo à nossa aula sobre Present Continuous! 🏃 Este é sobre o que está acontecendo AGORA MESMO. Por exemplo, agora você está aprendendo inglês! 😊 Me conta, você já sabe formar frases com 'am/is/are + ing'? Qual é seu nível atual?"
+                },
+                'basic_questions': {
+                    en: "Welcome to our lesson on Basic Questions! ❓ What, Where, When, Who, Why, How - these are the magic words that unlock information. Before we dive in, can you already ask simple questions in English, or should we start from scratch?",
+                    pt: "Bem-vindo à nossa aula sobre Perguntas Básicas! ❓ What, Where, When, Who, Why, How - essas são as palavras mágicas que desbloqueiam informações. Antes de mergulharmos, você já consegue fazer perguntas simples em inglês, ou devemos começar do zero?"
+                },
+                // Special training scenario
+                'basic_structures': {
+                    en: "Welcome to your polite expressions practice! 🎓 Today we'll work on asking for things politely, thanking people, and being courteous. First, tell me: how comfortable are you with saying 'please', 'thank you', and 'excuse me' in conversations?",
+                    pt: "Bem-vindo à sua prática de expressões educadas! 🎓 Hoje vamos trabalhar em pedir coisas educadamente, agradecer pessoas e ser cortês. Primeiro, me conte: quão confortável você está em dizer 'please', 'thank you' e 'excuse me' em conversas?"
+                }
+            };
+
+            // Check if this is a grammar/learning topic
+            const isGrammarTopic = grammarGreetings.hasOwnProperty(context);
+
+            if (isGrammarTopic) {
+                greeting = grammarGreetings[context].en;
+                translation = grammarGreetings[context].pt;
             } else {
                 // For conversation scenarios, start with context-appropriate greeting
                 const contextGreetings = {
