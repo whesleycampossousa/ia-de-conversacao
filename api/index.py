@@ -1733,10 +1733,10 @@ def tts_endpoint():
                 voice_name = "bilingual_v2"
                 effective_speed = pt_speed
             elif lesson_lang == 'pt':
-                voice_name = "pt-BR-Journey-F"
+                voice_name = voice_config['pt']  # Use selected PT voice (Neural2)
                 effective_speed = pt_speed
             else:
-                voice_name = "en-US-Journey-F"
+                voice_name = voice_config['en']  # Use selected EN voice (Neural2)
                 effective_speed = speed
             
             # Check cache first
