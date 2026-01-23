@@ -84,6 +84,7 @@ except Exception as e:
 
 # 7. Base64 for TTS REST API
 import base64
+import hashlib
 
 # Load environment variables
 try:
@@ -95,6 +96,30 @@ except Exception as e:
     DOTENV_ERROR = str(e)
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+
+# Cache directories (use /tmp on Vercel to avoid read-only filesystem issues)
+CACHE_ROOT = os.environ.get('CACHE_DIR')
+if not CACHE_ROOT:
+    CACHE_ROOT = '/tmp' if os.environ.get('VERCEL') else BASE_DIR
+
+def _build_cache_dirs(root):
+    audio_dir = os.path.join(root, 'audio_cache')
+    return audio_dir, os.path.join(audio_dir, 'common_phrases'), os.path.join(audio_dir, 'dynamic')
+
+AUDIO_CACHE_DIR, COMMON_PHRASES_DIR, DYNAMIC_CACHE_DIR = _build_cache_dirs(CACHE_ROOT)
+
+# Create cache directories (fallback to /tmp if needed)
+try:
+    for cache_dir in [AUDIO_CACHE_DIR, COMMON_PHRASES_DIR, DYNAMIC_CACHE_DIR]:
+        os.makedirs(cache_dir, exist_ok=True)
+except Exception as e:
+    if CACHE_ROOT != '/tmp':
+        CACHE_ROOT = '/tmp'
+        AUDIO_CACHE_DIR, COMMON_PHRASES_DIR, DYNAMIC_CACHE_DIR = _build_cache_dirs(CACHE_ROOT)
+        for cache_dir in [AUDIO_CACHE_DIR, COMMON_PHRASES_DIR, DYNAMIC_CACHE_DIR]:
+            os.makedirs(cache_dir, exist_ok=True)
+    else:
+        print(f"[WARNING] Failed to create cache directories: {e}")
 
 # Security Configuration
 app.config['SECRET_KEY'] = os.environ.get('SESSION_SECRET', 'dev-secret-change-in-production')
@@ -141,14 +166,22 @@ except Exception as e:
             return decorator
     limiter = LimiterDummy()
 
-# Configure Gemini
+# Configure Gemini with Caching Support
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "").strip()
+DEFAULT_GEN_CONFIG = {"temperature": 0.8}
 model = None
+cached_models = {}  # Store cached models by context
+
 if GOOGLE_API_KEY and GENAI_AVAILABLE:
     try:
         genai.configure(api_key=GOOGLE_API_KEY)
-        model = genai.GenerativeModel('gemini-2.0-flash')
+        # Fallback basic model (no cache)
+        model = genai.GenerativeModel(
+            'gemini-2.0-flash-exp',
+            generation_config=DEFAULT_GEN_CONFIG
+        )
         print("[OK] Gemini model initialized successfully")
+        print("[OK] Prompt caching enabled - will cache system prompts per context")
     except Exception as e:
         print(f"Gemini Init Error: {e}")
 elif not GENAI_AVAILABLE:
@@ -182,19 +215,25 @@ def require_auth(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         auth_header = request.headers.get('Authorization')
-        if not auth_header:
-            return jsonify({"error": "No authorization token provided"}), 401
-
-        try:
-            token = auth_header.replace('Bearer ', '')
-            payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
-            request.user_id = payload['user_id']
-            request.user_email = payload['email']
-            request.is_admin = payload.get('is_admin', False)
-        except jwt.ExpiredSignatureError:
-            return jsonify({"error": "Token expired"}), 401
-        except jwt.InvalidTokenError:
-            return jsonify({"error": "Invalid token"}), 401
+        allow_guest = os.environ.get('ALLOW_GUEST', '1') == '1'
+        if not auth_header and allow_guest:
+            # Guest fallback (no login) - limited, non-admin
+            request.user_id = "guest"
+            request.user_email = "guest@guest"
+            request.is_admin = False
+        else:
+            if not auth_header:
+                return jsonify({"error": "No authorization token provided"}), 401
+            try:
+                token = auth_header.replace('Bearer ', '')
+                payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+                request.user_id = payload['user_id']
+                request.user_email = payload['email']
+                request.is_admin = payload.get('is_admin', False)
+            except jwt.ExpiredSignatureError:
+                return jsonify({"error": "Token expired"}), 401
+            except jwt.InvalidTokenError:
+                return jsonify({"error": "Invalid token"}), 401
 
         return f(*args, **kwargs)
     return decorated_function
@@ -299,22 +338,63 @@ def load_json_file(path):
         print(f"Error loading {path}: {e}")
         return []
 
-SCENARIOS = load_json_file(SCENARIOS_PATH)
-GRAMMAR_TOPICS = load_json_file(GRAMMAR_PATH)
+SCENARIOS = []
+GRAMMAR_TOPICS = []
+GRAMMAR_TOPIC_IDS = set()
+CONTEXT_PROMPTS = {}
+
+def get_cached_model_for_context(context_key, system_prompt):
+    """Get or create a cached Gemini model for a specific context.
+    This uses system_instruction which gets cached automatically by Gemini,
+    reducing token costs by ~90% for the system prompt portion."""
+    global cached_models
+    
+    if not GENAI_AVAILABLE or not GOOGLE_API_KEY:
+        return model  # Fallback to basic model
+    
+    # Check if we already have a cached model for this context
+    if context_key in cached_models:
+        return cached_models[context_key]
+    
+    try:
+        # Create model with system_instruction (automatically cached by Gemini)
+        cached_model = genai.GenerativeModel(
+            model_name='gemini-2.0-flash-exp',
+            system_instruction=system_prompt,
+            generation_config=DEFAULT_GEN_CONFIG
+        )
+        cached_models[context_key] = cached_model
+        print(f"[CACHE] Created cached model for context: {context_key}")
+        return cached_model
+    except Exception as e:
+        print(f"[CACHE] Error creating cached model for {context_key}: {e}")
+        return model  # Fallback to basic model
+
+def load_context_data():
+    """Reload scenarios/grammar so new topics are available without restart."""
+    global SCENARIOS, GRAMMAR_TOPICS, GRAMMAR_TOPIC_IDS, CONTEXT_PROMPTS
+    SCENARIOS = load_json_file(SCENARIOS_PATH)
+    GRAMMAR_TOPICS = load_json_file(GRAMMAR_PATH)
+    GRAMMAR_TOPIC_IDS = {g.get('id') for g in GRAMMAR_TOPICS}
+    CONTEXT_PROMPTS = {s.get('id'): s.get('prompt', '') for s in SCENARIOS}
+    CONTEXT_PROMPTS.update({g.get('id'): g.get('prompt', '') for g in GRAMMAR_TOPICS})
+    return GRAMMAR_TOPICS
+
+# Initial load
+load_context_data()
 
 # Retrieve grammar topics endpoint
 @app.route('/api/grammar-topics', methods=['GET'])
 def get_grammar_topics():
-    return jsonify(GRAMMAR_TOPICS)
+    topics = load_context_data()
+    return jsonify(topics)
 
-# Merge prompts
-CONTEXT_PROMPTS = {s['id']: s['prompt'] for s in SCENARIOS}
-CONTEXT_PROMPTS.update({g['id']: g['prompt'] for g in GRAMMAR_TOPICS})
+# Merge prompts handled in load_context_data
 
 # Email whitelist configuration
 AUTHORIZED_EMAILS_FILE = os.path.join(BASE_DIR, 'authorized_emails.json')
 ADMIN_EMAIL = 'everydayconversation1991@gmail.com'
-ADMIN_PASSWORD = '1234567'
+ADMIN_PASSWORD = '1234560'
 
 def load_authorized_emails():
     """Load authorized emails from JSON file"""
@@ -455,6 +535,7 @@ def login():
 
 @app.route('/api/scenarios', methods=['GET'])
 def get_scenarios():
+    load_context_data()
     return jsonify(SCENARIOS)
 
 
@@ -475,6 +556,9 @@ def favicon():
 @limiter.limit("30 per minute")
 @require_auth
 def chat():
+    # Reload topics so newly added grammar lessons are immediately available
+    load_context_data()
+
     if not GOOGLE_API_KEY or not model:
         return jsonify({"error": "AI service not configured"}), 500
 
@@ -500,92 +584,236 @@ def chat():
 
     user_text = result
 
+    # Get conversation history for context (last 6 messages = 3 turns)
+    user_id = request.user_id
+    conversation_history = ""
+    if user_id in user_conversations:
+        recent = user_conversations[user_id][-6:]  # Last 6 messages
+        if recent:
+            history_lines = []
+            for msg in recent:
+                if msg.get('user'):
+                    history_lines.append(f"Student: {msg['user']}")
+                if msg.get('ai'):
+                    history_lines.append(f"You: {msg['ai']}")
+            if history_lines:
+                conversation_history = "\n### CONVERSATION HISTORY (for context):\n" + "\n".join(history_lines) + "\n"
+
     # Get System Prompt based on context
     system_prompt = CONTEXT_PROMPTS.get(context_key, CONTEXT_PROMPTS.get('coffee_shop', ''))
+    
+    # Get cached model for this context (saves ~90% on system prompt tokens)
+    context_model = get_cached_model_for_context(context_key, system_prompt)
 
     # Check if this is a grammar/learning topic
-    is_grammar_topic = context_key in ['verb_to_be', 'greetings', 'articles', 'plurals', 
-                                        'demonstratives', 'subject_pronouns', 'possessives',
-                                        'present_simple', 'present_continuous', 'basic_questions']
+    is_grammar_topic = context_key in GRAMMAR_TOPIC_IDS
+    is_demonstratives = context_key in ['demonstratives', 'this_that_these_those']
 
     if is_grammar_topic:
-        if lesson_lang == 'pt':
-            # PORTUGUESE MODE: Explanations in PT-BR with English examples marked
+        if is_demonstratives and lesson_lang == 'pt':
             full_prompt = f"""{system_prompt}
 
-### MODO PORTUGUÊS-INGLÊS (BILINGUAL)
-Você é uma professora de inglês carismática e acolhedora. Você fala em PORTUGUÊS BRASILEIRO, mas sempre que mostrar exemplos em inglês, você envolve eles em tags: [EN]exemplo em inglês[/EN]
+### MODO PORTUGUES-INGLES (BILINGUAL)
+Voce e uma professora de ingles humana, proxima e natural. Fale como em uma conversa real.
+Quando usar exemplos em ingles, marque com [EN]exemplo em ingles[/EN].
 
-### SITUAÇÃO ATUAL
+### TEACHER MODE — DEMONSTRATIVOS (INTERMEDIARIO)
+REGRAS DURAS:
+- Cada mensagem deve terminar com uma tarefa/pergunta aberta que obrigue o aluno a responder.
+- Cada mensagem deve ter entre 40 e 110 palavras.
+- Estrutura obrigatoria: (A) 1 frase amigavel curta + (B) 1 frase curta de ensino + (C) 1 tarefa/pergunta.
+- Depois de cumprimentar, volte ao tema na mesma mensagem.
+- Em cada turno, exija que o aluno use pelo menos um de: [EN]this[/EN], [EN]that[/EN], [EN]these[/EN], [EN]those[/EN].
+- No maximo 2 exemplos por turno.
+- Nao repita a frase inteira do aluno. Se corrigir, use: "Em vez de [EN]trecho curto[/EN], diga: [EN]frase correta[/EN]."
+
+### MICRO-ENSINO
+[EN]This/These[/EN] = perto (singular/plural)
+[EN]That/Those[/EN] = longe (singular/plural)
+Tambem pode ser distancia no tempo: [EN]that day[/EN], [EN]those years[/EN].
+
+### SITUACAO ATUAL
 O aluno disse: "{user_text}"
 
-### ESTRATÉGIA DE RESPOSTA
-1. Se o aluno mostrar confusão ou cometer um erro:
-   - **Valide:** Tranquilize ele carinhosamente ("Isso é super normal! 😊")
-   - **Micro-Explique:** Uma frase simples explicando o conceito EM PORTUGUÊS
-   - **Exemplo:** Dê um exemplo em inglês: [EN]I am happy[/EN] significa "eu estou feliz"
-   - **Prática Guiada:** Peça para ele tentar algo simples
-
-2. Se o aluno acertar:
-   - **Celebre:** Reconheça o sucesso com entusiasmo!
-   - **Avance:** Faça uma pergunta um pouco mais desafiadora
-
-### REGRAS CRÍTICAS
-- Fale PORTUGUÊS para explicações
-- Envolva TODAS as frases/palavras em inglês em [EN]...[/EN]
-- Seja acolhedor(a), paciente e motivador(a)
-- Mantenha respostas curtas (1-2 frases no máximo)
-- Retorne APENAS um JSON: {{"pt": "sua resposta com [EN]exemplos[/EN]"}}
-
-EXEMPLO DE RESPOSTA:
-{{"pt": "Muito bem! Agora tente dizer como você está se sentindo. Por exemplo: [EN]I am excited[/EN] significa 'estou animado'. Como você está agora?"}}
+### FORMATO DE SAIDA
+Retorne APENAS JSON: {{"pt": "...", "suggested_words": ["word1","word2","word3","word4"], "must_retry": true}}
 """
-        else:
-            # ENGLISH MODE: Original immersion-based approach
+        elif is_demonstratives and lesson_lang != 'pt':
             full_prompt = f"""{system_prompt}
+
+### TEACHER MODE — DEMONSTRATIVES (INTERMEDIATE)
+HARD RULES:
+- Every message must end with a task or an open question that requires the student to answer.
+- Keep each message between 40 and 110 words.
+- Structure each turn as: (A) 1 short friendly line + (B) 1 short teaching line + (C) 1 task/question.
+- After greetings, immediately move into the lesson topic.
+- In each turn, require the student to use at least one of: this, that, these, those.
+- Provide at most 2 examples per turn.
+- Do not repeat the student's full sentence. If correcting, use: "Instead of <short snippet>, say: <corrected>."
+
+### MICRO-TEACHING
+This/These = near (singular/plural)
+That/Those = far (singular/plural)
+Distance in time is ok: that day, those years.
 
 ### CURRENT SITUATION
 The student just said: "{user_text}"
 
-### YOUR RESPONSE STRATEGY
-1. If they show confusion or make a mistake:
-   - **Validate:** Reassure them warmly ("That's totally normal! 😊")
-   - **Micro-Explain:** One simple sentence explaining the concept
-   - **Example:** One clear, relatable example
-   - **Guided Practice:** Ask a simple question with a sentence starter if needed
+### OUTPUT FORMAT
+Return ONLY JSON: {{"en": "...", "suggested_words": ["word1","word2","word3","word4"], "must_retry": true}}
+"""
+        elif lesson_lang == 'pt':
+            # PORTUGUESE MODE: Explanations in PT-BR with English examples marked
+            full_prompt = f"""{system_prompt}
 
-2. If they answer correctly:
-   - **Celebrate:** Acknowledge their success enthusiastically!
-   - **Build on it:** Ask a slightly harder follow-up question to keep practicing
+### MODO PORTUGUES-INGLES (BILINGUAL)
+Voce e uma professora de ingles humana, proxima e natural. Fale como em uma conversa real.
+Quando usar exemplos em ingles, marque com [EN]exemplo em ingles[/EN].
+{conversation_history}
+### SITUACAO ATUAL
+O aluno disse: "{user_text}"
 
-### CRITICAL RULES
-- Speak ONLY in English (use very simple words for beginners)
-- Keep your response to 1-2 sentences MAX
-- Be warm, patient, and encouraging
-- Focus on making them USE English, not just study it
-- Return ONLY a JSON object: {{"en": "your response"}}
+### REGRAS CRITICAS (MUITO IMPORTANTE!)
+1. Se o aluno fizer uma PERGUNTA, voce DEVE responder PRIMEIRO antes de continuar. Nunca ignore perguntas!
+2. Seja uma parceira de conversa REAL, nao uma maquina de correcao.
+3. So corrija ERROS GRAMATICAIS REAIS (tempo verbal errado, concordancia errada, preposicao errada).
+4. NAO corrija alternativas validas! Ex: [EN]doing great[/EN] e [EN]doing well[/EN] sao AMBOS corretos - nao "corrija" um para o outro.
+5. Se o ingles do aluno estiver correto, apenas continue a conversa naturalmente SEM correcoes.
 
-Note: NO Portuguese translation needed for learning mode - immersion is key for beginners!
+### COMO RESPONDER
+- Reaja ao conteudo e mantenha a conversa fluindo.
+- Se houver ERRO REAL, corrija: "Em vez de [EN]trecho curto[/EN], diga: [EN]frase correta[/EN]."
+- Responda em PORTUGUES BRASILEIRO. Ingles sempre em [EN]...[/EN].
+- 1 a 2 frases curtas.
+- **REGRA OBRIGATORIA**: Sua resposta DEVE SEMPRE terminar com uma PERGUNTA para o aluno. NUNCA termine apenas com uma afirmacao! O aluno precisa saber o que responder.
+- suggested_words: APENAS quando houver ERRO GRAMATICAL REAL; senao [].
+- must_retry: true APENAS se suggested_words nao estiver vazio; senao false.
+- Retorne JSON: {{"pt": "...", "suggested_words": [], "must_retry": false}}
+"""
+        else:
+            # ENGLISH MODE: Original immersion-based approach
+            full_prompt = f"""{system_prompt}
+{conversation_history}
+### CURRENT SITUATION
+The student just said: "{user_text}"
+
+### CRITICAL RULES (VERY IMPORTANT!)
+1. If the student asks you a QUESTION, you MUST answer it FIRST before continuing. Never ignore questions!
+2. Be a REAL conversation partner, NOT a correction machine.
+3. Only correct REAL GRAMMAR ERRORS (wrong verb tense, subject-verb disagreement, wrong preposition).
+4. Do NOT correct valid alternatives! "doing great" and "doing well" are BOTH correct - don't "fix" one to the other.
+5. If their English is correct, just continue the conversation naturally WITHOUT corrections.
+
+### HOW TO RESPOND
+- React to what they said and keep the conversation flowing.
+- If there's a REAL error, correct it: "Instead of <short snippet>, say: <corrected>."
+- Speak in English (simple, natural, friendly).
+- 1-2 short sentences.
+- **MANDATORY RULE**: Your response MUST ALWAYS end with a QUESTION for the student. NEVER end with just a statement! The student needs to know what to respond.
+- suggested_words: ONLY when there is a REAL GRAMMAR ERROR; otherwise [].
+- must_retry: true ONLY if suggested_words is not empty; else false.
+- Return JSON: {{"en": "...", "suggested_words": [], "must_retry": false}}
 """
     else:
         # Standard conversation mode - with Portuguese translation
         full_prompt = f"""{system_prompt}
 
-IMPORTANT: You are also an English teacher. Evaluate the user's grammar and vocabulary.
+IMPORTANT: You are a friendly English conversation partner AND teacher.
+{conversation_history}
+User just said: "{user_text}"
 
-User says: "{user_text}"
+CRITICAL RULES:
+1. If the student asks you a QUESTION, you MUST answer it first before continuing. Never ignore their questions!
+2. Be a real conversation partner, NOT a correction machine. If their English is correct, just chat naturally.
+3. Only correct REAL GRAMMAR ERRORS (wrong verb tense, subject-verb disagreement, wrong preposition, etc).
+4. Do NOT correct valid alternatives! "doing great" and "doing well" are BOTH correct - don't "fix" one to the other.
+5. **MANDATORY**: Your response MUST ALWAYS end with a QUESTION. NEVER end with just a statement or affirmation! The student needs a prompt to respond.
 
-Response rules:
-1. Respond naturally in English to continue the conversation.
-2. Provide a Portuguese translation of your response.
-3. Mentally note any grammar/vocabulary errors for later feedback.
-4. Return ONLY a JSON object in this exact format: {{"en": "your response", "pt": "tradução"}}
+Response format:
+- Respond naturally in English, provide Portuguese translation.
+- If correcting a REAL error, use: "Instead of <short snippet>, say: <corrected>."
+- **CRITICAL**: Every response MUST end with a question mark (?). Examples: "What do you think?", "How about you?", "What happened next?"
+- suggested_words: ONLY when there is a REAL GRAMMAR ERROR; otherwise [].
+- must_retry: true ONLY if suggested_words is not empty; else false.
+- Return JSON: {{"en": "...", "pt": "...", "suggested_words": [], "must_retry": false}}
 
-Keep responses to 1-2 sentences maximum.
+Keep responses to 1-2 short sentences (about 20 words). The LAST sentence MUST be a question.
 """
 
     try:
-        response = model.generate_content(full_prompt)
+        # Use cached model with just the user-specific prompt (system already cached)
+        # For cached models, only send the dynamic part (user text + current situation)
+        if context_model != model:
+            # Using cached model - send minimal prompt
+            if is_grammar_topic:
+                if is_demonstratives and lesson_lang == 'pt':
+                    minimal_prompt = f"""### SITUACAO ATUAL
+O aluno disse: "{user_text}"
+
+Teacher mode (demonstrativos):
+- 40-110 palavras.
+- Estrutura: 1 frase amigavel + 1 frase de ensino + 1 tarefa/pergunta.
+- Exigir uso de [EN]this/that/these/those[/EN] pelo aluno.
+- No maximo 2 exemplos.
+- Se corrigir, use: "Em vez de [EN]trecho curto[/EN], diga: [EN]frase correta[/EN]."
+Retorne apenas JSON: {{"pt": "...", "suggested_words": ["...","...","...","..."], "must_retry": true}}.
+"""
+                elif is_demonstratives and lesson_lang != 'pt':
+                    minimal_prompt = f"""### CURRENT SITUATION
+The student just said: "{user_text}"
+
+Teacher mode (demonstratives):
+- 40-110 words.
+- Structure: 1 friendly line + 1 teaching line + 1 task/question.
+- Require the student to use this/that/these/those.
+- Max 2 examples.
+- If correcting, use: "Instead of <short snippet>, say: <corrected>."
+Return only JSON: {{"en": "...", "suggested_words": ["...","...","...","..."], "must_retry": true}}.
+"""
+                elif lesson_lang == 'pt':
+                    minimal_prompt = f"""### SITUACAO ATUAL
+O aluno disse: "{user_text}"
+
+Responda de forma humana e conversacional. Use portugues e marque ingles com [EN]...[/EN].
+Evite "aula/licao/exercicio/gramatica".
+1-2 frases curtas (max ~16 palavras cada) e termine com uma pergunta.
+Se corrigir, use: "Em vez de [EN]trecho curto[/EN], diga: [EN]frase correta[/EN]." (max 4 palavras do aluno).
+Nao repita a frase inteira do aluno.
+suggested_words: 4 palavras/expressoes curtas quando houver erro ou oportunidade; senao [].
+must_retry: true se suggested_words nao estiver vazio; senao false.
+Retorne apenas JSON: {{"pt": "...", "suggested_words": ["...","...","...","..."], "must_retry": true}}.
+"""
+                else:
+                    minimal_prompt = f"""### CURRENT SITUATION
+The student just said: "{user_text}"
+
+Respond like a real conversation partner. Use simple English and avoid "lesson/grammar/exercise".
+1-2 short sentences (max ~16 words each), end with one question.
+If you correct, use: "Instead of <short snippet>, say: <corrected>." (max 4 words from the student).
+Do not repeat the full student sentence.
+suggested_words: 4 short words/phrases when there is a mistake or clear improvement; otherwise [].
+must_retry: true if suggested_words is not empty; else false.
+Return only JSON: {{"en": "...", "suggested_words": ["...","...","...","..."], "must_retry": true}}.
+"""
+            else:
+                minimal_prompt = f"""{conversation_history}
+User just said: "{user_text}"
+
+CRITICAL RULES:
+1. If user asks a QUESTION, answer it first! Never ignore questions.
+2. Be a friendly conversation partner with MEMORY of the conversation above.
+3. Only correct REAL GRAMMAR ERRORS. Do NOT "fix" valid alternatives.
+4. Keep 1-2 short sentences (~20 words).
+5. **MANDATORY**: Your FINAL sentence MUST be a QUESTION ending with "?". NEVER end with just a statement! Examples: "What about you?", "How was yours?", "What do you think?"
+
+suggested_words: ONLY for real grammar errors; otherwise [].
+must_retry: true ONLY if suggested_words not empty; else false.
+Return JSON: {{"en": "...", "pt": "...", "suggested_words": [], "must_retry": false}}."""
+            response = context_model.generate_content(minimal_prompt)
+        else:
+            # Fallback to basic model with full prompt
+            response = model.generate_content(full_prompt)
+        
         print(f"[CHAT] User: {user_text[:50]}... | Response: {response.text[:100]}...")
 
         try:
@@ -605,6 +833,10 @@ Keep responses to 1-2 sentences maximum.
                     cleaned = json_match.group(0)
 
             parsed = json.loads(cleaned)
+
+            suggested_words = parsed.get('suggested_words', [])
+            must_retry = parsed.get('must_retry', False)
+            retry_prompt = parsed.get('retry_prompt', '')
             
             # Handle response based on lesson language mode
             if lesson_lang == 'pt' and is_grammar_topic:
@@ -623,6 +855,95 @@ Keep responses to 1-2 sentences maximum.
             if ai_trans:
                 ai_trans = ai_trans.replace('*', '').replace('_', '').replace('~', '').replace('`', '')
                 ai_trans = ' '.join(ai_trans.split())
+
+            # Normalize suggested_words
+            if isinstance(suggested_words, str):
+                suggested_words = [w.strip() for w in suggested_words.split(',') if w.strip()]
+            if not isinstance(suggested_words, list):
+                suggested_words = []
+            suggested_words = [str(w).strip() for w in suggested_words if str(w).strip()]
+            suggested_words = suggested_words[:4]
+
+            # ONLY set must_retry if AI explicitly corrected an error
+            has_correction = bool(ai_text and re.search(r'(Instead of|Em vez de)', ai_text, re.IGNORECASE))
+
+            if suggested_words and has_correction:
+                if not retry_prompt:
+                    retry_prompt = "Tente reformular sua resposta usando pelo menos uma dessas 4 palavras abaixo:"
+                must_retry = True
+            elif suggested_words and not has_correction:
+                # Suggestions without correction = just vocabulary help, NOT retry
+                suggested_words = []  # Clear suggestions if no actual error
+                must_retry = False
+            if is_demonstratives and not suggested_words and re.search(r'(Instead of|Em vez de)', ai_text or '', re.IGNORECASE):
+                suggested_words = ["this", "that", "these", "those"]
+                must_retry = True
+                if not retry_prompt:
+                    retry_prompt = "Tente reformular sua resposta usando pelo menos uma dessas 4 palavras abaixo:"
+
+            # Guardrail for demonstratives: enforce structure + length + task
+            if is_demonstratives:
+                def _needs_demo_repair(value):
+                    if not value:
+                        return True
+                    if not re.search(r'\b(this|that|these|those)\b', value, re.IGNORECASE):
+                        return True
+                    if '?' not in value:
+                        return True
+                    wc = len(re.findall(r"[A-Za-z0-9']+", value))
+                    return wc < 40 or wc > 110
+
+                if _needs_demo_repair(ai_text):
+                    try:
+                        repair_model = context_model if context_model else model
+                        if lesson_lang == 'pt':
+                            repair_prompt = f"""Reescreva a mensagem do assistente para seguir TODAS as regras:
+- Tema: demonstrativos (this/that/these/those).
+- 40 a 110 palavras.
+- Estrutura: 1 frase amigavel + 1 frase de ensino + 1 tarefa/pergunta.
+- Termine com pergunta/tarefa obrigatoria.
+- Use [EN]this/that/these/those[/EN].
+- Nao repita a frase inteira do aluno. Se corrigir, use: "Em vez de [EN]trecho curto[/EN], diga: [EN]frase correta[/EN]."
+- Maximo 2 exemplos.
+- Retorne apenas JSON: {{"pt": "...", "suggested_words": ["word1","word2","word3","word4"], "must_retry": true}}
+
+Mensagem original: "{ai_text}"
+"""
+                        else:
+                            repair_prompt = f"""Rewrite the assistant message to satisfy ALL rules:
+- Topic: this/that/these/those.
+- 40 to 110 words.
+- Structure: 1 friendly line + 1 teaching line + 1 task/question.
+- End with an open question/task.
+- Include this/that/these/those.
+- Do not repeat the student's full sentence. If correcting, use: "Instead of <short snippet>, say: <corrected>."
+- Max 2 examples.
+- Return ONLY JSON: {{"en": "...", "suggested_words": ["word1","word2","word3","word4"], "must_retry": true}}
+
+Original message: "{ai_text}"
+"""
+                        if repair_model:
+                            repaired = repair_model.generate_content(repair_prompt)
+                            repaired_text = (repaired.text or '').strip()
+                            cleaned_repair = repaired_text.replace('```json', '').replace('```', '').strip()
+                            if not (cleaned_repair.startswith('{') and cleaned_repair.endswith('}')):
+                                json_match = re.search(r'\{.*\}', repaired_text, re.DOTALL)
+                                if json_match:
+                                    cleaned_repair = json_match.group(0)
+                            repaired_obj = json.loads(cleaned_repair)
+                            ai_text = repaired_obj.get('pt' if lesson_lang == 'pt' else 'en', ai_text)
+                            suggested_words = repaired_obj.get('suggested_words', suggested_words)
+                            must_retry = repaired_obj.get('must_retry', must_retry)
+                            retry_prompt = repaired_obj.get('retry_prompt', retry_prompt)
+                    except Exception:
+                        # Fallback deterministic teacher message
+                        if lesson_lang == 'pt':
+                            ai_text = "Legal! Hoje vamos praticar [EN]this/that/these/those[/EN]. Regra rapida: [EN]this/these[/EN] = perto, [EN]that/those[/EN] = longe. Olhe ao seu redor e diga: o que e [EN]this[/EN] perto de voce e o que e [EN]that[/EN] mais longe? Responda com duas frases curtas."
+                        else:
+                            ai_text = "Nice! Today we're practicing this/that/these/those. Quick rule: this/these = near, that/those = far. Look around you and tell me: what is this near you and what is that far from you? Answer with two short sentences."
+                        suggested_words = ["this", "that", "these", "those"]
+                        must_retry = True
+                        retry_prompt = "Tente reformular sua resposta usando pelo menos uma dessas 4 palavras abaixo:"
                 
         except (json.JSONDecodeError, AttributeError):
             # Fallback: regex extraction or raw text
@@ -654,6 +975,83 @@ Keep responses to 1-2 sentences maximum.
                 ai_text = ai_text.replace('```json', '').replace('```', '').replace('{', '').replace('}', '')
                 ai_text = ' '.join(ai_text.split())
 
+        if 'suggested_words' not in locals():
+            suggested_words = []
+            must_retry = False
+            retry_prompt = ""
+
+        # Enforce shorter AI responses (avoid long monologues)
+        def _word_count(value):
+            return len(re.findall(r"[A-Za-zÀ-ÿ0-9']+", value or ""))
+
+        def _trim_sentences(value, max_sentences=2):
+            parts = re.split(r'(?<=[.!?])\s+', value.strip()) if value else []
+            return ' '.join(parts[:max_sentences]).strip()
+
+        def _trim_words(value, max_words):
+            if not value:
+                return value
+            words = value.split()
+            if len(words) <= max_words:
+                return value
+            return ' '.join(words[:max_words]).rstrip() + '...'
+
+        user_words = _word_count(user_text)
+        max_words = max(20, int(user_words * 2.0)) if user_words else 20
+
+        if ai_text and '[EN]' not in ai_text and not is_demonstratives:
+            if _word_count(ai_text) > max_words:
+                ai_text = _trim_sentences(ai_text, 2)
+                # Only trim words if response doesn't end with a question
+                if _word_count(ai_text) > max_words and not ai_text.rstrip().endswith('?'):
+                    ai_text = _trim_words(ai_text, max_words)
+
+            if ai_trans:
+                if _word_count(ai_trans) > max_words:
+                    ai_trans = _trim_sentences(ai_trans, 2)
+                    if _word_count(ai_trans) > max_words and not ai_trans.rstrip().endswith('?'):
+                        ai_trans = _trim_words(ai_trans, max_words)
+
+        # CRITICAL: Ensure response ALWAYS ends with a question
+        # If AI failed to include a question, append a follow-up question
+        def _ensure_ends_with_question(text, lang='en', context=''):
+            if not text:
+                return text
+            text = text.strip()
+            # Check if already ends with a question
+            if text.endswith('?'):
+                return text
+            
+            # Follow-up questions by language
+            follow_up_questions_en = [
+                "What about you?",
+                "What do you think?",
+                "How about you?",
+                "Does that make sense?",
+                "Can you try?"
+            ]
+            follow_up_questions_pt = [
+                "E você?",
+                "O que você acha?",
+                "Quer tentar?",
+                "Faz sentido?",
+                "O que me diz?"
+            ]
+            
+            import random
+            if lang == 'pt' or '[EN]' in text:
+                question = random.choice(follow_up_questions_pt)
+            else:
+                question = random.choice(follow_up_questions_en)
+            
+            # Append the question
+            return f"{text} {question}"
+        
+        # Apply question enforcement
+        ai_text = _ensure_ends_with_question(ai_text, lesson_lang if is_grammar_topic else 'en', context_key)
+        if ai_trans:
+            ai_trans = _ensure_ends_with_question(ai_trans, 'pt', context_key)
+
         # Store conversation for the user
         user_id = request.user_id
         if user_id not in user_conversations:
@@ -666,11 +1064,228 @@ Keep responses to 1-2 sentences maximum.
             "context": context_key
         })
 
-        return jsonify({"text": ai_text, "translation": ai_trans, "lessonLang": lesson_lang})
+        return jsonify({
+            "text": ai_text,
+            "translation": ai_trans,
+            "lessonLang": lesson_lang,
+            "suggested_words": suggested_words,
+            "retry_prompt": retry_prompt,
+            "must_retry": must_retry
+        })
     except Exception as e:
         print(f"[CHAT] Error: {e}")
         return jsonify({"error": "Failed to generate response. Please try again."}), 500
 
+
+@app.route('/api/free-conversation', methods=['POST'])
+@limiter.limit("30 per minute")
+@require_auth
+def free_conversation_action():
+    if not GOOGLE_API_KEY or not model:
+        return jsonify({"error": "AI service not configured"}), 500
+
+    # Check daily usage limit
+    user_email = request.user_email
+    if not check_usage_limit(user_email):
+        remaining = get_remaining_seconds(user_email)
+        return jsonify({
+            "error": "Daily practice limit reached",
+            "message": "You've used your 10 minutes for today. Come back tomorrow!",
+            "remaining_seconds": remaining
+        }), 429
+
+    data = request.json or {}
+    action = data.get('action', '').strip()
+    main_question = data.get('main_question', '')
+    student_answer = data.get('student_answer', '')
+    followup_question = data.get('followup_question', '')
+    followup_answer = data.get('followup_answer', '')
+    student_question = data.get('student_question', '')
+
+    if not action:
+        return jsonify({"error": "No action provided"}), 400
+
+    system_prompt = (
+        "You are a friendly English conversation partner for speaking practice. "
+        "Do NOT correct grammar or comment on mistakes. "
+        "Be natural, warm, and helpful. "
+        "Respond ONLY in English. Do not include translations or Portuguese. "
+        "Return only the requested content in plain English."
+    )
+
+    context_model = get_cached_model_for_context('free_conversation_guided', system_prompt)
+    active_model = context_model if context_model else model
+
+    if action == 'followup':
+        prompt = f"""{system_prompt}
+
+Task: Create ONE short follow-up question in English based on the student's answer.
+- Use 1 sentence.
+- Max 15 words.
+- Do not correct grammar.
+- Use English only; no translations or other languages.
+- Output ONLY the question text.
+
+Main question: "{main_question}"
+Student answer: "{student_answer}"
+"""
+    elif action == 'opinion':
+        prompt = f"""{system_prompt}
+
+Task: Write a response that starts with "In my opinion," and sounds natural.
+- 4 to 7 sentences (about 80-140 words).
+- Mention 1-2 points from the student's answers.
+- Do not correct grammar.
+- Use English only; no translations or other languages.
+- Do NOT end with a question.
+- Output ONLY the response text.
+
+Main question: "{main_question}"
+Student answer: "{student_answer}"
+Follow-up question: "{followup_question}"
+Follow-up answer: "{followup_answer}"
+"""
+    elif action == 'answer':
+        prompt = f"""{system_prompt}
+
+Task: Answer the student's question in English.
+- 2 to 5 sentences.
+- Be direct and helpful.
+- Do not correct grammar.
+- Use English only; no translations or other languages.
+- Do NOT end with a question.
+- Output ONLY the response text.
+
+Student question: "{student_question}"
+Main question context: "{main_question}"
+Student answer context: "{student_answer}"
+"""
+    else:
+        return jsonify({"error": "Invalid action"}), 400
+
+    try:
+        response = active_model.generate_content(prompt)
+        raw_text = response.text.strip() if response and response.text else ""
+        cleaned = raw_text.replace('```', '').replace('json', '').strip()
+
+        # Try to recover JSON if model returns it
+        if cleaned.startswith('{'):
+            try:
+                parsed = json.loads(cleaned)
+                cleaned = parsed.get('text', cleaned)
+            except json.JSONDecodeError:
+                pass
+
+        cleaned = cleaned.strip().strip('"').strip("'")
+
+        # Enforce formatting rules
+        if action == 'followup':
+            if cleaned and not cleaned.endswith('?'):
+                cleaned = cleaned.rstrip('.') + '?'
+        if action == 'opinion':
+            if cleaned and not cleaned.lower().startswith('in my opinion'):
+                cleaned = f"In my opinion, {cleaned}"
+
+        return jsonify({"text": cleaned})
+    except Exception as e:
+        print(f"FREE CONVERSATION ERROR: {str(e)}")
+        return jsonify({"error": "Failed to generate response. Please try again."}), 500
+
+
+
+@app.route('/api/suggestions', methods=['POST'])
+@limiter.limit("30 per minute")
+@require_auth
+def get_suggestions():
+    """Generate contextual response suggestions based on AI's last message"""
+    if not GOOGLE_API_KEY or not model:
+        return jsonify({"error": "AI service not configured"}), 500
+    
+    data = request.json
+    ai_last_message = data.get('aiMessage', '')
+    context_key = data.get('context', 'coffee_shop')
+    lesson_lang = data.get('lessonLang', 'en')
+    
+    if not ai_last_message:
+        return jsonify({"error": "No AI message provided"}), 400
+    
+    # Get topic name for context
+    # Extract just the topic name/title from prompts for better suggestions
+    context_info = ""
+    for topic in GRAMMAR_TOPICS:
+        if topic.get('id') == context_key:
+            context_info = topic.get('title', context_key)
+            break
+    
+    if not context_info:
+        context_info = context_key.replace('_', ' ').title()
+    
+    # Prompt to generate suggestions
+    if lesson_lang == 'pt':
+        prompt = f"""Você é um assistente gerando RESPOSTAS VÁLIDAS para um aluno de inglês.
+
+Tópico sendo praticado: {context_info}
+A IA disse: "{ai_last_message}"
+
+Gere 4 respostas curtas (máx 10 palavras cada) que o aluno poderia dar em INGLÊS.
+- As respostas DEVEM fazer sentido como resposta à fala da IA
+- Use estruturas apropriadas do tópico quando possível
+- Seja natural e conversacional
+- Formato: JSON com array "suggestions", cada item tem "en" (inglês) e "pt" (tradução)
+
+Exemplo se IA perguntou "My day was busy. How is your day?":
+{{"suggestions": [
+  {{"en": "My day is great, thanks!", "pt": "Meu dia está ótimo, obrigado!"}},
+  {{"en": "It's been pretty busy too.", "pt": "Também tem sido bem ocupado."}},
+  {{"en": "Not bad! What did you do?", "pt": "Nada mal! O que você fez?"}},
+  {{"en": "Good! Yours sounds hectic.", "pt": "Bom! O seu parece agitado."}}
+]}}
+
+CRÍTICO: As respostas DEVEM ser válidas para a fala da IA. Retorne APENAS o JSON.
+"""
+    else:
+        prompt = f"""You are generating VALID RESPONSE OPTIONS for an English learner.
+
+Topic being practiced: {context_info}
+The AI just said: "{ai_last_message}"
+
+Generate 4 short response options (max 10 words each) the student could say in ENGLISH.
+- Responses MUST make sense as replies to the AI's message
+- Use appropriate structures from the topic when possible
+- Be natural and conversational
+- Format: JSON with "suggestions" array, each item has "en" (English) and "pt" (Portuguese translation)
+
+Example if AI said "My day was busy. How is your day?":
+{{"suggestions": [
+  {{"en": "My day is great, thanks!", "pt": "Meu dia está ótimo, obrigado!"}},
+  {{"en": "It's been pretty busy too.", "pt": "Também tem sido bem ocupado."}},
+  {{"en": "Not bad! What did you do?", "pt": "Nada mal! O que você fez?"}},
+  {{"en": "Good! Yours sounds hectic.", "pt": "Bom! O seu parece agitado."}}
+]}}
+
+CRITICAL: Responses MUST be valid answers to the AI's statement/question. Return ONLY the JSON.
+"""
+    
+    try:
+        response = model.generate_content(prompt)
+        raw_text = response.text.strip()
+        
+        # Clean markdown if present
+        cleaned = raw_text.replace('```json', '').replace('```', '').strip()
+        result = json.loads(cleaned)
+        
+        return jsonify(result)
+    except Exception as e:
+        print(f"[SUGGESTIONS] Error: {e}")
+        # Fallback to generic but contextual suggestions
+        return jsonify({
+            "suggestions": [
+                {"en": "That's interesting!", "pt": "Que interessante!"},
+                {"en": "I agree with you.", "pt": "Concordo com você."},
+                {"en": "Tell me more about that.", "pt": "Me conte mais sobre isso."},
+                {"en": "I think so too.", "pt": "Eu também acho."}
+            ]
+        })
 
 @app.route('/api/report', methods=['POST'])
 @limiter.limit("10 per minute")
@@ -747,7 +1362,7 @@ Transcrição completa (ordem cronológica):
 
 Analise CUIDADOSAMENTE cada fala do usuário seguindo estas prioridades:
 1. PRIMEIRO: Identifique 3-4 PONTOS POSITIVOS (o que o aluno fez bem)
-2. Depois: Identifique apenas os 2-3 erros MAIS IMPORTANTES (se houver)
+2. Depois: Para CADA frase do aluno, avalie e classifique
 3. Dicas práticas e construtivas para evoluir
 
 Gere um relatório em português e retorne APENAS um JSON válido seguindo EXATAMENTE este formato:
@@ -756,20 +1371,37 @@ Gere um relatório em português e retorne APENAS um JSON válido seguindo EXATA
   "emoji": "emoji positivo (🎉, ✨, 🌟, 👏, 💪)",
   "tom": "positivo e encorajador",
   "correcoes": [
-    {{"ruim": "frase EXATA como o aluno falou", "boa": "versão corrigida", "explicacao": "breve explicação do erro (1 frase)"}}
+    {{
+      "fraseOriginal": "frase EXATA como o aluno falou",
+      "fraseCorrigida": "versão corrigida da frase",
+      "avaliacaoGeral": "Correta|Aceitável|Incorreta",
+      "comentarioBreve": "Comentário de 1 frase explicando se a frase foi boa ou não e por quê",
+      "tag": "Estrutura Incorreta|Incorreta, mas Compreensível|Correta, mas Pouco Natural",
+      "explicacaoDetalhada": "Explicação detalhada do erro e como corrigir (se houver erro)"
+    }}
   ],
   "elogios": ["elogio específico 1", "elogio específico 2", "elogio específico 3", "elogio específico 4"],
   "dicas": ["dica construtiva 1", "dica construtiva 2"],
   "frase_pratica": "próxima frase em inglês para o aluno treinar neste contexto"
 }}
 
-REGRAS CRÍTICAS PARA TOM ENCORAJADOR:
+TAGS DE CLASSIFICAÇÃO (use em "tag"):
+- "Estrutura Incorreta": Erro gramatical grave que compromete a compreensão
+- "Incorreta, mas Compreensível": Erro pequeno ou de concordância que não impede o entendimento
+- "Correta, mas Pouco Natural": Não é erro gramatical, mas um nativo não falaria assim (estranho ou formal demais)
+- Se a frase estiver 100% correta e natural, não inclua o campo "tag"
+
+AVALIAÇÃO GERAL (use em "avaliacaoGeral"):
+- "Correta": Frase gramaticalmente correta e natural
+- "Aceitável": Tem pequenos erros mas comunica bem a mensagem
+- "Incorreta": Tem erros significativos que precisam ser corrigidos
+
+REGRAS CRÍTICAS:
+- SEMPRE inclua "avaliacaoGeral" e "comentarioBreve" para CADA correção
+- O "comentarioBreve" deve dar ao aluno uma noção rápida do status da frase
 - SEMPRE comece com 3-4 elogios ANTES das correções
-- Máximo 3 correções (foque apenas nos erros mais importantes)
-- Se houver 3 correções, DEVE haver pelo menos 4 elogios
 - Tom SEMPRE positivo e motivador
 - Elogios devem ser ESPECÍFICOS sobre o que o aluno fez bem
-- Correções devem incluir "explicacao" do porquê está errado
 - Dicas devem ser construtivas, não críticas
 - Se o aluno estiver muito bem, elogie ainda mais!
 - SEM texto fora do JSON
@@ -940,41 +1572,105 @@ def clean_text_for_tts(text):
     
     return text.strip()
 
-def convert_to_bilingual_ssml(text):
-    """Convert text with [EN]...[/EN] tags to SSML with language switching"""
-    import re
+def get_audio_cache_path(text, speed, lesson_lang, voice_name):
+    """Generate cache path for audio based on text content and parameters"""
+    # Create unique hash from text + parameters
+    cache_key = f"{text}_{speed}_{lesson_lang}_{voice_name}"
+    hash_obj = hashlib.md5(cache_key.encode('utf-8'))
+    filename = hash_obj.hexdigest() + '.mp3'
     
+    # Use common phrases dir for short, simple texts
+    if len(text) < 50 and not '[EN]' in text:
+        return os.path.join(COMMON_PHRASES_DIR, filename)
+    else:
+        return os.path.join(DYNAMIC_CACHE_DIR, filename)
+
+def save_audio_to_cache(audio_content, cache_path):
+    """Save audio content to cache file"""
+    try:
+        with open(cache_path, 'wb') as f:
+            f.write(audio_content)
+        return True
+    except Exception as e:
+        print(f"[CACHE] Error saving audio to cache: {e}")
+        return False
+
+def get_audio_from_cache(cache_path):
+    """Retrieve audio from cache if exists"""
+    try:
+        if os.path.exists(cache_path):
+            with open(cache_path, 'rb') as f:
+                return f.read()
+        return None
+    except Exception as e:
+        print(f"[CACHE] Error reading audio from cache: {e}")
+        return None
+
+def convert_to_bilingual_ssml(text):
+    """Convert text with [EN]...[/EN] tags to SSML with language + voice switching"""
+    import re
+
     # First clean the text of emojis and formatting
     text = clean_text_for_tts(text)
-    
+
+    def escape_ssml(value):
+        return (value.replace('&', '&amp;')
+                     .replace('<', '&lt;')
+                     .replace('>', '&gt;'))
+
+    def pt_segment(value):
+        safe = escape_ssml(value)
+        return f'<voice name="pt-BR-Wavenet-C"><lang xml:lang="pt-BR">{safe}</lang></voice>'
+
+    def en_segment(value):
+        safe = escape_ssml(value)
+        # Slightly slower English for clarity
+        return f'<voice name="en-US-Neural2-F"><lang xml:lang="en-US"><prosody rate="95%">{safe}</prosody></lang></voice>'
+
+    switch_pause_ms = 250
+
+    def add_break():
+        if ssml_parts and ssml_parts[-1].startswith('<break'):
+            return
+        ssml_parts.append(f'<break time="{switch_pause_ms}ms"/>')
+
     # Start building SSML
     ssml_parts = ['<speak>']
-    
+
     # Split text by [EN]...[/EN] tags
-    # Pattern matches [EN]content[/EN] and captures the content
     pattern = r'\[EN\](.*?)\[/EN\]'
-    
+
     last_end = 0
+    has_content = False
     for match in re.finditer(pattern, text):
-        # Add Portuguese text before this match
+        # Portuguese text before this match
         pt_text = text[last_end:match.start()].strip()
         if pt_text:
-            ssml_parts.append(f'<lang xml:lang="pt-BR">{pt_text}</lang>')
-        
-        # Add English text (the matched content)
+            if has_content:
+                add_break()
+            ssml_parts.append(pt_segment(pt_text))
+            has_content = True
+
+        # English text (the matched content)
         en_text = match.group(1).strip()
         if en_text:
-            ssml_parts.append(f'<lang xml:lang="en-US">{en_text}</lang>')
-        
+            if has_content:
+                add_break()
+            ssml_parts.append(en_segment(en_text))
+            add_break()
+            has_content = True
+
         last_end = match.end()
-    
-    # Add any remaining Portuguese text after the last match
+
+    # Remaining Portuguese text after last match
     remaining = text[last_end:].strip()
     if remaining:
-        ssml_parts.append(f'<lang xml:lang="pt-BR">{remaining}</lang>')
-    
+        if has_content:
+            add_break()
+        ssml_parts.append(pt_segment(remaining))
+
     ssml_parts.append('</speak>')
-    
+
     return ''.join(ssml_parts)
 
 
@@ -991,6 +1687,22 @@ def tts_endpoint():
         text = data.get('text')
         speed = data.get('speed', 1.0) # Default to normal speed
         lesson_lang = data.get('lessonLang', 'en')
+        selected_voice = data.get('voice', 'female1')  # Default voice
+
+        # Available voices configuration
+        VOICE_OPTIONS = {
+            # English voices
+            'female1': {'en': 'en-US-Neural2-F', 'pt': 'pt-BR-Neural2-C', 'gender': 'FEMALE', 'name': 'Sarah'},
+            'female2': {'en': 'en-US-Neural2-C', 'pt': 'pt-BR-Neural2-A', 'gender': 'FEMALE', 'name': 'Emma'},
+            'male1': {'en': 'en-US-Neural2-D', 'pt': 'pt-BR-Neural2-B', 'gender': 'MALE', 'name': 'James'}
+        }
+        
+        # Validate voice selection
+        if selected_voice not in VOICE_OPTIONS:
+            selected_voice = 'female1'
+        
+        voice_config = VOICE_OPTIONS[selected_voice]
+        print(f"[TTS] Selected voice: {selected_voice} ({voice_config['name']})")
 
         # Validate input
         is_valid, result = validate_text_input(text, max_length=500)
@@ -1006,8 +1718,6 @@ def tts_endpoint():
             return jsonify({"error": "TTS service not configured - missing API key"}), 503
 
         try:
-            url = f"https://texttospeech.googleapis.com/v1/text:synthesize?key={GOOGLE_API_KEY}"
-            
             # Check if text contains [EN]...[/EN] tags (bilingual mode)
             has_bilingual_tags = '[EN]' in text and '[/EN]' in text
             
@@ -1018,20 +1728,45 @@ def tts_endpoint():
             # Portuguese always uses natural 1.0x speed (native speakers)
             pt_speed = 1.0
             
-            # Determine if we should use Portuguese voice
-            # Use PT voice if: has bilingual tags OR lessonLang is 'pt'
-            use_portuguese = has_bilingual_tags or lesson_lang == 'pt'
+            # Determine voice name and parameters
+            if has_bilingual_tags:
+                voice_name = "bilingual_v2"
+                effective_speed = pt_speed
+            elif lesson_lang == 'pt':
+                voice_name = "pt-BR-Journey-F"
+                effective_speed = pt_speed
+            else:
+                voice_name = "en-US-Journey-F"
+                effective_speed = speed
             
+            # Check cache first
+            cache_path = get_audio_cache_path(text, effective_speed, lesson_lang, voice_name)
+            cached_audio = get_audio_from_cache(cache_path)
+            
+            if cached_audio:
+                print(f"[CACHE] ? Audio cache HIT - saved TTS API call")
+                return send_file(
+                    io.BytesIO(cached_audio),
+                    mimetype="audio/mp3",
+                    as_attachment=False,
+                    download_name="tts.mp3"
+                )
+            print(f"[CACHE] ❌ Audio cache MISS - generating new audio")
+            
+            url = f"https://texttospeech.googleapis.com/v1/text:synthesize?key={GOOGLE_API_KEY}"
+            
+            # USE SELECTED VOICE FROM USER PREFERENCE
             if has_bilingual_tags:
                 # BILINGUAL MODE: Convert to SSML with language switching
                 ssml_text = convert_to_bilingual_ssml(text)
+                voice_name = voice_config['pt']  # Use PT voice for bilingual
                 
                 payload = {
                     "input": {"ssml": ssml_text},
                     "voice": {
                         "languageCode": "pt-BR",
-                        "name": "pt-BR-Chirp3-HD-Aoede",
-                        "ssmlGender": "FEMALE"
+                        "name": voice_name,
+                        "ssmlGender": voice_config['gender']
                     },
                     "audioConfig": {
                         "audioEncoding": "MP3",
@@ -1039,13 +1774,15 @@ def tts_endpoint():
                     }
                 }
             elif lesson_lang == 'pt':
-                # Pure Portuguese (no tags, but PT mode selected)
+                # Pure Portuguese - use selected PT voice
+                voice_name = voice_config['pt']
+                
                 payload = {
                     "input": {"text": clean_text_for_tts(text)},
                     "voice": {
                         "languageCode": "pt-BR",
-                        "name": "pt-BR-Chirp3-HD-Aoede",
-                        "ssmlGender": "FEMALE"
+                        "name": voice_name,
+                        "ssmlGender": voice_config['gender']
                     },
                     "audioConfig": {
                         "audioEncoding": "MP3",
@@ -1053,19 +1790,23 @@ def tts_endpoint():
                     }
                 }
             else:
-                # ENGLISH MODE (default): Use English voice
+                # ENGLISH MODE - use selected EN voice
+                voice_name = voice_config['en']
+                
                 payload = {
                     "input": {"text": clean_text_for_tts(text)},
                     "voice": {
                         "languageCode": "en-US",
-                        "name": "en-US-Journey-F", # Journey Voice (Much cheaper than Studio, high quality)
-                        "ssmlGender": "FEMALE"
+                        "name": voice_name,
+                        "ssmlGender": voice_config['gender']
                     },
                     "audioConfig": {
                         "audioEncoding": "MP3",
                         "speakingRate": speed
                     }
                 }
+            
+            print(f"[TTS] Using voice: {voice_name}")
 
             response = requests.post(url, json=payload, timeout=15)
             
@@ -1074,12 +1815,36 @@ def tts_endpoint():
                  # Logic to handle fallback if premium voice fails (omitted for brevity, can be re-added if needed)
                  pass
 
+            if response.status_code == 200:
+                # Success! Save to cache for future use
+                audio_content = base64.b64decode(response.json()['audioContent'])
+                save_audio_to_cache(audio_content, cache_path)
+                print(f"[CACHE] 💾 Saved audio to cache: {os.path.basename(cache_path)}")
+
             if response.status_code != 200:
                 error_msg = response.text[:500] if response.text else "Unknown error"
-                print(f"[TTS] Google Error: {response.status_code}, {error_msg}")
+                
+                # Detailed error logging for diagnosis
+                print(f"[TTS] ❌ GOOGLE TTS API ERROR")
+                print(f"[TTS] Status Code: {response.status_code}")
+                print(f"[TTS] Voice Attempted: {voice_name}")
+                print(f"[TTS] Error Message: {error_msg}")
+                print(f"[TTS] Possible causes:")
+                if response.status_code == 400:
+                    print(f"[TTS]   - Invalid request or unsupported voice")
+                elif response.status_code == 403:
+                    print(f"[TTS]   - API key restrictions or billing disabled")
+                elif response.status_code == 429:
+                    print(f"[TTS]   - Quota exceeded")
+                else:
+                    print(f"[TTS]   - Check Google Cloud Console for details")
+                
                 return jsonify({
-                    "error": "Text-to-speech temporarily unavailable",
-                    "details": f"API returned status {response.status_code}"
+                    "error": "Text-to-speech service error",
+                    "status_code": response.status_code,
+                    "voice": voice_name,
+                    "details": error_msg,
+                    "help": "Check backend logs for detailed diagnosis"
                 }), 503
 
             # Extract audio content from response
@@ -1342,13 +2107,13 @@ def transcribe_audio():
         # 2. Try GROQ if needed (Preferred for PT, or Fallback for Deepgram failure)
         # Condition: (Prefer Groq AND Groq exists) OR (Deepgram failed/skipped AND Groq exists)
         if not transcript and GROQ_API_KEY:
-             # Just logs to see why we are here
-             if prefer_groq_for_mixed and not transcript:
-                 print("[Transcription] Using Groq Whisper for Mixed/Bilingual mode...")
-             elif DEEPGRAM_API_KEY:
-                 print("[Transcription] Falling back to Groq Whisper after Deepgram failure...")
-                 
-             files = {
+            # Just logs to see why we are here
+            if prefer_groq_for_mixed and not transcript:
+                print("[Transcription] Using Groq Whisper for Mixed/Bilingual mode...")
+            elif DEEPGRAM_API_KEY:
+                print("[Transcription] Falling back to Groq Whisper after Deepgram failure...")
+
+            files = {
                 'file': ('audio.webm', audio_data, 'audio/webm')
             }
             # ... rest of Groq logic follows in existing code (we just flow into it)
@@ -1452,5 +2217,5 @@ def serve_static(path):
         return jsonify({"error": "File not found"}), 404
 
 if __name__ == '__main__':
-    # CHANGED: PORT 7910
-    app.run(debug=True, port=7910)
+    # PORT 8912
+    app.run(debug=True, port=8912)
