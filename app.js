@@ -70,6 +70,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- VOICE SELECTION LOGIC (Dynamically Injected) ---
     let currentVoice = localStorage.getItem('preferred_voice') || 'female1';
+    const normalizedLessonLang = (lessonLang || '').toLowerCase();
+    const isPortugueseLesson = normalizedLessonLang === 'pt' || normalizedLessonLang === 'pt-br' || normalizedLessonLang === 'pt_br';
 
     // Voice metadata shown in the selector per lesson language
     const voiceDisplaySets = {
@@ -90,10 +92,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const voiceStartBtn = document.getElementById('start-btn');
 
     if (startOverlay && voiceStartBtn) {
-        const displaySet = voiceDisplaySets[lessonLang === 'pt' ? 'pt' : 'en'];
+        const displaySet = voiceDisplaySets[isPortugueseLesson ? 'pt' : 'en'];
         const selectorHTML = `
             <div style="margin-bottom: 20px; text-align: center;">
-                <div class="voice-label" style="color:rgba(255,255,255,0.7); margin-bottom:10px; font-size:0.9rem;">${lessonLang === 'pt' ? 'Selecione a voz realista em português' : 'Select the AI voice'}</div>
+            <div class="voice-label" style="color:rgba(255,255,255,0.7); margin-bottom:10px; font-size:0.9rem;">${isPortugueseLesson ? 'Selecione a voz realista em português' : 'Select the AI voice'}</div>
                 <div class="voice-selector-container">
                     ${displaySet.map(option => `
                         <div class="voice-option ${currentVoice === option.id ? 'selected' : ''}" data-voice="${option.id}">
