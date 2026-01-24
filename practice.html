@@ -13,10 +13,64 @@
 </head>
 
 <body>
-    <div class="app-container">
+    <!-- Netflix-style Start Overlay -->
+    <div id="start-overlay" class="practice-overlay">
+        <!-- Background Image -->
+        <div class="practice-overlay-bg" id="overlay-bg"></div>
+
+        <!-- Header -->
+        <header class="practice-overlay-header">
+            <div class="header-left">
+                <button class="icon-btn" onclick="window.location.href='scenarios.html'" title="Voltar">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                <span class="practice-title" id="practice-title">CONVERSATION PRACTICE</span>
+                <span class="practice-timer-sep">|</span>
+                <span id="timer-display-overlay" class="practice-timer">00:00</span>
+            </div>
+            <div class="header-right">
+                <button id="cc-toggle-btn-overlay" class="subtitle-toggle-btn" title="Legendas">
+                    <span>??</span> Ativar legendas
+                </button>
+            </div>
+        </header>
+
+        <!-- Center Content -->
+        <div class="start-overlay-container">
+            <div class="voice-label">SELECIONE A VOZ DA IA</div>
+
+            <div class="voice-selector-container" id="voice-selector">
+                <!-- Voice options will be injected by JS -->
+            </div>
+
+            <button id="start-btn" class="play-btn pulse-animation">
+                <span class="play-icon">▶</span> Play
+            </button>
+            <p class="start-hint">Click to start conversation</p>
+        </div>
+
+        <!-- Avatar -->
+        <div class="avatar-container" id="avatar-container">
+            <img src="avatars/sarah.png" alt="AI Avatar" class="avatar-image" id="avatar-image"
+                 onerror="this.src='https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80'">
+        </div>
+
+        <!-- Report Bar -->
+        <div class="report-bar">
+            <button id="report-bar-btn" class="report-bar-button" disabled>
+                <span>📊</span> Gerar relatório da conversa
+            </button>
+        </div>
+    </div>
+
+    <!-- Main App Container (hidden until start) -->
+    <div class="app-container" id="app-container" style="display: none;">
         <header class="compact-header">
             <div class="header-left">
-                <button id="exit-btn" class="icon-btn" onclick="window.location.href='dashboard.html'" title="Sair">
+                <button id="exit-btn" class="icon-btn" onclick="window.location.href='scenarios.html'" title="Sair">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -28,7 +82,7 @@
             <div class="header-center">
                 <!-- Usage Timer (Minimalist) -->
                 <div id="usage-timer" class="usage-timer timer-normal">
-                    <span id="timer-display">10:00</span>
+                    <span id="timer-display">00:00</span>
                 </div>
             </div>
 
@@ -49,12 +103,6 @@
         <!-- Main Chat Area (Dominant) -->
         <main id="chat-window" class="audio-focused">
             <!-- Messages will be injected here via JS -->
-            <div class="message system-message" id="start-message">
-                <div class="bubble">
-                    <p>Pronto para começar?</p>
-                    <button id="start-btn" class="action-btn">Iniciar Conversa</button>
-                </div>
-            </div>
         </main>
 
         <!-- Footer Controls (Compact Grid) -->
@@ -67,7 +115,7 @@
                 <div class="mic-icon"></div>
                 <span id="record-text">🎤 Clique para Falar</span>
             </button>
-            <p class="disabled-hint" id="mic-hint">Click "Start Conversation" to begin</p>
+            <p class="disabled-hint" id="mic-hint" style="display: none;">Click "Start Conversation" to begin</p>
             <button id="report-btn" class="action-btn" disabled>Ver Relatório</button>
         </footer>
     </div>
@@ -85,9 +133,182 @@
         </div>
     </div>
 
+    <!-- Text Input Bar (for typing mode) -->
+    <div id="text-input-bar" class="text-input-bar" style="display: none;">
+        <input type="text" id="text-input" placeholder="Type your message..." autocomplete="off">
+        <button id="send-btn" class="send-btn">Send</button>
+        <button id="mic-toggle-btn" class="mic-toggle-btn" title="Switch to voice">🎤</button>
+    </div>
+
     <script src="api-client.js"></script>
     <script src="deepgram-recorder.js"></script>
     <script src="app.js"></script>
+
+    <script>
+        // Initialize practice overlay on page load
+        (function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const context = urlParams.get('context') || 'coffee_shop';
+            const contextName = urlParams.get('title') || 'Practice';
+            const lessonLang = urlParams.get('lessonLang') || 'en';
+
+            // Set practice title
+            const titleEl = document.getElementById('practice-title');
+            if (titleEl) {
+                titleEl.textContent = contextName.toUpperCase();
+            }
+
+            // Set background image based on context
+            const bgEl = document.getElementById('overlay-bg');
+            const contextImages = {
+                'coffee_shop': 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1920&q=80',
+                'hotel': 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1920&q=80',
+                'restaurant': 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1920&q=80',
+                'airport': 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1920&q=80',
+                'job_interview': 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=1920&q=80',
+                'basic_structures': 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1920&q=80',
+                'shopping': 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1920&q=80',
+                'doctor': 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=1920&q=80',
+                'free_conversation': 'https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=1920&q=80',
+                'taxi': 'https://images.unsplash.com/photo-1511994714008-b6d68a8b32a2?auto=format&fit=crop&w=1920&q=80',
+                'supermarket': 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1920&q=80',
+                'bank': 'https://images.unsplash.com/photo-1501167786227-4cba60f6d58f?auto=format&fit=crop&w=1920&q=80',
+                'pharmacy': 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&w=1920&q=80',
+                'gym': 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1920&q=80',
+                'cinema': 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1920&q=80',
+                'gas_station': 'https://images.unsplash.com/photo-1545458102-0bc66d2636a2?auto=format&fit=crop&w=1920&q=80',
+                'laundry': 'https://images.unsplash.com/photo-1545173168-9f1947eebb7f?auto=format&fit=crop&w=1920&q=80',
+                'post_office': 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?auto=format&fit=crop&w=1920&q=80',
+                'library': 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=1920&q=80',
+                'beach': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1920&q=80',
+                'park': 'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?auto=format&fit=crop&w=1920&q=80',
+                'museum': 'https://images.unsplash.com/photo-1566127444979-b3d2b654e3d7?auto=format&fit=crop&w=1920&q=80',
+                'train_station': 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1920&q=80',
+                'bus_station': 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?auto=format&fit=crop&w=1920&q=80',
+                'bar': 'https://images.unsplash.com/photo-1572116469696-31de0f17cc34?auto=format&fit=crop&w=1920&q=80',
+                'bakery': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=1920&q=80',
+                'bookstore': 'https://images.unsplash.com/photo-1507842217343-583bb7270b66?auto=format&fit=crop&w=1920&q=80',
+                'clothing_store': 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&w=1920&q=80',
+                'electronics_store': 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&w=1920&q=80',
+                'pet_store': 'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?auto=format&fit=crop&w=1920&q=80',
+                'hair_salon': 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1920&q=80',
+                'dentist': 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=1920&q=80',
+                'vet': 'https://images.unsplash.com/photo-1628009368231-7bb7cfcb0def?auto=format&fit=crop&w=1920&q=80',
+                'mechanic': 'https://images.unsplash.com/photo-1487754180451-c456f719a1fc?auto=format&fit=crop&w=1920&q=80',
+                'real_estate': 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1920&q=80',
+                'travel_agency': 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1920&q=80',
+                'office': 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1920&q=80',
+                'meeting': 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&w=1920&q=80',
+                'networking': 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=1920&q=80',
+                'presentation': 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&w=1920&q=80',
+                'phone_call': 'https://images.unsplash.com/photo-1423666639041-f56000c27a9a?auto=format&fit=crop&w=1920&q=80',
+                'email': 'https://images.unsplash.com/photo-1596526131083-e8c633c948d2?auto=format&fit=crop&w=1920&q=80',
+                'sports': 'https://images.unsplash.com/photo-1461896836934- voices-training-speaking?auto=format&fit=crop&w=1920&q=80',
+                'music': 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&w=1920&q=80',
+                'movies': 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=1920&q=80',
+                'food': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1920&q=80',
+                'travel': 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1920&q=80',
+                'family': 'https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=1920&q=80',
+                'hobbies': 'https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?auto=format&fit=crop&w=1920&q=80',
+                'weather': 'https://images.unsplash.com/photo-1504608524841-42fe6f032b4b?auto=format&fit=crop&w=1920&q=80',
+                'holidays': 'https://images.unsplash.com/photo-1482517967863-00e15c9b44be?auto=format&fit=crop&w=1920&q=80',
+                'technology': 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1920&q=80',
+                'health': 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=1920&q=80',
+                'education': 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=1920&q=80',
+                'environment': 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1920&q=80'
+            };
+
+            // Grammar topics images
+            const grammarImages = {
+                'verb_to_be': 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1920&q=80',
+                'greetings': 'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&w=1920&q=80',
+                'articles': 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=1920&q=80',
+                'plurals': 'https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&w=1920&q=80',
+                'present_simple': 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1920&q=80',
+                'present_continuous': 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1920&q=80',
+                'past_simple': 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1920&q=80',
+                'future_forms': 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1920&q=80',
+                'basic_questions': 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1920&q=80'
+            };
+
+            const bgImage = contextImages[context] || grammarImages[context] || 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1920&q=80';
+            if (bgEl) {
+                bgEl.style.backgroundImage = `url('${bgImage}')`;
+            }
+
+            // Initialize voice selector
+            const normalizedLang = (lessonLang || '').toLowerCase();
+            const isPortuguese = normalizedLang === 'pt' || normalizedLang === 'pt-br' || normalizedLang === 'pt_br';
+
+            const voiceSets = {
+                en: [
+                    { id: 'female1', avatar: '👩', label: 'Sarah' },
+                    { id: 'female2', avatar: '👩‍🦰', label: 'Emma' },
+                    { id: 'male1', avatar: '👨', label: 'James' }
+                ],
+                pt: [
+                    { id: 'female1', avatar: '👩', label: 'Bruna' },
+                    { id: 'female2', avatar: '👩‍🦰', label: 'Camila' },
+                    { id: 'male1', avatar: '👨', label: 'Rafael' }
+                ]
+            };
+
+            const voices = voiceSets[isPortuguese ? 'pt' : 'en'];
+            const currentVoice = localStorage.getItem('preferred_voice') || 'female1';
+            const selectorEl = document.getElementById('voice-selector');
+
+            if (selectorEl) {
+                selectorEl.innerHTML = voices.map(v => `
+                    <div class="voice-option ${currentVoice === v.id ? 'selected' : ''}" data-voice="${v.id}">
+                        <div class="voice-avatar">${v.avatar}</div>
+                        <div class="voice-name">${v.label}</div>
+                    </div>
+                `).join('');
+
+                // Add click handlers
+                selectorEl.querySelectorAll('.voice-option').forEach(opt => {
+                    opt.addEventListener('click', () => {
+                        const voice = opt.dataset.voice;
+                        localStorage.setItem('preferred_voice', voice);
+                        selectorEl.querySelectorAll('.voice-option').forEach(o => o.classList.remove('selected'));
+                        opt.classList.add('selected');
+
+                        // Update avatar
+                        updateAvatar(voice);
+                    });
+                });
+            }
+
+            // Avatar update function
+            function updateAvatar(voice) {
+                const avatarImg = document.getElementById('avatar-image');
+                const fallbacks = {
+                    'female1': 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80',
+                    'female2': 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=400&q=80',
+                    'male1': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80'
+                };
+                if (avatarImg) {
+                    avatarImg.src = `avatars/${voices.find(v => v.id === voice)?.label.toLowerCase() || 'sarah'}.png`;
+                    avatarImg.onerror = function() {
+                        this.src = fallbacks[voice] || fallbacks['female1'];
+                    };
+                }
+            }
+
+            // Initialize avatar
+            updateAvatar(currentVoice);
+
+            // CC toggle for overlay
+            const ccToggleOverlay = document.getElementById('cc-toggle-btn-overlay');
+            if (ccToggleOverlay) {
+                ccToggleOverlay.addEventListener('click', () => {
+                    document.body.classList.toggle('subtitles-on');
+                    const isOn = document.body.classList.contains('subtitles-on');
+                    ccToggleOverlay.innerHTML = isOn ? '<span>CC</span> Desativar legendas' : '<span>??</span> Ativar legendas';
+                });
+            }
+        })();
+    </script>
 </body>
 
 </html>

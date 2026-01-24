@@ -4,374 +4,622 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Select Scenario - Conversation Practice</title>
+    <title>Everyday Conversation - Practice English</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
-        .scenarios-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 1rem;
-            padding: 1rem;
-            width: 100%;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        .scenario-card {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--glass-border);
-            border-radius: 16px;
-            padding: 1.5rem 1rem;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
+        body {
+            background: #0a0a0a;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        .netflix-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 1rem 3rem;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, transparent 100%);
+        }
+
+        .netflix-logo {
+            color: #e50914;
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
+        }
+
+        /* Hero Section */
+        .hero {
+            position: relative;
+            height: 85vh;
+            min-height: 600px;
             display: flex;
-            flex-direction: column;
+            align-items: flex-end;
+            padding: 0 3rem 5rem;
+            background-size: cover;
+            background-position: center top;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, #0a0a0a 0%, transparent 50%, rgba(0,0,0,0.3) 100%);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 600px;
+        }
+
+        .hero-title {
+            font-size: 4rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
+        }
+
+        .hero-description {
+            font-size: 1.1rem;
+            color: #ccc;
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+            text-shadow: 1px 1px 4px rgba(0,0,0,0.8);
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn-play {
+            background: white;
+            color: black;
+            border: none;
+            padding: 0.75rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .btn-play:hover {
+            background: #e6e6e6;
+        }
+
+        .btn-info {
+            background: rgba(109, 109, 110, 0.7);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .btn-info:hover {
+            background: rgba(109, 109, 110, 0.5);
+        }
+
+        /* Start Here Section */
+        .start-here {
+            padding: 2rem 3rem;
+            margin-top: -3rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
             align-items: center;
             gap: 0.5rem;
         }
 
+        .start-here-card {
+            background: #1a1a1a;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            max-width: 600px;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .start-here-card:hover {
+            transform: scale(1.02);
+        }
+
+        .start-here-image {
+            width: 200px;
+            height: 150px;
+            object-fit: cover;
+        }
+
+        .start-here-content {
+            padding: 1rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .badge-new {
+            background: #e50914;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.25rem 0.5rem;
+            border-radius: 3px;
+            display: inline-block;
+            width: fit-content;
+            margin-bottom: 0.5rem;
+        }
+
+        .start-here-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .start-here-subtitle {
+            color: #888;
+            font-size: 0.9rem;
+            font-style: italic;
+            margin-bottom: 0.5rem;
+        }
+
+        .start-here-description {
+            color: #aaa;
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn-start {
+            background: white;
+            color: black;
+            border: none;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+            width: fit-content;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Category Rows */
+        .category-section {
+            padding: 1.5rem 3rem;
+        }
+
+        .category-row {
+            display: flex;
+            gap: 0.75rem;
+            overflow-x: auto;
+            padding-bottom: 1rem;
+            scrollbar-width: thin;
+            scrollbar-color: #333 transparent;
+        }
+
+        .category-row::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .category-row::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .category-row::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 3px;
+        }
+
+        /* Scenario Cards */
         .scenario-card {
-            position: relative;
+            flex: 0 0 auto;
+            width: 200px;
+            cursor: pointer;
+            transition: transform 0.3s;
         }
 
         .scenario-card:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-            border-color: var(--accent-color);
+            transform: scale(1.05);
         }
 
-        .scenario-card:hover .scenario-tooltip {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
+        .scenario-image {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 4px;
         }
 
-        .scenario-tooltip {
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%) translateY(10px);
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border);
-            border-radius: 8px;
-            padding: 0.5rem 0.75rem;
-            font-size: 0.8rem;
-            color: #e2e8f0;
-            white-space: nowrap;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.2s ease;
-            pointer-events: none;
-            z-index: 10;
-            margin-bottom: 0.5rem;
+        .scenario-card-content {
+            padding: 0.5rem 0;
         }
 
-        .scenario-icon {
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .scenario-title {
+        .scenario-card-title {
+            font-size: 0.95rem;
             font-weight: 600;
-            color: white;
-            font-size: 1rem;
+            margin-bottom: 0.2rem;
         }
 
-        .container {
-            max-width: 600px;
+        .scenario-card-subtitle {
+            color: #888;
+            font-size: 0.8rem;
+            margin-bottom: 0.3rem;
         }
 
-        /* Practice Mode Selection Modal */
-        .modal {
+        .scenario-match {
+            color: #46d369;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .netflix-header {
+                padding: 1rem 1.5rem;
+            }
+
+            .hero {
+                padding: 0 1.5rem 4rem;
+                height: 70vh;
+            }
+
+            .hero-title {
+                font-size: 2.5rem;
+            }
+
+            .start-here, .category-section {
+                padding-left: 1.5rem;
+                padding-right: 1.5rem;
+            }
+
+            .start-here-card {
+                flex-direction: column;
+            }
+
+            .start-here-image {
+                width: 100%;
+                height: 200px;
+            }
+
+            .scenario-card {
+                width: 150px;
+            }
+
+            .scenario-image {
+                height: 90px;
+            }
+        }
+
+        /* Modal */
+        .modal-overlay {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
+            inset: 0;
+            background: rgba(0,0,0,0.8);
             z-index: 1000;
             align-items: center;
             justify-content: center;
         }
 
         .modal-content {
-            background: var(--surface-color);
-            border: 1px solid var(--border-color);
-            border-radius: 1.5rem;
-            padding: 2.5rem;
+            background: #181818;
+            border-radius: 8px;
+            padding: 2rem;
             max-width: 500px;
             width: 90%;
-            text-align: center;
-        }
-
-        .modal-content h2 {
-            margin-bottom: 0.5rem;
-            color: var(--text-primary);
-        }
-
-        .mode-options {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .mode-btn {
-            background: rgba(255, 255, 255, 0.03);
-            border: 2px solid var(--border-color);
-            border-radius: 1rem;
-            padding: 2rem 1rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            color: var(--text-primary);
-        }
-
-        .mode-btn:hover {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: var(--primary-color);
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-        }
-
-        .mode-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-        }
-
-        .mode-title {
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-
-        .mode-description {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-        }
-
-        .modal-close-btn {
-            background: transparent;
-            border: 1px solid var(--border-color);
-            color: var(--text-secondary);
-            padding: 0.75rem 2rem;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .modal-close-btn:hover {
-            border-color: var(--error-color);
-            color: var(--error-color);
-        }
-
-        @media (max-width: 768px) {
-            .mode-options {
-                grid-template-columns: 1fr;
-            }
         }
     </style>
 </head>
 
-<body class="login-page">
-    <div class="glass-container container">
-        <header class="login-header">
-            <div class="logo-circle">
-                <span>CP</span>
-            </div>
-            <h1>Choose Context</h1>
-            <p>Where would you like to practice today?</p>
-        </header>
+<body>
+    <!-- Header -->
+    <header class="netflix-header">
+        <div class="netflix-logo">Everyday Conversation</div>
+    </header>
 
-        <!-- Practice Mode Selection Modal -->
-        <div id="practice-mode-modal" class="modal" style="display: none;">
-            <div class="modal-content">
-                <h2>Como você quer praticar?</h2>
-                <p style="color: var(--text-secondary); margin-bottom: 2rem;">Escolha o modo de prática que funciona
-                    melhor para você:</p>
-
-                <div class="mode-options">
-                    <button class="mode-btn" onclick="startPractice('normal')">
-                        <div class="mode-icon">👁️ 📢</div>
-                        <div class="mode-title">Ler + Áudio</div>
-                        <div class="mode-description">Ver o texto e ouvir a pronúncia</div>
-                    </button>
-
-                    <button class="mode-btn" onclick="startPractice('audio-only')">
-                        <div class="mode-icon">🎧</div>
-                        <div class="mode-title">Somente Áudio</div>
-                        <div class="mode-description">Praticar apenas ouvindo (desafio!)</div>
-                    </button>
-                </div>
-
-                <button class="modal-close-btn" onclick="closePracticeModeModal()">Cancelar</button>
+    <!-- Hero Section -->
+    <section class="hero" id="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title" id="hero-title">Job Interview</h1>
+            <p class="hero-description" id="hero-description">Prepare for your dream career. Master the art of professional dialogue, answer tough questions with confidence, and leave a lasting impression.</p>
+            <div class="hero-buttons">
+                <button class="btn-play" id="hero-play-btn">
+                    <span>&#9658;</span> Play
+                </button>
+                <button class="btn-info" id="hero-info-btn">
+                    <span>&#9432;</span> More Info
+                </button>
             </div>
         </div>
+    </section>
 
-        <div class="scenarios-grid" id="scenarios-container">
-            <!-- Scenarios will be loaded here -->
-            <div class="loading">Loading scenarios...</div>
-        </div>
-    </div>
-
-    <!-- Tutorial Modal -->
-    <div id="tutorial-modal" class="modal-overlay" style="display: none;">
-        <div class="modal-content">
-            <h2>🎉 Welcome to Conversation Practice!</h2>
-            <div class="tutorial-steps">
-                <div class="tutorial-step">
-                    <span class="step-icon">1️⃣</span>
-                    <p><strong>Choose a scenario</strong> - Pick a situation you want to practice (coffee shop, airport,
-                        etc.)</p>
-                </div>
-                <div class="tutorial-step">
-                    <span class="step-icon">2️⃣</span>
-                    <p><strong>Click the microphone</strong> 🎤 to speak in English (or type if you prefer)</p>
-                </div>
-                <div class="tutorial-step">
-                    <span class="step-icon">3️⃣</span>
-                    <p><strong>See translations</strong> 🌐 by clicking the translation button on AI messages</p>
-                </div>
-                <div class="tutorial-step">
-                    <span class="step-icon">4️⃣</span>
-                    <p><strong>Generate a report</strong> after 3+ exchanges to see corrections and tips</p>
-                </div>
+    <!-- Start Here Section -->
+    <section class="start-here">
+        <h2 class="section-title"><span style="color: #e50914;">&#127919;</span> Start Here</h2>
+        <div class="start-here-card" onclick="goToPractice('free_conversation', 'Free Conversation')">
+            <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=300&fit=crop" alt="Free Conversation" class="start-here-image">
+            <div class="start-here-content">
+                <span class="badge-new">&#9679; NOVO</span>
+                <h3 class="start-here-title">Conversacao Livre</h3>
+                <p class="start-here-subtitle">Free Conversation</p>
+                <p class="start-here-description">Escolha o tema que quiser! A IA vai perguntar sobre o que voce quer conversar.</p>
+                <button class="btn-start">&#9658; Comecar Agora</button>
             </div>
-            <button id="start-tutorial-btn" class="action-btn" style="width: 100%; margin-top: 1rem;">Got it! Let's
-                start</button>
         </div>
-    </div>
+    </section>
 
+    <!-- Trending Now -->
+    <section class="category-section">
+        <h2 class="section-title">Trending Now</h2>
+        <div class="category-row" id="trending-row"></div>
+    </section>
+
+    <!-- Grammar & Foundations -->
+    <section class="category-section">
+        <h2 class="section-title">Grammar & Foundations</h2>
+        <div class="category-row" id="grammar-row"></div>
+    </section>
+
+    <!-- All Content -->
+    <section class="category-section">
+        <h2 class="section-title">All Content</h2>
+        <div class="category-row" id="all-content-row"></div>
+    </section>
+
+    <!-- Travel & Adventure -->
+    <section class="category-section">
+        <h2 class="section-title">Travel & Adventure</h2>
+        <div class="category-row" id="travel-row"></div>
+    </section>
+
+    <!-- Business & Career -->
+    <section class="category-section">
+        <h2 class="section-title">Business & Career</h2>
+        <div class="category-row" id="business-row"></div>
+    </section>
+
+    <!-- Daily Life -->
+    <section class="category-section">
+        <h2 class="section-title">Daily Life</h2>
+        <div class="category-row" id="daily-row"></div>
+    </section>
+
+    <script src="api-client.js"></script>
     <script>
         // Auth Check
         const user = JSON.parse(localStorage.getItem('conversation_user'));
-        if (!user) window.location.href = 'login.html';
+        if (!user) window.location.href = 'index.html';
 
-        // Show tutorial modal on first visit
-        const hasSeenTutorial = localStorage.getItem('has_seen_tutorial');
-        const tutorialModal = document.getElementById('tutorial-modal');
-        const startTutorialBtn = document.getElementById('start-tutorial-btn');
-
-        if (!hasSeenTutorial && tutorialModal) {
-            tutorialModal.style.display = 'flex';
-        }
-
-        if (startTutorialBtn) {
-            startTutorialBtn.onclick = () => {
-                localStorage.setItem('has_seen_tutorial', 'true');
-                tutorialModal.style.display = 'none';
-            };
-        }
-
-        // Difficulty badge mapping
-        const difficultyLevels = {
-            'coffee_shop': 'basic', 'street': 'basic', 'parents_house': 'basic',
-            'supermarket': 'basic', 'pharmacy': 'basic', 'gym': 'basic',
-            'school': 'intermediate', 'airport': 'intermediate', 'hotel': 'intermediate',
-            'restaurant': 'intermediate', 'bank': 'intermediate', 'post_office': 'intermediate',
-            'doctor': 'intermediate', 'dentist': 'intermediate', 'library': 'intermediate',
-            'job_interview': 'advanced', 'business_meeting': 'advanced', 'court': 'advanced',
-            'embassy': 'advanced', 'conference': 'advanced', 'tech_support': 'advanced',
-            'real_estate': 'intermediate', 'car_rental': 'intermediate', 'taxi': 'basic',
-            'train_station': 'intermediate', 'bus': 'basic', 'park': 'basic',
-            'museum': 'intermediate', 'concert': 'intermediate', 'cinema': 'basic',
-            'bookstore': 'intermediate', 'electronics_store': 'intermediate', 'clothing_store': 'basic',
-            'birthday_party': 'basic', 'graduation_party': 'intermediate', 'wedding': 'intermediate'
+        // Scenario Images (using Unsplash for high quality images)
+        const scenarioImages = {
+            'free_conversation': 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=300&fit=crop',
+            'basic_structures': 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=400&h=300&fit=crop',
+            'coffee_shop': 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&h=300&fit=crop',
+            'street': 'https://images.unsplash.com/photo-1517732306149-e8f829eb588a?w=400&h=300&fit=crop',
+            'parents_house': 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=400&h=300&fit=crop',
+            'school': 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=400&h=300&fit=crop',
+            'airport': 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=400&h=300&fit=crop',
+            'supermarket': 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&h=300&fit=crop',
+            'doctor': 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=400&h=300&fit=crop',
+            'pharmacy': 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=400&h=300&fit=crop',
+            'library': 'https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=400&h=300&fit=crop',
+            'job_interview': 'https://images.unsplash.com/photo-1565688534245-05d6b5be184a?w=400&h=300&fit=crop',
+            'hotel': 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=300&fit=crop',
+            'restaurant': 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop',
+            'gas_station': 'https://images.unsplash.com/photo-1545558014-8692077e9b5c?w=400&h=300&fit=crop',
+            'gym': 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=300&fit=crop',
+            'cinema': 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400&h=300&fit=crop',
+            'park': 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=400&h=300&fit=crop',
+            'museum': 'https://images.unsplash.com/photo-1554907984-15263bfd63bd?w=400&h=300&fit=crop',
+            'bank': 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&h=300&fit=crop',
+            'post_office': 'https://images.unsplash.com/photo-1568254183919-78a4f43a2877?w=400&h=300&fit=crop',
+            'train_station': 'https://images.unsplash.com/photo-1474487548417-781cb71495f3?w=400&h=300&fit=crop',
+            'bus_stop': 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=400&h=300&fit=crop',
+            'hair_salon': 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&h=300&fit=crop',
+            'clothing_store': 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop',
+            'pet_shop': 'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=400&h=300&fit=crop',
+            'bakery': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400&h=300&fit=crop',
+            'dental_clinic': 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=400&h=300&fit=crop',
+            'tech_support': 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=400&h=300&fit=crop',
+            'pizza_delivery': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=300&fit=crop',
+            'renting_car': 'https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=400&h=300&fit=crop',
+            'neighbor': 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&h=300&fit=crop',
+            'wedding': 'https://images.unsplash.com/photo-1519741497674-611481863552?w=400&h=300&fit=crop',
+            'graduation': 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=400&h=300&fit=crop'
         };
 
-        function getDifficultyBadge(level) {
-            const badges = {
-                'basic': '<span class="difficulty-badge basic">🟢 Basic</span>',
-                'intermediate': '<span class="difficulty-badge intermediate">🟡 Intermediate</span>',
-                'advanced': '<span class="difficulty-badge advanced">🔴 Advanced</span>'
-            };
-            return badges[level] || badges['intermediate'];
-        }
-
-        // Scenario descriptions for tooltips
-        const scenarioDescriptions = {
-            'coffee_shop': 'Order drinks and snacks',
-            'street': 'Ask for directions',
-            'parents_house': 'Family conversation',
-            'school': 'Academic discussions',
-            'airport': 'Check-in and boarding',
-            'supermarket': 'Shopping for groceries',
-            'doctor': 'Medical consultation',
-            'pharmacy': 'Get medication',
-            'restaurant': 'Order food',
-            'hotel': 'Check-in/out',
-            'bank': 'Banking services',
-            'job_interview': 'Professional interview',
-            'business_meeting': 'Corporate meeting',
-            'taxi': 'Give directions to driver',
-            'gym': 'Fitness talk',
-            'library': 'Find books',
-            'cinema': 'Buy tickets',
-            'park': 'Casual outdoor chat'
+        // Portuguese translations
+        const scenarioPT = {
+            'free_conversation': 'Conversacao Livre',
+            'basic_structures': 'Treino de estruturas basicas',
+            'coffee_shop': 'Cafeteria',
+            'street': 'Na rua',
+            'parents_house': 'Casa dos pais',
+            'school': 'Escola',
+            'airport': 'Aeroporto',
+            'supermarket': 'Supermercado',
+            'doctor': 'Consultorio medico',
+            'pharmacy': 'Farmacia',
+            'library': 'Biblioteca',
+            'job_interview': 'Entrevista de emprego',
+            'hotel': 'Hotel',
+            'restaurant': 'Restaurante',
+            'gas_station': 'Posto de gasolina',
+            'gym': 'Academia',
+            'cinema': 'Cinema',
+            'park': 'Parque',
+            'museum': 'Museu',
+            'bank': 'Banco',
+            'post_office': 'Correios',
+            'train_station': 'Estacao de trem',
+            'bus_stop': 'Ponto de onibus',
+            'hair_salon': 'Salao de beleza',
+            'clothing_store': 'Loja de roupas',
+            'pet_shop': 'Pet shop',
+            'bakery': 'Padaria',
+            'dental_clinic': 'Dentista',
+            'tech_support': 'Suporte tecnico',
+            'pizza_delivery': 'Delivery de pizza',
+            'renting_car': 'Aluguel de carro',
+            'neighbor': 'Vizinho',
+            'wedding': 'Casamento',
+            'graduation': 'Formatura'
         };
 
+        // Hero backgrounds
+        const heroBackgrounds = {
+            'job_interview': 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=1920&h=1080&fit=crop',
+            'airport': 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1920&h=1080&fit=crop',
+            'restaurant': 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1920&h=1080&fit=crop',
+            'hotel': 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1920&h=1080&fit=crop'
+        };
+
+        const heroDescriptions = {
+            'job_interview': 'Prepare for your dream career. Master the art of professional dialogue, answer tough questions with confidence, and leave a lasting impression.',
+            'airport': 'Navigate international travel with ease. Learn essential phrases for check-in, security, and boarding.',
+            'restaurant': 'Order like a local. Master dining vocabulary, make reservations, and handle special requests with confidence.',
+            'hotel': 'Check in and out smoothly. Learn to make requests, report issues, and enjoy your stay.'
+        };
+
+        // Category definitions
+        const categories = {
+            trending: ['coffee_shop', 'job_interview', 'airport', 'restaurant', 'supermarket'],
+            grammar: ['basic_structures'],
+            allContent: ['free_conversation', 'basic_structures', 'coffee_shop', 'street', 'parents_house'],
+            travel: ['airport', 'hotel', 'train_station', 'renting_car', 'bus_stop'],
+            business: ['job_interview', 'tech_support'],
+            daily: ['supermarket', 'pharmacy', 'bank', 'post_office', 'gym']
+        };
+
+        // Set random hero
+        const heroOptions = ['job_interview', 'airport', 'restaurant', 'hotel'];
+        const randomHero = heroOptions[Math.floor(Math.random() * heroOptions.length)];
+
+        function setHero(scenarioId) {
+            const hero = document.getElementById('hero-section');
+            const title = document.getElementById('hero-title');
+            const desc = document.getElementById('hero-description');
+
+            hero.style.backgroundImage = `url('${heroBackgrounds[scenarioId]}')`;
+            title.textContent = scenarioId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            desc.textContent = heroDescriptions[scenarioId];
+
+            document.getElementById('hero-play-btn').onclick = () => goToPractice(scenarioId, title.textContent);
+        }
+
+        setHero(randomHero);
+
+        // Create scenario card
+        function createCard(id, title) {
+            const card = document.createElement('div');
+            card.className = 'scenario-card';
+            card.onclick = () => goToPractice(id, title);
+
+            const img = scenarioImages[id] || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=300&fit=crop';
+            const ptTitle = scenarioPT[id] || title;
+
+            card.innerHTML = `
+                <img src="${img}" alt="${title}" class="scenario-image" onerror="this.src='https://via.placeholder.com/200x120?text=${encodeURIComponent(title)}'">
+                <div class="scenario-card-content">
+                    <div class="scenario-card-title">${title}</div>
+                    <div class="scenario-card-subtitle">${ptTitle}</div>
+                    <div class="scenario-match">98% Match</div>
+                </div>
+            `;
+            return card;
+        }
+
+        // Load scenarios from API and populate rows
         async function loadScenarios() {
-            const container = document.getElementById('scenarios-container');
             try {
                 const response = await fetch('/api/scenarios');
                 const scenarios = await response.json();
 
-                container.innerHTML = '';
-                scenarios.forEach(s => {
-                    const card = document.createElement('div');
-                    card.className = 'scenario-card';
-                    card.onclick = () => selectScenario(s.id, s.title);
+                const scenarioMap = {};
+                scenarios.forEach(s => scenarioMap[s.id] = s.title);
 
-                    const difficulty = difficultyLevels[s.id] || 'intermediate';
-                    const description = scenarioDescriptions[s.id] || 'Practice conversation';
+                // Populate rows
+                const trendingRow = document.getElementById('trending-row');
+                const grammarRow = document.getElementById('grammar-row');
+                const allContentRow = document.getElementById('all-content-row');
+                const travelRow = document.getElementById('travel-row');
+                const businessRow = document.getElementById('business-row');
+                const dailyRow = document.getElementById('daily-row');
 
-                    card.innerHTML = `
-                        <div class="scenario-tooltip">${description}</div>
-                        <div class="scenario-icon">${s.icon}</div>
-                        <div class="scenario-title">${s.title}</div>
-                        ${getDifficultyBadge(difficulty)}
-                    `;
-                    container.appendChild(card);
+                // Trending
+                categories.trending.forEach(id => {
+                    if (scenarioMap[id]) trendingRow.appendChild(createCard(id, scenarioMap[id]));
                 });
+
+                // Grammar - add all grammar-related
+                scenarios.filter(s => s.id.includes('basic') || s.id.includes('structure'))
+                    .forEach(s => grammarRow.appendChild(createCard(s.id, s.title)));
+
+                // All Content - first 10
+                scenarios.slice(0, 10).forEach(s => {
+                    allContentRow.appendChild(createCard(s.id, s.title));
+                });
+
+                // Travel
+                categories.travel.forEach(id => {
+                    if (scenarioMap[id]) travelRow.appendChild(createCard(id, scenarioMap[id]));
+                });
+
+                // Business
+                categories.business.forEach(id => {
+                    if (scenarioMap[id]) businessRow.appendChild(createCard(id, scenarioMap[id]));
+                });
+
+                // Daily
+                categories.daily.forEach(id => {
+                    if (scenarioMap[id]) dailyRow.appendChild(createCard(id, scenarioMap[id]));
+                });
+
             } catch (err) {
                 console.error('Error loading scenarios:', err);
-                container.innerHTML = '<div class="error">Failed to load scenarios.</div>';
             }
         }
 
-        let selectedScenario = { id: '', title: '' };
-
-        function selectScenario(id, title) {
-            // Check if there's an ongoing conversation
-            const hasConversation = localStorage.getItem('conversation_backup');
-            const lastContext = localStorage.getItem('last_context');
-
-            if (hasConversation && lastContext && lastContext !== id) {
-                // Show confirmation modal
-                const confirmed = confirm('Switching scenarios will clear your current conversation. Continue?');
-                if (!confirmed) {
-                    return; // Don't switch
-                }
-            }
-
-            // Get speed from current URL
+        function goToPractice(id, title) {
             const urlParams = new URLSearchParams(window.location.search);
             const speed = urlParams.get('speed') || '1.0';
-
-            // Navigate directly to practice with audio-only mode as default
             window.location.href = `practice.html?context=${id}&title=${encodeURIComponent(title)}&speed=${speed}&mode=audio-only`;
         }
 
-
         loadScenarios();
     </script>
-    <script src="api-client.js"></script>
-
 </body>
 
 </html>

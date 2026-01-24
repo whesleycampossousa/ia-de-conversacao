@@ -68,55 +68,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const suggestionsPanel = document.getElementById('suggestions-panel');
     const suggestionsList = document.getElementById('suggestions-list');
 
-    // --- VOICE SELECTION LOGIC (Dynamically Injected) ---
+    // --- VOICE SELECTION LOGIC ---
     let currentVoice = localStorage.getItem('preferred_voice') || 'female1';
-    const normalizedLessonLang = (lessonLang || '').toLowerCase();
-    const isPortugueseLesson = normalizedLessonLang === 'pt' || normalizedLessonLang === 'pt-br' || normalizedLessonLang === 'pt_br';
 
-    // Voice metadata shown in the selector per lesson language
-    const voiceDisplaySets = {
-        en: [
-            { id: 'female1', avatar: '👩', label: 'Sarah', description: 'Warm American accent' },
-            { id: 'female2', avatar: '👩‍🦰', label: 'Emma', description: 'Crisp US pronunciation' },
-            { id: 'male1', avatar: '👨', label: 'James', description: 'Natural US voice' }
-        ],
-        pt: [
-            { id: 'female1', avatar: '👩', label: 'Bruna', description: 'PT-BR natural & acolhedora' },
-            { id: 'female2', avatar: '👩‍🦰', label: 'Camila', description: 'PT-BR calorosa com clareza' },
-            { id: 'male1', avatar: '👨', label: 'Rafael', description: 'PT-BR voz grave confiante' }
-        ]
-    };
-
-    // Inject Voice Selector into Start Overlay
-    const startOverlay = document.querySelector('.start-overlay-container');
-    const voiceStartBtn = document.getElementById('start-btn');
-
-    if (startOverlay && voiceStartBtn) {
-        const displaySet = voiceDisplaySets[isPortugueseLesson ? 'pt' : 'en'];
-        const selectorHTML = `
-            <div style="margin-bottom: 20px; text-align: center;">
-            <div class="voice-label" style="color:rgba(255,255,255,0.7); margin-bottom:10px; font-size:0.9rem;">${isPortugueseLesson ? 'Selecione a voz realista em português' : 'Select the AI voice'}</div>
-                <div class="voice-selector-container">
-                    ${displaySet.map(option => `
-                        <div class="voice-option ${currentVoice === option.id ? 'selected' : ''}" data-voice="${option.id}">
-                            <div class="voice-avatar">${option.avatar}</div>
-                            <div class="voice-name">${option.label}</div>
-                            <div class="voice-desc">${option.description}</div>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        `;
-
-        const container = document.createElement('div');
-        container.innerHTML = selectorHTML;
-        startOverlay.insertBefore(container, voiceStartBtn);
-
-        container.querySelectorAll('.voice-option').forEach(opt => {
+    // Voice selector is now created directly in practice.html
+    // This section handles the voice selection click events
+    const existingVoiceSelector = document.getElementById('voice-selector');
+    if (existingVoiceSelector) {
+        // Voice selector already exists in HTML, just add click handlers if needed
+        existingVoiceSelector.querySelectorAll('.voice-option').forEach(opt => {
             opt.addEventListener('click', () => {
                 currentVoice = opt.dataset.voice;
                 localStorage.setItem('preferred_voice', currentVoice);
-                container.querySelectorAll('.voice-option').forEach(o => o.classList.remove('selected'));
+                existingVoiceSelector.querySelectorAll('.voice-option').forEach(o => o.classList.remove('selected'));
                 opt.classList.add('selected');
             });
         });
@@ -1173,6 +1137,11 @@ document.addEventListener('DOMContentLoaded', () => {
         startBtn.addEventListener('click', async () => {
             const startOverlay = document.getElementById('start-overlay');
             if (startOverlay) startOverlay.style.display = 'none';
+
+            // Show main app container
+            const appContainer = document.getElementById('app-container');
+            if (appContainer) appContainer.style.display = 'flex';
+
             const startMessage = document.getElementById('start-message');
             if (startMessage) startMessage.style.display = 'none';
 
