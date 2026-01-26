@@ -654,20 +654,32 @@
             const hero = document.getElementById('hero-section');
             const title = document.getElementById('hero-title');
             const desc = document.getElementById('hero-description');
+            const playBtn = document.getElementById('hero-play-btn');
+            const infoBtn = document.getElementById('hero-info-btn');
 
-            if (heroBackgrounds[scenarioId]) {
+            if (hero && heroBackgrounds[scenarioId]) {
                 hero.style.backgroundImage = `url('${heroBackgrounds[scenarioId]}')`;
-                title.textContent = scenarioId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                desc.textContent = heroDescriptions[scenarioId];
+                if (title) title.textContent = scenarioId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                if (desc) desc.textContent = heroDescriptions[scenarioId];
             }
 
-            document.getElementById('hero-play-btn').onclick = () => goToPractice(scenarioId, title.textContent);
-            document.getElementById('hero-info-btn').onclick = () => {
-                document.getElementById('trending-row').scrollIntoView({ behavior: 'smooth' });
-            };
+            if (playBtn && title) {
+                playBtn.onclick = () => goToPractice(scenarioId, title.textContent);
+            }
+
+            if (infoBtn) {
+                infoBtn.onclick = () => {
+                    const trending = document.getElementById('trending-row');
+                    if (trending) trending.scrollIntoView({ behavior: 'smooth' });
+                };
+            }
         }
 
-        setHero(randomHero);
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            setHero(randomHero);
+            loadScenarios();
+        });
 
         // Create scenario card
         function createCard(id, title) {
@@ -807,7 +819,8 @@
             }
         }
 
-        loadScenarios();
+        // loadScenarios(); // Moved to DOMContentLoaded
+
     </script>
 </body>
 
