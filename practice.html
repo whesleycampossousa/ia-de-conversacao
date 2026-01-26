@@ -580,32 +580,35 @@
             justify-content: center;
         }
 
-        .mode-card {
-            background: rgba(30, 30, 30, 0.95);
-            border: 2px solid rgba(255,255,255,0.1);
-            border-radius: 16px;
-            padding: 1.5rem 1rem;
-            width: 180px;
-            max-width: 45vw;
+        /* Use specific selector to override style.css */
+        .start-overlay-container .mode-card {
+            background: rgba(30, 30, 30, 0.95) !important;
+            border: 2px solid rgba(255,255,255,0.1) !important;
+            border-radius: 16px !important;
+            padding: 1rem 0.8rem !important;
+            width: 140px !important;
+            max-width: 42vw !important;
             cursor: pointer;
             transition: all 0.3s ease;
+            display: block !important;
+            text-align: center;
         }
 
-        .mode-card:hover {
-            transform: translateY(-5px);
-            border-color: rgba(255,255,255,0.3);
-            background: rgba(40, 40, 40, 0.95);
+        .start-overlay-container .mode-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(255,255,255,0.3) !important;
+            background: rgba(40, 40, 40, 0.95) !important;
         }
 
-        .mode-card.selected {
-            border-color: #e50914;
-            background: rgba(229, 9, 20, 0.15);
+        .start-overlay-container .mode-card.selected {
+            border-color: #e50914 !important;
+            background: rgba(229, 9, 20, 0.15) !important;
             transform: scale(1.02);
         }
 
-        .mode-icon {
-            font-size: 2.5rem;
-            margin-bottom: 0.8rem;
+        .start-overlay-container .mode-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
         }
 
         .mode-name {
@@ -633,47 +636,47 @@
             margin-top: 0.4rem;
         }
 
-        /* Mobile: cards SMALLER and SIDE BY SIDE */
+        /* Mobile: cards SMALLER and SIDE BY SIDE - v3 */
         @media (max-width: 600px) {
-            .mode-options {
-                flex-direction: row;  /* Keep side by side! */
-                gap: 0.6rem;
+            .start-overlay-container .mode-options {
+                flex-direction: row !important;
+                gap: 0.5rem !important;
             }
-            .mode-card {
-                width: 130px;
-                padding: 0.6rem 0.5rem;
+            .start-overlay-container .mode-card {
+                width: 120px !important;
+                padding: 0.5rem 0.4rem !important;
             }
-            .mode-icon {
-                font-size: 1.5rem;
-                margin-bottom: 0.3rem;
+            .start-overlay-container .mode-icon {
+                font-size: 1.4rem !important;
+                margin-bottom: 0.2rem !important;
             }
-            .mode-name {
-                font-size: 0.85rem;
+            .start-overlay-container .mode-name {
+                font-size: 0.8rem !important;
             }
-            .mode-name-pt {
-                font-size: 0.65rem;
-                margin-bottom: 0.3rem;
+            .start-overlay-container .mode-name-pt {
+                font-size: 0.6rem !important;
+                margin-bottom: 0.2rem !important;
             }
-            .mode-description,
-            .mode-description-pt {
-                display: none;  /* Hide descriptions on mobile */
+            .start-overlay-container .mode-description,
+            .start-overlay-container .mode-description-pt {
+                display: none !important;
             }
         }
 
         /* Very small screens */
         @media (max-width: 400px) {
-            .mode-card {
-                width: 110px;
-                padding: 0.5rem 0.4rem;
+            .start-overlay-container .mode-card {
+                width: 100px !important;
+                padding: 0.4rem 0.3rem !important;
             }
-            .mode-icon {
-                font-size: 1.3rem;
+            .start-overlay-container .mode-icon {
+                font-size: 1.2rem !important;
             }
-            .mode-name {
-                font-size: 0.75rem;
+            .start-overlay-container .mode-name {
+                font-size: 0.7rem !important;
             }
-            .mode-name-pt {
-                font-size: 0.6rem;
+            .start-overlay-container .mode-name-pt {
+                font-size: 0.55rem !important;
             }
         }
 
