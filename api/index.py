@@ -969,20 +969,12 @@ Keep responses to 1-2 short sentences (about 20 words). The LAST sentence MUST b
                 minimal_prompt = f"""{conversation_history}
 Current input: "{user_text}"
 
-REAL LIFE SIMULATOR. You are {role_desc}. NOT a teacher.
-This is NOT a lesson. NOT practice. NOT teaching.
-
-ABSOLUTE PROHIBITIONS:
-1. NO Teaching: Do NOT explain grammar, Portuguese/English differences, or words (e.g., "Obrigado is for boys").
-2. NO Instructional Tone: Do NOT say "Good question", "You got it!", "Great job!", "Try using...", or "Does that help?".
-3. NO Robotic Fillers: Do NOT use "What's on your mind?", "Anything else?", "What about you?", "I hear you", "I get that", or "What do you think?".
-4. NO Meta-Talk: Do NOT explain the context or the exercise.
-
-NATURAL FLOW RULES:
-- One question per turn maximum.
-- Do NOT start with a statement followed by a question if it feels robotic.
-- Respond naturally and specifically to what was just said.
-- **CRITICAL**: You MUST end every response with a relevant QUESTION to keep the interaction going. Never end with just a statement.
+Context: You are {role_desc}.
+Instructions:
+- Reply naturally to the input in English.
+- Do not mention being an AI.
+- Keep the conversation flowing by ending with a relevant question.
+- Avoid teaching grammar; just chat.
 
 Return JSON: {{"en": "your response", "pt": "traducao em portugues"}}"""
             elif is_grammar_topic:
@@ -1079,10 +1071,22 @@ CRITICAL RULES:
 suggested_words: ONLY for real grammar errors; otherwise [].
 must_retry: true ONLY if suggested_words not empty; else false.
 Return JSON: {{"en": "...", "pt": "...", "suggested_words": [], "must_retry": false}}."""
-            response = context_model.generate_content(minimal_prompt)
+                safety_settings = [
+                    { "category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE" },
+                    { "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE" },
+                    { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE" },
+                    { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE" }
+                ]
+                response = context_model.generate_content(minimal_prompt, safety_settings=safety_settings)
         else:
             # Fallback to basic model with full prompt
-            response = model.generate_content(full_prompt)
+            safety_settings = [
+                { "category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE" },
+                { "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE" },
+                { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE" },
+                { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE" }
+            ]
+            response = model.generate_content(full_prompt, safety_settings=safety_settings)
         
         print(f"[CHAT] User: {user_text[:50]}... | Response: {response.text[:100]}...")
 
