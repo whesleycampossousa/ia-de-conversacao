@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Conversation Player</title>
-    <!-- Version: 2026-01-26-v2 - pmode-card fix -->
+    <!-- Version: 2026-01-26-v3 - solid overlay background + visible play button -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
@@ -39,7 +39,7 @@
             </div>
 
             <!-- Start Overlay -->
-            <div id="start-overlay" class="start-overlay-container" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 2vh; overflow-y: auto;">
+            <div id="start-overlay" class="start-overlay-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; background: rgba(0,0,0,0.95); position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 100;">
 
                 <!-- Mode Selection (Step 1) -->
                 <div id="mode-selection" class="mode-selection-container" style="text-align: center; margin-bottom: 0.8rem;">
@@ -66,7 +66,7 @@
 
                 <!-- Play button (Step 2) -->
                 <button id="start-btn" class="primary-btn pulse-animation"
-                    style="display: none; padding: 0.6rem 1.5rem; font-size: 0.9rem;">
+                    style="display: none; padding: 1rem 2rem; font-size: 1.1rem; margin-top: 1.5rem;">
                     ▶ Play
                 </button>
                 <div id="start-message" class="start-message" style="display: none; font-size: 0.8rem;">Tap to start</div>
@@ -635,6 +635,14 @@
 
         /* Mobile: cards SMALLER and SIDE BY SIDE - v3 */
         @media (max-width: 600px) {
+            #start-overlay {
+                justify-content: flex-start !important;
+                padding-top: 20vh !important;
+            }
+            #start-btn {
+                margin-top: 1.5rem !important;
+                padding: 0.8rem 1.5rem !important;
+            }
             .start-overlay-container .pmode-options {
                 flex-direction: row !important;
                 gap: 0.5rem !important;
