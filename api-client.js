@@ -5,9 +5,35 @@
 
 class APIClient {
     constructor() {
-        this.baseURL = '';  // Relative paths for deployment
+        // Detect environment and set baseURL accordingly
+        const hostname = window.location.hostname;
+        const port = window.location.port;
+        const protocol = window.location.protocol;
+        
+        // If page is being served by Flask on port 8912, use relative paths
+        // If page is opened directly (file://) or on different port, use full URL
+        if (hostname === '' || protocol === 'file:') {
+            // File opened directly - need full URL
+            this.baseURL = 'http://localhost:8912';
+        } else if (port === '8912' || (hostname === 'localhost' && port === '')) {
+            // Already being served by Flask - use relative paths
+            this.baseURL = '';
+        } else if (hostname === 'localhost' || hostname === '127.0.0.1') {
+            // Local but different port - use full URL
+            this.baseURL = 'http://localhost:8912';
+        } else {
+            // Production/deployment - use relative paths
+            this.baseURL = '';
+        }
+        
         this.token = localStorage.getItem('auth_token');
-        this.user = JSON.parse(localStorage.getItem('conversation_user'));
+        try {
+            const userStr = localStorage.getItem('conversation_user');
+            this.user = userStr ? JSON.parse(userStr) : null;
+        } catch (e) {
+            console.warn('Error parsing user data:', e);
+            this.user = null;
+        }
     }
 
     /**
@@ -46,7 +72,12 @@ class APIClient {
 
         if (!response.ok) {
             const error = await response.json().catch(() => ({ error: 'Unknown error' }));
-            throw new Error(error.error || `HTTP ${response.status}`);
+            // Preserve full error object for TTS errors with enable_url
+            const errorMessage = error.error || error.message || `HTTP ${response.status}`;
+            const errorObj = new Error(JSON.stringify(error)); // Pass full error as JSON string
+            errorObj.status = response.status;
+            errorObj.originalError = error;
+            throw errorObj;
         }
 
         return response;
@@ -91,11 +122,25 @@ class APIClient {
     /**
      * Send chat message
      */
-    async chat(text, context, lessonLang = 'en') {
+    async chat(text, context, lessonLang = 'en', practiceMode = 'learning') {
         const response = await fetch(`${this.baseURL}/api/chat`, {
             method: 'POST',
             headers: this.getHeaders(),
-            body: JSON.stringify({ text, context, lessonLang })
+            body: JSON.stringify({ text, context, lessonLang, practiceMode })
+        });
+
+        await this.handleResponse(response);
+        return await response.json();
+    }
+
+    /**
+     * Free conversation actions (guided flow)
+     */
+    async freeConversationAction(action, payload = {}) {
+        const response = await fetch(`${this.baseURL}/api/free-conversation`, {
+            method: 'POST',
+            headers: this.getHeaders(),
+            body: JSON.stringify({ action, ...payload })
         });
 
         await this.handleResponse(response);
@@ -119,11 +164,18 @@ class APIClient {
     /**
      * Get TTS audio
      */
-    async getTTS(text, speed = 1.0, lessonLang = 'en') {
+    async getTTS(text, speed = 1.0, lessonLang = 'en', voice = 'female2') {
+        // Get voice from localStorage if not provided
+        if (!voice || voice === 'undefined') {
+            voice = localStorage.getItem('preferred_voice') || 'female2';
+        }
+        
+        console.log(`[api-client] getTTS called with voice: ${voice}, lessonLang: ${lessonLang}`);
+        
         const response = await fetch(`${this.baseURL}/api/tts`, {
             method: 'POST',
             headers: this.getHeaders(),
-            body: JSON.stringify({ text, speed, lessonLang })
+            body: JSON.stringify({ text, speed, lessonLang, voice })
         });
 
         await this.handleResponse(response);

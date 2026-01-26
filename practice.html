@@ -4,311 +4,715 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conversation Practice</title>
-    <!-- Import Inter Font -->
+    <title>Conversation Player</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 
-<body>
-    <!-- Netflix-style Start Overlay -->
-    <div id="start-overlay" class="practice-overlay">
-        <!-- Background Image -->
-        <div class="practice-overlay-bg" id="overlay-bg"></div>
+<body style="background: black; overflow: hidden;" class="audio-only-mode">
 
-        <!-- Header -->
-        <header class="practice-overlay-header">
-            <div class="header-left">
-                <button class="icon-btn" onclick="window.location.href='scenarios.html'" title="Voltar">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="15 18 9 12 15 6"></polyline>
-                    </svg>
-                </button>
-                <span class="practice-title" id="practice-title">CONVERSATION PRACTICE</span>
-                <span class="practice-timer-sep">|</span>
-                <span id="timer-display-overlay" class="practice-timer">00:00</span>
-            </div>
-            <div class="header-right">
-                <button id="cc-toggle-btn-overlay" class="subtitle-toggle-btn" title="Legendas">
-                    <span>??</span> Ativar legendas
-                </button>
-            </div>
-        </header>
+    <div class="cinematic-player">
 
-        <!-- Center Content -->
-        <div class="start-overlay-container">
-            <div class="voice-label">SELECIONE A VOZ DA IA</div>
-
-            <div class="voice-selector-container" id="voice-selector">
-                <!-- Voice options will be injected by JS -->
-            </div>
-
-            <button id="start-btn" class="play-btn pulse-animation">
-                <span class="play-icon">▶</span> Play
-            </button>
-            <p class="start-hint">Click to start conversation</p>
+        <!-- Background Image (Dynamic) -->
+        <div id="player-bg" class="player-background"
+            style="background-image: url('https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1920&q=80');">
         </div>
 
-        <!-- Avatar -->
-        <div class="avatar-container" id="avatar-container">
-            <img src="avatars/sarah.png" alt="AI Avatar" class="avatar-image" id="avatar-image"
-                 onerror="this.src='https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80'">
-        </div>
+        <!-- Overlay -->
+        <div class="player-overlay">
 
-        <!-- Report Bar -->
-        <div class="report-bar">
-            <button id="report-bar-btn" class="report-bar-button" disabled>
-                <span>📊</span> Gerar relatório da conversa
-            </button>
-        </div>
-    </div>
-
-    <!-- Main App Container (hidden until start) -->
-    <div class="app-container" id="app-container" style="display: none;">
-        <header class="compact-header">
-            <div class="header-left">
-                <button id="exit-btn" class="icon-btn" onclick="window.location.href='scenarios.html'" title="Sair">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
-            </div>
-
-            <div class="header-center">
-                <!-- Usage Timer (Minimalist) -->
-                <div id="usage-timer" class="usage-timer timer-normal">
+            <!-- Top Bar with Context Title and Subtitle Toggle -->
+            <div class="player-top-bar">
+                <div class="player-context">
+                    <span id="player-scenario-title">BASIC STRUCTURES TRAINING</span>
+                    <span class="divider">|</span>
                     <span id="timer-display">00:00</span>
+                </div>
+
+                <!-- Subtitle Toggle Button -->
+                <button id="subtitle-toggle-btn" class="subtitle-toggle-btn" onclick="toggleSubtitles()">?? Ativar
+                    legendas</button>
+            </div>
+
+            <!-- Start Overlay -->
+            <div id="start-overlay" class="start-overlay-container" style="display: flex;">
+
+                <!-- Mode Selection (Step 1) -->
+                <div id="mode-selection" class="mode-selection-container">
+                    <div class="mode-title">Choose your practice mode</div>
+                    <div class="mode-subtitle">Escolha como você quer praticar</div>
+
+                    <div class="mode-options">
+                        <div class="mode-card" data-mode="learning" id="mode-learning">
+                            <div class="mode-icon">📚</div>
+                            <div class="mode-name">Learning</div>
+                            <div class="mode-name-pt">Aprendizado</div>
+                            <div class="mode-description">Guided lesson with explanations and practice</div>
+                            <div class="mode-description-pt">Aula guiada com explicações e prática</div>
+                        </div>
+
+                        <div class="mode-card" data-mode="simulator" id="mode-simulator">
+                            <div class="mode-icon">🎭</div>
+                            <div class="mode-name">Simulator</div>
+                            <div class="mode-name-pt">Simulador</div>
+                            <div class="mode-description">Realistic roleplay - practice like in real life</div>
+                            <div class="mode-description-pt">Roleplay realista - pratique como na vida real</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Voice selector is handled by app.js after mode selection -->
+                <div id="voice-selection-step" style="display: none;"></div>
+
+                <!-- Play button (Step 2) -->
+                <button id="start-btn" class="primary-btn pulse-animation"
+                    style="transform: scale(1.3); padding: 1rem 3rem; display: none;">
+                    ▶ Play
+                </button>
+                <div id="start-message" class="start-message" style="display: none;">Click to start conversation</div>
+            </div>
+
+            <!-- Subtitle Chat Area -->
+            <div id="chat-window" class="subtitle-container"></div>
+
+            <!-- Suggestions Panel (Learning Mode) -->
+            <div id="suggestions-panel" class="suggestions-panel" style="display: none;">
+                <div class="suggestions-title">Escolha uma das frases e leia em voz alta</div>
+                <div id="suggestions-list" class="suggestions-list"></div>
+            </div>
+
+            <!-- Free Conversation Question Picker -->
+            <div id="free-question-panel" class="free-question-panel hidden">
+                <div class="free-question-card">
+                    <div id="free-question-text" class="free-question-text">Question loading...</div>
+                    <div class="free-question-actions">
+                        <button id="free-question-refresh" class="free-question-refresh"
+                            title="Trocar pergunta">⟳</button>
+                        <button id="free-question-ok" class="free-question-ok">OK</button>
+                    </div>
                 </div>
             </div>
 
-            <div class="header-right">
-                <!-- Translation Toggle (Mini) -->
-                <label class="mini-toggle" title="Tradução Automática">
-                    <input type="checkbox" id="auto-translate-toggle">
-                    <span class="toggle-label">PT</span>
-                </label>
+            <!-- Footer Controls -->
+            <div class="player-controls footer-bar" id="footer-bar">
+                <div class="utility-row" id="utility-row">
+                    <button class="control-btn" id="exit-btn" onclick="window.location.href='scenarios.html'"
+                        title="Back to Browse">
+                        ✕
+                    </button>
 
-                <!-- CC Toggle (Subtitles) -->
-                <button id="cc-toggle-btn" class="icon-btn cc-btn" onclick="toggleSubtitles()" title="Legendas (CC)">
-                    <span class="cc-icon">CC</span>
-                </button>
+                    <button id="suggestions-toggle-btn" class="suggestions-toggle-btn" title="Ver sugestoes"
+                        style="display: none;">
+                        Ver sugestoes
+                    </button>
+
+                    <!-- Hidden checkbox for app.js compatibility -->
+                    <input type="checkbox" id="auto-translate-toggle" style="display:none;">
+
+                    <button class="control-btn" id="report-icon-btn"
+                        onclick="document.getElementById('report-btn').click()" title="Report">
+                        📊
+                    </button>
+
+                    <!-- Hidden original report button triggered by icon -->
+                    <button id="report-btn" style="display:none;">Report</button>
+                </div>
+
+                <div class="input-row" id="input-row">
+                    <!-- Mic button stays visible next to input -->
+                    <div class="text-input-container">
+                        <input type="text" id="text-input" class="text-input" placeholder="Type your message...">
+                        <button id="send-btn" class="action-btn send-btn">Send</button>
+                    </div>
+                    <button id="record-btn" class="control-btn mic-btn" title="Start/Speak" disabled>
+                        <span id="mic-icon-inner">🎤</span>
+                    </button>
+                    <div id="record-text" style="display: none;"></div>
+                </div>
+
+                <div id="report-bar" class="report-bar">
+                    <button id="report-bar-btn">
+                        📊 Gerar relatório da conversa
+                    </button>
+                </div>
             </div>
-        </header>
 
-        <!-- Main Chat Area (Dominant) -->
-        <main id="chat-window" class="audio-focused">
-            <!-- Messages will be injected here via JS -->
-        </main>
-
-        <!-- Footer Controls (Compact Grid) -->
-        <footer class="controls">
-            <div id="status-indicator"></div>
-            <p class="mic-tip" style="margin: 0.5rem 0; font-size: 0.85rem; color: #94a3b8; text-align: center;">
-                💡 Dica: Fale devagar e claramente para melhor reconhecimento
-            </p>
-            <button id="record-btn" class="record-btn" disabled>
-                <div class="mic-icon"></div>
-                <span id="record-text">🎤 Clique para Falar</span>
-            </button>
-            <p class="disabled-hint" id="mic-hint" style="display: none;">Click "Start Conversation" to begin</p>
-            <button id="report-btn" class="action-btn" disabled>Ver Relatório</button>
-        </footer>
-    </div>
-
-    <!-- Fullscreen Report Modal -->
-    <div id="report-modal" class="report-modal" style="display: none;">
-        <div class="report-modal-content">
-            <div class="report-modal-header">
-                <h2>📊 Relatório de Prática</h2>
-                <button class="report-modal-close" onclick="closeReportModal()">✕</button>
+            <!-- Avatar Container -->
+            <div id="avatar-container" class="avatar-container">
+                <div class="avatar-wrapper">
+                    <img id="avatar-image"
+                        src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80"
+                        alt="AI Avatar" class="avatar-img"
+                        onerror="this.src='https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80'">
+                    <div id="talking-overlay" class="talking-overlay"></div>
+                </div>
             </div>
-            <div class="report-modal-body" id="report-modal-body">
-                <!-- Report content will be inserted here -->
+
+            <!-- Connection Status (Bottom Right) -->
+            <div id="status-indicator" class="status-indicator">
+                Ready
             </div>
+
+
         </div>
     </div>
 
-    <!-- Text Input Bar (for typing mode) -->
-    <div id="text-input-bar" class="text-input-bar" style="display: none;">
-        <input type="text" id="text-input" placeholder="Type your message..." autocomplete="off">
-        <button id="send-btn" class="send-btn">Send</button>
-        <button id="mic-toggle-btn" class="mic-toggle-btn" title="Switch to voice">🎤</button>
+    <!-- Report Modal (Cinematic Style) -->
+    <div id="report-modal" class="report-modal" style="display: none;">
+        <div class="report-modal-content" style="background: rgba(20,20,20,0.95); border: 1px solid #333; color: #fff;">
+            <div class="report-modal-header" style="border-bottom: 1px solid #333;">
+                <h2 style="color: #fff;">Performance Report</h2>
+                <button class="report-modal-close" onclick="closeReportModal()" style="color: #fff;">✕</button>
+            </div>
+            <div class="report-modal-body" id="report-modal-body">
+                <!-- Content -->
+            </div>
+        </div>
     </div>
 
     <script src="api-client.js"></script>
     <script src="deepgram-recorder.js"></script>
-    <script src="app.js"></script>
 
     <script>
-        // Initialize practice overlay on page load
-        (function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const context = urlParams.get('context') || 'coffee_shop';
-            const contextName = urlParams.get('title') || 'Practice';
-            const lessonLang = urlParams.get('lessonLang') || 'en';
+        // Init Player UI logic
+        const urlParams = new URLSearchParams(window.location.search);
+        const scenarioTitle = urlParams.get('title') || 'Conversation';
+        const scenarioTitleEl = document.getElementById('player-scenario-title');
+        if (scenarioTitleEl) {
+            scenarioTitleEl.textContent = scenarioTitle.toUpperCase();
+        }
 
-            // Set practice title
-            const titleEl = document.getElementById('practice-title');
-            if (titleEl) {
-                titleEl.textContent = contextName.toUpperCase();
+        // Find background image based on context ID
+        const contextId = urlParams.get('context') || 'basic_structures';
+        const lessonLang = urlParams.get('lessonLang') || 'en';
+
+        // Theme-appropriate images for each scenario/lesson
+        const categoryImages = {
+            // Conversation scenarios
+            'coffee_shop': 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1920&q=80',
+            'hotel': 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1920&q=80',
+            'restaurant': 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1920&q=80',
+            'airport': 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1920&q=80',
+            'job_interview': 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=1920&q=80',
+            'basic_structures': 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1920&q=80',
+            'shopping': 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1920&q=80',
+            'doctor': 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=1920&q=80',
+            'free_conversation': 'https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=1920&q=80',
+            'taxi': 'https://images.unsplash.com/photo-1511994714008-b6d68a8b32a2?auto=format&fit=crop&w=1920&q=80',
+            'supermarket': 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1920&q=80',
+            'bank': 'https://images.unsplash.com/photo-1501167786227-4cba60f6d58f?auto=format&fit=crop&w=1920&q=80',
+            'pharmacy': 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&w=1920&q=80',
+            'gym': 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1920&q=80',
+            'cinema': 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1920&q=80',
+            'gas_station': 'https://images.unsplash.com/photo-1545458102-0bc66d2636a2?auto=format&fit=crop&w=1920&q=80',
+            'laundry': 'https://images.unsplash.com/photo-1545173168-9f1947eebb7f?auto=format&fit=crop&w=1920&q=80',
+            'post_office': 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?auto=format&fit=crop&w=1920&q=80',
+            'library': 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=1920&q=80',
+            'beach': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1920&q=80',
+            'park': 'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?auto=format&fit=crop&w=1920&q=80',
+            'museum': 'https://images.unsplash.com/photo-1566127444979-b3d2b654e3d7?auto=format&fit=crop&w=1920&q=80',
+            'train_station': 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1920&q=80',
+            'bus_station': 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?auto=format&fit=crop&w=1920&q=80',
+            'bar': 'https://images.unsplash.com/photo-1572116469696-31de0f17cc34?auto=format&fit=crop&w=1920&q=80',
+            'bakery': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=1920&q=80',
+            'bookstore': 'https://images.unsplash.com/photo-1507842217343-583bb7270b66?auto=format&fit=crop&w=1920&q=80',
+            'clothing_store': 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&w=1920&q=80',
+            'electronics_store': 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&w=1920&q=80',
+            'pet_store': 'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?auto=format&fit=crop&w=1920&q=80',
+            'hair_salon': 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1920&q=80',
+            'dentist': 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=1920&q=80',
+            'vet': 'https://images.unsplash.com/photo-1628009368231-7bb7cfcb0def?auto=format&fit=crop&w=1920&q=80',
+            'mechanic': 'https://images.unsplash.com/photo-1487754180451-c456f719a1fc?auto=format&fit=crop&w=1920&q=80',
+            'real_estate': 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1920&q=80',
+            'travel_agency': 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1920&q=80',
+            'office': 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1920&q=80',
+            'meeting': 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&w=1920&q=80',
+            'networking': 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=1920&q=80',
+            'presentation': 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&w=1920&q=80',
+            'phone_call': 'https://images.unsplash.com/photo-1423666639041-f56000c27a9a?auto=format&fit=crop&w=1920&q=80',
+            'email': 'https://images.unsplash.com/photo-1596526131083-e8c633c948d2?auto=format&fit=crop&w=1920&q=80',
+            'music': 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&w=1920&q=80',
+            'movies': 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=1920&q=80',
+            'food': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1920&q=80',
+            'travel': 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1920&q=80',
+            'family': 'https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=1920&q=80',
+            'hobbies': 'https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?auto=format&fit=crop&w=1920&q=80',
+            'weather': 'https://images.unsplash.com/photo-1504608524841-42fe6f032b4b?auto=format&fit=crop&w=1920&q=80',
+            'holidays': 'https://images.unsplash.com/photo-1482517967863-00e15c9b44be?auto=format&fit=crop&w=1920&q=80',
+            'technology': 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1920&q=80',
+            'health': 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=1920&q=80',
+            'education': 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=1920&q=80',
+            'environment': 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1920&q=80',
+
+            // Grammar Topics (Learning Mode)
+            'verb_to_be': 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1920&q=80',
+            'greetings': 'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&w=1920&q=80',
+            'articles': 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=1920&q=80',
+            'plurals': 'https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&w=1920&q=80',
+            'present_simple': 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1920&q=80',
+            'present_continuous': 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1920&q=80',
+            'past_simple': 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1920&q=80',
+            'future_forms': 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1920&q=80',
+            'basic_questions': 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1920&q=80',
+
+            // Default fallback
+            'default': 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1920&q=80'
+        };
+
+        const getBgUrl = (url) => {
+            if (!url) return url;
+            return url.replace(/w=\d+/g, 'w=1920');
+        };
+
+        const currentBg = getBgUrl(categoryImages[contextId] || categoryImages['default']);
+        const bgEl = document.getElementById('player-bg');
+        if (bgEl && currentBg) {
+            bgEl.style.backgroundImage = `url('${currentBg}')`;
+        }
+
+        // Avatar Mapping
+        const avatarMap = {
+            'hotel': 'https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=400&q=80',
+            'coffee_shop': 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=400&q=80',
+            'airport': 'https://images.unsplash.com/photo-1529070538774-1843cb3265df?auto=format&fit=crop&w=400&q=80',
+            'restaurant': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80',
+            'bank': 'https://images.unsplash.com/photo-1524503033411-c9566986fc8f?auto=format&fit=crop&w=400&q=80',
+            'cinema': 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=400&q=80',
+            'doctor': 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=400&q=80',
+            'gas_station': 'https://images.unsplash.com/photo-1524502397800-2eeaad7c3fe5?auto=format&fit=crop&w=400&q=80',
+            'gym': 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=400&q=80',
+            'job_interview': 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80',
+            'library': 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=400&q=80',
+            'museum': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80',
+            'park': 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80',
+            'pharmacy': 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=400&q=80',
+            'school': 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=400&q=80',
+            'supermarket': 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=400&q=80',
+            'default': 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80'
+        };
+
+        // Load Avatar
+        const avatarImg = document.getElementById('avatar-image');
+        const avatarSrc = avatarMap[contextId] || avatarMap['default'];
+        if (avatarImg) {
+            avatarImg.src = avatarSrc;
+            avatarImg.onerror = function () {
+                this.src = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80';
+            };
+        }
+
+        // Make startTalking/stopTalking available globally for app.js
+        window.startAvatarTalking = () => {
+            const wrapper = document.querySelector('.avatar-wrapper');
+            if (wrapper) wrapper.classList.add('talking');
+        };
+
+        window.stopAvatarTalking = () => {
+            const wrapper = document.querySelector('.avatar-wrapper');
+            if (wrapper) wrapper.classList.remove('talking');
+        };
+
+        // Voice selector is now handled entirely by app.js
+        // Make selected voice available globally for app.js
+        window.getSelectedVoice = () => {
+            return localStorage.getItem('preferred_voice') || 'female2';
+        };
+
+        // Subtitle visibility state
+        let subtitlesEnabled = false;
+        window.subtitlesEnabled = subtitlesEnabled;
+        const subtitleToggleBtn = document.getElementById('subtitle-toggle-btn');
+        const autoTranslateCheckbox = document.getElementById('auto-translate-toggle');
+
+        if (!window.obfuscateText) {
+            window.obfuscateText = () => '(... ...)';
+        }
+
+        function updateToggleUI() {
+            if (subtitleToggleBtn) {
+                subtitleToggleBtn.textContent = window.subtitlesEnabled
+                    ? '?? Desativar legendas'
+                    : '?? Ativar legendas';
+                subtitleToggleBtn.classList.toggle('active', window.subtitlesEnabled);
+            }
+            if (autoTranslateCheckbox) {
+                autoTranslateCheckbox.checked = window.subtitlesEnabled;
+            }
+        }
+
+        function applySubtitleState() {
+            const chatWindow = document.getElementById('chat-window');
+            if (chatWindow) {
+                chatWindow.classList.toggle('subtitles-on', window.subtitlesEnabled);
             }
 
-            // Set background image based on context
-            const bgEl = document.getElementById('overlay-bg');
-            const contextImages = {
-                'coffee_shop': 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1920&q=80',
-                'hotel': 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1920&q=80',
-                'restaurant': 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1920&q=80',
-                'airport': 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1920&q=80',
-                'job_interview': 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=1920&q=80',
-                'basic_structures': 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1920&q=80',
-                'shopping': 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1920&q=80',
-                'doctor': 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=1920&q=80',
-                'free_conversation': 'https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=1920&q=80',
-                'taxi': 'https://images.unsplash.com/photo-1511994714008-b6d68a8b32a2?auto=format&fit=crop&w=1920&q=80',
-                'supermarket': 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1920&q=80',
-                'bank': 'https://images.unsplash.com/photo-1501167786227-4cba60f6d58f?auto=format&fit=crop&w=1920&q=80',
-                'pharmacy': 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&w=1920&q=80',
-                'gym': 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1920&q=80',
-                'cinema': 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1920&q=80',
-                'gas_station': 'https://images.unsplash.com/photo-1545458102-0bc66d2636a2?auto=format&fit=crop&w=1920&q=80',
-                'laundry': 'https://images.unsplash.com/photo-1545173168-9f1947eebb7f?auto=format&fit=crop&w=1920&q=80',
-                'post_office': 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?auto=format&fit=crop&w=1920&q=80',
-                'library': 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=1920&q=80',
-                'beach': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1920&q=80',
-                'park': 'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?auto=format&fit=crop&w=1920&q=80',
-                'museum': 'https://images.unsplash.com/photo-1566127444979-b3d2b654e3d7?auto=format&fit=crop&w=1920&q=80',
-                'train_station': 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1920&q=80',
-                'bus_station': 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?auto=format&fit=crop&w=1920&q=80',
-                'bar': 'https://images.unsplash.com/photo-1572116469696-31de0f17cc34?auto=format&fit=crop&w=1920&q=80',
-                'bakery': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=1920&q=80',
-                'bookstore': 'https://images.unsplash.com/photo-1507842217343-583bb7270b66?auto=format&fit=crop&w=1920&q=80',
-                'clothing_store': 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&w=1920&q=80',
-                'electronics_store': 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&w=1920&q=80',
-                'pet_store': 'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?auto=format&fit=crop&w=1920&q=80',
-                'hair_salon': 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1920&q=80',
-                'dentist': 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=1920&q=80',
-                'vet': 'https://images.unsplash.com/photo-1628009368231-7bb7cfcb0def?auto=format&fit=crop&w=1920&q=80',
-                'mechanic': 'https://images.unsplash.com/photo-1487754180451-c456f719a1fc?auto=format&fit=crop&w=1920&q=80',
-                'real_estate': 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1920&q=80',
-                'travel_agency': 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1920&q=80',
-                'office': 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1920&q=80',
-                'meeting': 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&w=1920&q=80',
-                'networking': 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=1920&q=80',
-                'presentation': 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&w=1920&q=80',
-                'phone_call': 'https://images.unsplash.com/photo-1423666639041-f56000c27a9a?auto=format&fit=crop&w=1920&q=80',
-                'email': 'https://images.unsplash.com/photo-1596526131083-e8c633c948d2?auto=format&fit=crop&w=1920&q=80',
-                'sports': 'https://images.unsplash.com/photo-1461896836934- voices-training-speaking?auto=format&fit=crop&w=1920&q=80',
-                'music': 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&w=1920&q=80',
-                'movies': 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=1920&q=80',
-                'food': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1920&q=80',
-                'travel': 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1920&q=80',
-                'family': 'https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=1920&q=80',
-                'hobbies': 'https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?auto=format&fit=crop&w=1920&q=80',
-                'weather': 'https://images.unsplash.com/photo-1504608524841-42fe6f032b4b?auto=format&fit=crop&w=1920&q=80',
-                'holidays': 'https://images.unsplash.com/photo-1482517967863-00e15c9b44be?auto=format&fit=crop&w=1920&q=80',
-                'technology': 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1920&q=80',
-                'health': 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=1920&q=80',
-                'education': 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=1920&q=80',
-                'environment': 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1920&q=80'
-            };
+            const subtitleLines = document.querySelectorAll('.subtitle-line');
+            subtitleLines.forEach(el => {
+                const realText = el.getAttribute('data-text') || el.innerText || '';
+                if (!realText) return;
+                const decodedText = realText.replace(/&quot;/g, '"').replace(/&amp;/g, '&');
+                el.setAttribute('data-text', decodedText);
+                el.innerText = window.subtitlesEnabled
+                    ? decodedText
+                    : (window.obfuscateText ? window.obfuscateText(decodedText) : '(... ...)');
+            });
 
-            // Grammar topics images
-            const grammarImages = {
-                'verb_to_be': 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1920&q=80',
-                'greetings': 'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&w=1920&q=80',
-                'articles': 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=1920&q=80',
-                'plurals': 'https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&w=1920&q=80',
-                'present_simple': 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1920&q=80',
-                'present_continuous': 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1920&q=80',
-                'past_simple': 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1920&q=80',
-                'future_forms': 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1920&q=80',
-                'basic_questions': 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1920&q=80'
-            };
+            const translations = document.querySelectorAll('.translation-line');
+            translations.forEach(el => {
+                el.style.display = window.subtitlesEnabled ? 'block' : 'none';
+            });
+        }
 
-            const bgImage = contextImages[context] || grammarImages[context] || 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=1920&q=80';
-            if (bgEl) {
-                bgEl.style.backgroundImage = `url('${bgImage}')`;
-            }
+        // Initialize UI State
+        updateToggleUI();
+        applySubtitleState();
 
-            // Initialize voice selector
-            const normalizedLang = (lessonLang || '').toLowerCase();
-            const isPortuguese = normalizedLang === 'pt' || normalizedLang === 'pt-br' || normalizedLang === 'pt_br';
+        function toggleSubtitles() {
+            window.subtitlesEnabled = !window.subtitlesEnabled;
+            localStorage.setItem('auto_translate', window.subtitlesEnabled ? 'true' : 'false');
 
-            const voiceSets = {
-                en: [
-                    { id: 'female1', avatar: '👩', label: 'Sarah' },
-                    { id: 'female2', avatar: '👩‍🦰', label: 'Emma' },
-                    { id: 'male1', avatar: '👨', label: 'James' }
-                ],
-                pt: [
-                    { id: 'female1', avatar: '👩', label: 'Bruna' },
-                    { id: 'female2', avatar: '👩‍🦰', label: 'Camila' },
-                    { id: 'male1', avatar: '👨', label: 'Rafael' }
-                ]
-            };
+            updateToggleUI();
+            applySubtitleState();
+        }
 
-            const voices = voiceSets[isPortuguese ? 'pt' : 'en'];
-            const currentVoice = localStorage.getItem('preferred_voice') || 'female1';
-            const selectorEl = document.getElementById('voice-selector');
+        // Make toggleSubtitles available globally
+        window.toggleSubtitles = toggleSubtitles;
 
-            if (selectorEl) {
-                selectorEl.innerHTML = voices.map(v => `
-                    <div class="voice-option ${currentVoice === v.id ? 'selected' : ''}" data-voice="${v.id}">
-                        <div class="voice-avatar">${v.avatar}</div>
-                        <div class="voice-name">${v.label}</div>
-                    </div>
-                `).join('');
+        // ===== MODE SELECTION LOGIC =====
+        let selectedMode = localStorage.getItem('practice_mode') || null;
 
-                // Add click handlers
-                selectorEl.querySelectorAll('.voice-option').forEach(opt => {
-                    opt.addEventListener('click', () => {
-                        const voice = opt.dataset.voice;
-                        localStorage.setItem('preferred_voice', voice);
-                        selectorEl.querySelectorAll('.voice-option').forEach(o => o.classList.remove('selected'));
-                        opt.classList.add('selected');
+        // Initialize mode selection
+        function initModeSelection() {
+            const modeCards = document.querySelectorAll('.mode-card');
+            const voiceSelectionStep = document.getElementById('voice-selection-step');
+            const startBtn = document.getElementById('start-btn');
+            const startMessage = document.getElementById('start-message');
 
-                        // Update avatar
-                        updateAvatar(voice);
-                    });
+            modeCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    // Remove selected from all cards
+                    modeCards.forEach(c => c.classList.remove('selected'));
+                    // Add selected to clicked card
+                    card.classList.add('selected');
+                    // Store selected mode
+                    selectedMode = card.dataset.mode;
+                    localStorage.setItem('practice_mode', selectedMode);
+                    window.practiceMode = selectedMode;
+
+                    // Show voice selection step (app.js will inject voice selector here)
+                    if (voiceSelectionStep) {
+                        voiceSelectionStep.style.display = 'block';
+                    }
+
+                    // Show start button after mode selection
+                    if (startBtn) {
+                        startBtn.style.display = 'block';
+                    }
+                    if (startMessage) {
+                        startMessage.style.display = 'block';
+                    }
+
+                    console.log('[MODE] Selected mode:', selectedMode);
                 });
-            }
+            });
 
-            // Avatar update function
-            function updateAvatar(voice) {
-                const avatarImg = document.getElementById('avatar-image');
-                const fallbacks = {
-                    'female1': 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80',
-                    'female2': 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=400&q=80',
-                    'male1': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80'
-                };
-                if (avatarImg) {
-                    avatarImg.src = `avatars/${voices.find(v => v.id === voice)?.label.toLowerCase() || 'sarah'}.png`;
-                    avatarImg.onerror = function() {
-                        this.src = fallbacks[voice] || fallbacks['female1'];
-                    };
+            // If mode was already selected (from localStorage), apply it
+            if (selectedMode) {
+                const savedCard = document.querySelector(`.mode-card[data-mode="${selectedMode}"]`);
+                if (savedCard) {
+                    savedCard.classList.add('selected');
+                    window.practiceMode = selectedMode;
+                    // Show start button
+                    if (startBtn) startBtn.style.display = 'block';
+                    if (startMessage) startMessage.style.display = 'block';
                 }
             }
+        }
 
-            // Initialize avatar
-            updateAvatar(currentVoice);
+        // Global function to get selected mode
+        window.getSelectedMode = () => selectedMode || 'learning';
 
-            // CC toggle for overlay
-            const ccToggleOverlay = document.getElementById('cc-toggle-btn-overlay');
-            if (ccToggleOverlay) {
-                ccToggleOverlay.addEventListener('click', () => {
-                    document.body.classList.toggle('subtitles-on');
-                    const isOn = document.body.classList.contains('subtitles-on');
-                    ccToggleOverlay.innerHTML = isOn ? '<span>CC</span> Desativar legendas' : '<span>??</span> Ativar legendas';
-                });
-            }
-        })();
+        // Initialize on DOM ready
+        initModeSelection();
     </script>
+
+    <!-- Load App Logic -->
+    <script src="app.js"></script>
+
+    <style>
+        /* Top bar styles */
+        .player-top-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 50;
+        }
+
+        .player-context {
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 600;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .player-context .divider {
+            opacity: 0.5;
+        }
+
+        #timer-display {
+            font-feature-settings: 'tnum';
+        }
+
+        /* Subtitle toggle button */
+        .subtitle-toggle-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: rgba(255, 255, 255, 0.7);
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .subtitle-toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        .subtitle-toggle-btn.active {
+            background: rgba(229, 9, 20, 0.3);
+            border-color: #E50914;
+            color: #fff;
+        }
+
+        /* Start overlay */
+        .start-overlay-container {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 10;
+        }
+
+        /* Mode Selection Styles */
+        .mode-selection-container {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .mode-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .mode-subtitle {
+            font-size: 1rem;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 2rem;
+        }
+
+        .mode-options {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+        }
+
+        .mode-card {
+            background: rgba(30, 30, 30, 0.95);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 2rem 1.5rem;
+            width: 200px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .mode-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255,255,255,0.3);
+            background: rgba(40, 40, 40, 0.95);
+        }
+
+        .mode-card.selected {
+            border-color: #e50914;
+            background: rgba(229, 9, 20, 0.15);
+            transform: scale(1.02);
+        }
+
+        .mode-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .mode-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.25rem;
+        }
+
+        .mode-name-pt {
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 1rem;
+        }
+
+        .mode-description {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.8);
+            line-height: 1.4;
+        }
+
+        .mode-description-pt {
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.5);
+            margin-top: 0.5rem;
+        }
+
+        @media (max-width: 600px) {
+            .mode-options {
+                flex-direction: column;
+                align-items: center;
+            }
+            .mode-card {
+                width: 280px;
+            }
+        }
+
+        .start-message {
+            margin-top: 1rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Status indicator */
+        .status-indicator {
+            position: absolute;
+            bottom: 30px;
+            right: 40px;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.8rem;
+        }
+
+        /* Translation line styling */
+        .translation-line {
+            font-size: 0.9em;
+            color: #aaa;
+            margin-top: 5px;
+            font-style: italic;
+            display: none;
+            /* Hidden by default */
+        }
+
+        /* Voice selector styles - matching the model */
+        .voice-label {
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .voice-selector-container {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 30px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .voice-option {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            padding: 16px 20px;
+            min-width: 100px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+        }
+
+        .voice-option:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .voice-option.selected {
+            background: rgba(229, 9, 20, 0.2);
+            border-color: #E50914;
+            box-shadow: 0 4px 16px rgba(229, 9, 20, 0.4);
+            transform: scale(1.05);
+        }
+
+        .voice-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .voice-option.selected .voice-avatar {
+            border-color: #E50914;
+            background: rgba(229, 9, 20, 0.3);
+            box-shadow: 0 0 20px rgba(229, 9, 20, 0.5);
+        }
+
+        .voice-name {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.9);
+            text-align: center;
+        }
+
+        .voice-option.selected .voice-name {
+            color: #fff;
+        }
+
+        /* Pulse animation for Play button */
+        .pulse-animation {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1.3);
+            }
+
+            50% {
+                transform: scale(1.35);
+            }
+        }
+    </style>
 </body>
 
 </html>

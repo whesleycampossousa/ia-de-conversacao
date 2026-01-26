@@ -6,145 +6,85 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modo Aprendizado - IA de Conversação</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        /* Language Selection Modal */
-        .lang-modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(8px);
-            z-index: 10000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .lang-modal-overlay.active {
-            display: flex;
-        }
-
-        .lang-modal {
-            background: var(--surface-color);
-            border: 1px solid var(--border-color);
-            border-radius: 24px;
-            padding: 2rem;
-            max-width: 400px;
-            width: 90%;
-            text-align: center;
-            animation: slideUp 0.3s ease;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .lang-modal h2 {
-            margin-bottom: 0.5rem;
-            font-size: 1.5rem;
-        }
-
-        .lang-modal p {
-            color: var(--text-secondary);
-            margin-bottom: 1.5rem;
-            font-size: 0.95rem;
-        }
-
-        .lang-topic-title {
-            color: var(--accent-color);
-            font-weight: 600;
-        }
-
-        .lang-options {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .lang-option {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 1.25rem;
-            background: rgba(255, 255, 255, 0.03);
-            border: 2px solid transparent;
-            border-radius: 16px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-align: left;
-        }
-
-        .lang-option:hover {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: var(--accent-color);
-        }
-
-        .lang-option .flag {
-            font-size: 2rem;
-        }
-
-        .lang-option .lang-info h3 {
-            font-size: 1.1rem;
-            margin-bottom: 0.25rem;
-        }
-
-        .lang-option .lang-info p {
-            font-size: 0.85rem;
-            margin: 0;
-            color: var(--text-secondary);
-        }
-
-        .lang-cancel {
-            margin-top: 1rem;
-            background: transparent;
-            border: none;
-            color: var(--text-secondary);
-            cursor: pointer;
-            font-size: 0.9rem;
-            padding: 0.5rem;
-        }
-
-        .lang-cancel:hover {
-            color: var(--text-primary);
-        }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 
 <body>
-    <div class="app-container">
-        <header class="main-header">
-            <div class="header-content">
-                <button onclick="window.location.href='dashboard.html'" class="btn-back">
-                    ⬅ Voltar
-                </button>
-                <h1>🎓 Modo Aprendizado</h1>
-            </div>
-            <div class="header-actions">
-                <div class="user-profile" id="user-profile">
-                    <span class="avatar">👤</span>
-                    <span class="username">Carregando...</span>
-                </div>
-            </div>
-        </header>
+    <!-- Transparent Header -->
+    <header class="netflix-remote-header scrolled" id="main-header">
+        <div class="logo-big" onclick="window.location.href='dashboard.html'">EVERYDAY</div>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="scenarios.html">Conversation</a></li>
+                <li><a href="learning.html" class="active">Grammar</a></li>
+                <li><a href="dashboard.html">Dashboard</a></li>
+            </ul>
+        </nav>
+    </header>
 
-        <main class="scenarios-grid" id="topics-grid">
-            <!-- Topics will be loaded here -->
-            <div class="loading-state">
-                <div class="spinner"></div>
-                Starting classes...
+    <!-- Hero Billboard -->
+    <div class="hero-billboard" id="hero-billboard" style="background-image: url('https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <div class="hero-title" id="hero-title">Verb To Be</div>
+            <div class="hero-description" id="hero-description">
+                Start with the fundamentals. Learn how to use 'I am', 'You are', 'He is' and master the most essential verb in English.
             </div>
-        </main>
+            <div class="hero-buttons">
+                <button class="btn-play" id="hero-play-btn" onclick="showLangModal('verb_to_be', 'Verb To Be')">
+                    ► Start Lesson
+                </button>
+                <button class="btn-info" onclick="alert('Mais informações sobre o tópico em breve!')">
+                    ℹ More Info
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rows Container -->
+    <div class="rows-container" style="margin-top: -100px; position: relative; z-index: 20;">
+        <!-- Loading State -->
+        <div id="loading-state" style="text-align: center; padding: 4rem; color: #b3b3b3;">
+            <div class="spinner" style="width: 50px; height: 50px; border: 4px solid #333; border-top-color: #E50914; border-radius: 50%; margin: 0 auto 1rem; animation: spin 1s linear infinite;"></div>
+            <p>Carregando aulas...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="error-state" style="display: none; text-align: center; padding: 4rem; color: #b3b3b3;">
+            <h3 style="margin-bottom: 1rem; color: #E50914;">⚠️ Erro ao carregar aulas</h3>
+            <p id="error-message" style="margin-bottom: 1.5rem;"></p>
+            <button onclick="loadTopics()" class="primary-btn">🔄 Tentar novamente</button>
+        </div>
+
+        <!-- Basics Row -->
+        <div class="category-row" id="row-basics-container" style="display: none;">
+            <div class="row-header">🌟 Basics - Start Here</div>
+            <div class="row-grid" id="row-basics"></div>
+        </div>
+
+        <!-- Pronouns Row -->
+        <div class="category-row" id="row-pronouns-container" style="display: none;">
+            <div class="row-header">👤 Pronouns & Determiners</div>
+            <div class="row-grid" id="row-pronouns"></div>
+        </div>
+
+        <!-- Verbs Row -->
+        <div class="category-row" id="row-verbs-container" style="display: none;">
+            <div class="row-header">⚡ Verb Tenses</div>
+            <div class="row-grid" id="row-verbs"></div>
+        </div>
+
+        <!-- Grammar Row -->
+        <div class="category-row" id="row-grammar-container" style="display: none;">
+            <div class="row-header">📚 Grammar Essentials</div>
+            <div class="row-grid" id="row-grammar"></div>
+        </div>
+
+        <!-- Advanced Row -->
+        <div class="category-row" id="row-advanced-container" style="display: none;">
+            <div class="row-header">🎯 Advanced Topics</div>
+            <div class="row-grid" id="row-advanced"></div>
+        </div>
     </div>
 
     <!-- Language Selection Modal -->
@@ -177,61 +117,405 @@
 
     <script src="api-client.js"></script>
     <script>
-        // Note: apiClient is already declared in api-client.js, no need to redeclare
-        const grid = document.getElementById('topics-grid');
-        const userProfile = document.getElementById('user-profile');
+        // Header scroll effect
+        window.addEventListener('scroll', () => {
+            const header = document.getElementById('main-header');
+            if (window.scrollY > 50) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+
+        // Topic categorization for Netflix-style rows - ~50 topics
+        const topicCategories = {
+            'basics': ['verb_to_be', 'greetings', 'articles', 'plurals', 'demonstratives', 'zero_article'],
+            'pronouns': ['subject_pronouns', 'object_pronouns', 'possessives', 'possessive_pronouns', 'reflexive_pronouns'],
+            'verbs': ['present_simple', 'present_continuous', 'past_simple', 'past_continuous', 'past_perfect', 'present_perfect', 'present_perfect_continuous', 'present_perfect_vs_past_simple', 'future_forms', 'future_continuous', 'future_perfect', 'used_to_would', 'modals_ability_permission', 'modals_obligation', 'modals_advice', 'modal_deduction', 'conditionals_zero_first', 'conditionals_second', 'conditionals_third'],
+            'grammar': ['basic_questions', 'there_is_there_are', 'countable_uncountable', 'some_any_no', 'quantifiers', 'adverbs_frequency_manner', 'comparative_adverbs', 'adjectives_order', 'adjectives_vs_adverbs', 'prepositions_time_place', 'dependent_prepositions', 'gerunds_infinitives', 'phrasal_verbs', 'passive_voice', 'reported_speech', 'linking_words', 'question_tags'],
+            'advanced': ['comparatives_superlatives', 'relative_clauses', 'wish_if_only']
+        };
+
+        // Topic images - thematic for each grammar topic (~50 topics)
+        const topicImages = {
+            // Basics
+            'verb_to_be': 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=400&q=80',
+            'greetings': 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=400&q=80',
+            'articles': 'https://images.unsplash.com/photo-1456324504439-367cee3b3c32?auto=format&fit=crop&w=400&q=80',
+            'plurals': 'https://images.unsplash.com/photo-1516222338250-863216ce01ea?auto=format&fit=crop&w=400&q=80',
+            'demonstratives': 'https://images.unsplash.com/photo-1503437313881-503a91226402?auto=format&fit=crop&w=400&q=80',
+            'zero_article': 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?auto=format&fit=crop&w=400&q=80',
+            
+            // Pronouns
+            'subject_pronouns': 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=400&q=80',
+            'object_pronouns': 'https://images.unsplash.com/photo-1491438590914-bc09fcaaf77a?auto=format&fit=crop&w=400&q=80',
+            'possessives': 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=400&q=80',
+            'possessive_pronouns': 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=400&q=80',
+            'reflexive_pronouns': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80',
+            
+            // Verb Tenses
+            'present_simple': 'https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?auto=format&fit=crop&w=400&q=80',
+            'present_continuous': 'https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?auto=format&fit=crop&w=400&q=80',
+            'past_simple': 'https://images.unsplash.com/photo-1501139083538-0139583c060f?auto=format&fit=crop&w=400&q=80',
+            'past_continuous': 'https://images.unsplash.com/photo-1495995424756-6a5a3f9e7543?auto=format&fit=crop&w=400&q=80',
+            'past_perfect': 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=400&q=80',
+            'present_perfect': 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=400&q=80',
+            'present_perfect_continuous': 'https://images.unsplash.com/photo-1553531333-89bd24e93005?auto=format&fit=crop&w=400&q=80',
+            'present_perfect_vs_past_simple': 'https://images.unsplash.com/photo-1507668339897-8a035aa27c66?auto=format&fit=crop&w=400&q=80',
+            'future_forms': 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=400&q=80',
+            'future_continuous': 'https://images.unsplash.com/photo-1502189562704-87e622a34c85?auto=format&fit=crop&w=400&q=80',
+            'future_perfect': 'https://images.unsplash.com/photo-1484589065579-248aad0d628b?auto=format&fit=crop&w=400&q=80',
+            'used_to_would': 'https://images.unsplash.com/photo-1533228892524-2194fe009941?auto=format&fit=crop&w=400&q=80',
+            'modals_ability_permission': 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=400&q=80',
+            'modals_obligation': 'https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=400&q=80',
+            'modals_advice': 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=400&q=80',
+            'modal_deduction': 'https://images.unsplash.com/photo-1531238426915-058df34ea6cf?auto=format&fit=crop&w=400&q=80',
+            'conditionals_zero_first': 'https://images.unsplash.com/photo-1447015237013-0e80b2786ddc?auto=format&fit=crop&w=400&q=80',
+            'conditionals_second': 'https://images.unsplash.com/photo-1516062423079-7ca13cdc7f5a?auto=format&fit=crop&w=400&q=80',
+            'conditionals_third': 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=400&q=80',
+            
+            // Grammar Essentials
+            'basic_questions': 'https://images.unsplash.com/photo-1457369804613-52c61a468e7d?auto=format&fit=crop&w=400&q=80',
+            'there_is_there_are': 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=400&q=80',
+            'countable_uncountable': 'https://images.unsplash.com/photo-1543168256-418811576931?auto=format&fit=crop&w=400&q=80',
+            'some_any_no': 'https://images.unsplash.com/photo-1576866209830-589e1bfbaa4d?auto=format&fit=crop&w=400&q=80',
+            'quantifiers': 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=400&q=80',
+            'adverbs_frequency_manner': 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&w=400&q=80',
+            'comparative_adverbs': 'https://images.unsplash.com/photo-1501136186121-69791f111001?auto=format&fit=crop&w=400&q=80',
+            'adjectives_order': 'https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?auto=format&fit=crop&w=400&q=80',
+            'adjectives_vs_adverbs': 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=400&q=80',
+            'prepositions_time_place': 'https://images.unsplash.com/photo-1508672019048-805c876b67e2?auto=format&fit=crop&w=400&q=80',
+            'dependent_prepositions': 'https://images.unsplash.com/photo-1516979187457-637abb4f9353?auto=format&fit=crop&w=400&q=80',
+            'gerunds_infinitives': 'https://images.unsplash.com/photo-1455390582261-242963ef6707?auto=format&fit=crop&w=400&q=80',
+            'phrasal_verbs': 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80',
+            'passive_voice': 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=400&q=80',
+            'reported_speech': 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=400&q=80',
+            'linking_words': 'https://images.unsplash.com/photo-1496449903678-68ddcb189a24?auto=format&fit=crop&w=400&q=80',
+            'question_tags': 'https://images.unsplash.com/photo-1457369804613-52c61a468e7d?auto=format&fit=crop&w=400&q=80',
+            
+            // Advanced
+            'comparatives_superlatives': 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?auto=format&fit=crop&w=400&q=80',
+            'relative_clauses': 'https://images.unsplash.com/photo-1471107340929-a87cd0f5b5f3?auto=format&fit=crop&w=400&q=80',
+            'wish_if_only': 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=400&q=80',
+            
+            // Fallback
+            'default': 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=400&q=80'
+        };
+
+        // Hero images for billboard
+        const heroImages = {
+            'verb_to_be': 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80',
+            'greetings': 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1920&q=80',
+            'articles': 'https://images.unsplash.com/photo-1456324504439-367cee3b3c32?auto=format&fit=crop&w=1920&q=80',
+            'present_simple': 'https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?auto=format&fit=crop&w=1920&q=80',
+            'present_perfect': 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=1920&q=80',
+            'default': 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80'
+        };
+
+        function getTopicImage(id) {
+            return topicImages[id] || topicImages['default'];
+        }
+
+        function getHeroImage(id) {
+            return heroImages[id] || heroImages['default'];
+        }
+
+        // Icon mapping for all topics
+        function getTopicIcon(id, defaultIcon) {
+            const iconMap = {
+                'verb_to_be': '🎭',
+                'greetings': '👋',
+                'articles': '🍎',
+                'plurals': '🐈',
+                'demonstratives': '👉',
+                'zero_article': '📝',
+                'subject_pronouns': '👤',
+                'object_pronouns': '🎯',
+                'possessives': '🎒',
+                'possessive_pronouns': '🏷️',
+                'reflexive_pronouns': '🔁',
+                'present_simple': '⏰',
+                'present_continuous': '🏃',
+                'past_simple': '📅',
+                'past_continuous': '🎞️',
+                'past_perfect': '🕰️',
+                'present_perfect': '✨',
+                'present_perfect_continuous': '🔁',
+                'present_perfect_vs_past_simple': '⚖️',
+                'future_forms': '🔮',
+                'future_continuous': '⏳',
+                'future_perfect': '🎯',
+                'used_to_would': '🧸',
+                'modals_ability_permission': '✅',
+                'modals_obligation': '📌',
+                'modals_advice': '💡',
+                'modal_deduction': '🔍',
+                'conditionals_zero_first': '🌦️',
+                'conditionals_second': '💭',
+                'conditionals_third': '⏳',
+                'basic_questions': '❓',
+                'there_is_there_are': '📍',
+                'countable_uncountable': '🧮',
+                'some_any_no': '➕',
+                'quantifiers': '📊',
+                'adverbs_frequency_manner': '⏱️',
+                'comparative_adverbs': '📈',
+                'adjectives_order': '🧩',
+                'adjectives_vs_adverbs': '⚖️',
+                'prepositions_time_place': '🧭',
+                'dependent_prepositions': '🔗',
+                'gerunds_infinitives': '📝',
+                'phrasal_verbs': '🔀',
+                'passive_voice': '🎬',
+                'reported_speech': '🗣️',
+                'linking_words': '💡',
+                'question_tags': '❓',
+                'comparatives_superlatives': '🏆',
+                'relative_clauses': '🧵',
+                'wish_if_only': '🌟'
+            };
+            return iconMap[id] || defaultIcon || '📚';
+        }
+
         const langModal = document.getElementById('lang-modal');
         const modalTopicTitle = document.getElementById('modal-topic-title');
-
-        // Store selected topic for language modal
         let selectedTopic = null;
+        let allTopics = [];
 
         // Verify auth
         if (!localStorage.getItem('auth_token')) {
-            window.location.href = 'login.html';
-        }
-
-        // Set user info
-        if (apiClient.user) {
-            userProfile.querySelector('.username').textContent = apiClient.user.name;
+            window.location.href = 'index.html';
         }
 
         async function loadTopics() {
+            const loadingState = document.getElementById('loading-state');
+            const errorState = document.getElementById('error-state');
+            const errorMessage = document.getElementById('error-message');
+            
             try {
-                // Fetch topics from backend
-                const response = await fetch(`${apiClient.baseURL}/api/grammar-topics`, {
-                    headers: apiClient.getHeaders()
+                loadingState.style.display = 'block';
+                errorState.style.display = 'none';
+                
+                const apiUrl = `${apiClient.baseURL}/api/grammar-topics`;
+                console.log('Tentando carregar tópicos de:', apiUrl);
+                
+                const response = await fetch(apiUrl, {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
                 });
 
-                if (!response.ok) throw new Error('Failed to load topics');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
 
                 const topics = await response.json();
+                console.log('Tópicos carregados:', topics);
+                
+                if (!topics || !Array.isArray(topics) || topics.length === 0) {
+                    throw new Error('Nenhum tópico encontrado');
+                }
+
+                allTopics = topics;
+                loadingState.style.display = 'none';
                 renderTopics(topics);
             } catch (err) {
-                console.error('Error:', err);
-                grid.innerHTML = '<p class="error-msg">Não foi possível carregar as aulas. Tente recarregar a página.</p>';
+                console.error('Error loading topics:', err);
+                loadingState.style.display = 'none';
+                errorState.style.display = 'block';
+                
+                if (err.message.includes('Failed to fetch') || err.message.includes('ERR_CONNECTION_REFUSED') || err.name === 'TypeError') {
+                    errorMessage.innerHTML = `
+                        <p style="margin-bottom: 0.5rem;">Servidor não está rodando. Certifique-se de que o servidor Flask está ativo na porta 8912.</p>
+                        <code style="background: rgba(255,255,255,0.1); padding: 0.5rem; border-radius: 4px; display: block; margin: 1rem 0;">
+                            python api/index.py
+                        </code>
+                    `;
+                } else {
+                    errorMessage.textContent = `Erro ao carregar aulas: ${err.message}`;
+                }
             }
         }
 
         function renderTopics(topics) {
-            grid.innerHTML = '';
+            // Index topics by ID
+            const topicMap = {};
+            topics.forEach(t => topicMap[t.id] = t);
 
-            topics.forEach(topic => {
-                const card = document.createElement('div');
-                card.className = 'scenario-card learning-card';
-                card.onclick = () => showLangModal(topic.id, topic.title);
+            // Auto-categorize any topics not in predefined categories
+            autoCategorizeTopics(topics, topicMap);
 
-                card.innerHTML = `
-                    <div class="scenario-icon">${topic.icon}</div>
-                    <h3>${topic.title}</h3>
-                    <p>${topic.description}</p>
-                    <div class="card-footer">
-                        <span class="level-tag">Iniciante</span>
-                    </div>
-                `;
+            // Update hero with first topic (verb_to_be)
+            const firstTopic = topicMap['verb_to_be'] || topics[0];
+            if (firstTopic) {
+                updateHero(firstTopic);
+            }
 
-                grid.appendChild(card);
+            // Populate rows
+            populateRow('row-basics', topicCategories.basics, topicMap);
+            populateRow('row-pronouns', topicCategories.pronouns, topicMap);
+            populateRow('row-verbs', topicCategories.verbs, topicMap);
+            populateRow('row-grammar', topicCategories.grammar, topicMap);
+            populateRow('row-advanced', topicCategories.advanced, topicMap);
+        }
+
+        function updateHero(topic) {
+            const heroTitle = document.getElementById('hero-title');
+            const heroDescription = document.getElementById('hero-description');
+            const heroPlayBtn = document.getElementById('hero-play-btn');
+            const heroBillboard = document.getElementById('hero-billboard');
+
+            heroTitle.textContent = topic.title;
+            heroDescription.textContent = topic.description || 'Aprenda este tópico fundamental de gramática inglesa.';
+            heroPlayBtn.setAttribute('onclick', `showLangModal('${topic.id}', '${topic.title.replace(/'/g, "\\'")}')`);
+            
+            const heroImg = getHeroImage(topic.id);
+            heroBillboard.style.backgroundImage = `url('${heroImg}')`;
+        }
+
+        function populateRow(rowId, topicIds, topicMap) {
+            const container = document.getElementById(rowId);
+            const rowContainer = document.getElementById(`${rowId}-container`);
+            
+            // Clear container
+            container.innerHTML = '';
+            
+            let hasTopics = false;
+            topicIds.forEach(id => {
+                const t = topicMap[id];
+                if (t) {
+                    hasTopics = true;
+                    const card = createTopicCard(t);
+                    container.appendChild(card);
+                }
             });
+
+            // Show row if it has topics
+            if (hasTopics && rowContainer) {
+                rowContainer.style.display = 'block';
+            }
+        }
+
+        // Function to auto-categorize topics that aren't in predefined categories
+        function autoCategorizeTopics(topics, topicMap) {
+            // Add any topics from API that aren't in predefined categories
+            const categorizedIds = new Set();
+            Object.values(topicCategories).flat().forEach(id => categorizedIds.add(id));
+            
+            // Add uncategorized topics to appropriate rows based on their ID/name
+            topics.forEach(topic => {
+                if (!categorizedIds.has(topic.id)) {
+                    const id = topic.id.toLowerCase();
+                    const title = topic.title.toLowerCase();
+                    
+                    // Auto-categorize based on keywords
+                    if (id.includes('pronoun') || title.includes('pronoun')) {
+                        if (!topicCategories.pronouns.includes(topic.id)) {
+                            topicCategories.pronouns.push(topic.id);
+                        }
+                    } else if (id.includes('verb') || id.includes('tense') || id.includes('past') || id.includes('present') || id.includes('future') || id.includes('modal') || id.includes('conditional')) {
+                        if (!topicCategories.verbs.includes(topic.id)) {
+                            topicCategories.verbs.push(topic.id);
+                        }
+                    } else if (id.includes('question') || id.includes('preposition') || id.includes('adjective') || id.includes('adverb') || id.includes('phrasal') || id.includes('passive') || id.includes('reported') || id.includes('linking') || id.includes('gerund') || id.includes('infinitive')) {
+                        if (!topicCategories.grammar.includes(topic.id)) {
+                            topicCategories.grammar.push(topic.id);
+                        }
+                    } else if (id.includes('comparative') || id.includes('superlative') || id.includes('relative') || id.includes('clause') || id.includes('wish')) {
+                        if (!topicCategories.advanced.includes(topic.id)) {
+                            topicCategories.advanced.push(topic.id);
+                        }
+                    } else {
+                        // Default to basics
+                        if (!topicCategories.basics.includes(topic.id)) {
+                            topicCategories.basics.push(topic.id);
+                        }
+                    }
+                }
+            });
+        }
+
+        function createTopicCard(topic) {
+            const card = document.createElement('div');
+            card.className = 'poster-card';
+            card.onclick = () => {
+                updateHero(topic);
+                showLangModal(topic.id, topic.title);
+            };
+
+            const imgUrl = getTopicImage(topic.id);
+            const ptTitle = getPortugueseTitle(topic.title, topic.description);
+
+            const topicIcon = getTopicIcon(topic.id, topic.icon);
+            card.innerHTML = `
+                <div class="poster-image-wrapper">
+                    <img src="${imgUrl}" class="poster-image" alt="${topic.title}" loading="lazy">
+                    <div class="poster-overlay"></div>
+                    <div class="topic-icon">${topicIcon}</div>
+                </div>
+                <div class="poster-info">
+                    <div class="poster-title">${topic.title}</div>
+                    <div class="poster-subtitle">${ptTitle}</div>
+                    <div class="poster-tags">Beginner</div>
+                </div>
+            `;
+            return card;
+        }
+
+        function getPortugueseTitle(englishTitle, description) {
+            const translations = {
+                'Verb To Be': 'Verbo to be',
+                'Greetings & Intros': 'Saudações e apresentações',
+                'Articles (A/An/The)': 'Artigos (A/An/The)',
+                'Plural Nouns': 'Substantivos no plural',
+                'This / That / These / Those': 'This/That/These/Those',
+                'Zero Article': 'Artigo zero',
+                'Subject Pronouns': 'Pronomes sujeitos',
+                'Object Pronouns': 'Pronomes objeto',
+                'Possessive Adjectives': 'Adjetivos possessivos',
+                'Possessive Pronouns': 'Pronomes possessivos',
+                'Reflexive Pronouns': 'Pronomes reflexivos',
+                'Present Simple': 'Presente simples',
+                'Present Continuous': 'Presente contínuo',
+                'Past Simple': 'Passado simples',
+                'Past Continuous': 'Passado contínuo',
+                'Past Perfect': 'Mais-que-perfeito',
+                'Present Perfect': 'Present perfect',
+                'Present Perfect Continuous': 'Present perfect contínuo',
+                'Present Perfect vs Past Simple': 'Present perfect vs passado simples',
+                'Future Forms': 'Formas de futuro',
+                'Future Continuous': 'Futuro contínuo',
+                'Future Perfect': 'Futuro perfeito',
+                'Used To & Would': 'Used to e Would',
+                'Modals: Ability & Permission': 'Modais: habilidade e permissão',
+                'Modals: Obligation': 'Modais: obrigação',
+                'Modals: Advice': 'Modais: conselho',
+                'Modals of Deduction': 'Modais de dedução',
+                'Zero & First Conditionals': 'Condicionais zero e primeira',
+                'Second Conditional': 'Segunda condicional',
+                'Third Conditional': 'Terceira condicional',
+                'Basic Questions': 'Perguntas básicas',
+                'There Is / There Are': 'There is / There are',
+                'Countable vs Uncountable': 'Contáveis e incontáveis',
+                'Some, Any, No': 'Some, Any, No',
+                'Quantifiers': 'Quantificadores',
+                'Adverbs (Frequency & Manner)': 'Advérbios (frequência e modo)',
+                'Comparative Adverbs': 'Advérbios comparativos',
+                'Order of Adjectives': 'Ordem dos adjetivos',
+                'Adjectives vs Adverbs': 'Adjetivos vs advérbios',
+                'Prepositions (Time, Place, Movement)': 'Preposições (tempo, lugar, movimento)',
+                'Dependent Prepositions': 'Preposições dependentes',
+                'Gerunds vs Infinitives': 'Gerundios e infinitivos',
+                'Phrasal Verbs': 'Phrasal verbs',
+                'Passive Voice': 'Voz passiva',
+                'Reported Speech': 'Discurso indireto',
+                'Linking Words': 'Conectores',
+                'Question Tags': 'Question tags',
+                'Comparatives & Superlatives': 'Comparativos e superlativos',
+                'Relative Clauses': 'Orações relativas',
+                'Wish / If Only': 'Wish / If only'
+            };
+            return translations[englishTitle] || description || '';
         }
 
         function showLangModal(id, title) {
@@ -247,9 +531,7 @@
 
         function selectLessonLanguage(lang) {
             if (!selectedTopic) return;
-
             const encodedTitle = encodeURIComponent(selectedTopic.title);
-            // Navigate to practice with lesson language parameter
             window.location.href = `practice.html?context=${selectedTopic.id}&title=${encodedTitle}&type=grammar&lessonLang=${lang}`;
         }
 
@@ -263,6 +545,134 @@
         // Initialize
         loadTopics();
     </script>
+
+    <style>
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Language Modal - Netflix themed */
+        .lang-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .lang-modal-overlay.active {
+            display: flex;
+        }
+
+        .lang-modal {
+            background: #181818;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .lang-modal h2 {
+            margin-bottom: 0.5rem;
+            font-size: 1.5rem;
+            color: #fff;
+        }
+
+        .lang-modal p {
+            color: #b3b3b3;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+        }
+
+        .lang-topic-title {
+            color: #E50914;
+            font-weight: 600;
+        }
+
+        .lang-options {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .lang-option {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.25rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+
+        .lang-option:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: #E50914;
+        }
+
+        .lang-option .flag {
+            font-size: 2rem;
+        }
+
+        .lang-option .lang-info h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+            color: #fff;
+        }
+
+        .lang-option .lang-info p {
+            font-size: 0.85rem;
+            margin: 0;
+            color: #b3b3b3;
+        }
+
+        .lang-cancel {
+            margin-top: 1rem;
+            background: transparent;
+            border: none;
+            color: #808080;
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 0.5rem;
+        }
+
+        .lang-cancel:hover {
+            color: #fff;
+        }
+
+        /* Topic icon overlay on cards */
+        .topic-icon {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            font-size: 1.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            z-index: 5;
+        }
+    </style>
 </body>
 
 </html>

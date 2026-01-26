@@ -68,19 +68,52 @@ document.addEventListener('DOMContentLoaded', () => {
     const suggestionsPanel = document.getElementById('suggestions-panel');
     const suggestionsList = document.getElementById('suggestions-list');
 
-    // --- VOICE SELECTION LOGIC ---
+    // --- VOICE SELECTION LOGIC (Dynamically Injected) ---
     let currentVoice = localStorage.getItem('preferred_voice') || 'female1';
+    const normalizedLessonLang = (lessonLang || '').toLowerCase();
+    const isPortugueseLesson = normalizedLessonLang === 'pt' || normalizedLessonLang === 'pt-br' || normalizedLessonLang === 'pt_br';
 
-    // Voice selector is now created directly in practice.html
-    // This section handles the voice selection click events
-    const existingVoiceSelector = document.getElementById('voice-selector');
-    if (existingVoiceSelector) {
-        // Voice selector already exists in HTML, just add click handlers if needed
-        existingVoiceSelector.querySelectorAll('.voice-option').forEach(opt => {
+    // Voice metadata shown in the selector per lesson language
+    const voiceDisplaySets = {
+        en: [
+            { id: 'female1', avatar: '👩', label: 'Sarah', description: 'Warm American accent' },
+            { id: 'female2', avatar: '👩‍🦰', label: 'Emma', description: 'Crisp US pronunciation' },
+            { id: 'male1', avatar: '👨', label: 'James', description: 'Natural US voice' }
+        ],
+        pt: [
+            { id: 'female1', avatar: '👩', label: 'Bruna', description: 'PT-BR natural & acolhedora' },
+            { id: 'female2', avatar: '👩‍🦰', label: 'Camila', description: 'PT-BR calorosa com clareza' },
+            { id: 'male1', avatar: '👨', label: 'Rafael', description: 'PT-BR voz grave confiante' }
+        ]
+    };
+
+    // Inject Voice Selector into voice-selection-step container
+    const voiceSelectionStep = document.getElementById('voice-selection-step');
+
+    if (voiceSelectionStep) {
+        const displaySet = voiceDisplaySets[isPortugueseLesson ? 'pt' : 'en'];
+        const selectorHTML = `
+            <div style="margin-bottom: 20px; text-align: center;">
+            <div class="voice-label" style="color:rgba(255,255,255,0.7); margin-bottom:10px; font-size:0.9rem;">${isPortugueseLesson ? 'Selecione a voz realista em portugues' : 'Select the AI voice'}</div>
+                <div class="voice-selector-container">
+                    ${displaySet.map(option => `
+                        <div class="voice-option ${currentVoice === option.id ? 'selected' : ''}" data-voice="${option.id}">
+                            <div class="voice-avatar">${option.avatar}</div>
+                            <div class="voice-name">${option.label}</div>
+                            <div class="voice-desc">${option.description}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+
+        voiceSelectionStep.innerHTML = selectorHTML;
+
+        voiceSelectionStep.querySelectorAll('.voice-option').forEach(opt => {
             opt.addEventListener('click', () => {
                 currentVoice = opt.dataset.voice;
                 localStorage.setItem('preferred_voice', currentVoice);
-                existingVoiceSelector.querySelectorAll('.voice-option').forEach(o => o.classList.remove('selected'));
+                voiceSelectionStep.querySelectorAll('.voice-option').forEach(o => o.classList.remove('selected'));
                 opt.classList.add('selected');
             });
         });
@@ -1137,11 +1170,6 @@ document.addEventListener('DOMContentLoaded', () => {
         startBtn.addEventListener('click', async () => {
             const startOverlay = document.getElementById('start-overlay');
             if (startOverlay) startOverlay.style.display = 'none';
-
-            // Show main app container
-            const appContainer = document.getElementById('app-container');
-            if (appContainer) appContainer.style.display = 'flex';
-
             const startMessage = document.getElementById('start-message');
             if (startMessage) startMessage.style.display = 'none';
 
@@ -1424,8 +1452,9 @@ document.addEventListener('DOMContentLoaded', () => {
         showLoadingIndicator();
 
         try {
-            // 2. Call AI Backend with new API client (pass lessonLang for bilingual mode)
-            const data = await apiClient.chat(text, context, lessonLang);
+            // 2. Call AI Backend with new API client (pass lessonLang and practiceMode)
+            const practiceMode = window.getSelectedMode ? window.getSelectedMode() : 'learning';
+            const data = await apiClient.chat(text, context, lessonLang, practiceMode);
 
             // Hide loading indicator
             hideLoadingIndicator();

@@ -63,7 +63,7 @@
 
         <header class="dashboard-header">
             <h1 id="welcome-msg">Bem-vindo!</h1>
-            <p id="subtitle-msg">Selecione um modo para começar sua prática.</p>
+            <p id="subtitle-msg">Comece sua prática de conversação.</p>
             <button id="admin-panel-btn" class="action-btn"
                 style="display: none; margin: 1rem auto 0; padding: 0.5rem 1rem; font-size: 0.9rem; background: #475569;"
                 onclick="window.location.href='admin.html'">
@@ -86,8 +86,8 @@
                 </div>
             </a>
 
-            <!-- Learning Mode -->
-            <a href="learning.html" class="mode-card learning-mode">
+            <!-- Learning Mode - HIDDEN -->
+            <a href="learning.html" class="mode-card learning-mode" style="display: none;">
                 <svg class="icon-svg" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round"
                         d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.57 50.57 0 0 0-5.266-1.425 2.052 2.052 0 0 1 .684-2.766 50.584 50.584 0 0 1 20.916 0 2.052 2.052 0 0 1 .684 2.766 50.571 50.571 0 0 0-5.266 1.425m-15.482 0A50.55 50.55 0 0 1 12 8s.096.002.19.006c.995.043 1.99.11 2.976.202" />
@@ -110,7 +110,7 @@
         // Check auth on load
         const apiClient = new APIClient();
         if (!localStorage.getItem('auth_token')) {
-            window.location.href = 'login.html';
+            window.location.href = 'index.html';
         } else {
             const user = apiClient.getUser();
             if (user && user.is_admin) {
@@ -121,14 +121,14 @@
 
         function logout() {
             apiClient.logout();
-            window.location.href = 'login.html';
+            window.location.href = 'index.html';
         }
 
         // Language Logic
         const translations = {
             'pt': {
                 welcome: 'Bem-vindo!',
-                subtitle: 'Selecione um modo para começar sua prática.',
+                subtitle: 'Comece sua prática de conversação.',
                 convTitle: 'Conversação',
                 convDesc: 'Pratique situações reais do dia a dia. Melhore sua fluência com conversas interativas.',
                 convBtn: 'Praticar agora',
@@ -139,7 +139,7 @@
             },
             'en': {
                 welcome: 'Welcome!',
-                subtitle: 'Select a mode to start practicing.',
+                subtitle: 'Start your conversation practice.',
                 convTitle: 'Conversation',
                 convDesc: 'Practice real-life situations. Improve fluency with interactive conversations.',
                 convBtn: 'Practice Now',
@@ -158,9 +158,10 @@
             document.getElementById('conv-desc').innerText = translations[lang].convDesc;
             document.getElementById('conv-btn').innerText = translations[lang].convBtn;
 
-            document.getElementById('learn-title').innerText = translations[lang].learnTitle;
-            document.getElementById('learn-desc').innerText = translations[lang].learnDesc;
-            document.getElementById('learn-btn').innerText = translations[lang].learnBtn;
+            // Learning mode is hidden, but keep translations for future use
+            // document.getElementById('learn-title').innerText = translations[lang].learnTitle;
+            // document.getElementById('learn-desc').innerText = translations[lang].learnDesc;
+            // document.getElementById('learn-btn').innerText = translations[lang].learnBtn;
 
             document.getElementById('logout-btn').innerText = translations[lang].logout;
 

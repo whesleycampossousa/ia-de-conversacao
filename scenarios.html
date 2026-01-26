@@ -31,7 +31,7 @@
             right: 0;
             z-index: 100;
             padding: 1rem 3rem;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, transparent 100%);
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.9) 0%, transparent 100%);
         }
 
         .netflix-logo {
@@ -58,7 +58,7 @@
             content: '';
             position: absolute;
             inset: 0;
-            background: linear-gradient(to top, #0a0a0a 0%, transparent 50%, rgba(0,0,0,0.3) 100%);
+            background: linear-gradient(to top, #0a0a0a 0%, transparent 50%, rgba(0, 0, 0, 0.3) 100%);
         }
 
         .hero-content {
@@ -72,7 +72,7 @@
             font-weight: 800;
             line-height: 1;
             margin-bottom: 1rem;
-            text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
         }
 
         .hero-description {
@@ -80,7 +80,7 @@
             color: #ccc;
             margin-bottom: 1.5rem;
             line-height: 1.5;
-            text-shadow: 1px 1px 4px rgba(0,0,0,0.8);
+            text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8);
         }
 
         .hero-buttons {
@@ -299,7 +299,8 @@
                 font-size: 2.5rem;
             }
 
-            .start-here, .category-section {
+            .start-here,
+            .category-section {
                 padding-left: 1.5rem;
                 padding-right: 1.5rem;
             }
@@ -327,7 +328,7 @@
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.8);
+            background: rgba(0, 0, 0, 0.8);
             z-index: 1000;
             align-items: center;
             justify-content: center;
@@ -353,7 +354,8 @@
     <section class="hero" id="hero-section">
         <div class="hero-content">
             <h1 class="hero-title" id="hero-title">Job Interview</h1>
-            <p class="hero-description" id="hero-description">Prepare for your dream career. Master the art of professional dialogue, answer tough questions with confidence, and leave a lasting impression.</p>
+            <p class="hero-description" id="hero-description">Prepare for your dream career. Master the art of
+                professional dialogue, answer tough questions with confidence, and leave a lasting impression.</p>
             <div class="hero-buttons">
                 <button class="btn-play" id="hero-play-btn">
                     <span>&#9658;</span> Play
@@ -369,12 +371,14 @@
     <section class="start-here">
         <h2 class="section-title"><span style="color: #e50914;">&#127919;</span> Start Here</h2>
         <div class="start-here-card" onclick="goToPractice('free_conversation', 'Free Conversation')">
-            <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=300&fit=crop" alt="Free Conversation" class="start-here-image">
+            <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=300&fit=crop"
+                alt="Free Conversation" class="start-here-image">
             <div class="start-here-content">
                 <span class="badge-new">&#9679; NOVO</span>
                 <h3 class="start-here-title">Conversacao Livre</h3>
                 <p class="start-here-subtitle">Free Conversation</p>
-                <p class="start-here-description">Escolha o tema que quiser! A IA vai perguntar sobre o que voce quer conversar.</p>
+                <p class="start-here-description">Escolha o tema que quiser! A IA vai perguntar sobre o que voce quer
+                    conversar.</p>
                 <button class="btn-start">&#9658; Comecar Agora</button>
             </div>
         </div>
@@ -419,62 +423,115 @@
     <script src="api-client.js"></script>
     <script>
         // Auth Check
-        const user = JSON.parse(localStorage.getItem('conversation_user'));
-        if (!user) window.location.href = 'index.html';
+        console.log('[DEBUG] Verificando autenticação...');
+        let user = null;
+        try {
+            user = JSON.parse(localStorage.getItem('conversation_user'));
+            console.log('[DEBUG] Usuário:', user ? user.email : 'não logado');
+        } catch (e) {
+            console.error('[DEBUG] Erro ao ler usuário:', e);
+        }
+        if (!user) {
+            console.log('[DEBUG] Redirecionando para login...');
+            window.location.href = 'index.html';
+        }
+    </script>
 
-        // Scenario Images (using Unsplash for high quality images)
+    <script>
+        console.log('[DEBUG] Script principal iniciando...');
+
+        // Data definitions - imagens para todos os cenários
         const scenarioImages = {
-            'free_conversation': 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=300&fit=crop',
-            'basic_structures': 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=400&h=300&fit=crop',
-            'coffee_shop': 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&h=300&fit=crop',
-            'street': 'https://images.unsplash.com/photo-1517732306149-e8f829eb588a?w=400&h=300&fit=crop',
+            'restaurant': 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop',
+            'job_interview': 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=400&h=300&fit=crop',
+            'airport': 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=400&h=300&fit=crop',
+            'hotel': 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=300&fit=crop',
+            'coffee_shop': 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=300&fit=crop',
+            'supermarket': 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&h=300&fit=crop',
+            'pharmacy': 'https://images.unsplash.com/photo-1631549916768-4119b2e5f926?w=400&h=300&fit=crop',
+            'basic_structures': 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=400&h=300&fit=crop',
+            'free_conversation': 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=400&h=300&fit=crop',
+            'street': 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=400&h=300&fit=crop',
             'parents_house': 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=400&h=300&fit=crop',
             'school': 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=400&h=300&fit=crop',
-            'airport': 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=400&h=300&fit=crop',
-            'supermarket': 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&h=300&fit=crop',
             'doctor': 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=400&h=300&fit=crop',
-            'pharmacy': 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=400&h=300&fit=crop',
-            'library': 'https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=400&h=300&fit=crop',
-            'job_interview': 'https://images.unsplash.com/photo-1565688534245-05d6b5be184a?w=400&h=300&fit=crop',
-            'hotel': 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=300&fit=crop',
-            'restaurant': 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop',
-            'gas_station': 'https://images.unsplash.com/photo-1545558014-8692077e9b5c?w=400&h=300&fit=crop',
+            'library': 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=400&h=300&fit=crop',
+            'gas_station': 'https://images.unsplash.com/photo-1545458102-0bc66d2636a2?w=400&h=300&fit=crop',
             'gym': 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=300&fit=crop',
             'cinema': 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400&h=300&fit=crop',
-            'park': 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=400&h=300&fit=crop',
-            'museum': 'https://images.unsplash.com/photo-1554907984-15263bfd63bd?w=400&h=300&fit=crop',
-            'bank': 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&h=300&fit=crop',
-            'post_office': 'https://images.unsplash.com/photo-1568254183919-78a4f43a2877?w=400&h=300&fit=crop',
+            'park': 'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?w=400&h=300&fit=crop',
+            'museum': 'https://images.unsplash.com/photo-1566127992631-137a642a90f4?w=400&h=300&fit=crop',
+            'bank': 'https://images.unsplash.com/photo-1501167786227-4cba60f6d58f?w=400&h=300&fit=crop',
+            'post_office': 'https://images.unsplash.com/photo-1526367790999-0150786686a2?w=400&h=300&fit=crop',
             'train_station': 'https://images.unsplash.com/photo-1474487548417-781cb71495f3?w=400&h=300&fit=crop',
-            'bus_stop': 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=400&h=300&fit=crop',
+            'bus_stop': 'https://images.unsplash.com/photo-1507038732195-23c7210e7dc2?w=400&h=300&fit=crop',
             'hair_salon': 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&h=300&fit=crop',
             'clothing_store': 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop',
             'pet_shop': 'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=400&h=300&fit=crop',
             'bakery': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400&h=300&fit=crop',
-            'dental_clinic': 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=400&h=300&fit=crop',
-            'tech_support': 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=400&h=300&fit=crop',
-            'pizza_delivery': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=300&fit=crop',
+            'flower_shop': 'https://images.unsplash.com/photo-1494972683935-1f3964508277?w=400&h=300&fit=crop',
+            'dental_clinic': 'https://images.unsplash.com/photo-1606107583011-90ee53ff17bf?w=400&h=300&fit=crop',
+            'tech_support': 'https://images.unsplash.com/photo-1520923647493-9077755c9111?w=400&h=300&fit=crop',
+            'pizza_delivery': 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=300&fit=crop',
             'renting_car': 'https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=400&h=300&fit=crop',
+            'lost_found': 'https://images.unsplash.com/photo-1586769852044-692d6e3703f0?w=400&h=300&fit=crop',
             'neighbor': 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&h=300&fit=crop',
-            'wedding': 'https://images.unsplash.com/photo-1519741497674-611481863552?w=400&h=300&fit=crop',
-            'graduation': 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=400&h=300&fit=crop'
+            'first_date': 'https://images.unsplash.com/photo-1511632765487-2f47d8c5e5ed?w=400&h=300&fit=crop',
+            'wedding': 'https://images.unsplash.com/photo-1519748123821-4418640702d7?w=400&h=300&fit=crop',
+            'graduation': 'https://images.unsplash.com/photo-1523050843133-a31dfc9a3c3f?w=400&h=300&fit=crop',
+            'verb_to_be': 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&h=300&fit=crop',
+            'greetings': 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=400&h=300&fit=crop',
+            'articles': 'https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=400&h=300&fit=crop',
+            'plurals': 'https://images.unsplash.com/photo-1516321165247-4aa89a48be28?w=400&h=300&fit=crop',
+            'demonstratives': 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=400&h=300&fit=crop',
+            'zero_article': 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=400&h=300&fit=crop',
+            'subject_pronouns': 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=300&fit=crop',
+            'object_pronouns': 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=400&h=300&fit=crop',
+            'possessives': 'https://images.unsplash.com/photo-1513128034602-7814ccadence?w=400&h=300&fit=crop',
+            'possessive_pronouns': 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=400&h=300&fit=crop',
+            'reflexive_pronouns': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop',
+            'present_simple': 'https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=400&h=300&fit=crop',
+            'present_continuous': 'https://images.unsplash.com/photo-1552581234-26160f608093?w=400&h=300&fit=crop',
+            'past_simple': 'https://images.unsplash.com/photo-1501139083538-0139583c060f?w=400&h=300&fit=crop',
+            'past_continuous': 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=400&h=300&fit=crop',
+            'past_perfect': 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=400&h=300&fit=crop',
+            'present_perfect': 'https://images.unsplash.com/photo-1488190211105-8b0e65b80b4e?w=400&h=300&fit=crop',
+            'present_perfect_continuous': 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400&h=300&fit=crop',
+            'present_perfect_vs_past_simple': 'https://images.unsplash.com/photo-1516321497487-e288fb19713f?w=400&h=300&fit=crop',
+            'future_forms': 'https://images.unsplash.com/photo-1435527173128-983b87201f4d?w=400&h=300&fit=crop',
+            'future_continuous': 'https://images.unsplash.com/photo-1508962914676-134849a727f0?w=400&h=300&fit=crop',
+            'future_perfect': 'https://images.unsplash.com/photo-1506485338023-6ce5f36692df?w=400&h=300&fit=crop',
+            'used_to_would': 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=400&h=300&fit=crop',
+            'modals_ability_permission': 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=400&h=300&fit=crop',
+            'modals_obligation': 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=400&h=300&fit=crop',
+            'modals_advice': 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=400&h=300&fit=crop',
+            'modal_deduction': 'https://images.unsplash.com/photo-1456406644174-8ddd4cd52a06?w=400&h=300&fit=crop',
+            'conditionals_zero_first': 'https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=400&h=300&fit=crop',
+            'conditionals_second': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop',
+            'conditionals_third': 'https://images.unsplash.com/photo-1484589065579-248aad0d628b?w=400&h=300&fit=crop',
+            'basic_questions': 'https://images.unsplash.com/photo-1509228627152-72ae9ae6848d?w=400&h=300&fit=crop',
+            'there_is_there_are': 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&h=300&fit=crop',
+            'countable_uncountable': 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&h=300&fit=crop',
+            'some_any_no': 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=400&h=300&fit=crop',
+            'quantifiers': 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=300&fit=crop',
+            'adverbs_frequency_manner': 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=400&h=300&fit=crop',
+            'comparative_adverbs': 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=300&fit=crop',
+            'adjectives_order': 'https://images.unsplash.com/photo-1499951360447-b19be8fe80f5?w=400&h=300&fit=crop',
+            'adjectives_vs_adverbs': 'https://images.unsplash.com/photo-1581287053822-fd7bf4f4bfec?w=400&h=300&fit=crop',
+            'prepositions_time_place': 'https://images.unsplash.com/photo-1507925921958-8a62f3d1a50d?w=400&h=300&fit=crop',
+            'dependent_prepositions': 'https://images.unsplash.com/photo-1516383740770-fbcc5ccbece0?w=400&h=300&fit=crop',
+            'gerunds_infinitives': 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&h=300&fit=crop',
+            'phrasal_verbs': 'https://images.unsplash.com/photo-1471970471555-19d4b113e9ed?w=400&h=300&fit=crop',
+            'passive_voice': 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=300&fit=crop',
+            'reported_speech': 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=300&fit=crop',
+            'linking_words': 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=400&h=300&fit=crop',
+            'question_tags': 'https://images.unsplash.com/photo-1509228627152-72ae9ae6848d?w=400&h=300&fit=crop',
+            'comparatives_superlatives': 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=300&fit=crop',
+            'relative_clauses': 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=400&h=300&fit=crop',
+            'wish_if_only': 'https://images.unsplash.com/photo-1519834785169-98be25ec3f84?w=400&h=300&fit=crop'
         };
 
-        // Portuguese translations
         const scenarioPT = {
-            'free_conversation': 'Conversacao Livre',
-            'basic_structures': 'Treino de estruturas basicas',
-            'coffee_shop': 'Cafeteria',
-            'street': 'Na rua',
-            'parents_house': 'Casa dos pais',
-            'school': 'Escola',
-            'airport': 'Aeroporto',
-            'supermarket': 'Supermercado',
-            'doctor': 'Consultorio medico',
-            'pharmacy': 'Farmacia',
-            'library': 'Biblioteca',
-            'job_interview': 'Entrevista de emprego',
-            'hotel': 'Hotel',
             'restaurant': 'Restaurante',
             'gas_station': 'Posto de gasolina',
             'gym': 'Academia',
@@ -483,19 +540,85 @@
             'museum': 'Museu',
             'bank': 'Banco',
             'post_office': 'Correios',
-            'train_station': 'Estacao de trem',
-            'bus_stop': 'Ponto de onibus',
-            'hair_salon': 'Salao de beleza',
+            'train_station': 'Estação de trem',
+            'bus_stop': 'Ponto de ônibus',
+            'hair_salon': 'Salão de beleza',
             'clothing_store': 'Loja de roupas',
             'pet_shop': 'Pet shop',
             'bakery': 'Padaria',
             'dental_clinic': 'Dentista',
-            'tech_support': 'Suporte tecnico',
+            'tech_support': 'Suporte técnico',
             'pizza_delivery': 'Delivery de pizza',
             'renting_car': 'Aluguel de carro',
             'neighbor': 'Vizinho',
             'wedding': 'Casamento',
-            'graduation': 'Formatura'
+            'graduation': 'Formatura',
+            'coffee_shop': 'Cafeteria',
+            'job_interview': 'Entrevista de emprego',
+            'airport': 'Aeroporto',
+            'hotel': 'Hotel',
+            'supermarket': 'Supermercado',
+            'pharmacy': 'Farmácia',
+            'basic_structures': 'Estruturas básicas',
+            'free_conversation': 'Conversação livre',
+            'street': 'Na rua',
+            'parents_house': 'Casa dos pais',
+            'school': 'Escola',
+            'doctor': 'Consultório médico',
+            'library': 'Biblioteca',
+            'lost_found': 'Achados e perdidos',
+            'first_date': 'Primeiro encontro',
+            'flower_shop': 'Floricultura',
+            'verb_to_be': 'Verbo To Be',
+            'greetings': 'Saudações e Apresentações',
+            'articles': 'Artigos (A/An/The)',
+            'plurals': 'Plural dos Substantivos',
+            'demonstratives': 'Demonstrativos',
+            'zero_article': 'Artigo Zero',
+            'subject_pronouns': 'Pronomes Sujeito',
+            'object_pronouns': 'Pronomes Objeto',
+            'possessives': 'Adjetivos Possessivos',
+            'possessive_pronouns': 'Pronomes Possessivos',
+            'reflexive_pronouns': 'Pronomes Reflexivos',
+            'present_simple': 'Presente Simples',
+            'present_continuous': 'Presente Contínuo',
+            'past_simple': 'Passado Simples',
+            'past_continuous': 'Passado Contínuo',
+            'past_perfect': 'Passado Perfeito',
+            'present_perfect': 'Presente Perfeito',
+            'present_perfect_continuous': 'Presente Perfeito Contínuo',
+            'present_perfect_vs_past_simple': 'Present Perfect vs Past Simple',
+            'future_forms': 'Formas do Futuro',
+            'future_continuous': 'Futuro Contínuo',
+            'future_perfect': 'Futuro Perfeito',
+            'used_to_would': 'Used To e Would',
+            'modals_ability_permission': 'Modais: Habilidade e Permissão',
+            'modals_obligation': 'Modais: Obrigação',
+            'modals_advice': 'Modais: Conselho',
+            'modal_deduction': 'Modais de Dedução',
+            'conditionals_zero_first': 'Condicionais Zero e Primeira',
+            'conditionals_second': 'Segunda Condicional',
+            'conditionals_third': 'Terceira Condicional',
+            'basic_questions': 'Perguntas Básicas',
+            'there_is_there_are': 'There Is / There Are',
+            'countable_uncountable': 'Contáveis vs Incontáveis',
+            'some_any_no': 'Some, Any, No',
+            'quantifiers': 'Quantificadores',
+            'adverbs_frequency_manner': 'Advérbios (Frequência e Modo)',
+            'comparative_adverbs': 'Advérbios Comparativos',
+            'adjectives_order': 'Ordem dos Adjetivos',
+            'adjectives_vs_adverbs': 'Adjetivos vs Advérbios',
+            'prepositions_time_place': 'Preposições (Tempo e Lugar)',
+            'dependent_prepositions': 'Preposições Dependentes',
+            'gerunds_infinitives': 'Gerúndios vs Infinitivos',
+            'phrasal_verbs': 'Phrasal Verbs',
+            'passive_voice': 'Voz Passiva',
+            'reported_speech': 'Discurso Indireto',
+            'linking_words': 'Conectivos',
+            'question_tags': 'Question Tags',
+            'comparatives_superlatives': 'Comparativos e Superlativos',
+            'relative_clauses': 'Orações Relativas',
+            'wish_if_only': 'Wish / If Only'
         };
 
         // Hero backgrounds
@@ -513,14 +636,14 @@
             'hotel': 'Check in and out smoothly. Learn to make requests, report issues, and enjoy your stay.'
         };
 
-        // Category definitions
+        // Category definitions - expandido com todos os cenários disponíveis
         const categories = {
-            trending: ['coffee_shop', 'job_interview', 'airport', 'restaurant', 'supermarket'],
+            trending: ['coffee_shop', 'job_interview', 'airport', 'restaurant', 'supermarket', 'hotel', 'gym'],
             grammar: ['basic_structures'],
-            allContent: ['free_conversation', 'basic_structures', 'coffee_shop', 'street', 'parents_house'],
-            travel: ['airport', 'hotel', 'train_station', 'renting_car', 'bus_stop'],
-            business: ['job_interview', 'tech_support'],
-            daily: ['supermarket', 'pharmacy', 'bank', 'post_office', 'gym']
+            allContent: ['free_conversation', 'basic_structures', 'coffee_shop', 'street', 'parents_house', 'school', 'airport', 'supermarket', 'doctor', 'pharmacy'],
+            travel: ['airport', 'hotel', 'train_station', 'renting_car', 'bus_stop', 'restaurant', 'museum', 'park'],
+            business: ['job_interview', 'tech_support', 'bank', 'post_office'],
+            daily: ['supermarket', 'pharmacy', 'bank', 'post_office', 'gym', 'coffee_shop', 'restaurant', 'doctor', 'library', 'cinema', 'gas_station', 'hair_salon', 'clothing_store', 'bakery', 'dental_clinic', 'pizza_delivery']
         };
 
         // Set random hero
@@ -532,11 +655,16 @@
             const title = document.getElementById('hero-title');
             const desc = document.getElementById('hero-description');
 
-            hero.style.backgroundImage = `url('${heroBackgrounds[scenarioId]}')`;
-            title.textContent = scenarioId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-            desc.textContent = heroDescriptions[scenarioId];
+            if (heroBackgrounds[scenarioId]) {
+                hero.style.backgroundImage = `url('${heroBackgrounds[scenarioId]}')`;
+                title.textContent = scenarioId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                desc.textContent = heroDescriptions[scenarioId];
+            }
 
             document.getElementById('hero-play-btn').onclick = () => goToPractice(scenarioId, title.textContent);
+            document.getElementById('hero-info-btn').onclick = () => {
+                document.getElementById('trending-row').scrollIntoView({ behavior: 'smooth' });
+            };
         }
 
         setHero(randomHero);
@@ -551,7 +679,8 @@
             const ptTitle = scenarioPT[id] || title;
 
             card.innerHTML = `
-                <img src="${img}" alt="${title}" class="scenario-image" onerror="this.src='https://via.placeholder.com/200x120?text=${encodeURIComponent(title)}'">
+                <img src="${img}" alt="${title}" class="scenario-image"
+                    onerror="this.src='https://via.placeholder.com/200x120?text=${encodeURIComponent(title)}'">
                 <div class="scenario-card-content">
                     <div class="scenario-card-title">${title}</div>
                     <div class="scenario-card-subtitle">${ptTitle}</div>
@@ -561,16 +690,54 @@
             return card;
         }
 
+        // Navigation function
+        function goToPractice(id, title) {
+            // Encode title for URL
+            const encodedTitle = encodeURIComponent(title);
+            // Default to 'learning' mode unless specified logic exists for others
+            // Redirect to practice.html with context
+            window.location.href = `practice.html?context=${id}&title=${encodedTitle}&mode=speaking`;
+        }
+
         // Load scenarios from API and populate rows
         async function loadScenarios() {
             try {
-                const response = await fetch('/api/scenarios');
-                const scenarios = await response.json();
+                console.log('[loadScenarios] Iniciando carregamento...');
+
+                // Show loading state if rows exist
+                const rows = ['trending-row', 'grammar-row', 'all-content-row', 'travel-row', 'business-row', 'daily-row'];
+                rows.forEach(rowId => {
+                    const row = document.getElementById(rowId);
+                    if (row) row.innerHTML = '<div style="color: #666; padding: 10px;">Carregando...</div>';
+                });
+
+                // Fetch BOTH scenarios and grammar topics
+                const [scenarios, grammarTopics] = await Promise.all([
+                    fetch('/api/scenarios').then(r => {
+                        if (!r.ok) throw new Error(`Scenarios API error: ${r.status}`);
+                        return r.json();
+                    }),
+                    fetch('/api/grammar-topics').then(r => {
+                        if (!r.ok) throw new Error(`Grammar API error: ${r.status}`);
+                        return r.json();
+                    })
+                ]);
+
+                console.log('[loadScenarios] Cenários:', scenarios.length, 'Gramática:', grammarTopics.length);
 
                 const scenarioMap = {};
-                scenarios.forEach(s => scenarioMap[s.id] = s.title);
+                scenarios.forEach(s => { if (s && s.id) scenarioMap[s.id] = s.title; });
 
-                // Populate rows
+                const grammarMap = {};
+                grammarTopics.forEach(g => { if (g && g.id) grammarMap[g.id] = g.title; });
+
+                // Clear loading indicators
+                rows.forEach(rowId => {
+                    const row = document.getElementById(rowId);
+                    if (row) row.innerHTML = '';
+                });
+
+                // Rows
                 const trendingRow = document.getElementById('trending-row');
                 const grammarRow = document.getElementById('grammar-row');
                 const allContentRow = document.getElementById('all-content-row');
@@ -578,44 +745,66 @@
                 const businessRow = document.getElementById('business-row');
                 const dailyRow = document.getElementById('daily-row');
 
-                // Trending
+                // 1. Trending
                 categories.trending.forEach(id => {
-                    if (scenarioMap[id]) trendingRow.appendChild(createCard(id, scenarioMap[id]));
+                    if (scenarioMap[id] && trendingRow) trendingRow.appendChild(createCard(id, scenarioMap[id]));
                 });
 
-                // Grammar - add all grammar-related
-                scenarios.filter(s => s.id.includes('basic') || s.id.includes('structure'))
-                    .forEach(s => grammarRow.appendChild(createCard(s.id, s.title)));
+                // 2. Grammar & Foundations (From grammarTopics API - all 42 topics)
+                if (grammarRow) {
+                    grammarTopics.forEach(g => {
+                        grammarRow.appendChild(createCard(g.id, g.title));
+                    });
+                }
 
-                // All Content - first 10
-                scenarios.slice(0, 10).forEach(s => {
-                    allContentRow.appendChild(createCard(s.id, s.title));
-                });
+                // 3. All Content
+                if (allContentRow) {
+                    scenarios.forEach(s => allContentRow.appendChild(createCard(s.id, s.title)));
+                }
 
-                // Travel
-                categories.travel.forEach(id => {
-                    if (scenarioMap[id]) travelRow.appendChild(createCard(id, scenarioMap[id]));
-                });
+                // 4. Travel
+                if (travelRow) {
+                    categories.travel.forEach(id => {
+                        if (scenarioMap[id]) travelRow.appendChild(createCard(id, scenarioMap[id]));
+                    });
+                    // Fill with more travel items
+                    scenarios.filter(s => s.id.includes('airport') || s.id.includes('hotel') || s.id.includes('travel'))
+                        .slice(0, 10).forEach(s => {
+                            if (!categories.travel.includes(s.id)) travelRow.appendChild(createCard(s.id, s.title));
+                        });
+                }
 
-                // Business
-                categories.business.forEach(id => {
-                    if (scenarioMap[id]) businessRow.appendChild(createCard(id, scenarioMap[id]));
-                });
+                // 5. Business
+                if (businessRow) {
+                    categories.business.forEach(id => {
+                        if (scenarioMap[id]) businessRow.appendChild(createCard(id, scenarioMap[id]));
+                    });
+                }
 
-                // Daily
-                categories.daily.forEach(id => {
-                    if (scenarioMap[id]) dailyRow.appendChild(createCard(id, scenarioMap[id]));
-                });
+                // 6. Daily
+                if (dailyRow) {
+                    categories.daily.forEach(id => {
+                        if (scenarioMap[id]) dailyRow.appendChild(createCard(id, scenarioMap[id]));
+                    });
+                }
+
+                console.log('[loadScenarios] Carregamento completo!');
 
             } catch (err) {
-                console.error('Error loading scenarios:', err);
-            }
-        }
+                console.error('[loadScenarios] Erro:', err);
 
-        function goToPractice(id, title) {
-            const urlParams = new URLSearchParams(window.location.search);
-            const speed = urlParams.get('speed') || '1.0';
-            window.location.href = `practice.html?context=${id}&title=${encodeURIComponent(title)}&speed=${speed}&mode=audio-only`;
+                // Visible error feedback
+                const rows = ['trending-row', 'grammar-row', 'all-content-row', 'travel-row', 'business-row', 'daily-row'];
+                rows.forEach(rowId => {
+                    const row = document.getElementById(rowId);
+                    if (row) {
+                        row.innerHTML = `<div style="color: #e50914; padding: 20px;">
+                            ⚠️ Erro ao carregar tópicos.<br>
+                            <small style="color: #666;">${err.message}</small>
+                        </div>`;
+                    }
+                });
+            }
         }
 
         loadScenarios();

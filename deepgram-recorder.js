@@ -117,7 +117,9 @@ async function transcribeWithDeepgram(audioBlob, token, language = null) {
     try {
         console.log(`[Deepgram] Sending audio for transcription${language ? ' with language hint: ' + language : ''}...`);
 
-        const response = await fetch('/api/transcribe', {
+        // Use apiClient baseURL if available, otherwise use relative path
+        const baseURL = (typeof apiClient !== 'undefined' && apiClient.baseURL) ? apiClient.baseURL : '';
+        const response = await fetch(`${baseURL}/api/transcribe`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`

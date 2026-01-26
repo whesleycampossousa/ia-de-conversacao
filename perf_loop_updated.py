@@ -33,39 +33,6 @@ MODEL_EVALUATOR = DEFAULT_LOCAL_MODEL # QA
 
 # CONTEXTS TO TEST (Ordered List)
 AUTO_PERFECTION_CONTEXTS = [
-    "free_conversation",
-    "basic_structures",
-    "coffee_shop",
-    "street",
-    "parents_house",
-    "school",
-    "airport",
-    "supermarket",
-    "doctor",
-    "pharmacy",
-    "library",
-    "job_interview",
-    "hotel",
-    "restaurant",
-    "gas_station",
-    "gym",
-    "cinema",
-    "park",
-    "museum",
-    "bank",
-    "post_office",
-    "train_station",
-    "bus_stop",
-    "hair_salon",
-    "clothing_store",
-    "pet_shop",
-    "bakery",
-    "flower_shop",
-    "dental_clinic",
-    "tech_support",
-    "pizza_delivery",
-    "renting_car",
-    "lost_found",
     "neighbor",
     "first_date",
     "wedding",
@@ -268,34 +235,43 @@ class AutoPerfectionLoop:
         else:
             opening_rule_text = "\nIMPORTANT: This is NOT the first turn. Do NOT check for opening greetings. Ignore opening rules completely.\n"
 
-        system_prompt = f"""
-        Act as a STRICT QA Judge for a Simulator AI.
-        Scenario: {context}
-        {opening_rule_text}
+        EVALUATOR_PROMPT = """
+        You are a strict QA Evaluator for an English Conversation AI.
         
-        STRICT RULES FOR AI (TARGET):
-        1. NO Teaching/Coaching: No "Good job", "Try again", "Say this".
-        2. NO Robotic Fillers: "What do you think?", "How about you?", "Does that make sense?".
-        3. NO Meta-Talk: Do not explain the exercise.
-        4. Natural Flow: Only 1 question per turn.
+        Analyze the AI's response (Turn {turn_num}).
+
+        CONTEXT: {context}
+        PROFILE: {profile_name}
         
-        INPUTS:
-        Student: "{student_input}"
-        AI: "{ai_response}"
+        RULES TO CHECK:
+        1. **Role Adherence**: 
+           - If context is 'coffee_shop', 'airport', etc., AI MUST be a Service Worker.
+           - If context is 'free_conversation', 'neighbor', AI MUST be a Peer.
+           - NO "I'm an AI" or "I can help practice".
         
-        Evaluate. Return JSON:
+        2. **Natural Flow**:
+           - ONE question per turn maximum.
+           - No robotic headers ("Sure!", "Okay!").
+           - **MUST end with a question** (Critical).
+
+        3. **No Teaching (Strict)**:
+           - No "Good job!", "Correct!", "Try saying...".
+           - **EXCEPTION**: Natural agreement ("That's a good point", "I agree") is ALLOWED for Peers.
+           - **EXCEPTION**: Explaining items (e.g., menu, artifacts) is ALLOWED for Service roles (Museum, Restaurant).
+
+        OUTPUT JSON:
         {{
             "is_natural": boolean,
             "contract_violation": boolean,
             "violation_reason": "string or null",
-            "score": 0-10,
+            "score": 1-10,
             "improvement_suggestion": "string"
         }}
         """
         
         if OLLAMA_AVAILABLE:
             try:
-                msg = ollama.chat(model=MODEL_EVALUATOR, messages=[{'role': 'user', 'content': system_prompt}])
+                msg = ollama.chat(model=MODEL_EVALUATOR, messages=[{'role': 'system', 'content': EVALUATOR_PROMPT}])
                 result = self.extract_json_with_repair(msg['message']['content'])
                 
                 # Force override if opening check failed locally
