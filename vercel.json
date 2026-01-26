@@ -4,9 +4,36 @@
     {
       "src": "api/index.py",
       "use": "@vercel/python"
+    },
+    {
+      "src": "*.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "*.css",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "*.js",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
+    {
+      "src": "/(.*\\.html)$",
+      "dest": "/$1",
+      "headers": {
+        "Cache-Control": "no-cache, no-store, must-revalidate"
+      }
+    },
+    {
+      "src": "/(.*\\.css)$",
+      "dest": "/$1"
+    },
+    {
+      "src": "/(.*\\.js)$",
+      "dest": "/$1"
+    },
     {
       "src": "/(.*)",
       "dest": "api/index.py"
