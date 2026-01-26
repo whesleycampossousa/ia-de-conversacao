@@ -633,47 +633,47 @@
             margin-top: 0.4rem;
         }
 
-        /* Mobile: cards SMALLER, not larger */
+        /* Mobile: cards SMALLER and SIDE BY SIDE */
         @media (max-width: 600px) {
             .mode-options {
-                flex-direction: column;
-                align-items: center;
-                gap: 1rem;
+                flex-direction: row;  /* Keep side by side! */
+                gap: 0.6rem;
             }
             .mode-card {
-                width: 160px;
-                padding: 1rem 0.8rem;
+                width: 130px;
+                padding: 0.6rem 0.5rem;
             }
             .mode-icon {
-                font-size: 2rem;
-                margin-bottom: 0.5rem;
+                font-size: 1.5rem;
+                margin-bottom: 0.3rem;
             }
             .mode-name {
-                font-size: 1rem;
+                font-size: 0.85rem;
             }
             .mode-name-pt {
-                font-size: 0.75rem;
-                margin-bottom: 0.5rem;
+                font-size: 0.65rem;
+                margin-bottom: 0.3rem;
             }
-            .mode-description {
-                font-size: 0.7rem;
-            }
+            .mode-description,
             .mode-description-pt {
-                font-size: 0.6rem;
+                display: none;  /* Hide descriptions on mobile */
             }
         }
 
         /* Very small screens */
         @media (max-width: 400px) {
             .mode-card {
-                width: 140px;
-                padding: 0.8rem 0.6rem;
+                width: 110px;
+                padding: 0.5rem 0.4rem;
             }
             .mode-icon {
-                font-size: 1.8rem;
+                font-size: 1.3rem;
             }
             .mode-name {
-                font-size: 0.9rem;
+                font-size: 0.75rem;
+            }
+            .mode-name-pt {
+                font-size: 0.6rem;
             }
         }
 

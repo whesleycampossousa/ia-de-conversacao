@@ -1623,8 +1623,50 @@ body {
     text-align: center;
 }
 
+/* Voice selector - Mobile responsive */
+@media (max-width: 600px) {
+    .voice-selector-container {
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 15px;
+    }
+    .voice-option {
+        width: 70px;
+        padding: 8px;
+        gap: 4px;
+    }
+    .voice-avatar {
+        width: 36px;
+        height: 36px;
+        font-size: 1.2rem;
+    }
+    .voice-name {
+        font-size: 0.7rem;
+    }
+    .voice-desc {
+        font-size: 0.6rem;
+        display: none; /* Hide description on mobile */
+    }
+    .voice-label {
+        font-size: 0.8rem;
+        margin-bottom: 8px;
+    }
+}
 
-
+@media (max-width: 400px) {
+    .voice-option {
+        width: 60px;
+        padding: 6px;
+    }
+    .voice-avatar {
+        width: 30px;
+        height: 30px;
+        font-size: 1rem;
+    }
+    .voice-name {
+        font-size: 0.65rem;
+    }
+}
 
 /* Avatar Styling */
 .avatar-container {
@@ -1766,288 +1808,5 @@ body {
     .suggestions-toggle-btn {
         padding: 0.5rem 0.8rem;
         font-size: 0.9rem;
-    }
-}
-
-/* =====================================================
-   PRACTICE OVERLAY - Netflix Style Start Screen
-   ===================================================== */
-
-.practice-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1000;
-    display: flex;
-    flex-direction: column;
-    background: #000;
-}
-
-.practice-overlay-bg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    z-index: 1;
-}
-
-.practice-overlay-bg::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-        to bottom,
-        rgba(0, 0, 0, 0.6) 0%,
-        rgba(0, 0, 0, 0.4) 50%,
-        rgba(0, 0, 0, 0.8) 100%
-    );
-}
-
-.practice-overlay-header {
-    position: relative;
-    z-index: 10;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 24px;
-    background: transparent;
-}
-
-.practice-overlay-header .header-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.practice-overlay-header .header-right {
-    display: flex;
-    align-items: center;
-}
-
-.practice-title {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #fff;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-}
-
-.practice-timer-sep {
-    color: rgba(255, 255, 255, 0.5);
-    margin: 0 8px;
-}
-
-.practice-timer {
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.8);
-}
-
-.subtitle-toggle-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 4px;
-    padding: 8px 16px;
-    color: #fff;
-    font-size: 0.85rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.subtitle-toggle-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-.start-overlay-container {
-    position: relative;
-    z-index: 10;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
-}
-
-.play-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    background: #E50914;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    padding: 16px 48px;
-    font-size: 1.2rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    margin-top: 20px;
-}
-
-.play-btn:hover {
-    background: #f6121d;
-    transform: scale(1.05);
-}
-
-.play-btn .play-icon {
-    font-size: 1rem;
-}
-
-.start-hint {
-    margin-top: 12px;
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 0.9rem;
-}
-
-/* Avatar for practice overlay */
-.practice-overlay .avatar-container {
-    position: absolute;
-    bottom: 80px;
-    right: 5%;
-    width: 300px;
-    max-width: 35vw;
-    z-index: 20;
-    pointer-events: none;
-}
-
-.practice-overlay .avatar-image {
-    width: 100%;
-    height: auto;
-    border-radius: 12px;
-    object-fit: cover;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-}
-
-/* Report Bar */
-.report-bar {
-    position: relative;
-    z-index: 10;
-    width: 100%;
-    background: #E50914;
-    padding: 0;
-}
-
-.report-bar-button {
-    width: 100%;
-    background: transparent;
-    border: none;
-    color: #fff;
-    font-size: 1rem;
-    font-weight: 500;
-    padding: 16px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: background 0.2s ease;
-}
-
-.report-bar-button:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.report-bar-button:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-}
-
-/* Mobile responsiveness for practice overlay */
-@media (max-width: 768px) {
-    .practice-overlay-header {
-        padding: 12px 16px;
-    }
-
-    .practice-title {
-        font-size: 0.75rem;
-    }
-
-    .subtitle-toggle-btn {
-        padding: 6px 12px;
-        font-size: 0.75rem;
-    }
-
-    .voice-selector-container {
-        gap: 10px;
-    }
-
-    .voice-option {
-        width: 85px;
-        padding: 10px;
-    }
-
-    .voice-avatar {
-        width: 40px;
-        height: 40px;
-        font-size: 1.2rem;
-    }
-
-    .voice-name {
-        font-size: 0.75rem;
-    }
-
-    .play-btn {
-        padding: 14px 36px;
-        font-size: 1rem;
-    }
-
-    .practice-overlay .avatar-container {
-        width: 180px;
-        bottom: 100px;
-        right: 3%;
-    }
-}
-
-@media (max-width: 480px) {
-    .practice-overlay .avatar-container {
-        width: 140px;
-        bottom: 90px;
-    }
-
-    .voice-option {
-        width: 75px;
-        padding: 8px;
-    }
-
-    .voice-avatar {
-        width: 36px;
-        height: 36px;
-        font-size: 1rem;
-    }
-
-    .play-btn {
-        padding: 12px 28px;
-        font-size: 0.95rem;
-    }
-}
-
-/* Pulse animation for Play button */
-.pulse-animation {
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(229, 9, 20, 0.7);
-    }
-    70% {
-        box-shadow: 0 0 0 15px rgba(229, 9, 20, 0);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(229, 9, 20, 0);
     }
 }
