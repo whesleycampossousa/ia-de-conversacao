@@ -69,7 +69,7 @@
 
                 <!-- Play button (Step 2) -->
                 <button id="start-btn" class="primary-btn pulse-animation"
-                    style="transform: scale(1.3); padding: 1rem 3rem; display: none;">
+                    style="display: none;">
                     ▶ Play
                 </button>
                 <div id="start-message" class="start-message" style="display: none;">Click to start conversation</div>
@@ -507,16 +507,48 @@
             align-items: center;
             background: rgba(0, 0, 0, 0.4);
             z-index: 10;
+            padding: 1rem;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        /* Play button responsive */
+        #start-btn {
+            transform: scale(1.3);
+            padding: 1rem 3rem;
+        }
+
+        @media (max-width: 600px) {
+            .start-overlay-container {
+                padding: 0.5rem;
+                justify-content: flex-start;
+                padding-top: 8vh;
+            }
+            #start-btn {
+                transform: scale(1);
+                padding: 0.8rem 2rem;
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .start-overlay-container {
+                padding-top: 5vh;
+            }
+            #start-btn {
+                padding: 0.7rem 1.5rem;
+                font-size: 0.9rem;
+            }
         }
 
         /* Mode Selection Styles */
         .mode-selection-container {
             text-align: center;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
         }
 
         .mode-title {
-            font-size: 1.8rem;
+            font-size: 1.6rem;
             font-weight: 700;
             color: white;
             margin-bottom: 0.5rem;
@@ -524,9 +556,22 @@
         }
 
         .mode-subtitle {
-            font-size: 1rem;
+            font-size: 0.95rem;
             color: rgba(255,255,255,0.7);
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 600px) {
+            .mode-selection-container {
+                margin-bottom: 1rem;
+            }
+            .mode-title {
+                font-size: 1.3rem;
+            }
+            .mode-subtitle {
+                font-size: 0.85rem;
+                margin-bottom: 1rem;
+            }
         }
 
         .mode-options {
@@ -539,8 +584,9 @@
             background: rgba(30, 30, 30, 0.95);
             border: 2px solid rgba(255,255,255,0.1);
             border-radius: 16px;
-            padding: 2rem 1.5rem;
-            width: 200px;
+            padding: 1.5rem 1rem;
+            width: 180px;
+            max-width: 45vw;
             cursor: pointer;
             transition: all 0.3s ease;
         }
@@ -558,42 +604,76 @@
         }
 
         .mode-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
+            font-size: 2.5rem;
+            margin-bottom: 0.8rem;
         }
 
         .mode-name {
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             font-weight: 700;
             color: white;
             margin-bottom: 0.25rem;
         }
 
         .mode-name-pt {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: rgba(255,255,255,0.5);
-            margin-bottom: 1rem;
+            margin-bottom: 0.8rem;
         }
 
         .mode-description {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: rgba(255,255,255,0.8);
             line-height: 1.4;
         }
 
         .mode-description-pt {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: rgba(255,255,255,0.5);
-            margin-top: 0.5rem;
+            margin-top: 0.4rem;
         }
 
+        /* Mobile: cards SMALLER, not larger */
         @media (max-width: 600px) {
             .mode-options {
                 flex-direction: column;
                 align-items: center;
+                gap: 1rem;
             }
             .mode-card {
-                width: 280px;
+                width: 160px;
+                padding: 1rem 0.8rem;
+            }
+            .mode-icon {
+                font-size: 2rem;
+                margin-bottom: 0.5rem;
+            }
+            .mode-name {
+                font-size: 1rem;
+            }
+            .mode-name-pt {
+                font-size: 0.75rem;
+                margin-bottom: 0.5rem;
+            }
+            .mode-description {
+                font-size: 0.7rem;
+            }
+            .mode-description-pt {
+                font-size: 0.6rem;
+            }
+        }
+
+        /* Very small screens */
+        @media (max-width: 400px) {
+            .mode-card {
+                width: 140px;
+                padding: 0.8rem 0.6rem;
+            }
+            .mode-icon {
+                font-size: 1.8rem;
+            }
+            .mode-name {
+                font-size: 0.9rem;
             }
         }
 

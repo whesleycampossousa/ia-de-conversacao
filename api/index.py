@@ -1077,7 +1077,11 @@ Return JSON: {{"en": "...", "pt": "...", "suggested_words": [], "must_retry": fa
                     { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE" },
                     { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE" }
                 ]
-                response = context_model.generate_content(minimal_prompt, safety_settings=safety_settings)
+                try:
+                    response = context_model.generate_content(minimal_prompt, safety_settings=safety_settings)
+                except Exception as e:
+                    print(f"[ERROR] Gemini Generation Failed (Context): {e}")
+                    return jsonify({"error": f"AI Error: {str(e)}"}), 500
         else:
             # Fallback to basic model with full prompt
             safety_settings = [
@@ -1086,7 +1090,11 @@ Return JSON: {{"en": "...", "pt": "...", "suggested_words": [], "must_retry": fa
                 { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE" },
                 { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE" }
             ]
-            response = model.generate_content(full_prompt, safety_settings=safety_settings)
+            try:
+                response = model.generate_content(full_prompt, safety_settings=safety_settings)
+            except Exception as e:
+                print(f"[ERROR] Gemini Generation Failed: {e}")
+                return jsonify({"error": f"AI Error: {str(e)}"}), 500
         
         print(f"[CHAT] User: {user_text[:50]}... | Response: {response.text[:100]}...")
 
@@ -1309,7 +1317,9 @@ Original message: "{ai_text}"
         })
     except Exception as e:
         print(f"[CHAT] Error: {e}")
-        return jsonify({"error": "Failed to generate response. Please try again."}), 500
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": f"Server Error: {str(e)}"}), 500
 
 
 @app.route('/api/free-conversation', methods=['POST'])
@@ -1424,7 +1434,9 @@ Student answer context: "{student_answer}"
         return jsonify({"text": cleaned})
     except Exception as e:
         print(f"FREE CONVERSATION ERROR: {str(e)}")
-        return jsonify({"error": "Failed to generate response. Please try again."}), 500
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": f"Server Error: {str(e)}"}), 500
 
 
 
