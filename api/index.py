@@ -982,6 +982,7 @@ NATURAL FLOW RULES:
 - One question per turn maximum.
 - Do NOT start with a statement followed by a question if it feels robotic.
 - Respond naturally and specifically to what was just said.
+- **CRITICAL**: You MUST end every response with a relevant QUESTION to keep the interaction going. Never end with just a statement.
 
 Return JSON: {{"en": "your response", "pt": "traducao em portugues"}}"""
             elif is_grammar_topic:
