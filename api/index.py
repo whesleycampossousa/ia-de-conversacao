@@ -326,6 +326,19 @@ def check_usage_limit(email):
     remaining = get_remaining_seconds(email)
     return remaining > 0
 
+def is_local_request():
+    """Bypass usage limits for local testing."""
+    try:
+        host = (request.host or "").lower()
+        addr = (request.remote_addr or "").lower()
+        return (
+            addr in ("127.0.0.1", "::1")
+            or host.startswith("localhost")
+            or host.startswith("127.0.0.1")
+        )
+    except Exception:
+        return False
+
 # Load Scenarios and Grammar Topics
 SCENARIOS_PATH = os.path.join(BASE_DIR, 'scenarios_db.json')
 GRAMMAR_PATH = os.path.join(BASE_DIR, 'grammar_topics.json')
@@ -342,29 +355,33 @@ SCENARIOS = []
 GRAMMAR_TOPICS = []
 GRAMMAR_TOPIC_IDS = set()
 CONTEXT_PROMPTS = {}
+SIMULATOR_PROMPTS = {}  # Simulator mode prompts for realistic roleplay
 
 def get_cached_model_for_context(context_key, system_prompt):
     """Get or create a cached Gemini model for a specific context.
-    This uses system_instruction which gets cached automatically by Gemini,
-    reducing token costs by ~90% for the system prompt portion."""
+    Uses a combination of context_key and system_prompt hash to ensure updates are reflected."""
     global cached_models
     
     if not GENAI_AVAILABLE or not GOOGLE_API_KEY:
         return model  # Fallback to basic model
     
-    # Check if we already have a cached model for this context
-    if context_key in cached_models:
-        return cached_models[context_key]
+    # Create a unique key including the prompt content
+    prompt_hash = hashlib.md5(system_prompt.encode()).hexdigest()
+    cache_key = f"{context_key}_{prompt_hash}"
+    
+    # Check if we already have this exact model
+    if cache_key in cached_models:
+        return cached_models[cache_key]
     
     try:
-        # Create model with system_instruction (automatically cached by Gemini)
+        # Create model with system_instruction
         cached_model = genai.GenerativeModel(
             model_name='gemini-2.0-flash-exp',
             system_instruction=system_prompt,
             generation_config=DEFAULT_GEN_CONFIG
         )
-        cached_models[context_key] = cached_model
-        print(f"[CACHE] Created cached model for context: {context_key}")
+        cached_models[cache_key] = cached_model
+        print(f"[CACHE] Created NEW cached model for {context_key} (Hash: {prompt_hash[:8]})")
         return cached_model
     except Exception as e:
         print(f"[CACHE] Error creating cached model for {context_key}: {e}")
@@ -372,12 +389,14 @@ def get_cached_model_for_context(context_key, system_prompt):
 
 def load_context_data():
     """Reload scenarios/grammar so new topics are available without restart."""
-    global SCENARIOS, GRAMMAR_TOPICS, GRAMMAR_TOPIC_IDS, CONTEXT_PROMPTS
+    global SCENARIOS, GRAMMAR_TOPICS, GRAMMAR_TOPIC_IDS, CONTEXT_PROMPTS, SIMULATOR_PROMPTS
     SCENARIOS = load_json_file(SCENARIOS_PATH)
     GRAMMAR_TOPICS = load_json_file(GRAMMAR_PATH)
     GRAMMAR_TOPIC_IDS = {g.get('id') for g in GRAMMAR_TOPICS}
     CONTEXT_PROMPTS = {s.get('id'): s.get('prompt', '') for s in SCENARIOS}
     CONTEXT_PROMPTS.update({g.get('id'): g.get('prompt', '') for g in GRAMMAR_TOPICS})
+    # Load simulator prompts (realistic roleplay mode)
+    SIMULATOR_PROMPTS = {s.get('id'): s.get('simulator_prompt', '') for s in SCENARIOS if s.get('simulator_prompt')}
     return GRAMMAR_TOPICS
 
 # Initial load
@@ -564,7 +583,7 @@ def chat():
 
     # Check daily usage limit
     user_email = request.user_email
-    if not check_usage_limit(user_email):
+    if not is_local_request() and not check_usage_limit(user_email):
         remaining = get_remaining_seconds(user_email)
         return jsonify({
             "error": "Daily practice limit reached",
@@ -574,8 +593,9 @@ def chat():
 
     data = request.json
     user_text = data.get('text')
-    context_key = data.get('context', 'coffee_shop')
+    context_key = (data.get('context') or 'coffee_shop').strip().lower()
     lesson_lang = data.get('lessonLang', 'en')  # 'en' or 'pt'
+    practice_mode = data.get('practiceMode', 'learning')  # 'learning' or 'simulator'
 
     # Validate input
     is_valid, result = validate_text_input(user_text, max_length=500)
@@ -585,7 +605,40 @@ def chat():
     user_text = result
 
     # Get conversation history for context (last 6 messages = 3 turns)
-    user_id = request.user_id
+    user_id = request.user_id # Fix: Define user_id here before using it
+    
+    # FORCE GREETING LOGIC (Start Trigger)
+    is_force_greeting = (user_text == "[START_SIMULATION]" or request.json.get('forceGreeting'))
+    
+    if is_force_greeting:
+        friendly_place = context_key.replace('_', ' ').title()
+        
+        # 1. SPECIAL CASE: Free Conversation (Not a specific place/role)
+        if context_key == "free_conversation":
+             greeting = "Hello! I'm here to practice English with you. What would you like to talk about today?"
+             
+        # 2. SPECIAL CASE: Job Interview (Specific role)
+        elif context_key == "job_interview":
+            greeting = "Hello, welcome to the interview. Please, have a seat. Tell me a little about yourself."
+            
+        # 3. SPECIAL CASE: Basic Structures (Grammar focus)
+        elif context_key == "basic_structures":
+            greeting = "Hello! We are going to practice polite questions today. Ready to start?"
+
+        # 4. STANDARD CASE: Place-based scenarios (Hotel, Cafe, etc.)
+        else:
+            # Fix "The The" issue
+            prefix = "the " if "the " not in friendly_place.lower() and "the" not in context_key.lower() else ""
+            greeting = f"Hello, welcome to {prefix}{friendly_place}. How can I help you today?"
+            
+        print(f"[CHAT] (DEBUG) EXECUTING FORCE GREETING BRANCH for {context_key}")
+        
+        # Save to history so AI remembers it said this
+        if user_id in user_conversations:
+            user_conversations[user_id].append({"ai": greeting})
+            
+        return jsonify({"text": greeting})
+
     conversation_history = ""
     if user_id in user_conversations:
         recent = user_conversations[user_id][-6:]  # Last 6 messages
@@ -599,8 +652,34 @@ def chat():
             if history_lines:
                 conversation_history = "\n### CONVERSATION HISTORY (for context):\n" + "\n".join(history_lines) + "\n"
 
-    # Get System Prompt based on context
-    system_prompt = CONTEXT_PROMPTS.get(context_key, CONTEXT_PROMPTS.get('coffee_shop', ''))
+    # Get System Prompt based on context and practice mode
+    if practice_mode == 'simulator':
+        if context_key in SIMULATOR_PROMPTS:
+            system_prompt = SIMULATOR_PROMPTS.get(context_key)
+            print(f"[CHAT] Using SPECIFIC SIMULATOR mode for {context_key}")
+        else:
+            # Universal Fallback for Simulator Mode
+            system_prompt = f"""
+### REAL LIFE SIMULATOR MODE - Context: {context_key.replace('_', ' ').title()}
+You are a person in this situation. Talk naturally.
+This is NOT a lesson. NOT practice. NOT teaching.
+
+CORE RULE:
+You must ALWAYS act like a real person in this scenario.
+You must NEVER act like a teacher, tutor, or language coach.
+
+ABSOLUTE PROHIBITIONS (STRICT VIOLATIONS):
+- No "Can you try?", "Repeat this", "Let's practice".
+- No praise like "Good job!", "Well done!".
+- No robotic fillers: "What do you think?", "Does that make sense?", "How about you?".
+- No teacher-style explanations.
+
+RECAST RULE: Respond naturally using correct grammar, don't correct explicitly.
+"""
+            print(f"[CHAT] Using FALLBACK SIMULATOR mode for {context_key}")
+    else:
+        system_prompt = CONTEXT_PROMPTS.get(context_key, CONTEXT_PROMPTS.get('coffee_shop', ''))
+        print(f"[CHAT] Using LEARNING mode for {context_key}")
     
     # Get cached model for this context (saves ~90% on system prompt tokens)
     context_model = get_cached_model_for_context(context_key, system_prompt)
@@ -609,7 +688,77 @@ def chat():
     is_grammar_topic = context_key in GRAMMAR_TOPIC_IDS
     is_demonstratives = context_key in ['demonstratives', 'this_that_these_those']
 
-    if is_grammar_topic:
+    # SIMULATOR MODE: REAL LIFE SIMULATOR - NO TEACHING
+    if practice_mode == 'simulator':
+        role_desc = "conversation partner" if context_key == "free_conversation" else "service worker (barista, waiter, receptionist, etc)"
+        full_prompt = f"""{system_prompt}
+{conversation_history}
+
+YOU ARE IN REAL LIFE SIMULATOR MODE.
+The person you are talking to just said: "{user_text}"
+
+CORE RULE:
+You must ALWAYS act like a real {role_desc}.
+You must NEVER act like a teacher, tutor, or language coach.
+This is NOT a lesson. This is NOT practice. This is NOT teaching.
+
+ABSOLUTE PROHIBITIONS (CRITICAL - if you do any of these, the simulation FAILS):
+- "Can you try?"
+- "Repeat after me"
+- "I'd like you to say..."
+- "Let's practice"
+- "How about you?"
+- "What do you think?"
+- "Does that make sense?"
+- "Good job!" or any praise for language
+- Any sentence asking user to repeat or practice English
+- Any explanation about language, grammar, or learning
+
+ALLOWED BEHAVIOR:
+- Ask only questions a real service worker would ask
+- Respond naturally to what the customer says
+- Confirm orders naturally (recast silently)
+- Offer real options that exist in the scenario
+- Handle misunderstandings like a human (ask to repeat or clarify)
+- Ignore nonsense or redirect politely back to the order
+
+RECAST RULE (VERY IMPORTANT):
+If the user says something incorrect in English:
+- DO NOT correct explicitly
+- DO NOT explain
+- Simply respond using the correct, natural version
+
+Examples:
+- User: "Like a hot coffee." → You: "Sure, a hot coffee. What size?"
+- User: "Can we small?" → You: "No problem — a small coffee."
+- User: "How much cost?" → You: "That'll be $4.50."
+
+CONFIRMATION RULE:
+When confirming an order, do NOT turn it into practice.
+- CORRECT: "Alright, one large hot coffee."
+- WRONG: "I'd like a large hot coffee, please! Can you say that?"
+
+META QUESTIONS FROM USER:
+If the user questions the simulation or asks meta questions:
+- Answer briefly (1 sentence)
+- Reaffirm the role
+- Immediately return to the scenario
+Example: User: "This is a simulator, not a lesson." → You: "Exactly — I'm the barista. What else can I get for you?"
+
+FLOW CONTROL:
+- One question at a time
+- Never repeat a question already answered
+- Never explain what you are doing
+
+END CONDITION:
+When order is complete: Ask about payment → Confirm method → Close politely
+
+Your ONLY goal: Simulate a real interaction so naturally that the user forgets this is an AI.
+
+### RESPONSE FORMAT
+Return JSON: {{"en": "your response", "pt": "traducao em portugues"}}
+"""
+    elif is_grammar_topic:
         if is_demonstratives and lesson_lang == 'pt':
             full_prompt = f"""{system_prompt}
 
@@ -680,14 +829,12 @@ O aluno disse: "{user_text}"
 4. NAO corrija alternativas validas! Ex: [EN]doing great[/EN] e [EN]doing well[/EN] sao AMBOS corretos - nao "corrija" um para o outro.
 5. Se o ingles do aluno estiver correto, apenas continue a conversa naturalmente SEM correcoes.
 
-### COMO RESPONDER
-- Reaja ao conteudo e mantenha a conversa fluindo.
-- Se houver ERRO REAL, corrija: "Em vez de [EN]trecho curto[/EN], diga: [EN]frase correta[/EN]."
-- Responda em PORTUGUES BRASILEIRO. Ingles sempre em [EN]...[/EN].
-- 1 a 2 frases curtas.
-- **REGRA OBRIGATORIA**: Sua resposta DEVE SEMPRE terminar com uma PERGUNTA para o aluno. NUNCA termine apenas com uma afirmacao! O aluno precisa saber o que responder.
-- suggested_words: APENAS quando houver ERRO GRAMATICAL REAL; senao [].
-- must_retry: true APENAS se suggested_words nao estiver vazio; senao false.
+- **REGRA OBRIGATORIA (ESTRUTURA)**:
+  1. Reaja ao aluno de forma humana.
+  2. **ENSINE algo novo** (uma frase, uma palavra, uma correção) com exemplo em [EN]...[/EN].
+  3. **TERMINE com uma PERGUNTA** ou tarefa para o aluno.
+- **PROIBIDO**: Nao use frases decoradas/robóticas como "What do you think?", "Does that make sense?" ou "Ready to continue?".
+- **PROIBIDO**: Responder apenas com perguntas ou apenas com afirmações.
 - Retorne JSON: {{"pt": "...", "suggested_words": [], "must_retry": false}}
 """
         else:
@@ -704,39 +851,108 @@ The student just said: "{user_text}"
 4. Do NOT correct valid alternatives! "doing great" and "doing well" are BOTH correct - don't "fix" one to the other.
 5. If their English is correct, just continue the conversation naturally WITHOUT corrections.
 
-### HOW TO RESPOND
-- React to what they said and keep the conversation flowing.
-- If there's a REAL error, correct it: "Instead of <short snippet>, say: <corrected>."
+### HOW TO RESPOND (BALANCED STRUCTURE)
+1. **React**: Human-like response to the student's message.
+2. **Teach**: Provide 1 specific English example or correction.
+3. **Question**: Always end with a question or task to keep the flow.
+- **FORBIDDEN**: Do not use robotic loops like "What do you think?", "Does that make sense?", or "How about you?".
+- **FORBIDDEN**: Never provide only a question or only a statement.
 - Speak in English (simple, natural, friendly).
 - 1-2 short sentences.
-- **MANDATORY RULE**: Your response MUST ALWAYS end with a QUESTION for the student. NEVER end with just a statement! The student needs to know what to respond.
 - suggested_words: ONLY when there is a REAL GRAMMAR ERROR; otherwise [].
 - must_retry: true ONLY if suggested_words is not empty; else false.
 - Return JSON: {{"en": "...", "suggested_words": [], "must_retry": false}}
 """
     else:
-        # Standard conversation mode - with Portuguese translation
-        full_prompt = f"""{system_prompt}
+        # Standard scenario mode (Learning mode = structured teaching)
+        if practice_mode == 'learning':
+            # LEARNING MODE: Teacher with absolute leadership - NO ROLEPLAY
+            full_prompt = f"""{system_prompt}
 
-You are having a REAL conversation. Act like a friendly human, not a chatbot or teacher.
+### YOU ARE A TEACHER — NOT A CONVERSATION PARTNER — NOT A SERVICE WORKER
+You give STRUCTURED LESSONS. You do NOT chat. You do NOT ask opinions. You do NOT roleplay.
+{conversation_history}
+Student just said: "{user_text}"
+
+### MANDATORY OPENING (First message only)
+Your FIRST message MUST be: "Today you will learn how to [topic] in English."
+NEVER start with roleplay greeting ("Welcome to...", "Good morning!", "What can I get you?")
+NEVER act as barista/waiter/receptionist in Learning mode.
+
+### ABSOLUTE FORBIDDEN PHRASES (NEVER USE - CRITICAL!)
+- "What about you?" (BANNED - casual chat)
+- "What do you think?" (BANNED - opinion question)
+- "How about you?" (BANNED - casual chat)
+- "Do you like...?" (BANNED - irrelevant to lesson)
+- "Does that make sense?" (BANNED - condescending)
+- "Ready?" / "Shall we start?" / "Would you like to learn?" (BANNED - don't ask permission)
+- "Now that we've..." (BANNED - don't presume previous actions)
+- "Can you try?" without clear instruction (BANNED)
+- "Good morning! Welcome to..." (BANNED - this is roleplay)
+- Any roleplay greeting or service worker language
+- Any question asking for OPINION
+- Any small talk or casual conversation
+
+### GOLDEN RULE
+If your sentence doesn't TEACH something or REQUEST PRACTICE, delete it.
+Every response must contain:
+- A useful phrase to learn, OR
+- A model sentence, OR
+- A clear practice command ("Repeat this." / "Now order using size + type.")
+
+### LESSON FLOW (Fixed Order)
+1. TEACH: Show vocabulary/options first
+2. MODEL: Give example sentence
+3. PRACTICE: Clear command ("Repeat this sentence." / "Order a coffee with size.")
+
+NEVER ask before teaching. NEVER skip steps.
+
+### NOISE HANDLING (Critical!)
+If student writes nonsense, tests limits, or goes off-topic:
+- IGNORE the content completely
+- DO NOT react emotionally ("Oh dear!", "That sounds awful!")
+- DO NOT engage with off-topic content
+- REDIRECT immediately: "Let's focus on [topic]. [Practice command]."
+Example: "Let's focus on ordering coffee. Repeat: I'd like a coffee, please."
+
+### STAY ON TOPIC
+If topic is "Ordering Coffee" → ONLY teach coffee ordering:
+- Basic order (I'd like... / Can I have...)
+- Sizes (small, medium, large)
+- Types (latte, cappuccino, espresso)
+- Polite expressions (please, thank you)
+NOTHING ELSE. No tangents.
+
+### RESPONSE FORMAT
+- English + Portuguese translation
+- End with PRACTICE COMMAND (never opinion question)
+- suggested_words: only for real errors, otherwise []
+- Return JSON: {{"en": "...", "pt": "...", "suggested_words": [], "must_retry": false}}
+"""
+        else:
+            # FREE CONVERSATION MODE: Casual conversation partner
+            full_prompt = f"""{system_prompt}
+
+IMPORTANT: You are a friendly English conversation partner.
 {conversation_history}
 User just said: "{user_text}"
 
-BE HUMAN - CRITICAL RULES:
-1. **RECIPROCAL QUESTIONS**: If student asks "How about you?", "And you?", "What about yourself?" etc., YOU MUST SHARE ABOUT YOURSELF FIRST! Answer their question, then ask something new.
-2. **UNDERSTAND CONTEXT**: If student says something unclear, ask naturally: "Oh, do you mean...?" or "I didn't quite catch that - did you say...?"
-3. **NO MECHANICAL PHRASES**: NEVER say "What is your question?", "Do you have questions for me?", or "Is there anything else?". These sound robotic.
-4. **ONLY CORRECT REAL ERRORS**: Wrong verb tense, wrong preposition, wrong word order. Do NOT correct valid alternatives like "doing great" vs "doing well".
-5. **BE INTERESTED**: React to what they say! "Oh nice!", "That sounds fun!", "Really?", "I love that too!" - then continue naturally.
-6. **VARY YOUR QUESTIONS**: Don't always ask the same type of question. Mix: opinions, experiences, preferences, follow-ups on what they said.
+CRITICAL RULES:
+1. If the student asks you a QUESTION, you MUST answer it first before continuing. Never ignore their questions!
+2. Be a real conversation partner, NOT a correction machine. If their English is correct, just chat naturally.
+3. Only correct REAL GRAMMAR ERRORS (wrong verb tense, subject-verb disagreement, wrong preposition, etc).
+4. Do NOT correct valid alternatives! "doing great" and "doing well" are BOTH correct - don't "fix" one to the other.
+5. **MANDATORY**: Your response MUST ALWAYS end with a QUESTION. NEVER end with just a statement or affirmation! The student needs a prompt to respond.
 
 Response format:
-- 1-2 natural sentences in English + Portuguese translation.
-- End with a question that flows naturally from the conversation.
-- If correcting: "Instead of <snippet>, try: <corrected>." (brief, not the whole sentence)
-- suggested_words: ONLY for real grammar errors; otherwise [].
-- must_retry: true ONLY if suggested_words not empty.
+- Respond naturally in English, provide Portuguese translation.
+- If correcting a REAL error, use: "Instead of <short snippet>, say: <corrected>."
+- **CRITICAL**: Every response MUST end with a question mark (?). Examples: "What do you think?", "How about you?", "What happened next?"
+- suggested_words: ONLY when there is a REAL GRAMMAR ERROR; otherwise [].
+- must_retry: true ONLY if suggested_words is not empty; else false.
 - Return JSON: {{"en": "...", "pt": "...", "suggested_words": [], "must_retry": false}}
+
+Keep responses to 1-2 short sentences (about 20 words). The LAST sentence MUST be a question.
 """
 
     try:
@@ -744,7 +960,31 @@ Response format:
         # For cached models, only send the dynamic part (user text + current situation)
         if context_model != model:
             # Using cached model - send minimal prompt
-            if is_grammar_topic:
+            if practice_mode == 'simulator' and context_key in SIMULATOR_PROMPTS:
+                # Decide role type
+                is_peer = any(k in context_key for k in ['free', 'basic', 'neighbor', 'date', 'friend', 'wedding', 'graduation'])
+                role_desc = "a friendly English conversation partner (PEER)" if is_peer else "a REAL service worker (Barista/Staff/Attendant)"
+                
+                # SIMULATOR MODE: REAL LIFE - NO TEACHING
+                minimal_prompt = f"""{conversation_history}
+Current input: "{user_text}"
+
+REAL LIFE SIMULATOR. You are {role_desc}. NOT a teacher.
+This is NOT a lesson. NOT practice. NOT teaching.
+
+ABSOLUTE PROHIBITIONS:
+1. NO Teaching: Do NOT explain grammar, Portuguese/English differences, or words (e.g., "Obrigado is for boys").
+2. NO Instructional Tone: Do NOT say "Good question", "Try using...", or "Does that help?".
+3. NO Robotic Fillers: Do NOT use "What's on your mind?", "Anything else?", "What about you?", or "What do you think?".
+4. NO Meta-Talk: Do NOT explain the context or the exercise.
+
+NATURAL FLOW RULES:
+- One question per turn maximum.
+- Do NOT start with a statement followed by a question if it feels robotic.
+- Respond naturally and specifically to what was just said.
+
+Return JSON: {{"en": "your response", "pt": "traducao em portugues"}}"""
+            elif is_grammar_topic:
                 if is_demonstratives and lesson_lang == 'pt':
                     minimal_prompt = f"""### SITUACAO ATUAL
 O aluno disse: "{user_text}"
@@ -773,49 +1013,67 @@ Return only JSON: {{"en": "...", "suggested_words": ["...","...","...","..."], "
                     minimal_prompt = f"""### SITUACAO ATUAL
 O aluno disse: "{user_text}"
 
-SEJA HUMANO:
-- Se o aluno perguntar sobre VOCE ("E voce?", "What about you?"): RESPONDA sobre voce primeiro, depois faca uma nova pergunta.
-- Se nao entendeu: "Hmm, voce quis dizer...?" ou "Nao entendi bem, voce disse...?"
-- NUNCA diga: "Qual e sua pergunta?", "Tem mais perguntas?" - muito robotico.
-- Reaja naturalmente: "Que legal!", "Serio?", "Eu tambem!" - mostre interesse.
-- So corrija ERROS REAIS (tempo verbal, preposicao errada). Nao "corrija" alternativas validas.
-
-Use portugues e marque ingles com [EN]...[/EN]. Evite "aula/licao/exercicio/gramatica".
-1-2 frases curtas, termine com pergunta natural.
-Se corrigir: "Em vez de [EN]trecho[/EN], diga: [EN]correcao[/EN]." (breve)
-suggested_words: 4 palavras quando houver erro REAL; senao [].
-must_retry: true se suggested_words nao vazio; senao false.
-Retorne JSON: {{"pt": "...", "suggested_words": [], "must_retry": false}}.
+Responda de forma humana e conversacional. Use portugues e marque ingles com [EN]...[/EN].
+Evite "aula/licao/exercicio/gramatica".
+1-2 frases curtas (max ~16 palavras cada) e termine com uma pergunta.
+Se corrigir, use: "Em vez de [EN]trecho curto[/EN], diga: [EN]frase correta[/EN]." (max 4 palavras do aluno).
+Nao repita a frase inteira do aluno.
+suggested_words: 4 palavras/expressoes curtas quando houver erro ou oportunidade; senao [].
+must_retry: true se suggested_words nao estiver vazio; senao false.
+Retorne apenas JSON: {{"pt": "...", "suggested_words": ["...","...","...","..."], "must_retry": true}}.
 """
                 else:
                     minimal_prompt = f"""### CURRENT SITUATION
 The student just said: "{user_text}"
 
-BE HUMAN:
-- If they ask about YOU ("How about you?", "And you?"): SHARE about yourself first, then ask something new.
-- If unclear: "Oh, do you mean...?" or "I didn't catch that, did you say...?"
-- NEVER say: "What is your question?", "Any questions?" - too robotic.
-- React naturally: "Oh nice!", "That's cool!", "Really?" - show interest.
-- Only correct REAL errors (wrong tense, preposition). Not valid alternatives.
-
-Use simple English. Avoid "lesson/grammar/exercise".
-1-2 short sentences, end with natural follow-up question.
-If correcting: "Instead of <snippet>, try: <corrected>." (brief)
-suggested_words: 4 words when there's a REAL error; otherwise [].
-must_retry: true if suggested_words not empty; else false.
-Return JSON: {{"en": "...", "suggested_words": [], "must_retry": false}}.
+Respond like a real conversation partner. Use simple English and avoid "lesson/grammar/exercise".
+1-2 short sentences (max ~16 words each), end with one question.
+If you correct, use: "Instead of <short snippet>, say: <corrected>." (max 4 words from the student).
+Do not repeat the full student sentence.
+suggested_words: 4 short words/phrases when there is a mistake or clear improvement; otherwise [].
+must_retry: true if suggested_words is not empty; else false.
+Return only JSON: {{"en": "...", "suggested_words": ["...","...","...","..."], "must_retry": true}}.
 """
             else:
-                minimal_prompt = f"""{conversation_history}
+                if practice_mode == 'learning':
+                    # LEARNING MODE: Strict teacher - NO ROLEPLAY - NO CONVERSATION
+                    minimal_prompt = f"""{conversation_history}
+Student said: "{user_text}"
+
+YOU ARE A TEACHER. NOT a conversation partner. NOT a service worker.
+
+BANNED PHRASES (NEVER USE):
+- "What about you?" / "How about you?" / "What do you think?" (BANNED)
+- "Does that make sense?" / "Do you like...?" (BANNED)
+- "Ready?" / "Shall we start?" / "Would you like to learn?" (BANNED)
+- "Good morning! Welcome to..." (BANNED - this is roleplay)
+- Any roleplay greeting or service worker language (BANNED)
+- Any opinion questions or casual chat
+
+FIRST MESSAGE: "Today you will learn how to [topic] in English."
+NEVER start with roleplay greeting.
+
+NOISE HANDLING:
+If nonsense/off-topic → IGNORE and redirect: "Let's focus on [topic]. [Practice command]."
+NEVER react emotionally ("Oh dear!", "That sounds awful!").
+
+LESSON FLOW:
+1. TEACH first (show options/vocabulary)
+2. MODEL (example sentence)
+3. PRACTICE command ("Repeat this." / "Order using size + type.")
+
+Return JSON: {{"en": "...", "pt": "...", "suggested_words": [], "must_retry": false}}."""
+                else:
+                    # FREE CONVERSATION MODE: Casual conversation partner
+                    minimal_prompt = f"""{conversation_history}
 User just said: "{user_text}"
 
-BE HUMAN:
-1. **If they ask about YOU** ("How about you?", "And you?", "What do you like?"): SHARE about yourself first, then ask something new.
-2. **If unclear speech**: Ask naturally "Oh, do you mean...?" or "I didn't catch that, did you say...?"
-3. **NEVER say**: "What is your question?", "Do you have questions?", "Anything else?" - too robotic.
-4. **React naturally**: "Oh nice!", "That's cool!", "Really?" - show interest before continuing.
-5. **Only correct REAL errors** (wrong tense, preposition, word order). Not valid alternatives.
-6. Keep 1-2 sentences. End with a natural follow-up question.
+CRITICAL RULES:
+1. If user asks a QUESTION, answer it first! Never ignore questions.
+2. Be a friendly conversation partner with MEMORY of the conversation above.
+3. Only correct REAL GRAMMAR ERRORS. Do NOT "fix" valid alternatives.
+4. Keep 1-2 short sentences (~20 words).
+5. **MANDATORY**: Your FINAL sentence MUST be a QUESTION ending with "?". NEVER end with just a statement! Examples: "What about you?", "How was yours?", "What do you think?"
 
 suggested_words: ONLY for real grammar errors; otherwise [].
 must_retry: true ONLY if suggested_words not empty; else false.
@@ -1024,45 +1282,6 @@ Original message: "{ai_text}"
                         ai_trans = _trim_words(ai_trans, max_words)
 
         # CRITICAL: Ensure response ALWAYS ends with a question
-        # If AI failed to include a question, append a follow-up question
-        def _ensure_ends_with_question(text, lang='en', context=''):
-            if not text:
-                return text
-            text = text.strip()
-            # Check if already ends with a question
-            if text.endswith('?'):
-                return text
-            
-            # Follow-up questions by language
-            follow_up_questions_en = [
-                "What about you?",
-                "What do you think?",
-                "How about you?",
-                "Does that make sense?",
-                "Can you try?"
-            ]
-            follow_up_questions_pt = [
-                "E você?",
-                "O que você acha?",
-                "Quer tentar?",
-                "Faz sentido?",
-                "O que me diz?"
-            ]
-            
-            import random
-            if lang == 'pt' or '[EN]' in text:
-                question = random.choice(follow_up_questions_pt)
-            else:
-                question = random.choice(follow_up_questions_en)
-            
-            # Append the question
-            return f"{text} {question}"
-        
-        # Apply question enforcement
-        ai_text = _ensure_ends_with_question(ai_text, lesson_lang if is_grammar_topic else 'en', context_key)
-        if ai_trans:
-            ai_trans = _ensure_ends_with_question(ai_trans, 'pt', context_key)
-
         # Store conversation for the user
         user_id = request.user_id
         if user_id not in user_conversations:
@@ -1097,7 +1316,7 @@ def free_conversation_action():
 
     # Check daily usage limit
     user_email = request.user_email
-    if not check_usage_limit(user_email):
+    if not is_local_request() and not check_usage_limit(user_email):
         remaining = get_remaining_seconds(user_email)
         return jsonify({
             "error": "Daily practice limit reached",
@@ -1762,7 +1981,7 @@ def tts_endpoint():
                     as_attachment=False,
                     download_name="tts.mp3"
                 )
-            print(f"[CACHE] ❌ Audio cache MISS - generating new audio")
+            print(f"[CACHE] Audio cache MISS - generating new audio")
             
             url = f"https://texttospeech.googleapis.com/v1/text:synthesize?key={GOOGLE_API_KEY}"
             
@@ -1836,7 +2055,7 @@ def tts_endpoint():
                 error_msg = response.text[:500] if response.text else "Unknown error"
                 
                 # Detailed error logging for diagnosis
-                print(f"[TTS] ❌ GOOGLE TTS API ERROR")
+                print(f"[TTS] GOOGLE TTS API ERROR")
                 print(f"[TTS] Status Code: {response.status_code}")
                 print(f"[TTS] Voice Attempted: {voice_name}")
                 print(f"[TTS] Error Message: {error_msg}")
@@ -2034,7 +2253,7 @@ def transcribe_audio():
     
     # Check daily usage limit
     user_email = request.user_email
-    if not check_usage_limit(user_email):
+    if not is_local_request() and not check_usage_limit(user_email):
         remaining = get_remaining_seconds(user_email)
         return jsonify({
             "error": "Daily practice limit reached",
