@@ -1263,10 +1263,12 @@ Original message: "{ai_text}"
             # Append the question
             return f"{text} {question}"
         
-        # Apply question enforcement
-        ai_text = _ensure_ends_with_question(ai_text, lesson_lang if is_grammar_topic else 'en', context_key)
-        if ai_trans:
-            ai_trans = _ensure_ends_with_question(ai_trans, 'pt', context_key)
+        # Apply question enforcement ONLY for learning mode (NOT simulator)
+        # Simulator mode should have natural roleplay flow without forced generic questions
+        if practice_mode != 'simulator':
+            ai_text = _ensure_ends_with_question(ai_text, lesson_lang if is_grammar_topic else 'en', context_key)
+            if ai_trans:
+                ai_trans = _ensure_ends_with_question(ai_trans, 'pt', context_key)
 
         # Store conversation for the user
         user_id = request.user_id
