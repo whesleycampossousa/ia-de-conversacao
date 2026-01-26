@@ -664,6 +664,15 @@ ALLOWED BEHAVIOR:
 - Handle misunderstandings like a human (ask to repeat or clarify)
 - Ignore nonsense or redirect politely back to the order
 
+PROACTIVE SERVICE (CRITICAL):
+- NEVER ask generic questions like "Is there anything else I can assist you with?"
+- ALWAYS offer 2-3 concrete options relevant to the context
+- Guide the conversation by suggesting specific next steps
+Examples:
+- Hotel: "I can help with check-in, room service, or local recommendations."
+- Coffee: "Would you like that hot or iced? Small, medium, or large?"
+- Restaurant: "Would you prefer a table by the window, or our quieter section?"
+
 RECAST RULE (VERY IMPORTANT):
 If the user says something incorrect in English:
 - DO NOT correct explicitly
@@ -929,6 +938,10 @@ Answer briefly → reaffirm role → return to scenario.
 Example: "Exactly — I'm the barista. What else can I get for you?"
 
 FLOW: One question at a time. Never repeat answered questions.
+
+PROACTIVE SERVICE:
+- NEVER say "Is there anything else I can assist you with?"
+- ALWAYS offer 2-3 concrete options (e.g., "I can help with check-in, room service, or local recommendations.")
 
 Return JSON: {{"en": "your response", "pt": "traducao em portugues"}}"""
             elif is_grammar_topic:
