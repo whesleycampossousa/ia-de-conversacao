@@ -177,7 +177,7 @@ if GOOGLE_API_KEY and GENAI_AVAILABLE:
         genai.configure(api_key=GOOGLE_API_KEY)
         # Fallback basic model (no cache)
         model = genai.GenerativeModel(
-            'gemini-2.0-flash-exp',
+            'gemini-3.0-flash-preview',
             generation_config=DEFAULT_GEN_CONFIG
         )
         print("[OK] Gemini model initialized successfully")
@@ -373,7 +373,7 @@ def get_cached_model_for_context(context_key, system_prompt):
     try:
         # Create model with system_instruction (automatically cached by Gemini)
         cached_model = genai.GenerativeModel(
-            model_name='gemini-2.0-flash-exp',
+            model_name='gemini-3.0-flash-preview',
             system_instruction=system_prompt,
             generation_config=DEFAULT_GEN_CONFIG
         )
