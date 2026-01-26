@@ -38,28 +38,24 @@
             </div>
 
             <!-- Start Overlay -->
-            <div id="start-overlay" class="start-overlay-container" style="display: flex;">
+            <div id="start-overlay" class="start-overlay-container" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 2vh; overflow-y: auto;">
 
                 <!-- Mode Selection (Step 1) -->
-                <div id="mode-selection" class="mode-selection-container">
-                    <div class="mode-title">Choose your practice mode</div>
-                    <div class="mode-subtitle">Escolha como você quer praticar</div>
+                <div id="mode-selection" class="mode-selection-container" style="text-align: center; margin-bottom: 0.8rem;">
+                    <div class="mode-title" style="font-size: 1.1rem; margin-bottom: 0.3rem;">Choose your mode</div>
+                    <div class="mode-subtitle" style="font-size: 0.8rem; margin-bottom: 0.8rem;">Escolha o modo</div>
 
-                    <div class="mode-options">
-                        <div class="mode-card" data-mode="learning" id="mode-learning">
-                            <div class="mode-icon">📚</div>
-                            <div class="mode-name">Learning</div>
-                            <div class="mode-name-pt">Aprendizado</div>
-                            <div class="mode-description">Guided lesson with explanations and practice</div>
-                            <div class="mode-description-pt">Aula guiada com explicações e prática</div>
+                    <div class="mode-options" style="display: flex; flex-direction: row; gap: 0.5rem; justify-content: center;">
+                        <div class="mode-card" data-mode="learning" id="mode-learning" style="width: 110px; padding: 0.5rem; background: rgba(30,30,30,0.95); border: 2px solid rgba(255,255,255,0.1); border-radius: 12px; cursor: pointer; text-align: center;">
+                            <div class="mode-icon" style="font-size: 1.5rem; margin-bottom: 0.2rem;">📚</div>
+                            <div class="mode-name" style="font-size: 0.8rem; font-weight: 700; color: white;">Learning</div>
+                            <div class="mode-name-pt" style="font-size: 0.6rem; color: rgba(255,255,255,0.5);">Aprendizado</div>
                         </div>
 
-                        <div class="mode-card" data-mode="simulator" id="mode-simulator">
-                            <div class="mode-icon">🎭</div>
-                            <div class="mode-name">Simulator</div>
-                            <div class="mode-name-pt">Simulador</div>
-                            <div class="mode-description">Realistic roleplay - practice like in real life</div>
-                            <div class="mode-description-pt">Roleplay realista - pratique como na vida real</div>
+                        <div class="mode-card" data-mode="simulator" id="mode-simulator" style="width: 110px; padding: 0.5rem; background: rgba(30,30,30,0.95); border: 2px solid rgba(255,255,255,0.1); border-radius: 12px; cursor: pointer; text-align: center;">
+                            <div class="mode-icon" style="font-size: 1.5rem; margin-bottom: 0.2rem;">🎭</div>
+                            <div class="mode-name" style="font-size: 0.8rem; font-weight: 700; color: white;">Simulator</div>
+                            <div class="mode-name-pt" style="font-size: 0.6rem; color: rgba(255,255,255,0.5);">Simulador</div>
                         </div>
                     </div>
                 </div>
@@ -69,10 +65,10 @@
 
                 <!-- Play button (Step 2) -->
                 <button id="start-btn" class="primary-btn pulse-animation"
-                    style="display: none;">
+                    style="display: none; padding: 0.6rem 1.5rem; font-size: 0.9rem;">
                     ▶ Play
                 </button>
-                <div id="start-message" class="start-message" style="display: none;">Click to start conversation</div>
+                <div id="start-message" class="start-message" style="display: none; font-size: 0.8rem;">Tap to start</div>
             </div>
 
             <!-- Subtitle Chat Area -->

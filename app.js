@@ -93,14 +93,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (voiceSelectionStep) {
         const displaySet = voiceDisplaySets[isPortugueseLesson ? 'pt' : 'en'];
         const selectorHTML = `
-            <div style="margin-bottom: 20px; text-align: center;">
-            <div class="voice-label" style="color:rgba(255,255,255,0.7); margin-bottom:10px; font-size:0.9rem;">${isPortugueseLesson ? 'Selecione a voz realista em portugues' : 'Select the AI voice'}</div>
-                <div class="voice-selector-container">
+            <div style="margin-bottom: 10px; text-align: center;">
+            <div class="voice-label" style="color:rgba(255,255,255,0.7); margin-bottom:6px; font-size:0.75rem;">${isPortugueseLesson ? 'Selecione a voz' : 'Select voice'}</div>
+                <div class="voice-selector-container" style="display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;">
                     ${displaySet.map(option => `
-                        <div class="voice-option ${currentVoice === option.id ? 'selected' : ''}" data-voice="${option.id}">
-                            <div class="voice-avatar">${option.avatar}</div>
-                            <div class="voice-name">${option.label}</div>
-                            <div class="voice-desc">${option.description}</div>
+                        <div class="voice-option ${currentVoice === option.id ? 'selected' : ''}" data-voice="${option.id}" style="width: 60px; padding: 6px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; cursor: pointer; text-align: center;">
+                            <div class="voice-avatar" style="font-size: 1.2rem;">${option.avatar}</div>
+                            <div class="voice-name" style="font-size: 0.6rem; color: white;">${option.label}</div>
                         </div>
                     `).join('')}
                 </div>
