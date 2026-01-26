@@ -359,29 +359,26 @@ SIMULATOR_PROMPTS = {}  # Simulator mode prompts for realistic roleplay
 
 def get_cached_model_for_context(context_key, system_prompt):
     """Get or create a cached Gemini model for a specific context.
-    Uses a combination of context_key and system_prompt hash to ensure updates are reflected."""
+    This uses system_instruction which gets cached automatically by Gemini,
+    reducing token costs by ~90% for the system prompt portion."""
     global cached_models
     
     if not GENAI_AVAILABLE or not GOOGLE_API_KEY:
         return model  # Fallback to basic model
     
-    # Create a unique key including the prompt content
-    prompt_hash = hashlib.md5(system_prompt.encode()).hexdigest()
-    cache_key = f"{context_key}_{prompt_hash}"
-    
-    # Check if we already have this exact model
-    if cache_key in cached_models:
-        return cached_models[cache_key]
+    # Check if we already have a cached model for this context
+    if context_key in cached_models:
+        return cached_models[context_key]
     
     try:
-        # Create model with system_instruction
+        # Create model with system_instruction (automatically cached by Gemini)
         cached_model = genai.GenerativeModel(
             model_name='gemini-2.0-flash-exp',
             system_instruction=system_prompt,
             generation_config=DEFAULT_GEN_CONFIG
         )
-        cached_models[cache_key] = cached_model
-        print(f"[CACHE] Created NEW cached model for {context_key} (Hash: {prompt_hash[:8]})")
+        cached_models[context_key] = cached_model
+        print(f"[CACHE] Created cached model for context: {context_key}")
         return cached_model
     except Exception as e:
         print(f"[CACHE] Error creating cached model for {context_key}: {e}")
@@ -593,7 +590,7 @@ def chat():
 
     data = request.json
     user_text = data.get('text')
-    context_key = (data.get('context') or 'coffee_shop').strip().lower()
+    context_key = data.get('context', 'coffee_shop')
     lesson_lang = data.get('lessonLang', 'en')  # 'en' or 'pt'
     practice_mode = data.get('practiceMode', 'learning')  # 'learning' or 'simulator'
 
@@ -605,40 +602,7 @@ def chat():
     user_text = result
 
     # Get conversation history for context (last 6 messages = 3 turns)
-    user_id = request.user_id # Fix: Define user_id here before using it
-    
-    # FORCE GREETING LOGIC (Start Trigger)
-    is_force_greeting = (user_text == "[START_SIMULATION]" or request.json.get('forceGreeting'))
-    
-    if is_force_greeting:
-        friendly_place = context_key.replace('_', ' ').title()
-        
-        # 1. SPECIAL CASE: Free Conversation (Not a specific place/role)
-        if context_key == "free_conversation":
-             greeting = "Hello! I'm here to practice English with you. What would you like to talk about today?"
-             
-        # 2. SPECIAL CASE: Job Interview (Specific role)
-        elif context_key == "job_interview":
-            greeting = "Hello, welcome to the interview. Please, have a seat. Tell me a little about yourself."
-            
-        # 3. SPECIAL CASE: Basic Structures (Grammar focus)
-        elif context_key == "basic_structures":
-            greeting = "Hello! We are going to practice polite questions today. Ready to start?"
-
-        # 4. STANDARD CASE: Place-based scenarios (Hotel, Cafe, etc.)
-        else:
-            # Fix "The The" issue
-            prefix = "the " if "the " not in friendly_place.lower() and "the" not in context_key.lower() else ""
-            greeting = f"Hello, welcome to {prefix}{friendly_place}. How can I help you today?"
-            
-        print(f"[CHAT] (DEBUG) EXECUTING FORCE GREETING BRANCH for {context_key}")
-        
-        # Save to history so AI remembers it said this
-        if user_id in user_conversations:
-            user_conversations[user_id].append({"ai": greeting})
-            
-        return jsonify({"text": greeting})
-
+    user_id = request.user_id
     conversation_history = ""
     if user_id in user_conversations:
         recent = user_conversations[user_id][-6:]  # Last 6 messages
@@ -653,30 +617,9 @@ def chat():
                 conversation_history = "\n### CONVERSATION HISTORY (for context):\n" + "\n".join(history_lines) + "\n"
 
     # Get System Prompt based on context and practice mode
-    if practice_mode == 'simulator':
-        if context_key in SIMULATOR_PROMPTS:
-            system_prompt = SIMULATOR_PROMPTS.get(context_key)
-            print(f"[CHAT] Using SPECIFIC SIMULATOR mode for {context_key}")
-        else:
-            # Universal Fallback for Simulator Mode
-            system_prompt = f"""
-### REAL LIFE SIMULATOR MODE - Context: {context_key.replace('_', ' ').title()}
-You are a person in this situation. Talk naturally.
-This is NOT a lesson. NOT practice. NOT teaching.
-
-CORE RULE:
-You must ALWAYS act like a real person in this scenario.
-You must NEVER act like a teacher, tutor, or language coach.
-
-ABSOLUTE PROHIBITIONS (STRICT VIOLATIONS):
-- No "Can you try?", "Repeat this", "Let's practice".
-- No praise like "Good job!", "Well done!".
-- No robotic fillers: "What do you think?", "Does that make sense?", "How about you?".
-- No teacher-style explanations.
-
-RECAST RULE: Respond naturally using correct grammar, don't correct explicitly.
-"""
-            print(f"[CHAT] Using FALLBACK SIMULATOR mode for {context_key}")
+    if practice_mode == 'simulator' and context_key in SIMULATOR_PROMPTS:
+        system_prompt = SIMULATOR_PROMPTS.get(context_key)
+        print(f"[CHAT] Using SIMULATOR mode for {context_key}")
     else:
         system_prompt = CONTEXT_PROMPTS.get(context_key, CONTEXT_PROMPTS.get('coffee_shop', ''))
         print(f"[CHAT] Using LEARNING mode for {context_key}")
@@ -689,16 +632,15 @@ RECAST RULE: Respond naturally using correct grammar, don't correct explicitly.
     is_demonstratives = context_key in ['demonstratives', 'this_that_these_those']
 
     # SIMULATOR MODE: REAL LIFE SIMULATOR - NO TEACHING
-    if practice_mode == 'simulator':
-        role_desc = "conversation partner" if context_key == "free_conversation" else "service worker (barista, waiter, receptionist, etc)"
+    if practice_mode == 'simulator' and context_key in SIMULATOR_PROMPTS:
         full_prompt = f"""{system_prompt}
 {conversation_history}
 
 YOU ARE IN REAL LIFE SIMULATOR MODE.
-The person you are talking to just said: "{user_text}"
+The customer just said: "{user_text}"
 
 CORE RULE:
-You must ALWAYS act like a real {role_desc}.
+You must ALWAYS act like a real service worker (barista, waiter, receptionist, etc).
 You must NEVER act like a teacher, tutor, or language coach.
 This is NOT a lesson. This is NOT practice. This is NOT teaching.
 
@@ -829,12 +771,14 @@ O aluno disse: "{user_text}"
 4. NAO corrija alternativas validas! Ex: [EN]doing great[/EN] e [EN]doing well[/EN] sao AMBOS corretos - nao "corrija" um para o outro.
 5. Se o ingles do aluno estiver correto, apenas continue a conversa naturalmente SEM correcoes.
 
-- **REGRA OBRIGATORIA (ESTRUTURA)**:
-  1. Reaja ao aluno de forma humana.
-  2. **ENSINE algo novo** (uma frase, uma palavra, uma correção) com exemplo em [EN]...[/EN].
-  3. **TERMINE com uma PERGUNTA** ou tarefa para o aluno.
-- **PROIBIDO**: Nao use frases decoradas/robóticas como "What do you think?", "Does that make sense?" ou "Ready to continue?".
-- **PROIBIDO**: Responder apenas com perguntas ou apenas com afirmações.
+### COMO RESPONDER
+- Reaja ao conteudo e mantenha a conversa fluindo.
+- Se houver ERRO REAL, corrija: "Em vez de [EN]trecho curto[/EN], diga: [EN]frase correta[/EN]."
+- Responda em PORTUGUES BRASILEIRO. Ingles sempre em [EN]...[/EN].
+- 1 a 2 frases curtas.
+- **REGRA OBRIGATORIA**: Sua resposta DEVE SEMPRE terminar com uma PERGUNTA para o aluno. NUNCA termine apenas com uma afirmacao! O aluno precisa saber o que responder.
+- suggested_words: APENAS quando houver ERRO GRAMATICAL REAL; senao [].
+- must_retry: true APENAS se suggested_words nao estiver vazio; senao false.
 - Retorne JSON: {{"pt": "...", "suggested_words": [], "must_retry": false}}
 """
         else:
@@ -851,14 +795,12 @@ The student just said: "{user_text}"
 4. Do NOT correct valid alternatives! "doing great" and "doing well" are BOTH correct - don't "fix" one to the other.
 5. If their English is correct, just continue the conversation naturally WITHOUT corrections.
 
-### HOW TO RESPOND (BALANCED STRUCTURE)
-1. **React**: Human-like response to the student's message.
-2. **Teach**: Provide 1 specific English example or correction.
-3. **Question**: Always end with a question or task to keep the flow.
-- **FORBIDDEN**: Do not use robotic loops like "What do you think?", "Does that make sense?", or "How about you?".
-- **FORBIDDEN**: Never provide only a question or only a statement.
+### HOW TO RESPOND
+- React to what they said and keep the conversation flowing.
+- If there's a REAL error, correct it: "Instead of <short snippet>, say: <corrected>."
 - Speak in English (simple, natural, friendly).
 - 1-2 short sentences.
+- **MANDATORY RULE**: Your response MUST ALWAYS end with a QUESTION for the student. NEVER end with just a statement! The student needs to know what to respond.
 - suggested_words: ONLY when there is a REAL GRAMMAR ERROR; otherwise [].
 - must_retry: true ONLY if suggested_words is not empty; else false.
 - Return JSON: {{"en": "...", "suggested_words": [], "must_retry": false}}
@@ -961,20 +903,32 @@ Keep responses to 1-2 short sentences (about 20 words). The LAST sentence MUST b
         if context_model != model:
             # Using cached model - send minimal prompt
             if practice_mode == 'simulator' and context_key in SIMULATOR_PROMPTS:
-                # Decide role type
-                is_peer = any(k in context_key for k in ['free', 'basic', 'neighbor', 'date', 'friend', 'wedding', 'graduation'])
-                role_desc = "a friendly English conversation partner (PEER)" if is_peer else "a REAL service worker (Barista/Staff/Attendant)"
-                
                 # SIMULATOR MODE: REAL LIFE - NO TEACHING
                 minimal_prompt = f"""{conversation_history}
-Current input: "{user_text}"
+Customer just said: "{user_text}"
 
-Context: You are {role_desc}.
-Instructions:
-- Reply naturally to the input in English.
-- Do not mention being an AI.
-- Keep the conversation flowing by ending with a relevant question.
-- Avoid teaching grammar; just chat.
+REAL LIFE SIMULATOR. You are a REAL service worker. NOT a teacher.
+This is NOT a lesson. NOT practice. NOT teaching.
+
+ABSOLUTE PROHIBITIONS (simulation FAILS if you do these):
+- "Can you try?" / "Repeat after me" / "Let's practice"
+- "How about you?" / "What do you think?" / "Does that make sense?"
+- "Good job!" / Any praise for language
+- Any request to repeat or practice English
+
+RECAST RULE:
+If user says incorrect English → respond using correct form naturally. NO explanation.
+Example: "Can we small?" → "No problem — a small coffee."
+
+CONFIRMATION RULE:
+- CORRECT: "Alright, one large hot coffee."
+- WRONG: "Can you say that?"
+
+META QUESTIONS:
+Answer briefly → reaffirm role → return to scenario.
+Example: "Exactly — I'm the barista. What else can I get for you?"
+
+FLOW: One question at a time. Never repeat answered questions.
 
 Return JSON: {{"en": "your response", "pt": "traducao em portugues"}}"""
             elif is_grammar_topic:
@@ -1071,30 +1025,10 @@ CRITICAL RULES:
 suggested_words: ONLY for real grammar errors; otherwise [].
 must_retry: true ONLY if suggested_words not empty; else false.
 Return JSON: {{"en": "...", "pt": "...", "suggested_words": [], "must_retry": false}}."""
-                safety_settings = [
-                    { "category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE" },
-                    { "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE" },
-                    { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE" },
-                    { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE" }
-                ]
-                try:
-                    response = context_model.generate_content(minimal_prompt, safety_settings=safety_settings)
-                except Exception as e:
-                    print(f"[ERROR] Gemini Generation Failed (Context): {e}")
-                    return jsonify({"error": f"AI Error: {str(e)}"}), 500
+            response = context_model.generate_content(minimal_prompt)
         else:
             # Fallback to basic model with full prompt
-            safety_settings = [
-                { "category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE" },
-                { "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE" },
-                { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE" },
-                { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE" }
-            ]
-            try:
-                response = model.generate_content(full_prompt, safety_settings=safety_settings)
-            except Exception as e:
-                print(f"[ERROR] Gemini Generation Failed: {e}")
-                return jsonify({"error": f"AI Error: {str(e)}"}), 500
+            response = model.generate_content(full_prompt)
         
         print(f"[CHAT] User: {user_text[:50]}... | Response: {response.text[:100]}...")
 
@@ -1295,6 +1229,45 @@ Original message: "{ai_text}"
                         ai_trans = _trim_words(ai_trans, max_words)
 
         # CRITICAL: Ensure response ALWAYS ends with a question
+        # If AI failed to include a question, append a follow-up question
+        def _ensure_ends_with_question(text, lang='en', context=''):
+            if not text:
+                return text
+            text = text.strip()
+            # Check if already ends with a question
+            if text.endswith('?'):
+                return text
+            
+            # Follow-up questions by language
+            follow_up_questions_en = [
+                "What about you?",
+                "What do you think?",
+                "How about you?",
+                "Does that make sense?",
+                "Can you try?"
+            ]
+            follow_up_questions_pt = [
+                "E você?",
+                "O que você acha?",
+                "Quer tentar?",
+                "Faz sentido?",
+                "O que me diz?"
+            ]
+            
+            import random
+            if lang == 'pt' or '[EN]' in text:
+                question = random.choice(follow_up_questions_pt)
+            else:
+                question = random.choice(follow_up_questions_en)
+            
+            # Append the question
+            return f"{text} {question}"
+        
+        # Apply question enforcement
+        ai_text = _ensure_ends_with_question(ai_text, lesson_lang if is_grammar_topic else 'en', context_key)
+        if ai_trans:
+            ai_trans = _ensure_ends_with_question(ai_trans, 'pt', context_key)
+
         # Store conversation for the user
         user_id = request.user_id
         if user_id not in user_conversations:
@@ -1317,9 +1290,7 @@ Original message: "{ai_text}"
         })
     except Exception as e:
         print(f"[CHAT] Error: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({"error": f"Server Error: {str(e)}"}), 500
+        return jsonify({"error": "Failed to generate response. Please try again."}), 500
 
 
 @app.route('/api/free-conversation', methods=['POST'])
@@ -1434,9 +1405,7 @@ Student answer context: "{student_answer}"
         return jsonify({"text": cleaned})
     except Exception as e:
         print(f"FREE CONVERSATION ERROR: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({"error": f"Server Error: {str(e)}"}), 500
+        return jsonify({"error": "Failed to generate response. Please try again."}), 500
 
 
 
@@ -2459,7 +2428,13 @@ def debug_imports():
 @app.route('/<path:path>')
 def serve_static(path):
     try:
-        return send_from_directory(BASE_DIR, path)
+        response = send_from_directory(BASE_DIR, path)
+        # No cache for HTML files to ensure fresh content
+        if path.endswith('.html'):
+            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '0'
+        return response
     except FileNotFoundError:
         return jsonify({"error": "File not found"}), 404
 
