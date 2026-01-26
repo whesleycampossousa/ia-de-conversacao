@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Conversation Player</title>
-    <!-- Version: 2026-01-26-v3 - solid overlay background + visible play button -->
+    <!-- Version: 2026-01-26-v4 - hide footer while overlay showing -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
@@ -431,6 +431,10 @@
 
         // Global function to get selected mode
         window.getSelectedMode = () => selectedMode || 'learning';
+
+        // Hide footer while overlay is showing (so Play button is not covered)
+        const footerBar = document.getElementById('footer-bar');
+        if (footerBar) footerBar.style.display = 'none';
 
         // Initialize on DOM ready
         initModeSelection();

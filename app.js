@@ -1171,6 +1171,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (startOverlay) startOverlay.style.display = 'none';
             const startMessage = document.getElementById('start-message');
             if (startMessage) startMessage.style.display = 'none';
+            // Show footer bar now that overlay is hidden
+            const footerBar = document.getElementById('footer-bar');
+            if (footerBar) footerBar.style.display = '';
 
             // Remove hint and enable buttons
             if (micHint) micHint.style.display = 'none';
