@@ -673,6 +673,15 @@ Examples:
 - Coffee: "Would you like that hot or iced? Small, medium, or large?"
 - Restaurant: "Would you prefer a table by the window, or our quieter section?"
 
+CONVERSATION FLOW (CRITICAL):
+- ALWAYS end your response with a question to keep the conversation moving
+- Instead of statements like "I need X", ask "May I have X?"
+- Examples:
+  - WRONG: "I just need your credit card."
+  - RIGHT: "May I have your credit card, please?"
+  - WRONG: "Your room is ready."
+  - RIGHT: "Your room is ready. Shall I show you the way?"
+
 RECAST RULE (VERY IMPORTANT):
 If the user says something incorrect in English:
 - DO NOT correct explicitly
@@ -942,6 +951,9 @@ FLOW: One question at a time. Never repeat answered questions.
 PROACTIVE SERVICE:
 - NEVER say "Is there anything else I can assist you with?"
 - ALWAYS offer 2-3 concrete options (e.g., "I can help with check-in, room service, or local recommendations.")
+
+CONVERSATION FLOW:
+- ALWAYS end with a question. Instead of "I need X", ask "May I have X?"
 
 Return JSON: {{"en": "your response", "pt": "traducao em portugues"}}"""
             elif is_grammar_topic:
