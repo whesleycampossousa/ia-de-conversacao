@@ -1,20 +1,18 @@
+# Python
 __pycache__
 *.pyc
 .env
-.venv
+.venv/
 venv/
+
+# Local files
 *.mp3
-test_*.py
-list_*.py
-.git
-audio_cache/
-test_reports/
-free_conversation/
-scripts/
-.claude/
-node_modules/
 *.bat
 *.log
+*.txt
+!requirements.txt
+test_*.py
+list_*.py
 debug_*.py
 perf_*.py
 reproduce_*.py
@@ -25,3 +23,20 @@ temp_*.py
 start_server.py
 models.txt
 nul
+
+# Directories
+.git/
+.claude/
+.vercel/cache/
+audio_cache/
+test_reports/
+free_conversation/
+scripts/
+node_modules/
+backup_today/
+files/
+files2/
+
+# Misc
+*.md
+!README.md
