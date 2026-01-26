@@ -65,6 +65,15 @@ except Exception as e:
     TEXTTOSPEECH_AVAILABLE = False
     TEXTTOSPEECH_ERROR = str(e)
 
+# 4.5. Google Cloud Speech-to-Text
+try:
+    from google.cloud import speech
+    from google.oauth2 import service_account
+    SPEECH_AVAILABLE = True
+except Exception as e:
+    SPEECH_AVAILABLE = False
+    SPEECH_ERROR = str(e)
+
 # 5. ReportLab
 try:
     from reportlab.lib.pagesizes import letter
@@ -2296,62 +2305,53 @@ def transcribe_audio():
         print(f"[Transcription] Received audio: {len(audio_data)} bytes, hint: {language_hint}")
         
         # --- INTELLIGENT ROUTING ---
-        # Priority: Google Speech-to-Text > Deepgram > Groq
+        # Priority: Google Speech-to-Text (Service Account) > Deepgram > Groq
 
         transcript = None
         confidence = 0.0
         provider = "none"
 
-        # 1. Try GOOGLE SPEECH-TO-TEXT first (user's preferred paid API)
-        if GOOGLE_API_KEY and not transcript:
+        # 1. Try GOOGLE SPEECH-TO-TEXT with Service Account
+        google_sa_json = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON", "").strip()
+        if SPEECH_AVAILABLE and google_sa_json and not transcript:
             try:
-                import base64
-                audio_b64 = base64.b64encode(audio_data).decode('utf-8')
+                # Parse service account JSON from environment
+                sa_info = json.loads(google_sa_json)
+                credentials = service_account.Credentials.from_service_account_info(sa_info)
+                client = speech.SpeechClient(credentials=credentials)
 
                 # Determine language code
                 lang_code = 'en-US' if language_hint == 'en' else 'pt-BR'
 
-                google_stt_url = f"https://speech.googleapis.com/v1/speech:recognize?key={GOOGLE_API_KEY}"
-
-                stt_body = {
-                    "config": {
-                        "encoding": "WEBM_OPUS",
-                        "sampleRateHertz": 48000,
-                        "languageCode": lang_code,
-                        "enableAutomaticPunctuation": True,
-                        "model": "latest_short"
-                    },
-                    "audio": {
-                        "content": audio_b64
-                    }
-                }
-
-                response = requests.post(
-                    google_stt_url,
-                    json=stt_body,
-                    headers={'Content-Type': 'application/json'},
-                    timeout=15
+                # Configure recognition
+                config = speech.RecognitionConfig(
+                    encoding=speech.RecognitionConfig.AudioEncoding.WEBM_OPUS,
+                    sample_rate_hertz=48000,
+                    language_code=lang_code,
+                    enable_automatic_punctuation=True,
+                    model="latest_short"
                 )
 
-                if response.status_code == 200:
-                    result = response.json()
-                    if 'results' in result and result['results']:
-                        alternatives = result['results'][0].get('alternatives', [])
-                        if alternatives:
-                            transcript = alternatives[0].get('transcript', '')
-                            confidence = alternatives[0].get('confidence', 0.9)
-                            if transcript:
-                                provider = "google-speech"
-                                print(f"[Google STT] Success: '{transcript[:50]}...', Conf: {confidence}")
-                            else:
-                                print("[Google STT] Empty transcript")
-                    else:
-                        print("[Google STT] No results in response")
+                audio = speech.RecognitionAudio(content=audio_data)
+
+                # Perform recognition
+                response = client.recognize(config=config, audio=audio)
+
+                if response.results:
+                    result = response.results[0]
+                    if result.alternatives:
+                        transcript = result.alternatives[0].transcript
+                        confidence = result.alternatives[0].confidence
+                        if transcript:
+                            provider = "google-speech-sa"
+                            print(f"[Google STT SA] Success: '{transcript[:50]}...', Conf: {confidence}")
+                        else:
+                            print("[Google STT SA] Empty transcript")
                 else:
-                    print(f"[Google STT] Error {response.status_code}: {response.text[:200]}")
+                    print("[Google STT SA] No results in response")
 
             except Exception as e:
-                print(f"[Google STT] Exception: {e}")
+                print(f"[Google STT SA] Exception: {e}")
 
         # 2. Try DEEPGRAM as fallback
         prefer_groq_for_mixed = (language_hint != 'en')
