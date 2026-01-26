@@ -1289,8 +1289,10 @@ Original message: "{ai_text}"
             "must_retry": must_retry
         })
     except Exception as e:
+        import traceback
         print(f"[CHAT] Error: {e}")
-        return jsonify({"error": "Failed to generate response. Please try again."}), 500
+        print(f"[CHAT] Traceback: {traceback.format_exc()}")
+        return jsonify({"error": f"Failed to generate response: {str(e)}"}), 500
 
 
 @app.route('/api/free-conversation', methods=['POST'])
