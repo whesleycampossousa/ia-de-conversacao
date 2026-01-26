@@ -45,17 +45,17 @@
                     <div class="mode-title" style="font-size: 1.1rem; margin-bottom: 0.3rem;">Choose your mode</div>
                     <div class="mode-subtitle" style="font-size: 0.8rem; margin-bottom: 0.8rem;">Escolha o modo</div>
 
-                    <div class="mode-options" style="display: flex; flex-direction: row; gap: 0.5rem; justify-content: center;">
-                        <div class="mode-card" data-mode="learning" id="mode-learning" style="width: 110px; padding: 0.5rem; background: rgba(30,30,30,0.95); border: 2px solid rgba(255,255,255,0.1); border-radius: 12px; cursor: pointer; text-align: center;">
-                            <div class="mode-icon" style="font-size: 1.5rem; margin-bottom: 0.2rem;">📚</div>
-                            <div class="mode-name" style="font-size: 0.8rem; font-weight: 700; color: white;">Learning</div>
-                            <div class="mode-name-pt" style="font-size: 0.6rem; color: rgba(255,255,255,0.5);">Aprendizado</div>
+                    <div class="pmode-options" style="display: flex; flex-direction: row; gap: 0.5rem; justify-content: center;">
+                        <div class="pmode-card" data-mode="learning" id="mode-learning" style="width: 110px; padding: 0.5rem; background: rgba(30,30,30,0.95); border: 2px solid rgba(255,255,255,0.1); border-radius: 12px; cursor: pointer; text-align: center;">
+                            <div style="font-size: 1.5rem; margin-bottom: 0.2rem;">📚</div>
+                            <div style="font-size: 0.8rem; font-weight: 700; color: white;">Learning</div>
+                            <div style="font-size: 0.6rem; color: rgba(255,255,255,0.5);">Aprendizado</div>
                         </div>
 
-                        <div class="mode-card" data-mode="simulator" id="mode-simulator" style="width: 110px; padding: 0.5rem; background: rgba(30,30,30,0.95); border: 2px solid rgba(255,255,255,0.1); border-radius: 12px; cursor: pointer; text-align: center;">
-                            <div class="mode-icon" style="font-size: 1.5rem; margin-bottom: 0.2rem;">🎭</div>
-                            <div class="mode-name" style="font-size: 0.8rem; font-weight: 700; color: white;">Simulator</div>
-                            <div class="mode-name-pt" style="font-size: 0.6rem; color: rgba(255,255,255,0.5);">Simulador</div>
+                        <div class="pmode-card" data-mode="simulator" id="mode-simulator" style="width: 110px; padding: 0.5rem; background: rgba(30,30,30,0.95); border: 2px solid rgba(255,255,255,0.1); border-radius: 12px; cursor: pointer; text-align: center;">
+                            <div style="font-size: 1.5rem; margin-bottom: 0.2rem;">🎭</div>
+                            <div style="font-size: 0.8rem; font-weight: 700; color: white;">Simulator</div>
+                            <div style="font-size: 0.6rem; color: rgba(255,255,255,0.5);">Simulador</div>
                         </div>
                     </div>
                 </div>
@@ -382,7 +382,7 @@
 
         // Initialize mode selection
         function initModeSelection() {
-            const modeCards = document.querySelectorAll('.mode-card');
+            const modeCards = document.querySelectorAll('.pmode-card');
             const voiceSelectionStep = document.getElementById('voice-selection-step');
             const startBtn = document.getElementById('start-btn');
             const startMessage = document.getElementById('start-message');
@@ -417,7 +417,7 @@
 
             // If mode was already selected (from localStorage), apply it
             if (selectedMode) {
-                const savedCard = document.querySelector(`.mode-card[data-mode="${selectedMode}"]`);
+                const savedCard = document.querySelector(`.pmode-card[data-mode="${selectedMode}"]`);
                 if (savedCard) {
                     savedCard.classList.add('selected');
                     window.practiceMode = selectedMode;
@@ -570,14 +570,14 @@
             }
         }
 
-        .mode-options {
+        .pmode-options {
             display: flex;
             gap: 1.5rem;
             justify-content: center;
         }
 
         /* Use specific selector to override style.css */
-        .start-overlay-container .mode-card {
+        .start-overlay-container .pmode-card {
             background: rgba(30, 30, 30, 0.95) !important;
             border: 2px solid rgba(255,255,255,0.1) !important;
             border-radius: 16px !important;
@@ -590,13 +590,13 @@
             text-align: center;
         }
 
-        .start-overlay-container .mode-card:hover {
+        .start-overlay-container .pmode-card:hover {
             transform: translateY(-3px);
             border-color: rgba(255,255,255,0.3) !important;
             background: rgba(40, 40, 40, 0.95) !important;
         }
 
-        .start-overlay-container .mode-card.selected {
+        .start-overlay-container .pmode-card.selected {
             border-color: #e50914 !important;
             background: rgba(229, 9, 20, 0.15) !important;
             transform: scale(1.02);
@@ -634,11 +634,11 @@
 
         /* Mobile: cards SMALLER and SIDE BY SIDE - v3 */
         @media (max-width: 600px) {
-            .start-overlay-container .mode-options {
+            .start-overlay-container .pmode-options {
                 flex-direction: row !important;
                 gap: 0.5rem !important;
             }
-            .start-overlay-container .mode-card {
+            .start-overlay-container .pmode-card {
                 width: 120px !important;
                 padding: 0.5rem 0.4rem !important;
             }
@@ -661,7 +661,7 @@
 
         /* Very small screens */
         @media (max-width: 400px) {
-            .start-overlay-container .mode-card {
+            .start-overlay-container .pmode-card {
                 width: 100px !important;
                 padding: 0.4rem 0.3rem !important;
             }
