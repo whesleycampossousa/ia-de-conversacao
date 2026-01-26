@@ -2259,8 +2259,8 @@ def reload_authorized_emails():
 @limiter.limit("30 per minute")
 @require_auth
 def transcribe_audio():
-    """Transcribe audio using Deepgram Nova-2 or Groq Whisper"""
-    if not (DEEPGRAM_API_KEY or GROQ_API_KEY):
+    """Transcribe audio using Google Speech-to-Text, Deepgram Nova-2, or Groq Whisper"""
+    if not (GOOGLE_API_KEY or DEEPGRAM_API_KEY or GROQ_API_KEY):
         return jsonify({"error": "Transcription service not configured"}), 503
     
     if not REQUESTS_AVAILABLE:
@@ -2296,17 +2296,66 @@ def transcribe_audio():
         print(f"[Transcription] Received audio: {len(audio_data)} bytes, hint: {language_hint}")
         
         # --- INTELLIGENT ROUTING ---
-        # "Portuguese Mode" (Bilingual) -> Groq Whisper (Best for mixed En/Pt)
-        # "English Mode" (Immersion) -> Deepgram Nova-2 (Best for speed/cost)
-        
-        prefer_groq_for_mixed = (language_hint != 'en') # True if PT or default
-        
+        # Priority: Google Speech-to-Text > Deepgram > Groq
+
         transcript = None
         confidence = 0.0
         provider = "none"
 
-        # 1. Try DEEPGRAM if it's the preferred strategy checks out (English Mode) OR if it's the only option
-        should_use_deepgram = DEEPGRAM_API_KEY and (not prefer_groq_for_mixed or not GROQ_API_KEY)
+        # 1. Try GOOGLE SPEECH-TO-TEXT first (user's preferred paid API)
+        if GOOGLE_API_KEY and not transcript:
+            try:
+                import base64
+                audio_b64 = base64.b64encode(audio_data).decode('utf-8')
+
+                # Determine language code
+                lang_code = 'en-US' if language_hint == 'en' else 'pt-BR'
+
+                google_stt_url = f"https://speech.googleapis.com/v1/speech:recognize?key={GOOGLE_API_KEY}"
+
+                stt_body = {
+                    "config": {
+                        "encoding": "WEBM_OPUS",
+                        "sampleRateHertz": 48000,
+                        "languageCode": lang_code,
+                        "enableAutomaticPunctuation": True,
+                        "model": "latest_short"
+                    },
+                    "audio": {
+                        "content": audio_b64
+                    }
+                }
+
+                response = requests.post(
+                    google_stt_url,
+                    json=stt_body,
+                    headers={'Content-Type': 'application/json'},
+                    timeout=15
+                )
+
+                if response.status_code == 200:
+                    result = response.json()
+                    if 'results' in result and result['results']:
+                        alternatives = result['results'][0].get('alternatives', [])
+                        if alternatives:
+                            transcript = alternatives[0].get('transcript', '')
+                            confidence = alternatives[0].get('confidence', 0.9)
+                            if transcript:
+                                provider = "google-speech"
+                                print(f"[Google STT] Success: '{transcript[:50]}...', Conf: {confidence}")
+                            else:
+                                print("[Google STT] Empty transcript")
+                    else:
+                        print("[Google STT] No results in response")
+                else:
+                    print(f"[Google STT] Error {response.status_code}: {response.text[:200]}")
+
+            except Exception as e:
+                print(f"[Google STT] Exception: {e}")
+
+        # 2. Try DEEPGRAM as fallback
+        prefer_groq_for_mixed = (language_hint != 'en')
+        should_use_deepgram = not transcript and DEEPGRAM_API_KEY and (not prefer_groq_for_mixed or not GROQ_API_KEY)
         
         if should_use_deepgram:
             try:
@@ -2349,14 +2398,9 @@ def transcribe_audio():
             except Exception as e:
                 print(f"[Deepgram] Exception: {e}")
         
-        # 2. Try GROQ if needed (Preferred for PT, or Fallback for Deepgram failure)
-        # Condition: (Prefer Groq AND Groq exists) OR (Deepgram failed/skipped AND Groq exists)
+        # 3. Try GROQ as final fallback
         if not transcript and GROQ_API_KEY:
-            # Just logs to see why we are here
-            if prefer_groq_for_mixed and not transcript:
-                print("[Transcription] Using Groq Whisper for Mixed/Bilingual mode...")
-            elif DEEPGRAM_API_KEY:
-                print("[Transcription] Falling back to Groq Whisper after Deepgram failure...")
+            print("[Transcription] Falling back to Groq Whisper...")
 
             files = {
                 'file': ('audio.webm', audio_data, 'audio/webm')
