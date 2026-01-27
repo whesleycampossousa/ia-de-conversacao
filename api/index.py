@@ -2014,7 +2014,49 @@ def tts_endpoint():
                     download_name="tts.mp3"
                 )
             print(f"[CACHE] Audio cache MISS - generating new audio")
-            
+
+            # --- TRY QWEN3-TTS FIRST (Local GPU Server) ---
+            qwen_tts_url = os.environ.get("QWEN_TTS_URL", "").strip()
+            if qwen_tts_url:
+                try:
+                    # Map voices to Qwen3-TTS voices
+                    qwen_voice_map = {
+                        'female1': 'Chelsie',
+                        'female2': 'Serena',
+                        'male1': 'Ethan'
+                    }
+                    qwen_voice = qwen_voice_map.get(voice, 'Chelsie')
+
+                    clean_text = clean_text_for_tts(text)
+
+                    qwen_response = requests.post(
+                        f"{qwen_tts_url}/v1/audio/speech",
+                        json={
+                            "model": "Qwen/Qwen3-TTS-12Hz-1.7B",
+                            "input": clean_text,
+                            "voice": qwen_voice,
+                            "response_format": "mp3",
+                            "speed": effective_speed
+                        },
+                        timeout=8
+                    )
+
+                    if qwen_response.status_code == 200 and len(qwen_response.content) > 100:
+                        audio_data = qwen_response.content
+                        save_audio_to_cache(audio_data, cache_path)
+                        print(f"[Qwen3-TTS] Success! {len(audio_data)} bytes, voice: {qwen_voice}")
+                        return send_file(
+                            io.BytesIO(audio_data),
+                            mimetype="audio/mp3",
+                            as_attachment=False,
+                            download_name="tts.mp3"
+                        )
+                    else:
+                        print(f"[Qwen3-TTS] Failed: status={qwen_response.status_code}, falling back to Google")
+                except Exception as e:
+                    print(f"[Qwen3-TTS] Error: {e}, falling back to Google Cloud TTS")
+
+            # --- FALLBACK: GOOGLE CLOUD TTS ---
             url = f"https://texttospeech.googleapis.com/v1/text:synthesize?key={GOOGLE_API_KEY}"
             
             # USE SELECTED VOICE FROM USER PREFERENCE
