@@ -2020,25 +2020,26 @@ def tts_endpoint():
             if qwen_tts_url:
                 try:
                     # Map voices to Qwen3-TTS voices
+                    # Supported: aiden, dylan, eric, ono_anna, ryan, serena, sohee, uncle_fu, vivian
                     qwen_voice_map = {
-                        'female1': 'Chelsie',
-                        'female2': 'Serena',
-                        'male1': 'Ethan'
+                        'female1': 'serena',
+                        'female2': 'vivian',
+                        'male1': 'ryan'
                     }
-                    qwen_voice = qwen_voice_map.get(voice, 'Chelsie')
+                    qwen_voice = qwen_voice_map.get(voice, 'serena')
 
                     clean_text = clean_text_for_tts(text)
 
                     qwen_response = requests.post(
                         f"{qwen_tts_url}/v1/audio/speech",
                         json={
-                            "model": "Qwen/Qwen3-TTS-12Hz-0.6B",
+                            "model": "tts-1",
                             "input": clean_text,
                             "voice": qwen_voice,
                             "response_format": "mp3",
                             "speed": effective_speed
                         },
-                        timeout=8
+                        timeout=15
                     )
 
                     if qwen_response.status_code == 200 and len(qwen_response.content) > 100:
