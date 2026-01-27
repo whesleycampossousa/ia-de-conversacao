@@ -2032,7 +2032,7 @@ def tts_endpoint():
                     qwen_response = requests.post(
                         f"{qwen_tts_url}/v1/audio/speech",
                         json={
-                            "model": "Qwen/Qwen3-TTS-12Hz-1.7B",
+                            "model": "Qwen/Qwen3-TTS-12Hz-0.6B",
                             "input": clean_text,
                             "voice": qwen_voice,
                             "response_format": "mp3",
