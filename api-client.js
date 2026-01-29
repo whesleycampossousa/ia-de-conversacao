@@ -148,6 +148,20 @@ class APIClient {
     }
 
     /**
+     * Structured lesson actions (Learning mode with predefined layers)
+     */
+    async lesson(action, context, payload = {}) {
+        const response = await fetch(`${this.baseURL}/api/lesson`, {
+            method: 'POST',
+            headers: this.getHeaders(),
+            body: JSON.stringify({ action, context, ...payload })
+        });
+
+        await this.handleResponse(response);
+        return await response.json();
+    }
+
+    /**
      * Generate report
      */
     async generateReport(conversation, context) {

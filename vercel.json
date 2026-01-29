@@ -4,9 +4,20 @@
     {
       "src": "api/index.py",
       "use": "@vercel/python"
+    },
+    {
+      "src": "audio_cache/lessons/**",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
+    {
+      "src": "/audio_cache/lessons/(.*)",
+      "dest": "/audio_cache/lessons/$1",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
+      }
+    },
     {
       "src": "/(.*)",
       "dest": "api/index.py"

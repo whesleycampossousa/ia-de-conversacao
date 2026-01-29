@@ -29,6 +29,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const isFreeConversation = context === 'free_conversation';
     const user = apiClient.isAuthenticated() ? apiClient.getUser() : { name: 'Visitante', is_admin: false };
 
+    // =============================================
+    // STRUCTURED LESSON STATE (Learning Mode)
+    // =============================================
+    let lessonState = {
+        active: false,           // Is a structured lesson in progress?
+        layer: 0,                // Current layer index
+        totalLayers: 0,          // Total number of layers
+        selectedOption: null,    // Currently selected option index
+        selectedPhrase: null,    // The phrase object that was selected
+        nextAction: 'start',     // What action to take next
+        lessonTitle: '',         // Title of the lesson
+        skipToLayer: null        // For branching: skip to this layer after practice
+    };
+
     // Default: Audio-First (Subtitles OFF)
     // We do NOT add 'subtitles-on' class by default.
     // User must click CC to see text.
@@ -1198,6 +1212,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            // Check if we should use structured lesson mode (Learning mode with predefined layers)
+            const practiceMode = window.getSelectedMode ? window.getSelectedMode() : 'learning';
+            if (practiceMode === 'learning' && !isGrammarMode && shouldUseStructuredLesson()) {
+                await startStructuredLesson();
+                return;
+            }
+
             // Initial AI Greeting - context-specific, no generic "how can I help you"
             let greeting = "";
             let translation = "";
@@ -1436,6 +1457,28 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // Check if we're in structured lesson mode
+        if (lessonState.active) {
+            // If in practice mode, evaluate the practice
+            if (lessonState.nextAction === 'evaluate_practice') {
+                // Show user's practice attempt
+                addMessage(user ? user.name : "User", text);
+                userMessageCount++;
+                updateMessageCounter();
+
+                // Evaluate the practice with Gemini
+                await evaluateLessonPractice(text);
+                return;
+            }
+
+            // If waiting for option selection, ignore voice input
+            if (lessonState.nextAction === 'show_options' || lessonState.nextAction === 'select_option') {
+                // Don't process voice input - user should click an option
+                addMessage('System', 'Please click one of the options above to continue the lesson.', true);
+                return;
+            }
+        }
+
         // 1. Show User Text
         addMessage(user ? user.name : "User", text);
         userMessageCount++;
@@ -1463,7 +1506,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 3. Play AI Response
             playResponse(data.text, data.translation);
-            renderSuggestedWords(data.suggested_words || [], data.retry_prompt || '');
+            // Yellow suggestion bar disabled — not helpful for students
+            // renderSuggestedWords(data.suggested_words || [], data.retry_prompt || '');
 
             // Save conversation
             saveConversation();
@@ -1606,6 +1650,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function playAudioBlob(blob) {
         return new Promise((resolve) => {
+            // Stop any previous audio to prevent overlap
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                if (window.stopAvatarTalking) window.stopAvatarTalking();
+            }
+
+            // Disable microphone during playback to prevent interruption
+            if (recordBtn) recordBtn.disabled = true;
+
             const audioUrl = URL.createObjectURL(blob);
             const audio = new Audio(audioUrl);
             currentAudio = audio;
@@ -1616,6 +1670,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 URL.revokeObjectURL(audioUrl);
                 currentAudio = null;
                 if (window.stopAvatarTalking) window.stopAvatarTalking();
+                // Re-enable microphone after playback ends
+                if (recordBtn && !isProcessing) {
+                    recordBtn.disabled = false;
+                    setRecordText("🎤 Clique para Falar");
+                }
                 resolve();
             };
 
@@ -1678,6 +1737,23 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (e) {
             console.error("TTS Error:", e);
             finalizePlayback();
+        }
+    }
+
+    /**
+     * Play audio for a lesson option (without adding to chat)
+     * Used by the audio button on each option card
+     */
+    async function playOptionAudio(text) {
+        if (!text) return;
+
+        try {
+            const blob = await apiClient.getTTS(text, ttsSpeed, lessonLang, currentVoice);
+            if (blob && blob.size > 0) {
+                await playAudioBlob(blob);
+            }
+        } catch (e) {
+            console.error("Option audio TTS error:", e);
         }
     }
 
@@ -1814,29 +1890,38 @@ document.addEventListener('DOMContentLoaded', () => {
         meta.appendChild(createChip('AI', `${stats.ai} mensagens`, '🤖'));
         wrapper.appendChild(meta);
 
-        const grid = document.createElement('div');
-        grid.className = 'report-grid';
-        grid.appendChild(buildCorrectionsBlock(info.correcoes, info.raw));
-        grid.appendChild(buildSimpleBlock('Elogios', '⭐', info.elogios, "Sem elogios por enquanto."));
-        grid.appendChild(buildSimpleBlock('Dicas', '🎯', info.dicas, "Sem dicas registradas."));
-        wrapper.appendChild(grid);
+        // Phrase-by-phrase analysis block (before corrections)
+        if (info.analise_frases && info.analise_frases.length) {
+            wrapper.appendChild(buildAnaliseBlock(info.analise_frases));
+        }
 
-        const practiceCard = document.createElement('div');
-        practiceCard.className = 'practice-card';
-        const practiceTitle = document.createElement('div');
-        practiceTitle.className = 'block-title';
-        const practiceIcon = document.createElement('span');
-        practiceIcon.className = 'block-icon';
-        practiceIcon.textContent = '➡️';
-        practiceTitle.appendChild(practiceIcon);
-        practiceTitle.appendChild(document.createTextNode('Próxima frase para treinar'));
-        practiceCard.appendChild(practiceTitle);
+        // Expandable corrections section (hidden by default)
+        if (info.correcoes && info.correcoes.length) {
+            const correctionsToggle = document.createElement('button');
+            correctionsToggle.className = 'action-btn';
+            correctionsToggle.textContent = 'Acessar correções mais detalhadas';
+            correctionsToggle.style.cssText = 'width:100%;margin-top:1rem;padding:14px 20px;font-size:1rem;font-weight:700;color:#fff;background:linear-gradient(135deg,#6366f1 0%,#4f46e5 100%);border:none;border-radius:10px;cursor:pointer;box-shadow:0 4px 15px rgba(99,102,241,0.3);transition:all 0.3s ease;';
+            correctionsToggle.onmouseenter = () => { correctionsToggle.style.transform = 'translateY(-2px)'; correctionsToggle.style.boxShadow = '0 6px 20px rgba(99,102,241,0.5)'; };
+            correctionsToggle.onmouseleave = () => { correctionsToggle.style.transform = 'translateY(0)'; correctionsToggle.style.boxShadow = '0 4px 15px rgba(99,102,241,0.3)'; };
+            wrapper.appendChild(correctionsToggle);
 
-        const practiceText = document.createElement('p');
-        practiceText.className = 'practice-text';
-        practiceText.textContent = info.frase_pratica || info.raw || "Use o microfone para gerar frases.";
-        practiceCard.appendChild(practiceText);
-        wrapper.appendChild(practiceCard);
+            const correctionsPanel = document.createElement('div');
+            correctionsPanel.style.cssText = 'display:none;margin-top:1rem;';
+            correctionsPanel.appendChild(buildCorrectionsBlock(info.correcoes, info.raw));
+            wrapper.appendChild(correctionsPanel);
+
+            correctionsToggle.addEventListener('click', () => {
+                if (correctionsPanel.style.display === 'none') {
+                    correctionsPanel.style.display = 'block';
+                    correctionsToggle.textContent = 'Fechar correções detalhadas';
+                    correctionsToggle.style.background = 'linear-gradient(135deg,#64748b 0%,#475569 100%)';
+                } else {
+                    correctionsPanel.style.display = 'none';
+                    correctionsToggle.textContent = 'Acessar correções mais detalhadas';
+                    correctionsToggle.style.background = 'linear-gradient(135deg,#6366f1 0%,#4f46e5 100%)';
+                }
+            });
+        }
 
         if (info.raw && !info.wasStructured) {
             const rawNote = document.createElement('div');
@@ -1918,12 +2003,40 @@ document.addEventListener('DOMContentLoaded', () => {
             }).join('')
             : `<div class="empty">Sem falas registradas.</div>`;
 
+        // Phrase-by-phrase analysis HTML
+        const analiseHtml = (info.analise_frases && info.analise_frases.length)
+            ? info.analise_frases.map((item) => {
+                const nat = typeof item.naturalidade === 'number' ? item.naturalidade : 50;
+                let barColor = '#ef4444';
+                if (nat >= 80) barColor = '#22c55e';
+                else if (nat >= 50) barColor = '#f59e0b';
+                const nivelText = escapeHtml(item.nivel || '');
+                const explicacao = item.explicacao ? `<div style="font-size:0.85rem;color:var(--muted);padding:8px 10px;background:rgba(255,204,0,0.08);border-radius:6px;border-left:3px solid #f59e0b;margin-top:6px;">💡 ${escapeHtml(item.explicacao)}</div>` : '';
+                const naturalLine = item.frase_natural ? `<div style="margin-bottom:6px;font-size:0.95rem;"><span style="color:#22c55e;">✅ Mais natural:</span> <strong>"${escapeHtml(item.frase_natural)}"</strong></div>` : '';
+                return `
+                    <div class="analise-card">
+                        <div style="margin-bottom:8px;font-size:0.95rem;"><span style="color:var(--muted);">🗣️ Você disse:</span> <strong>"${escapeHtml(item.frase_aluno || '')}"</strong></div>
+                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                            <div style="flex:1;height:8px;background:rgba(255,255,255,0.1);border-radius:4px;overflow:hidden;">
+                                <div style="width:${nat}%;height:100%;background:${barColor};border-radius:4px;"></div>
+                            </div>
+                            <span style="font-weight:700;font-size:0.9rem;color:${barColor};min-width:40px;text-align:right;">${nat}%</span>
+                        </div>
+                        ${nivelText ? `<div style="font-size:0.8rem;color:${barColor};margin-bottom:8px;font-weight:600;">${nivelText}</div>` : ''}
+                        ${naturalLine}
+                        ${explicacao}
+                    </div>
+                `;
+            }).join('')
+            : `<div class="empty">Sem análise de frases disponível.</div>`;
+
         const reportPayload = {
             report: {
                 titulo: info.titulo,
                 emoji: info.emoji,
                 tom: info.tom,
                 correcoes: info.correcoes,
+                analise_frases: info.analise_frases,
                 elogios: info.elogios,
                 dicas: info.dicas,
                 frase_pratica: info.frase_pratica
@@ -2079,6 +2192,13 @@ main {
 }
 .footer-note { color: var(--muted); font-size: 0.9rem; }
 .empty { color: var(--muted); }
+.analise-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
 </style>
 </head>
 <body>
@@ -2100,23 +2220,21 @@ main {
   </section>
 
   <section class="highlight">
-    <h2>Correções detalhadas</h2>
-    <div class="corrections">${correctionsHtml}</div>
+    <h2>🎯 Análise Frase a Frase</h2>
+    <div class="corrections">${analiseHtml}</div>
   </section>
 
-  <section class="highlight">
-    <h2>Elogios</h2>
-    <ul>${elogiosHtml}</ul>
-  </section>
-
-  <section class="highlight">
-    <h2>Dicas para evoluir</h2>
-    <ul>${dicasHtml}</ul>
-  </section>
-
-  <section class="highlight">
-    <h2>Próxima frase para treinar</h2>
-    <p>${escapeHtml(info.frase_pratica || 'Continue praticando com frases curtas no contexto atual.')}</p>
+  <section class="highlight" style="text-align:center;">
+    <button id="toggle-corrections" style="
+      padding:14px 28px;font-size:1rem;font-weight:700;color:#fff;
+      background:linear-gradient(135deg,#6366f1 0%,#4f46e5 100%);
+      border:none;border-radius:10px;cursor:pointer;
+      box-shadow:0 4px 15px rgba(99,102,241,0.3);transition:all 0.3s ease;
+    ">Acessar correções mais detalhadas</button>
+    <div id="corrections-panel" style="display:none;margin-top:20px;text-align:left;">
+      <h2>Correções detalhadas</h2>
+      <div class="corrections">${correctionsHtml}</div>
+    </div>
   </section>
 
   <section class="highlight">
@@ -2143,6 +2261,20 @@ const getAuthHeaders = () => {
   if (token) headers['Authorization'] = 'Bearer ' + token;
   return headers;
 };
+
+document.getElementById('toggle-corrections').addEventListener('click', () => {
+  const panel = document.getElementById('corrections-panel');
+  const btn = document.getElementById('toggle-corrections');
+  if (panel.style.display === 'none') {
+    panel.style.display = 'block';
+    btn.textContent = 'Fechar correções detalhadas';
+    btn.style.background = 'linear-gradient(135deg,#64748b 0%,#475569 100%)';
+  } else {
+    panel.style.display = 'none';
+    btn.textContent = 'Acessar correções mais detalhadas';
+    btn.style.background = 'linear-gradient(135deg,#6366f1 0%,#4f46e5 100%)';
+  }
+});
 
 document.getElementById('download-pdf').addEventListener('click', async () => {
   const btn = document.getElementById('download-pdf');
@@ -2208,6 +2340,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
             emoji: "✨",
             tom: "positivo",
             correcoes: [],
+            analise_frases: [],
             elogios: [],
             dicas: [],
             frase_pratica: "",
@@ -2233,6 +2366,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         const corrections = Array.isArray(source.correcoes) ? source.correcoes : [];
         base.correcoes = corrections.map(normalizeCorrection).filter(Boolean);
 
+        base.analise_frases = Array.isArray(source.analise_frases) ? source.analise_frases.filter(Boolean) : [];
         base.elogios = Array.isArray(source.elogios) ? source.elogios.filter(Boolean) : [];
         base.dicas = Array.isArray(source.dicas) ? source.dicas.filter(Boolean) : [];
 
@@ -2253,6 +2387,99 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
 
         if (!ruim && !boa) return null;
         return { ruim, boa, explicacao };
+    }
+
+    function buildAnaliseBlock(frases) {
+        const block = document.createElement('div');
+        block.className = 'report-block analise-block';
+
+        const title = document.createElement('div');
+        title.className = 'block-title';
+        const icon = document.createElement('span');
+        icon.className = 'block-icon';
+        icon.textContent = '🎯';
+        title.appendChild(icon);
+        title.appendChild(document.createTextNode('Análise Frase a Frase'));
+        block.appendChild(title);
+
+        const container = document.createElement('div');
+        container.style.cssText = 'display: flex; flex-direction: column; gap: 12px;';
+
+        if (!frases || !frases.length) {
+            const empty = document.createElement('div');
+            empty.className = 'muted';
+            empty.textContent = 'Sem análise de frases disponível.';
+            container.appendChild(empty);
+        } else {
+            frases.forEach((item) => {
+                const card = document.createElement('div');
+                card.style.cssText = `
+                    background: rgba(0,0,0,0.3);
+                    border: 1px solid rgba(255,255,255,0.1);
+                    border-radius: 12px;
+                    padding: 16px;
+                `;
+
+                const nat = typeof item.naturalidade === 'number' ? item.naturalidade : 50;
+                let barColor = '#ef4444';
+                if (nat >= 80) barColor = '#22c55e';
+                else if (nat >= 50) barColor = '#f59e0b';
+
+                // Student phrase
+                const studentLine = document.createElement('div');
+                studentLine.style.cssText = 'margin-bottom: 8px; font-size: 0.95rem;';
+                studentLine.innerHTML = `<span style="color:#94a3b8;">🗣️ Você disse:</span> <strong>"${(item.frase_aluno || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}"</strong>`;
+                card.appendChild(studentLine);
+
+                // Progress bar
+                const barWrap = document.createElement('div');
+                barWrap.style.cssText = 'display: flex; align-items: center; gap: 10px; margin-bottom: 8px;';
+
+                const barBg = document.createElement('div');
+                barBg.style.cssText = 'flex: 1; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;';
+
+                const barFill = document.createElement('div');
+                barFill.style.cssText = `width: ${nat}%; height: 100%; background: ${barColor}; border-radius: 4px; transition: width 0.5s ease;`;
+                barBg.appendChild(barFill);
+                barWrap.appendChild(barBg);
+
+                const pctLabel = document.createElement('span');
+                pctLabel.style.cssText = `font-weight: 700; font-size: 0.9rem; color: ${barColor}; min-width: 40px; text-align: right;`;
+                pctLabel.textContent = `${nat}%`;
+                barWrap.appendChild(pctLabel);
+
+                card.appendChild(barWrap);
+
+                // Level label
+                if (item.nivel) {
+                    const nivel = document.createElement('div');
+                    nivel.style.cssText = `font-size: 0.8rem; color: ${barColor}; margin-bottom: 8px; font-weight: 600;`;
+                    nivel.textContent = item.nivel;
+                    card.appendChild(nivel);
+                }
+
+                // Natural version
+                if (item.frase_natural) {
+                    const naturalLine = document.createElement('div');
+                    naturalLine.style.cssText = 'margin-bottom: 6px; font-size: 0.95rem;';
+                    naturalLine.innerHTML = `<span style="color:#22c55e;">✅ Mais natural:</span> <strong>"${(item.frase_natural || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}"</strong>`;
+                    card.appendChild(naturalLine);
+                }
+
+                // Explanation
+                if (item.explicacao) {
+                    const explLine = document.createElement('div');
+                    explLine.style.cssText = 'font-size: 0.85rem; color: #94a3b8; padding: 8px 10px; background: rgba(255,204,0,0.08); border-radius: 6px; border-left: 3px solid #f59e0b;';
+                    explLine.textContent = '💡 ' + item.explicacao;
+                    card.appendChild(explLine);
+                }
+
+                container.appendChild(card);
+            });
+        }
+
+        block.appendChild(container);
+        return block;
     }
 
     function buildCorrectionsBlock(list, fallbackText) {
@@ -2543,6 +2770,315 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         messageGroup.appendChild(card);
     }
 
+    // =============================================
+    // STRUCTURED LESSON FUNCTIONS
+    // =============================================
+
+    /**
+     * Render lesson options as clickable cards
+     */
+    function renderLessonOptions(options, layerTitle = '') {
+        if (!chatWindow) return;
+
+        // Add lesson-mode class to enable scrolling
+        chatWindow.classList.add('lesson-mode');
+
+        // Remove any existing options
+        const existing = chatWindow.querySelector('.lesson-options-container');
+        if (existing) existing.remove();
+
+        if (!Array.isArray(options) || options.length === 0) return;
+
+        const container = document.createElement('div');
+        container.className = 'lesson-options-container';
+
+        // Progress indicator
+        if (lessonState.totalLayers > 0) {
+            const progress = document.createElement('div');
+            progress.className = 'lesson-progress';
+            progress.innerHTML = `
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${((lessonState.layer + 1) / lessonState.totalLayers) * 100}%"></div>
+                </div>
+                <span class="progress-text">Step ${lessonState.layer + 1} of ${lessonState.totalLayers}</span>
+            `;
+            container.appendChild(progress);
+        }
+
+        // Title
+        const title = document.createElement('div');
+        title.className = 'lesson-options-title';
+        title.textContent = layerTitle || 'Choose a phrase to practice:';
+        container.appendChild(title);
+
+        // Options list
+        options.forEach((opt, index) => {
+            const card = document.createElement('div');
+            card.className = 'lesson-option-card';
+
+            const optionNumber = document.createElement('div');
+            optionNumber.className = 'option-number';
+            optionNumber.textContent = index + 1;
+
+            const optionContent = document.createElement('div');
+            optionContent.className = 'option-content';
+            optionContent.innerHTML = `
+                <div class="option-en">"${opt.en || opt}"</div>
+                ${opt.pt ? `<div class="option-pt">(${opt.pt})</div>` : ''}
+            `;
+
+            // Audio button - plays pronunciation without selecting the option
+            const audioBtn = document.createElement('button');
+            audioBtn.className = 'option-audio-btn';
+            audioBtn.innerHTML = '<span class="audio-icon">🔊</span>';
+            audioBtn.title = 'Listen to pronunciation';
+            audioBtn.addEventListener('click', async (e) => {
+                e.stopPropagation(); // Prevent card selection
+                audioBtn.classList.add('playing');
+                try {
+                    await playOptionAudio(opt.en || opt);
+                } catch (err) {
+                    console.error('Audio playback error:', err);
+                }
+                audioBtn.classList.remove('playing');
+            });
+
+            card.appendChild(optionNumber);
+            card.appendChild(optionContent);
+            card.appendChild(audioBtn);
+            card.addEventListener('click', () => selectLessonOption(index, opt));
+            container.appendChild(card);
+        });
+
+        chatWindow.appendChild(container);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    /**
+     * Handle lesson option selection (click)
+     */
+    async function selectLessonOption(index, phrase) {
+        lessonState.selectedOption = index;
+        lessonState.selectedPhrase = phrase;
+
+        // Remove options UI
+        const existing = chatWindow.querySelector('.lesson-options-container');
+        if (existing) existing.remove();
+
+        // Show what was selected
+        addMessage('User', `Selected: "${phrase.en || phrase}"`, false, true);
+
+        // Call backend to get practice prompt
+        showLoadingIndicator();
+        try {
+            const data = await apiClient.lesson('select_option', context, {
+                layer: lessonState.layer,
+                option: index
+            });
+
+            hideLoadingIndicator();
+
+            // Play practice prompt
+            playResponse(data.text, data.translation);
+
+            // Update state
+            lessonState.nextAction = data.next_action;
+
+            // Store skip_to_layer if present (for branching after practice)
+            if (data.skip_to_layer !== undefined) {
+                lessonState.skipToLayer = data.skip_to_layer;
+            } else {
+                lessonState.skipToLayer = null;
+            }
+
+            // Now enable microphone for practice
+            // The user will speak, and processUserResponse will handle it
+
+        } catch (error) {
+            hideLoadingIndicator();
+            console.error('Lesson option error:', error);
+            addMessage('System', 'Error loading practice prompt. Please try again.', true);
+        }
+    }
+
+    /**
+     * Start a structured lesson
+     */
+    async function startStructuredLesson() {
+        lessonState.active = true;
+        lessonState.layer = 0;
+        lessonState.nextAction = 'start';
+
+        showLoadingIndicator();
+        try {
+            const data = await apiClient.lesson('start', context);
+
+            hideLoadingIndicator();
+
+            lessonState.totalLayers = data.total_layers || 0;
+            lessonState.lessonTitle = data.lesson_title || context;
+            lessonState.nextAction = data.next_action;
+
+            // Play welcome message
+            playResponse(data.text, data.translation);
+
+            // After welcome, show "Start" button
+            renderLessonStartButton();
+
+        } catch (error) {
+            hideLoadingIndicator();
+            console.error('Lesson start error:', error);
+            lessonState.active = false;
+            // Fallback to old conversational mode
+            addMessage('System', 'Structured lesson not available. Starting conversation mode.', true);
+        }
+    }
+
+    /**
+     * Render a "Start Lesson" button after welcome
+     */
+    function renderLessonStartButton() {
+        const container = document.createElement('div');
+        container.className = 'lesson-start-container';
+        container.innerHTML = `
+            <button class="lesson-start-btn">
+                Start Lesson
+            </button>
+        `;
+        container.querySelector('.lesson-start-btn').addEventListener('click', async () => {
+            container.remove();
+            await advanceLesson();
+        });
+        chatWindow.appendChild(container);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    /**
+     * Advance to next lesson step (show options or conclusion)
+     */
+    async function advanceLesson() {
+        showLoadingIndicator();
+        try {
+            const data = await apiClient.lesson('show_options', context, {
+                layer: lessonState.layer
+            });
+
+            hideLoadingIndicator();
+
+            lessonState.nextAction = data.next_action;
+
+            if (data.type === 'conclusion') {
+                // Lesson complete!
+                playResponse(data.text, data.translation);
+                lessonState.active = false;
+                // Remove lesson-mode class
+                if (chatWindow) chatWindow.classList.remove('lesson-mode');
+                // Show report button
+                updateReportButton();
+            } else if (data.type === 'options') {
+                // Show options
+                playResponse(data.text, data.translation);
+                setTimeout(() => {
+                    renderLessonOptions(data.options, data.layer_title);
+                }, 500);
+            }
+
+        } catch (error) {
+            hideLoadingIndicator();
+            console.error('Lesson advance error:', error);
+        }
+    }
+
+    /**
+     * Evaluate student's practice and advance
+     */
+    async function evaluateLessonPractice(userText) {
+        showLoadingIndicator();
+        try {
+            const payload = {
+                layer: lessonState.layer,
+                text: userText,
+                selected_phrase: lessonState.selectedPhrase
+            };
+
+            // Include skip_to_layer if present (for branching)
+            if (lessonState.skipToLayer !== null && lessonState.skipToLayer !== undefined) {
+                payload.skip_to_layer = lessonState.skipToLayer;
+            }
+
+            const data = await apiClient.lesson('evaluate_practice', context, payload);
+
+            hideLoadingIndicator();
+
+            // Update layer state BEFORE playing audio
+            lessonState.layer = data.next_layer;
+            lessonState.nextAction = data.next_action;
+
+            // Play feedback and WAIT for it to finish
+            await playResponse(data.text, data.translation);
+
+            // Only advance if the student's practice was good enough
+            if (data.ready_for_next) {
+                await advanceLesson();
+            } else {
+                // Keep in practice mode for retry - student can try again
+                lessonState.nextAction = 'evaluate_practice';
+            }
+
+        } catch (error) {
+            hideLoadingIndicator();
+            console.error('Lesson evaluation error:', error);
+        }
+    }
+
+    /**
+     * Check if we should use structured lesson mode
+     * Enabled for all contexts with structured lessons in lessons_db.json
+     */
+    function shouldUseStructuredLesson() {
+        // List of contexts that have structured lessons (All 33 contexts)
+        const structuredLessonContexts = [
+            // Fase 1 - Essenciais (10)
+            'coffee_shop',
+            'restaurant',
+            'hotel',
+            'airport',
+            'supermarket',
+            'bank',
+            'doctor',
+            'clothing_store',
+            'job_interview',
+            'school',
+            // Fase 2 - Importantes (10)
+            'pharmacy',
+            'train_station',
+            'bus_stop',
+            'renting_car',
+            'bakery',
+            'pizza_delivery',
+            'hair_salon',
+            'gas_station',
+            'tech_support',
+            'cinema',
+            // Fase 3 - Complementares (11)
+            'neighbor',
+            'street',
+            'first_date',
+            'dental_clinic',
+            'gym',
+            'post_office',
+            'lost_found',
+            'flower_shop',
+            'pet_shop',
+            'library',
+            'museum',
+            // Fase 4 - Especiais (2)
+            'wedding',
+            'graduation'
+        ];
+        return structuredLessonContexts.includes(context);
+    }
+
     function showLoadingIndicator() {
         const existing = document.getElementById('loading-indicator');
         if (existing) return;
@@ -2551,37 +3087,20 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         loader.id = 'loading-indicator';
         loader.className = 'message system-message';
         loader.innerHTML = `
-            <div class="bubble" style="display: flex; align-items: center; gap: 0.5rem;">
-                <div class="spinner"></div>
-                <span id="loading-text">Thinking...</span>
+            <div class="bubble" style="display: flex; align-items: center; gap: 0.4rem; padding: 0.6rem 1rem;">
+                <span class="thinking-dot" style="width:8px;height:8px;border-radius:50%;background:#aaa;animation:thinkPulse 1.2s infinite ease-in-out;"></span>
+                <span class="thinking-dot" style="width:8px;height:8px;border-radius:50%;background:#aaa;animation:thinkPulse 1.2s infinite ease-in-out 0.2s;"></span>
+                <span class="thinking-dot" style="width:8px;height:8px;border-radius:50%;background:#aaa;animation:thinkPulse 1.2s infinite ease-in-out 0.4s;"></span>
             </div>
+            <style>
+                @keyframes thinkPulse {
+                    0%, 60%, 100% { opacity: 0.3; transform: scale(0.8); }
+                    30% { opacity: 1; transform: scale(1.2); }
+                }
+            </style>
         `;
         chatWindow.appendChild(loader);
         chatWindow.scrollTop = chatWindow.scrollHeight;
-
-        // Animate loading messages
-        const messages = ['Thinking...', 'Preparing response...', 'Almost there...'];
-        let msgIndex = 0;
-        const loadingText = document.getElementById('loading-text');
-
-        const loadingInterval = setInterval(() => {
-            msgIndex = (msgIndex + 1) % messages.length;
-            if (loadingText) {
-                loadingText.textContent = messages[msgIndex];
-            } else {
-                clearInterval(loadingInterval);
-            }
-        }, 1500);
-
-        // Store interval ID for cleanup
-        loader.dataset.intervalId = loadingInterval;
-
-        // Show timeout message after 5 seconds
-        setTimeout(() => {
-            if (loadingText && document.getElementById('loading-indicator')) {
-                loadingText.textContent = 'Taking longer than usual, please wait...';
-            }
-        }, 5000);
     }
 
     function hideLoadingIndicator() {

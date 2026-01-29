@@ -722,6 +722,14 @@ body {
     padding-bottom: 0.5rem;
 }
 
+/* Lesson mode - allows scrolling through lesson options */
+.subtitle-container.lesson-mode {
+    max-height: 70vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 1rem;
+}
+
 .subtitle-line {
     color: white;
     font-size: 1.8rem;
@@ -1808,5 +1816,207 @@ body {
     .suggestions-toggle-btn {
         padding: 0.5rem 0.8rem;
         font-size: 0.9rem;
+    }
+}
+
+/* =============================================
+   STRUCTURED LESSON STYLES
+   ============================================= */
+
+.lesson-options-container {
+    background: rgba(30, 30, 40, 0.95);
+    border-radius: 16px;
+    padding: 20px;
+    margin: 16px 0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.lesson-progress {
+    margin-bottom: 16px;
+}
+
+.progress-bar {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #6366f1, #8b5cf6);
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+.progress-text {
+    font-size: 0.8rem;
+    color: #9aa4b2;
+}
+
+.lesson-options-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 16px;
+}
+
+.lesson-option-card {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 16px;
+    margin: 10px 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.lesson-option-card:hover {
+    background: rgba(99, 102, 241, 0.15);
+    border-color: rgba(99, 102, 241, 0.4);
+    transform: translateX(4px);
+}
+
+.option-number {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1rem;
+    color: #fff;
+    margin-right: 16px;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.option-content {
+    flex: 1;
+}
+
+.option-en {
+    font-size: 1.05rem;
+    color: #fff;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.option-pt {
+    font-size: 0.9rem;
+    color: #9aa4b2;
+    margin-top: 4px;
+}
+
+/* Audio Button for Lesson Options */
+.option-audio-btn {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-left: 12px;
+}
+
+.option-audio-btn:hover {
+    background: rgba(99, 102, 241, 0.3);
+    border-color: rgba(99, 102, 241, 0.5);
+    transform: scale(1.1);
+}
+
+.option-audio-btn:active {
+    transform: scale(0.95);
+}
+
+.option-audio-btn.playing {
+    background: rgba(99, 102, 241, 0.4);
+    animation: audioButtonPulse 0.6s infinite alternate;
+}
+
+.option-audio-btn .audio-icon {
+    font-size: 1.2rem;
+}
+
+@keyframes audioButtonPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
+    }
+    100% {
+        box-shadow: 0 0 0 8px rgba(99, 102, 241, 0);
+    }
+}
+
+/* Lesson Start Button */
+.lesson-start-container {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.lesson-start-btn {
+    padding: 16px 40px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(34, 197, 94, 0.3);
+    transition: all 0.3s ease;
+}
+
+.lesson-start-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(34, 197, 94, 0.5);
+}
+
+/* Mobile adjustments for lesson cards */
+@media (max-width: 600px) {
+    .lesson-options-container {
+        padding: 16px;
+        margin: 12px 0;
+    }
+
+    .lesson-option-card {
+        padding: 14px;
+    }
+
+    .option-number {
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        font-size: 0.9rem;
+        margin-right: 12px;
+    }
+
+    .option-en {
+        font-size: 0.95rem;
+    }
+
+    .option-pt {
+        font-size: 0.85rem;
+    }
+
+    .option-audio-btn {
+        width: 38px;
+        height: 38px;
+        min-width: 38px;
+        margin-left: 8px;
+    }
+
+    .option-audio-btn .audio-icon {
+        font-size: 1rem;
     }
 }

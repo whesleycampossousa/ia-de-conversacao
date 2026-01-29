@@ -12,3 +12,6 @@ node_modules/
 .vscode/
 .idea/
 authorized_emails.json
+gen-lang-client-*.json
+voice_references/*.wav
+audio_cache/dynamic/

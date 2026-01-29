@@ -351,6 +351,7 @@ def is_local_request():
 # Load Scenarios and Grammar Topics
 SCENARIOS_PATH = os.path.join(BASE_DIR, 'scenarios_db.json')
 GRAMMAR_PATH = os.path.join(BASE_DIR, 'grammar_topics.json')
+LESSONS_PATH = os.path.join(BASE_DIR, 'lessons_db.json')
 
 def load_json_file(path):
     try:
@@ -365,6 +366,7 @@ GRAMMAR_TOPICS = []
 GRAMMAR_TOPIC_IDS = set()
 CONTEXT_PROMPTS = {}
 SIMULATOR_PROMPTS = {}  # Simulator mode prompts for realistic roleplay
+LESSONS_DB = {}  # Structured lessons for Learning mode
 
 def get_cached_model_for_context(context_key, system_prompt):
     """Get or create a cached Gemini model for a specific context.
@@ -395,7 +397,7 @@ def get_cached_model_for_context(context_key, system_prompt):
 
 def load_context_data():
     """Reload scenarios/grammar so new topics are available without restart."""
-    global SCENARIOS, GRAMMAR_TOPICS, GRAMMAR_TOPIC_IDS, CONTEXT_PROMPTS, SIMULATOR_PROMPTS
+    global SCENARIOS, GRAMMAR_TOPICS, GRAMMAR_TOPIC_IDS, CONTEXT_PROMPTS, SIMULATOR_PROMPTS, LESSONS_DB
     SCENARIOS = load_json_file(SCENARIOS_PATH)
     GRAMMAR_TOPICS = load_json_file(GRAMMAR_PATH)
     GRAMMAR_TOPIC_IDS = {g.get('id') for g in GRAMMAR_TOPICS}
@@ -403,6 +405,9 @@ def load_context_data():
     CONTEXT_PROMPTS.update({g.get('id'): g.get('prompt', '') for g in GRAMMAR_TOPICS})
     # Load simulator prompts (realistic roleplay mode)
     SIMULATOR_PROMPTS = {s.get('id'): s.get('simulator_prompt', '') for s in SCENARIOS if s.get('simulator_prompt')}
+    # Load structured lessons for Learning mode
+    lessons_data = load_json_file(LESSONS_PATH)
+    LESSONS_DB = lessons_data if isinstance(lessons_data, dict) else {}
     return GRAMMAR_TOPICS
 
 # Initial load
@@ -835,75 +840,71 @@ The student just said: "{user_text}"
     else:
         # Standard scenario mode (Learning mode = structured teaching)
         if practice_mode == 'learning':
-            # LEARNING MODE: Teacher with absolute leadership - NO ROLEPLAY
+            # LEARNING MODE: Warm teacher who LEADS the conversation
             full_prompt = f"""{system_prompt}
 
-### YOU ARE A TEACHER — NOT A CONVERSATION PARTNER — NOT A SERVICE WORKER
-You give STRUCTURED LESSONS. You do NOT chat. You do NOT ask opinions. You do NOT roleplay.
+### YOU ARE A FRIENDLY ENGLISH TEACHER WHO LEADS THE LESSON
+You are warm and natural, but you are ALWAYS in control. You DRIVE the lesson forward.
+Think of yourself as a private tutor: friendly, but every response teaches something and moves to the next step.
 {conversation_history}
 Student just said: "{user_text}"
 
-### MANDATORY OPENING (ONLY FIRST MESSAGE!)
-Your FIRST message MUST be: "Today you will learn how to [topic] in English."
-AFTER the first message, NEVER repeat "Today you will learn". Continue naturally from student's response.
-NEVER start with roleplay greeting ("Welcome to...", "Good morning!", "What can I get you?")
-NEVER act as barista/waiter/receptionist in Learning mode.
+### THE 3-PART RULE (EVERY RESPONSE MUST HAVE ALL 3!)
+1. REACT briefly to what the student said (MAX 1 short sentence — then MOVE ON)
+2. TEACH something useful (a phrase, vocabulary, correction with Portuguese translation)
+3. ASK a question that ADVANCES the lesson to the next topic (not opinion, not confirmation)
 
-### ABSOLUTE FORBIDDEN PHRASES (NEVER USE - CRITICAL!)
-- "Today you will learn..." (BANNED after first message - never repeat!)
-- "Can you try?" (BANNED - too generic, give specific instruction instead)
-- "What about you?" (BANNED - casual chat)
-- "What do you think?" (BANNED - opinion question)
-- "How about you?" (BANNED - casual chat)
-- "Do you like...?" (BANNED - irrelevant to lesson)
-- "Does that make sense?" (BANNED - condescending)
-- "Ready?" / "Shall we start?" / "Would you like to learn?" (BANNED - don't ask permission)
-- "Now that we've..." (BANNED - don't presume previous actions)
-- "Good morning! Welcome to..." (BANNED - this is roleplay)
-- Any roleplay greeting or service worker language
-- Any question asking for OPINION
-- Any small talk or casual conversation
+CRITICAL: Keep reactions SHORT. Never spend more than 1 sentence reacting. The bulk of your response must be TEACHING + ADVANCING.
 
-### PROGRESSIVE TEACHING (CRITICAL!)
-BUILD on what the student just said. Don't restart the lesson.
-- If student made an error: correct it and give a SPECIFIC sentence to repeat
-- If student did well: acknowledge briefly and give the NEXT practice task
-- WRONG: "Today you will learn X. Can you try?"
-- RIGHT: "Good! Instead of 'in the wood of', say 'in the field of'. Now repeat: 'I have 10 years in the field of education.'"
+EXAMPLE (Job Interview):
+Student: "I work in education for two years."
+AI: "Good start! Just a small tweak — instead of 'I work for two years', say 'I have two years of experience in education' (Eu tenho dois anos de experiência em educação). Now, imagine the interviewer asks: 'Why are you interested in this position?' How would you answer that?"
 
-### GOLDEN RULE
-If your sentence doesn't TEACH something or REQUEST PRACTICE, delete it.
-Every response must contain:
-- A useful phrase to learn, OR
-- A model sentence, OR
-- A clear practice command ("Repeat this." / "Now order using size + type.")
+### GREETING HANDLING (CRITICAL!)
+If the student greets you ("Hi", "I'm doing great", "How are you?"):
+- DO NOT engage in small talk. DO NOT answer "How are you?" with more than 3 words.
+- IMMEDIATELY jump into the lesson.
+- Example: Student: "I'm doing great, how are you?" → AI: "Great to hear! So, let's jump right in — today we're going to practice job interviews. Imagine you're sitting in front of the interviewer and they say: 'Tell me about yourself.' A strong opening is: 'I have X years of experience in Y' (Eu tenho X anos de experiência em Y). How would you introduce yourself?"
 
-### LESSON FLOW (Fixed Order)
-1. TEACH: Show vocabulary/options first
-2. MODEL: Give example sentence
-3. PRACTICE: Clear command ("Repeat this sentence." / "Order a coffee with size.")
+### FIRST MESSAGE
+Your FIRST message must:
+1. React to greeting in MAX 3 words ("Great to hear!")
+2. Immediately set the scene ("Imagine you're at a job interview...")
+3. Teach the first useful phrase with Portuguese translation
+4. Ask the student to practice using it about THEIR life
 
-NEVER ask before teaching. NEVER skip steps.
+Example: "Great to hear! So, today we're going to practice job interviews in English. Imagine you just sat down and the interviewer says: 'Tell me about yourself.' A professional way to start is: 'I have X years of experience in Y' (Eu tenho X anos de experiência em Y). So tell me — what do you do, and how long have you been doing it?"
 
-### NOISE HANDLING (Critical!)
-If student writes nonsense, tests limits, or goes off-topic:
-- IGNORE the content completely
-- DO NOT react emotionally ("Oh dear!", "That sounds awful!")
-- DO NOT engage with off-topic content
-- REDIRECT immediately: "Let's focus on [topic]. [Practice command]."
-Example: "Let's focus on ordering coffee. Repeat: I'd like a coffee, please."
+After the first message, NEVER repeat "Today we're going to practice..." — just keep advancing.
 
-### STAY ON TOPIC
-If topic is "Ordering Coffee" → ONLY teach coffee ordering:
-- Basic order (I'd like... / Can I have...)
-- Sizes (small, medium, large)
-- Types (latte, cappuccino, espresso)
-- Polite expressions (please, thank you)
-NOTHING ELSE. No tangents.
+### HOW TO LEAD
+- ALWAYS end with a question that moves to the NEXT interview topic (not the same one)
+- After "Tell me about yourself" → move to "Why do you want this job?"
+- After "Why this job?" → move to "What are your strengths?"
+- After "Strengths" → move to "Where do you see yourself in 5 years?"
+- NEVER stay on the same topic for more than 2 exchanges
+- NEVER end with just an affirmation ("Great!", "You nailed it!") without advancing
+
+### CORRECTIONS (BE NATURAL!)
+- WRONG: "Repeat: 'I have five years of experience.'"
+- RIGHT: "Instead of 'I work for two years', say 'I have two years of experience' (Eu tenho dois anos de experiência) — it sounds more professional. Now, the interviewer asks about your motivation..."
+- Always include Portuguese translation for key phrases
+- No technical grammar terms (say "it sounds more professional" not "use present perfect")
+
+### WHEN STUDENT DOESN'T UNDERSTAND
+- Simplify with Portuguese: "No worries! 'experience' = experiência. So 'I have 5 years of experience' = 'Eu tenho 5 anos de experiência.'"
+- Give a simpler example and move on — don't get stuck
+
+### AVOID
+- Ending with statements/affirmations without a question
+- "Does that make sense?" / "Can you try?" / "What do you think?"
+- Staying on the same point for too long
+- Acting as a waiter/receptionist
+- Casual chat that doesn't teach anything
 
 ### RESPONSE FORMAT
-- English + Portuguese translation
-- End with PRACTICE COMMAND (never opinion question)
+- English + Portuguese translation for key phrases
+- MUST end with a question that advances to the next lesson topic
 - suggested_words: only for real errors, otherwise []
 - Return JSON: {{"en": "...", "pt": "...", "suggested_words": [], "must_retry": false}}
 """
@@ -1026,30 +1027,23 @@ Return only JSON: {{"en": "...", "suggested_words": ["...","...","...","..."], "
 """
             else:
                 if practice_mode == 'learning':
-                    # LEARNING MODE: Strict teacher - NO ROLEPLAY - NO CONVERSATION
+                    # LEARNING MODE: Teacher who LEADS naturally
                     minimal_prompt = f"""{conversation_history}
 Student said: "{user_text}"
 
-YOU ARE A TEACHER. NOT a conversation partner. NOT a service worker.
+You are a friendly English teacher who LEADS the lesson. Every response MUST have 3 parts:
+1. REACT briefly (1 sentence: acknowledge, correct, or praise)
+2. TEACH (a useful phrase + Portuguese translation)
+3. ASK a question that ADVANCES to the next lesson topic
 
-BANNED PHRASES (NEVER USE):
-- "Today you will learn..." (BANNED after first message - never repeat!)
-- "Can you try?" (BANNED - give specific sentence to repeat instead)
-- "What about you?" / "How about you?" / "What do you think?" (BANNED)
-- "Does that make sense?" / "Do you like...?" (BANNED)
-- "Ready?" / "Shall we start?" / "Would you like to learn?" (BANNED)
-- "Good morning! Welcome to..." (BANNED - roleplay)
-- Any roleplay greeting or opinion questions (BANNED)
+CRITICAL: NEVER end with just a statement. ALWAYS end with a question that moves forward.
+WRONG: "Great job! You nailed it." (no question, no advancement)
+RIGHT: "Great! Now imagine the interviewer asks: 'What are your strengths?' How would you answer?"
 
-FIRST MESSAGE ONLY: "Today you will learn how to [topic] in English."
-After first message: BUILD on student's response. Don't restart lesson.
-
-PROGRESSIVE TEACHING:
-- WRONG: "Today you will learn X. Can you try?"
-- RIGHT: "Good! Instead of 'in the wood of', say 'in the field of'. Repeat: 'I have 10 years in the field of education.'"
-
-NOISE HANDLING:
-If nonsense → IGNORE and redirect with specific practice command.
+Include Portuguese translations for key phrases.
+Correct naturally: "Instead of X, say Y (tradução) — it sounds more professional."
+No grammar jargon. No "Can you try?" / "Does that make sense?"
+If student doesn't understand: simplify + Portuguese translation.
 
 Return JSON: {{"en": "...", "pt": "...", "suggested_words": [], "must_retry": false}}."""
                 else:
@@ -1280,20 +1274,20 @@ Original message: "{ai_text}"
             if text.endswith('?'):
                 return text
             
-            # Follow-up questions by language
+            # Practice commands (NOT banned questions)
             follow_up_questions_en = [
-                "What about you?",
-                "What do you think?",
-                "How about you?",
-                "Does that make sense?",
-                "Can you try?"
+                "Now repeat this sentence.",
+                "Say this phrase out loud.",
+                "Try saying this in English.",
+                "Now practice this phrase.",
+                "Repeat after me."
             ]
             follow_up_questions_pt = [
-                "E você?",
-                "O que você acha?",
-                "Quer tentar?",
-                "Faz sentido?",
-                "O que me diz?"
+                "Agora repita essa frase.",
+                "Diga essa frase em voz alta.",
+                "Tente dizer isso em inglês.",
+                "Agora pratique essa frase.",
+                "Repita comigo."
             ]
             
             import random
@@ -1305,9 +1299,17 @@ Original message: "{ai_text}"
             # Append the question
             return f"{text} {question}"
         
-        # Apply question enforcement ONLY for learning mode (NOT simulator)
-        # Simulator mode should have natural roleplay flow without forced generic questions
-        if practice_mode != 'simulator':
+        # Strip "Today you will learn" from non-first messages in learning mode
+        if practice_mode == 'learning' and conversation_history:
+            import re as _re
+            ai_text = _re.sub(r'Today you will learn[^.]*\.?\s*', '', ai_text, flags=_re.IGNORECASE).strip()
+            if ai_trans:
+                ai_trans = _re.sub(r'Hoje você (vai|irá) aprender[^.]*\.?\s*', '', ai_trans, flags=_re.IGNORECASE).strip()
+
+        # Apply question enforcement ONLY for free conversation mode
+        # Learning mode: prompt already handles conversational endings
+        # Simulator mode: natural roleplay flow without forced questions
+        if practice_mode not in ('simulator', 'learning'):
             ai_text = _ensure_ends_with_question(ai_text, lesson_lang if is_grammar_topic else 'en', context_key)
             if ai_trans:
                 ai_trans = _ensure_ends_with_question(ai_trans, 'pt', context_key)
@@ -1549,6 +1551,189 @@ CRITICAL: Responses MUST be valid answers to the AI's statement/question. Return
             ]
         })
 
+# =============================================
+# STRUCTURED LESSON ENDPOINT (Learning Mode)
+# =============================================
+@app.route('/api/lesson', methods=['POST'])
+@limiter.limit("30 per minute")
+@require_auth
+def lesson():
+    """
+    Handles structured lessons with predefined layers and options.
+    Actions: start, show_options, select_option, evaluate_practice, next_layer
+    """
+    if not GOOGLE_API_KEY or not model:
+        return jsonify({"error": "AI service not configured"}), 500
+
+    data = request.json or {}
+    context = data.get('context', 'coffee_shop')
+    action = data.get('action', 'start')
+    current_layer = data.get('layer', 0)
+    selected_option = data.get('option')
+    user_text = data.get('text', '')
+
+    # Check if lesson exists for this context
+    lesson_data = LESSONS_DB.get(context)
+    if not lesson_data:
+        return jsonify({"error": f"No structured lesson found for '{context}'"}), 404
+
+    layers = lesson_data.get('layers', [])
+    total_layers = len(layers)
+
+    # ACTION: START - Show welcome message
+    if action == 'start':
+        welcome = lesson_data.get('welcome', {})
+        return jsonify({
+            "type": "welcome",
+            "text": welcome.get('en', 'Welcome to the lesson!'),
+            "translation": welcome.get('pt', 'Bem-vindo à aula!'),
+            "lesson_title": lesson_data.get('title', context),
+            "total_layers": total_layers,
+            "next_action": "show_options"
+        })
+
+    # ACTION: SHOW_OPTIONS - Display layer options
+    if action == 'show_options':
+        if current_layer >= total_layers:
+            # Lesson complete - show conclusion
+            conclusion = lesson_data.get('conclusion', {})
+            return jsonify({
+                "type": "conclusion",
+                "text": conclusion.get('en', 'Congratulations! You completed the lesson!'),
+                "translation": conclusion.get('pt', 'Parabéns! Você completou a aula!'),
+                "layer": current_layer,
+                "total_layers": total_layers,
+                "next_action": "finished"
+            })
+
+        layer = layers[current_layer]
+        instruction = layer.get('instruction', {})
+        options = layer.get('options', [])
+
+        return jsonify({
+            "type": "options",
+            "text": instruction.get('en', 'Choose an option:'),
+            "translation": instruction.get('pt', 'Escolha uma opção:'),
+            "layer_title": layer.get('title', f'Layer {current_layer + 1}'),
+            "options": options,
+            "layer": current_layer,
+            "total_layers": total_layers,
+            "next_action": "select_option"
+        })
+
+    # ACTION: SELECT_OPTION - User clicked an option, show practice prompt
+    if action == 'select_option':
+        if current_layer >= total_layers:
+            return jsonify({"error": "Invalid layer"}), 400
+
+        layer = layers[current_layer]
+        practice_prompt = layer.get('practice_prompt', {})
+        options = layer.get('options', [])
+
+        # Get the selected phrase
+        selected_phrase = None
+        skip_to_layer = None
+        if selected_option is not None and 0 <= selected_option < len(options):
+            selected_phrase = options[selected_option]
+            # Check if this option has skip_to_layer (for branching)
+            if isinstance(selected_phrase, dict):
+                skip_to_layer = selected_phrase.get('skip_to_layer')
+
+        response_data = {
+            "type": "practice",
+            "text": practice_prompt.get('en', 'Now try using this phrase!'),
+            "translation": practice_prompt.get('pt', 'Agora tente usar essa frase!'),
+            "selected_phrase": selected_phrase,
+            "layer": current_layer,
+            "total_layers": total_layers,
+            "next_action": "evaluate_practice"
+        }
+
+        # Include skip_to_layer if present (for layer skipping after practice)
+        if skip_to_layer is not None:
+            response_data["skip_to_layer"] = skip_to_layer
+
+        return jsonify(response_data)
+
+    # ACTION: EVALUATE_PRACTICE - User spoke, evaluate with Gemini
+    if action == 'evaluate_practice':
+        if current_layer >= total_layers:
+            return jsonify({"error": "Invalid layer"}), 400
+
+        layer = layers[current_layer]
+        selected_phrase = data.get('selected_phrase', {})
+        target_phrase = selected_phrase.get('en', '') if isinstance(selected_phrase, dict) else ''
+
+        # Use Gemini to evaluate the student's practice
+        eval_prompt = f"""You are a friendly English teacher evaluating a student's practice.
+
+The student was asked to practice using this phrase pattern: "{target_phrase}"
+The student said: "{user_text}"
+
+Evaluate their attempt and respond in this JSON format:
+{{
+    "feedback_en": "Your encouraging feedback in English (1-2 sentences). Be specific about what they did well or what to improve.",
+    "feedback_pt": "The same feedback in Portuguese.",
+    "score": 1-5 (1=needs work, 3=good effort, 5=excellent),
+    "ready_for_next": true/false (true if they demonstrated understanding)
+}}
+
+Be encouraging! Even if they made mistakes, find something positive. If they said something completely unrelated, gently redirect them.
+Return ONLY the JSON, no other text."""
+
+        try:
+            response = model.generate_content(eval_prompt)
+            raw = response.text.strip()
+
+            # Parse JSON
+            cleaned = raw.replace('```json', '').replace('```', '').strip()
+            start_idx = cleaned.find('{')
+            end_idx = cleaned.rfind('}')
+
+            if start_idx != -1 and end_idx != -1:
+                eval_result = json.loads(cleaned[start_idx:end_idx+1])
+            else:
+                eval_result = {
+                    "feedback_en": "Great effort! Keep practicing.",
+                    "feedback_pt": "Ótimo esforço! Continue praticando.",
+                    "score": 3,
+                    "ready_for_next": True
+                }
+        except Exception as e:
+            print(f"[LESSON] Evaluation error: {e}")
+            eval_result = {
+                "feedback_en": "Good try! Let's continue with the lesson.",
+                "feedback_pt": "Boa tentativa! Vamos continuar com a aula.",
+                "score": 3,
+                "ready_for_next": True
+            }
+
+        # Determine next layer (use skip_to_layer if provided, otherwise increment by 1)
+        skip_to = data.get('skip_to_layer')
+        if eval_result.get('ready_for_next', True):
+            if skip_to is not None:
+                # Convert layer ID to index (layer IDs are 1-based in lessons_db.json)
+                next_layer = skip_to - 1 if skip_to > 0 else skip_to
+            else:
+                next_layer = current_layer + 1
+        else:
+            next_layer = current_layer
+
+        return jsonify({
+            "type": "feedback",
+            "text": eval_result.get('feedback_en', 'Good job!'),
+            "translation": eval_result.get('feedback_pt', 'Bom trabalho!'),
+            "score": eval_result.get('score', 3),
+            "ready_for_next": eval_result.get('ready_for_next', True),
+            "layer": current_layer,
+            "next_layer": next_layer,
+            "total_layers": total_layers,
+            "next_action": "show_options" if next_layer < total_layers else "conclusion"
+        })
+
+    return jsonify({"error": f"Unknown action: {action}"}), 400
+
+
 @app.route('/api/report', methods=['POST'])
 @limiter.limit("10 per minute")
 @require_auth
@@ -1599,6 +1784,15 @@ Retorne APENAS um JSON válido seguindo EXATAMENTE este formato:
   "correcoes": [
     {{"ruim": "frase EXATA do aluno", "boa": "forma mais natural/educada", "explicacao": "por que essa forma é melhor"}}
   ],
+  "analise_frases": [
+    {{
+      "frase_aluno": "frase EXATA como o aluno falou",
+      "naturalidade": 50,
+      "nivel": "Compreensível, mas não natural",
+      "frase_natural": "como um nativo diria a mesma coisa",
+      "explicacao": "breve explicação de por que a versão natural é melhor"
+    }}
+  ],
   "elogios": ["estrutura que usou bem 1", "estrutura que usou bem 2", "estrutura que usou bem 3"],
   "dicas": ["estude esta estrutura: ...", "pratique usar: ..."],
   "frase_pratica": "How would you politely ask someone to open the window?"
@@ -1606,6 +1800,8 @@ Retorne APENAS um JSON válido seguindo EXATAMENTE este formato:
 
 REGRAS:
 - Máximo 3 correções (foque nas mais importantes)
+- Analise TODAS as falas do aluno em "analise_frases" (não apenas erros)
+- "naturalidade": 0-100 (90-100=perfeita, 60-89=boa, 40-59=compreensível mas não natural, 0-39=erro grave)
 - Pelo menos 3 elogios sobre estruturas que usou bem
 - Dicas devem sugerir estruturas específicas para estudar
 - Tom sempre positivo e motivador
@@ -1637,15 +1833,32 @@ Gere um relatório em português e retorne APENAS um JSON válido seguindo EXATA
       "fraseOriginal": "frase EXATA como o aluno falou",
       "fraseCorrigida": "versão corrigida da frase",
       "avaliacaoGeral": "Correta|Aceitável|Incorreta",
-      "comentarioBreve": "Comentário de 1 frase explicando se a frase foi boa ou não e por quê",
+      "comentarioBreve": "Comentário de 1 frase simples, como um professor explicaria na sala de aula",
       "tag": "Estrutura Incorreta|Incorreta, mas Compreensível|Correta, mas Pouco Natural",
-      "explicacaoDetalhada": "Explicação detalhada do erro e como corrigir (se houver erro)"
+      "explicacaoDetalhada": "Explicação DIDÁTICA e SIMPLES como um professor falaria para o aluno em sala de aula. SEM termos técnicos de gramática. Use exemplos do dia-a-dia, analogias e linguagem acessível. Ex: 'Em inglês, quando você quer pedir algo educadamente, é como dizer Eu gostaria em vez de Eu quero - soa mais gentil!'"
+    }}
+  ],
+  "analise_frases": [
+    {{
+      "frase_aluno": "frase EXATA como o aluno falou",
+      "naturalidade": 50,
+      "nivel": "Compreensível, mas não natural",
+      "frase_natural": "como um nativo diria a mesma coisa",
+      "explicacao": "breve explicação de por que a versão natural é melhor"
     }}
   ],
   "elogios": ["elogio específico 1", "elogio específico 2", "elogio específico 3", "elogio específico 4"],
   "dicas": ["dica construtiva 1", "dica construtiva 2"],
   "frase_pratica": "próxima frase em inglês para o aluno treinar neste contexto"
 }}
+
+ANÁLISE FRASE A FRASE (use em "analise_frases"):
+- Analise TODAS as falas do aluno, não apenas as com erro
+- "naturalidade" é um número de 0 a 100 representando quão natural a frase soa para um nativo
+- Escala: 90-100 = perfeita/natural, 60-89 = boa mas pode melhorar, 40-59 = compreensível mas não natural, 0-39 = erro grave
+- "nivel" deve descrever o nível em português (ex: "Perfeita!", "Boa, mas pode melhorar", "Compreensível, mas não natural", "Precisa de correção")
+- "frase_natural" deve ser EXATAMENTE como um nativo falaria (mesmo que a original já esteja correta, repita-a)
+- Se a frase do aluno já for perfeita, dê 90-100% e elogie na explicação
 
 TAGS DE CLASSIFICAÇÃO (use em "tag"):
 - "Estrutura Incorreta": Erro gramatical grave que compromete a compreensão
@@ -1868,6 +2081,42 @@ def get_audio_from_cache(cache_path):
         print(f"[CACHE] Error reading audio from cache: {e}")
         return None
 
+
+# Lesson audio cache directory (pre-generated audio for structured lessons)
+LESSON_AUDIO_CACHE_DIR = os.path.join(os.path.dirname(__file__), '..', 'audio_cache', 'lessons')
+
+def get_lesson_audio_cache(text):
+    """Check if pre-generated lesson audio exists for this text.
+
+    Pre-generated audio files are stored in audio_cache/lessons/ with filenames
+    containing a hash of the text content. This allows instant playback of
+    lesson content without TTS generation latency.
+
+    Args:
+        text: The text to look up in the lesson cache
+
+    Returns:
+        Tuple (full_path, filename) if found, (None, None) otherwise
+    """
+    if not os.path.exists(LESSON_AUDIO_CACHE_DIR):
+        return None, None
+
+    # Generate hash to search for
+    text_hash = hashlib.md5(text.encode('utf-8')).hexdigest()[:8]
+
+    try:
+        # Search for file with matching hash in filename
+        for filename in os.listdir(LESSON_AUDIO_CACHE_DIR):
+            if text_hash in filename and filename.endswith('.mp3'):
+                full_path = os.path.join(LESSON_AUDIO_CACHE_DIR, filename)
+                if os.path.exists(full_path):
+                    return full_path, filename
+    except Exception as e:
+        print(f"[LESSON CACHE] Error searching cache: {e}")
+
+    return None, None
+
+
 def convert_to_bilingual_ssml(text):
     """Convert text with [EN]...[/EN] tags to SSML with language + voice switching"""
     import re
@@ -1974,6 +2223,22 @@ def tts_endpoint():
 
         if not text:
             return jsonify({"error": "No text provided"}), 400
+
+        # Check lesson audio cache first (pre-generated audio for structured lessons)
+        lesson_cache_path, lesson_cache_filename = get_lesson_audio_cache(text)
+        if lesson_cache_path:
+            print(f"[LESSON CACHE] HIT - serving pre-generated audio: {lesson_cache_filename}")
+            # On Vercel, redirect to static CDN path for better performance
+            if os.environ.get('VERCEL'):
+                from flask import redirect
+                return redirect(f"/audio_cache/lessons/{lesson_cache_filename}", code=302)
+            else:
+                return send_file(
+                    lesson_cache_path,
+                    mimetype="audio/mp3",
+                    as_attachment=False,
+                    download_name="tts.mp3"
+                )
 
         # Check if Google API key is available
         if not GOOGLE_API_KEY:
@@ -2124,7 +2389,7 @@ def tts_endpoint():
                 # Success! Save to cache for future use
                 audio_content = base64.b64decode(response.json()['audioContent'])
                 save_audio_to_cache(audio_content, cache_path)
-                print(f"[CACHE] 💾 Saved audio to cache: {os.path.basename(cache_path)}")
+                print(f"[CACHE] Saved audio to cache: {os.path.basename(cache_path)}")
 
             if response.status_code != 200:
                 error_msg = response.text[:500] if response.text else "Unknown error"
@@ -2176,6 +2441,123 @@ def tts_endpoint():
     except Exception as e:
         print(f"TTS Error: {e}")
         return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/tts/clone', methods=['POST'])
+def tts_clone():
+    """TTS with voice cloning using Qwen3-TTS.
+
+    This endpoint generates speech using a cloned voice from a reference audio.
+    The reference audio and transcription are loaded from voice_references/config.json.
+
+    Request body:
+        {
+            "text": "Text to synthesize",
+            "speed": 0.85  (optional, default 0.85)
+        }
+
+    Returns:
+        audio/mp3 file
+    """
+    try:
+        data = request.json or {}
+        text = data.get('text', '')
+        speed = data.get('speed', 0.85)
+
+        if not text:
+            return jsonify({"error": "No text provided"}), 400
+
+        # Check for Qwen3-TTS server
+        qwen_tts_url = os.environ.get("QWEN_TTS_URL", "").strip()
+        if not qwen_tts_url:
+            return jsonify({"error": "QWEN_TTS_URL not configured"}), 500
+
+        # Load voice reference configuration
+        config_path = os.path.join(os.path.dirname(__file__), '..', 'voice_references', 'config.json')
+        if not os.path.exists(config_path):
+            return jsonify({"error": "Voice reference config not found. Run scripts/download_voice_reference.py first."}), 500
+
+        with open(config_path, 'r', encoding='utf-8') as f:
+            voice_config = json.load(f)
+
+        # Check if ref_audio exists
+        ref_audio_path = os.path.join(os.path.dirname(__file__), '..', voice_config['ref_audio'])
+        if not os.path.exists(ref_audio_path):
+            return jsonify({"error": f"Reference audio not found: {voice_config['ref_audio']}. Run scripts/download_voice_reference.py first."}), 500
+
+        # Check if ref_text is still placeholder
+        if 'PLACEHOLDER' in voice_config.get('ref_text', 'PLACEHOLDER'):
+            return jsonify({"error": "Voice reference transcription not set. Edit voice_references/config.json and add the transcription."}), 500
+
+        # Read reference audio as base64
+        with open(ref_audio_path, 'rb') as f:
+            ref_audio_b64 = base64.b64encode(f.read()).decode('utf-8')
+
+        print(f"[TTS/Clone] Generating audio for: {text[:50]}...")
+        print(f"[TTS/Clone] Using voice reference: {voice_config['ref_audio']}")
+        print(f"[TTS/Clone] Speed: {speed}x")
+
+        # Call Qwen3-TTS voice cloning endpoint
+        try:
+            response = requests.post(
+                f"{qwen_tts_url}/v1/audio/speech/clone",
+                json={
+                    "input": text,
+                    "ref_audio": ref_audio_b64,
+                    "ref_text": voice_config['ref_text'],
+                    "language": voice_config.get('language', 'English'),
+                    "speed": speed
+                },
+                timeout=60
+            )
+
+            if response.status_code == 200 and len(response.content) > 100:
+                print(f"[TTS/Clone] Success! {len(response.content)} bytes")
+                return send_file(
+                    io.BytesIO(response.content),
+                    mimetype="audio/mp3",
+                    as_attachment=False,
+                    download_name="tts_clone.mp3"
+                )
+            else:
+                print(f"[TTS/Clone] Failed: status={response.status_code}")
+
+                # Fallback to regular TTS with speed adjustment
+                print("[TTS/Clone] Falling back to regular Qwen3-TTS...")
+                fallback_response = requests.post(
+                    f"{qwen_tts_url}/v1/audio/speech",
+                    json={
+                        "model": "tts-1",
+                        "input": text,
+                        "voice": "serena",  # Default female voice
+                        "response_format": "mp3",
+                        "speed": speed
+                    },
+                    timeout=15
+                )
+
+                if fallback_response.status_code == 200 and len(fallback_response.content) > 100:
+                    print(f"[TTS/Clone] Fallback success! {len(fallback_response.content)} bytes")
+                    return send_file(
+                        io.BytesIO(fallback_response.content),
+                        mimetype="audio/mp3",
+                        as_attachment=False,
+                        download_name="tts_clone.mp3"
+                    )
+
+                return jsonify({"error": f"TTS clone failed: {response.status_code}"}), 503
+
+        except requests.exceptions.Timeout:
+            return jsonify({"error": "TTS clone request timed out"}), 504
+        except requests.exceptions.ConnectionError:
+            return jsonify({"error": "Cannot connect to Qwen3-TTS server"}), 503
+
+    except Exception as e:
+        print(f"[TTS/Clone] Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route('/api/conversations', methods=['GET'])
 @require_auth

@@ -6,7 +6,6 @@ __pycache__
 venv/
 
 # Local files
-*.mp3
 *.bat
 *.log
 *.txt
@@ -28,10 +27,11 @@ nul
 .git/
 .claude/
 .vercel/cache/
-audio_cache/
+audio_cache/dynamic/
 test_reports/
 free_conversation/
 scripts/
+voice_references/
 node_modules/
 backup_today/
 files/
