@@ -2,6 +2,7 @@ import os
 import io
 import json
 import re
+from difflib import SequenceMatcher
 try:
     import jwt
     JWT_AVAILABLE = True
@@ -1667,33 +1668,46 @@ def lesson():
         target_phrase = selected_phrase.get('en', '') if isinstance(selected_phrase, dict) else ''
         feedback_templates = layer.get('feedback', {})
 
-        # Simple keyword evaluation
-        user_lower = user_text.lower().strip()
-        target_lower = target_phrase.lower().strip()
+        # Robust evaluation with Unicode normalization and fuzzy matching
+        def normalize_for_eval(t):
+            t = t.lower().strip()
+            # Normalize curly/smart quotes and apostrophes to ASCII
+            t = t.replace('\u2019', "'").replace('\u2018', "'")
+            t = t.replace('\u201c', '"').replace('\u201d', '"')
+            # Remove punctuation
+            t = t.replace(",", "").replace(".", "").replace("?", "").replace("!", "").replace('"', '').replace("'", " ")
+            # Collapse whitespace
+            return ' '.join(t.split())
 
-        # Extract key words from target (remove common/stop words)
-        stop_words = {
-            'i', 'a', 'the', 'an', 'please', 'would', 'like', 'can', 'could',
-            'have', 'get', 'it', 'that', 'is', 'my', 'me', 'to', 'for', 'and',
-            'or', 'in', 'on', 'of', 'd', 'll', 's', 'no', 'yes', 'just', 'with'
-        }
-        target_words = set(target_lower.replace("'", " ").replace(",", "").replace(".", "").replace("?", "").replace("!", "").split()) - stop_words
-        user_words = set(user_lower.replace("'", " ").replace(",", "").replace(".", "").replace("?", "").replace("!", "").split()) - stop_words
+        user_norm = normalize_for_eval(user_text)
+        target_norm = normalize_for_eval(target_phrase)
 
-        # Calculate overlap
+        # Minimal stop words (only articles/prepositions, keep verbs like "like", "have", "get")
+        stop_words = {'i', 'a', 'the', 'an', 'my', 'me', 'to', 'for', 'and', 'or', 'in', 'on', 'of'}
+        target_words = set(target_norm.split()) - stop_words
+        user_words = set(user_norm.split()) - stop_words
+
+        # Calculate word overlap
         if target_words:
             overlap = len(target_words & user_words) / len(target_words)
         else:
             overlap = 0
 
-        # Also check if user text contains the target or vice versa
-        contains_target = target_lower in user_lower or user_lower in target_lower
+        # Substring match (normalized)
+        contains_target = (target_norm and user_norm and
+                           (target_norm in user_norm or user_norm in target_norm))
 
-        if contains_target or overlap >= 0.4:
+        # Character-level similarity as fallback (handles STT typos)
+        char_similarity = SequenceMatcher(None, user_norm, target_norm).ratio() if user_norm and target_norm else 0
+
+        # Adaptive threshold: stricter for long phrases, lenient for short ones
+        min_overlap = 0.3 if len(target_words) <= 2 else 0.4
+
+        if contains_target or overlap >= min_overlap or char_similarity >= 0.6:
             # SUCCESS - student used the phrase correctly
             fb = feedback_templates.get('success', {})
             ready_for_next = True
-        elif overlap > 0 or len(user_words) >= 2:
+        elif overlap > 0 or char_similarity >= 0.3 or len(user_words) >= 2:
             # RETRY - attempted but needs improvement
             fb = feedback_templates.get('retry', {})
             ready_for_next = False
@@ -1716,7 +1730,7 @@ def lesson():
             else:
                 next_layer = current_layer + 1
 
-        print(f"[LESSON] evaluate_practice: target='{target_phrase}', user='{user_text}', overlap={overlap:.2f}, ready={ready_for_next}")
+        print(f"[LESSON] evaluate_practice: target='{target_phrase}', user='{user_text}', overlap={overlap:.2f}, char_sim={char_similarity:.2f}, ready={ready_for_next}")
 
         return jsonify({
             "type": "feedback",

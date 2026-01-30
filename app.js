@@ -1406,8 +1406,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 isRecording = false;
                 recordBtn.classList.remove('recording');
 
-                // Transcribe
-                const transcribeResult = await transcribeWithDeepgram(audioBlob, apiClient.token, lessonLang);
+                // Transcribe — force English STT when practicing English phrases
+                const sttLang = (lessonState.active && lessonState.nextAction === 'evaluate_practice') ? 'en' : lessonLang;
+                const transcribeResult = await transcribeWithDeepgram(audioBlob, apiClient.token, sttLang);
 
                 if (transcribeResult.success) {
                     processUserResponse(transcribeResult.transcript);
