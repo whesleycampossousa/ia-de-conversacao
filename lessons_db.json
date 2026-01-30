@@ -4976,6 +4976,182 @@
             "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
           }
         }
+      },
+      {
+        "id": 7,
+        "title": "During the Ride",
+        "instruction": {
+          "en": "You're on the bus. Here's how to interact during the ride:",
+          "pt": "Você está no ônibus. Veja como interagir durante a viagem:"
+        },
+        "options": [
+          {
+            "en": "Excuse me, is this seat taken?",
+            "pt": "Com licença, este assento está ocupado?"
+          },
+          {
+            "en": "Could you move over a little, please?",
+            "pt": "Poderia se mover um pouco, por favor?"
+          },
+          {
+            "en": "Is the next stop the city center?",
+            "pt": "A próxima parada é o centro?"
+          },
+          {
+            "en": "How many more stops until the station?",
+            "pt": "Quantas paradas faltam até a estação?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Great! Now try interacting with other passengers.",
+          "pt": "Ótimo! Agora tente interagir com outros passageiros."
+        },
+        "feedback": {
+          "success": {
+            "en": "Well done! You're a confident bus rider. Let's handle an unexpected situation!",
+            "pt": "Muito bem! Você é um passageiro confiante. Vamos lidar com uma situação inesperada!"
+          },
+          "retry": {
+            "en": "Good try! Talk to other passengers politely. Try again!",
+            "pt": "Boa tentativa! Converse com outros passageiros educadamente. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "Handling Problems",
+        "instruction": {
+          "en": "Sometimes things don't go as planned on the bus. Here's how to handle problems:",
+          "pt": "Às vezes as coisas não saem como planejado no ônibus. Veja como lidar com problemas:"
+        },
+        "options": [
+          {
+            "en": "I think I missed my stop",
+            "pt": "Acho que passei da minha parada"
+          },
+          {
+            "en": "Does this bus go to the airport?",
+            "pt": "Este ônibus vai ao aeroporto?"
+          },
+          {
+            "en": "I need to transfer to another line",
+            "pt": "Preciso fazer baldeação para outra linha"
+          },
+          {
+            "en": "Can you tell me when we reach Main Street?",
+            "pt": "Pode me avisar quando chegarmos na Rua Principal?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now try handling a problem on the bus.",
+          "pt": "Agora tente lidar com um problema no ônibus."
+        },
+        "feedback": {
+          "success": {
+            "en": "Great problem-solving! Now let's get ready to exit.",
+            "pt": "Ótima resolução de problema! Agora vamos nos preparar para sair."
+          },
+          "retry": {
+            "en": "Good try! Explain the problem clearly. Try again!",
+            "pt": "Boa tentativa! Explique o problema claramente. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "Getting Off",
+        "instruction": {
+          "en": "You're approaching your stop. Here's how to signal and exit:",
+          "pt": "Você está chegando na sua parada. Veja como sinalizar e sair:"
+        },
+        "options": [
+          {
+            "en": "Excuse me, I need to get off here",
+            "pt": "Com licença, preciso descer aqui"
+          },
+          {
+            "en": "Could you let me through, please?",
+            "pt": "Poderia me dar passagem, por favor?"
+          },
+          {
+            "en": "Is this where I get off for the museum?",
+            "pt": "É aqui que desço para o museu?"
+          },
+          {
+            "en": "Next stop, please!",
+            "pt": "Próxima parada, por favor!"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now try getting off the bus.",
+          "pt": "Agora tente descer do ônibus."
+        },
+        "feedback": {
+          "success": {
+            "en": "Perfect exit! Now let's thank the driver.",
+            "pt": "Saída perfeita! Agora vamos agradecer ao motorista."
+          },
+          "retry": {
+            "en": "Good try! Signal that you need to get off. Try again!",
+            "pt": "Boa tentativa! Sinalize que precisa descer. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 10,
+        "title": "Thanking the Driver",
+        "instruction": {
+          "en": "Time to leave! Here's how to thank the bus driver:",
+          "pt": "Hora de sair! Veja como agradecer ao motorista:"
+        },
+        "options": [
+          {
+            "en": "Thank you, have a nice day!",
+            "pt": "Obrigado, tenha um bom dia!"
+          },
+          {
+            "en": "Thanks for the ride!",
+            "pt": "Obrigado pela viagem!"
+          },
+          {
+            "en": "Thanks! Have a good one!",
+            "pt": "Obrigado! Passe bem!"
+          },
+          {
+            "en": "Thank you, see you tomorrow!",
+            "pt": "Obrigado, até amanhã!"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Wonderful! Now say goodbye to the driver.",
+          "pt": "Maravilha! Agora se despeça do motorista."
+        },
+        "feedback": {
+          "success": {
+            "en": "Wonderful! You completed the entire bus experience!",
+            "pt": "Maravilha! Você completou toda a experiência no ônibus!"
+          },
+          "retry": {
+            "en": "Good try! Thank the driver warmly. Try again!",
+            "pt": "Boa tentativa! Agradeça ao motorista calorosamente. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
       }
     ],
     "conclusion": {
@@ -5573,6 +5749,182 @@
           "retry": {
             "en": "Good try! Pay for your order. Try again!",
             "pt": "Boa tentativa! Pague pelo seu pedido. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 7,
+        "title": "Asking About Ingredients",
+        "instruction": {
+          "en": "You have dietary needs. Here's how to ask about ingredients:",
+          "pt": "Você tem necessidades alimentares. Veja como perguntar sobre ingredientes:"
+        },
+        "options": [
+          {
+            "en": "Is this gluten-free?",
+            "pt": "Isso é sem glúten?"
+          },
+          {
+            "en": "Does this contain nuts?",
+            "pt": "Isso contém nozes?"
+          },
+          {
+            "en": "Do you have any vegan options?",
+            "pt": "Vocês têm opções veganas?"
+          },
+          {
+            "en": "What's in the filling?",
+            "pt": "O que tem no recheio?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Great! Now ask about the ingredients.",
+          "pt": "Ótimo! Agora pergunte sobre os ingredientes."
+        },
+        "feedback": {
+          "success": {
+            "en": "Good to know! Let's ask about custom orders!",
+            "pt": "Bom saber! Vamos perguntar sobre encomendas!"
+          },
+          "retry": {
+            "en": "Good try! Ask about ingredients or dietary options. Try again!",
+            "pt": "Boa tentativa! Pergunte sobre ingredientes ou opções dietéticas. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "Custom Orders",
+        "instruction": {
+          "en": "Need something special? Here's how to place a custom order:",
+          "pt": "Precisa de algo especial? Veja como fazer um pedido personalizado:"
+        },
+        "options": [
+          {
+            "en": "Can I order a birthday cake?",
+            "pt": "Posso encomendar um bolo de aniversário?"
+          },
+          {
+            "en": "I'd like to place an order for Saturday",
+            "pt": "Gostaria de fazer uma encomenda para sábado"
+          },
+          {
+            "en": "Can you write 'Happy Birthday' on it?",
+            "pt": "Pode escrever 'Feliz Aniversário' nele?"
+          },
+          {
+            "en": "How far in advance do I need to order?",
+            "pt": "Com quanta antecedência preciso encomendar?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now try placing a custom order.",
+          "pt": "Agora tente fazer um pedido personalizado."
+        },
+        "feedback": {
+          "success": {
+            "en": "Perfect! Custom order placed. Let's pay for everything!",
+            "pt": "Perfeito! Pedido personalizado feito. Vamos pagar por tudo!"
+          },
+          "retry": {
+            "en": "Good try! Place a custom order. Try again!",
+            "pt": "Boa tentativa! Faça um pedido personalizado. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "Paying",
+        "instruction": {
+          "en": "Time to pay! Here's how to handle payment at the bakery:",
+          "pt": "Hora de pagar! Veja como resolver o pagamento na padaria:"
+        },
+        "options": [
+          {
+            "en": "How much is everything?",
+            "pt": "Quanto é tudo?"
+          },
+          {
+            "en": "Can I pay by card?",
+            "pt": "Posso pagar com cartão?"
+          },
+          {
+            "en": "Do you have a loyalty card program?",
+            "pt": "Vocês têm programa de fidelidade?"
+          },
+          {
+            "en": "Here you go, keep the change",
+            "pt": "Aqui está, fique com o troco"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now pay for your order.",
+          "pt": "Agora pague pelo seu pedido."
+        },
+        "feedback": {
+          "success": {
+            "en": "Great! Payment done. Let's say goodbye!",
+            "pt": "Ótimo! Pagamento feito. Vamos nos despedir!"
+          },
+          "retry": {
+            "en": "Good try! Pay for your order. Try again!",
+            "pt": "Boa tentativa! Pague pelo seu pedido. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 10,
+        "title": "Saying Goodbye",
+        "instruction": {
+          "en": "Time to leave! Here's how to say goodbye at the bakery:",
+          "pt": "Hora de ir! Veja como se despedir na padaria:"
+        },
+        "options": [
+          {
+            "en": "Thank you, everything looks delicious!",
+            "pt": "Obrigado, tudo parece delicioso!"
+          },
+          {
+            "en": "Thanks! See you next time!",
+            "pt": "Obrigado! Até a próxima!"
+          },
+          {
+            "en": "Have a great day!",
+            "pt": "Tenha um ótimo dia!"
+          },
+          {
+            "en": "Thanks a lot! I'll be back!",
+            "pt": "Muito obrigado! Eu volto!"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Wonderful! Now say goodbye to the baker.",
+          "pt": "Maravilha! Agora se despeça do padeiro."
+        },
+        "feedback": {
+          "success": {
+            "en": "Wonderful! You completed the entire bakery experience!",
+            "pt": "Maravilha! Você completou toda a experiência na padaria!"
+          },
+          "retry": {
+            "en": "Good try! Say goodbye to the baker. Try again!",
+            "pt": "Boa tentativa! Despeça-se do padeiro. Tente novamente!"
           },
           "redirect": {
             "en": "Let's try again. Use the phrase from the reference card above.",
@@ -6506,6 +6858,182 @@
             "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
           }
         }
+      },
+      {
+        "id": 7,
+        "title": "Checking the Car",
+        "instruction": {
+          "en": "The attendant can check a few things. Here's how to ask:",
+          "pt": "O frentista pode verificar algumas coisas. Veja como pedir:"
+        },
+        "options": [
+          {
+            "en": "Could you check the tire pressure?",
+            "pt": "Poderia verificar a pressão dos pneus?"
+          },
+          {
+            "en": "Can you check the oil level?",
+            "pt": "Pode verificar o nível do óleo?"
+          },
+          {
+            "en": "Could you clean the windshield?",
+            "pt": "Poderia limpar o para-brisa?"
+          },
+          {
+            "en": "Can you top up the washer fluid?",
+            "pt": "Pode completar o fluido do limpador?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now ask the attendant to check something.",
+          "pt": "Agora peça ao frentista para verificar algo."
+        },
+        "feedback": {
+          "success": {
+            "en": "Great! Car is in good shape. Let's visit the convenience store!",
+            "pt": "Ótimo! O carro está em boa forma. Vamos visitar a loja de conveniência!"
+          },
+          "retry": {
+            "en": "Good try! Ask the attendant to check something. Try again!",
+            "pt": "Boa tentativa! Peça ao frentista para verificar algo. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "Convenience Store",
+        "instruction": {
+          "en": "Let's grab something from the shop. Here's how to ask:",
+          "pt": "Vamos pegar algo na loja. Veja como perguntar:"
+        },
+        "options": [
+          {
+            "en": "Do you have any cold drinks?",
+            "pt": "Vocês têm bebidas geladas?"
+          },
+          {
+            "en": "Where are the snacks?",
+            "pt": "Onde ficam os lanches?"
+          },
+          {
+            "en": "Can I get a coffee to go?",
+            "pt": "Posso pegar um café para viagem?"
+          },
+          {
+            "en": "Do you sell phone chargers?",
+            "pt": "Vocês vendem carregadores de celular?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now try buying something at the shop.",
+          "pt": "Agora tente comprar algo na loja."
+        },
+        "feedback": {
+          "success": {
+            "en": "Nice! Got what you need. Let's ask for directions!",
+            "pt": "Legal! Pegou o que precisa. Vamos pedir direções!"
+          },
+          "retry": {
+            "en": "Good try! Ask about items in the store. Try again!",
+            "pt": "Boa tentativa! Pergunte sobre itens na loja. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "Asking for Directions",
+        "instruction": {
+          "en": "You're not sure about the route. Here's how to ask:",
+          "pt": "Você não tem certeza sobre o caminho. Veja como perguntar:"
+        },
+        "options": [
+          {
+            "en": "How do I get to the highway from here?",
+            "pt": "Como chego na rodovia daqui?"
+          },
+          {
+            "en": "Is there a rest area nearby?",
+            "pt": "Tem uma área de descanso por perto?"
+          },
+          {
+            "en": "Which way to the city center?",
+            "pt": "Para que lado fica o centro?"
+          },
+          {
+            "en": "How far is the next gas station?",
+            "pt": "A que distância fica o próximo posto?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now ask for directions.",
+          "pt": "Agora peça direções."
+        },
+        "feedback": {
+          "success": {
+            "en": "Perfect directions! Let's pay and head out!",
+            "pt": "Direções perfeitas! Vamos pagar e seguir viagem!"
+          },
+          "retry": {
+            "en": "Good try! Ask for directions. Try again!",
+            "pt": "Boa tentativa! Peça direções. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 10,
+        "title": "Paying and Leaving",
+        "instruction": {
+          "en": "Time to pay and hit the road! Here's how:",
+          "pt": "Hora de pagar e pegar a estrada! Veja como:"
+        },
+        "options": [
+          {
+            "en": "I'll pay for the fuel and these items",
+            "pt": "Vou pagar pelo combustível e esses itens"
+          },
+          {
+            "en": "Can I pay everything together?",
+            "pt": "Posso pagar tudo junto?"
+          },
+          {
+            "en": "Thank you! Have a good day!",
+            "pt": "Obrigado! Tenha um bom dia!"
+          },
+          {
+            "en": "Thanks for the help! See you!",
+            "pt": "Obrigado pela ajuda! Até!"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now pay and say goodbye.",
+          "pt": "Agora pague e se despeça."
+        },
+        "feedback": {
+          "success": {
+            "en": "Wonderful! You completed the entire gas station experience!",
+            "pt": "Maravilha! Você completou toda a experiência no posto de gasolina!"
+          },
+          "retry": {
+            "en": "Good try! Pay and say goodbye. Try again!",
+            "pt": "Boa tentativa! Pague e se despeça. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
       }
     ],
     "conclusion": {
@@ -6779,6 +7307,182 @@
           "retry": {
             "en": "Good try! Thank the agent and close the call. Try again!",
             "pt": "Boa tentativa! Agradeça ao atendente e encerre a ligação. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 7,
+        "title": "Providing Account Details",
+        "instruction": {
+          "en": "The agent needs to verify your identity. Here's how to provide details:",
+          "pt": "O atendente precisa verificar sua identidade. Veja como fornecer dados:"
+        },
+        "options": [
+          {
+            "en": "My account number is 12345",
+            "pt": "Meu número de conta é 12345"
+          },
+          {
+            "en": "The email on file is john@email.com",
+            "pt": "O email registrado é john@email.com"
+          },
+          {
+            "en": "I registered under John Smith",
+            "pt": "Registrei como John Smith"
+          },
+          {
+            "en": "I can verify with my phone number",
+            "pt": "Posso verificar com meu número de telefone"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now verify your identity with the agent.",
+          "pt": "Agora verifique sua identidade com o atendente."
+        },
+        "feedback": {
+          "success": {
+            "en": "Great! Identity verified. Let's ask for an escalation if needed!",
+            "pt": "Ótimo! Identidade verificada. Vamos pedir escalação se necessário!"
+          },
+          "retry": {
+            "en": "Good try! Provide your account details. Try again!",
+            "pt": "Boa tentativa! Forneça seus dados da conta. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "Requesting Escalation",
+        "instruction": {
+          "en": "If the issue isn't resolved, you might need a supervisor. Here's how:",
+          "pt": "Se o problema não foi resolvido, você pode precisar de um supervisor. Veja como:"
+        },
+        "options": [
+          {
+            "en": "Could I speak to a supervisor, please?",
+            "pt": "Poderia falar com um supervisor, por favor?"
+          },
+          {
+            "en": "I'd like to escalate this issue",
+            "pt": "Gostaria de escalar esse problema"
+          },
+          {
+            "en": "Can someone else take a look at this?",
+            "pt": "Outra pessoa poderia verificar isso?"
+          },
+          {
+            "en": "This hasn't been resolved yet. What else can we try?",
+            "pt": "Isso ainda não foi resolvido. O que mais podemos tentar?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now try requesting further help.",
+          "pt": "Agora tente pedir mais ajuda."
+        },
+        "feedback": {
+          "success": {
+            "en": "Well handled! Let's get a reference number for your case!",
+            "pt": "Bem resolvido! Vamos pegar um número de referência para seu caso!"
+          },
+          "retry": {
+            "en": "Good try! Request escalation politely. Try again!",
+            "pt": "Boa tentativa! Peça escalação educadamente. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "Getting a Reference Number",
+        "instruction": {
+          "en": "Always get a reference for your support case. Here's how:",
+          "pt": "Sempre pegue uma referência para seu caso de suporte. Veja como:"
+        },
+        "options": [
+          {
+            "en": "Can I get a reference number for this case?",
+            "pt": "Posso ter um número de referência para este caso?"
+          },
+          {
+            "en": "Will I receive a confirmation email?",
+            "pt": "Vou receber um email de confirmação?"
+          },
+          {
+            "en": "What's the ticket number?",
+            "pt": "Qual é o número do chamado?"
+          },
+          {
+            "en": "How can I follow up on this?",
+            "pt": "Como posso acompanhar isso?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now ask for a reference number.",
+          "pt": "Agora peça um número de referência."
+        },
+        "feedback": {
+          "success": {
+            "en": "Smart! You have your reference. Let's close the call!",
+            "pt": "Esperto! Você tem sua referência. Vamos encerrar a ligação!"
+          },
+          "retry": {
+            "en": "Good try! Ask for a case reference. Try again!",
+            "pt": "Boa tentativa! Peça uma referência do caso. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 10,
+        "title": "Closing the Call",
+        "instruction": {
+          "en": "Time to end the call professionally. Here's how:",
+          "pt": "Hora de encerrar a ligação profissionalmente. Veja como:"
+        },
+        "options": [
+          {
+            "en": "Thank you for your help!",
+            "pt": "Obrigado pela sua ajuda!"
+          },
+          {
+            "en": "You've been very helpful, thanks!",
+            "pt": "Você foi muito útil, obrigado!"
+          },
+          {
+            "en": "I appreciate your patience. Goodbye!",
+            "pt": "Agradeço sua paciência. Até logo!"
+          },
+          {
+            "en": "Thanks for solving the issue! Have a good day!",
+            "pt": "Obrigado por resolver o problema! Tenha um bom dia!"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now close the call politely.",
+          "pt": "Agora encerre a ligação educadamente."
+        },
+        "feedback": {
+          "success": {
+            "en": "Wonderful! You completed the entire tech support experience!",
+            "pt": "Maravilha! Você completou toda a experiência de suporte técnico!"
+          },
+          "retry": {
+            "en": "Good try! Close the call professionally. Try again!",
+            "pt": "Boa tentativa! Encerre a ligação profissionalmente. Tente novamente!"
           },
           "redirect": {
             "en": "Let's try again. Use the phrase from the reference card above.",
@@ -7059,6 +7763,182 @@
           "retry": {
             "en": "Good try! Share your opinion about the movie. Try again!",
             "pt": "Boa tentativa! Compartilhe sua opinião sobre o filme. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 7,
+        "title": "Buying Snacks",
+        "instruction": {
+          "en": "Time for movie snacks! Here's how to order at the concession stand:",
+          "pt": "Hora dos lanches do cinema! Veja como pedir na lanchonete:"
+        },
+        "options": [
+          {
+            "en": "A large popcorn, please",
+            "pt": "Uma pipoca grande, por favor"
+          },
+          {
+            "en": "Two sodas and a candy bar",
+            "pt": "Dois refrigerantes e uma barra de chocolate"
+          },
+          {
+            "en": "Can I get the combo deal?",
+            "pt": "Posso pegar o combo?"
+          },
+          {
+            "en": "Do you have any sugar-free options?",
+            "pt": "Vocês têm opções sem açúcar?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now order your movie snacks!",
+          "pt": "Agora peça seus lanches do cinema!"
+        },
+        "feedback": {
+          "success": {
+            "en": "Yummy! Snacks ready. Let's find the right screen!",
+            "pt": "Delícia! Lanches prontos. Vamos encontrar a sala certa!"
+          },
+          "retry": {
+            "en": "Good try! Order snacks at the counter. Try again!",
+            "pt": "Boa tentativa! Peça lanches no balcão. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "Finding Your Seat",
+        "instruction": {
+          "en": "You're inside the theater. Here's how to find your way:",
+          "pt": "Você está dentro do cinema. Veja como se orientar:"
+        },
+        "options": [
+          {
+            "en": "Excuse me, is this row D?",
+            "pt": "Com licença, esta é a fileira D?"
+          },
+          {
+            "en": "Sorry, I think that's my seat",
+            "pt": "Desculpe, acho que esse é meu assento"
+          },
+          {
+            "en": "Could you move down one seat?",
+            "pt": "Poderia mover um assento?"
+          },
+          {
+            "en": "Are these seats taken?",
+            "pt": "Esses assentos estão ocupados?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now find and take your seat.",
+          "pt": "Agora encontre e ocupe seu assento."
+        },
+        "feedback": {
+          "success": {
+            "en": "Perfect! You're all settled. Enjoy the movie!",
+            "pt": "Perfeito! Você está acomodado. Aproveite o filme!"
+          },
+          "retry": {
+            "en": "Good try! Find your seat politely. Try again!",
+            "pt": "Boa tentativa! Encontre seu assento educadamente. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "After the Movie",
+        "instruction": {
+          "en": "The movie just ended! Here's how to share your thoughts:",
+          "pt": "O filme acabou! Veja como compartilhar suas impressões:"
+        },
+        "options": [
+          {
+            "en": "That was amazing!",
+            "pt": "Foi incrível!"
+          },
+          {
+            "en": "I really loved the ending",
+            "pt": "Eu realmente amei o final"
+          },
+          {
+            "en": "It wasn't what I expected",
+            "pt": "Não foi o que eu esperava"
+          },
+          {
+            "en": "The special effects were incredible",
+            "pt": "Os efeitos especiais foram incríveis"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now share your opinion about the movie!",
+          "pt": "Agora compartilhe sua opinião sobre o filme!"
+        },
+        "feedback": {
+          "success": {
+            "en": "Great review! Let's head out and say goodbye!",
+            "pt": "Ótima avaliação! Vamos sair e nos despedir!"
+          },
+          "retry": {
+            "en": "Good try! Share your thoughts on the movie. Try again!",
+            "pt": "Boa tentativa! Compartilhe suas impressões do filme. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 10,
+        "title": "Leaving the Cinema",
+        "instruction": {
+          "en": "Time to leave! Here's how to wrap up your movie outing:",
+          "pt": "Hora de ir! Veja como encerrar sua ida ao cinema:"
+        },
+        "options": [
+          {
+            "en": "That was a great movie! Let's go!",
+            "pt": "Que filme ótimo! Vamos!"
+          },
+          {
+            "en": "Should we grab dinner after this?",
+            "pt": "Devemos jantar depois disso?"
+          },
+          {
+            "en": "I had a great time, thanks!",
+            "pt": "Me diverti muito, obrigado!"
+          },
+          {
+            "en": "Let's come back next week!",
+            "pt": "Vamos voltar na semana que vem!"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now wrap up your cinema outing.",
+          "pt": "Agora encerre sua ida ao cinema."
+        },
+        "feedback": {
+          "success": {
+            "en": "Wonderful! You completed the entire cinema experience!",
+            "pt": "Maravilha! Você completou toda a experiência no cinema!"
+          },
+          "retry": {
+            "en": "Good try! Wrap up the outing. Try again!",
+            "pt": "Boa tentativa! Encerre o passeio. Tente novamente!"
           },
           "redirect": {
             "en": "Let's try again. Use the phrase from the reference card above.",
@@ -7661,6 +8541,182 @@
           "retry": {
             "en": "Good try! Thank the person for their help. Try again!",
             "pt": "Boa tentativa! Agradeça a pessoa pela ajuda. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 7,
+        "title": "Using Landmarks",
+        "instruction": {
+          "en": "People often use landmarks for directions. Here's how to understand them:",
+          "pt": "Pessoas costumam usar pontos de referência. Veja como entender:"
+        },
+        "options": [
+          {
+            "en": "Is it near the big church?",
+            "pt": "É perto da igreja grande?"
+          },
+          {
+            "en": "Is it past the traffic light?",
+            "pt": "É depois do semáforo?"
+          },
+          {
+            "en": "Do I go left at the roundabout?",
+            "pt": "Viro à esquerda na rotatória?"
+          },
+          {
+            "en": "Is it across from the park?",
+            "pt": "É em frente ao parque?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now use landmarks to confirm directions.",
+          "pt": "Agora use pontos de referência para confirmar."
+        },
+        "feedback": {
+          "success": {
+            "en": "Great! You're navigating like a local. Let's ask about transportation!",
+            "pt": "Ótimo! Você está navegando como um local. Vamos perguntar sobre transporte!"
+          },
+          "retry": {
+            "en": "Good try! Use landmarks to confirm. Try again!",
+            "pt": "Boa tentativa! Use pontos de referência. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "Taking Public Transport",
+        "instruction": {
+          "en": "Maybe you should take a bus or taxi. Here's how to ask:",
+          "pt": "Talvez deva pegar um ônibus ou táxi. Veja como perguntar:"
+        },
+        "options": [
+          {
+            "en": "Where's the nearest bus stop?",
+            "pt": "Onde fica o ponto de ônibus mais perto?"
+          },
+          {
+            "en": "Can I walk there or should I take a taxi?",
+            "pt": "Posso ir a pé ou devo pegar um táxi?"
+          },
+          {
+            "en": "Is there a subway station nearby?",
+            "pt": "Tem uma estação de metrô por perto?"
+          },
+          {
+            "en": "How do I call a ride?",
+            "pt": "Como chamo um carro por aplicativo?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now ask about transportation options.",
+          "pt": "Agora pergunte sobre opções de transporte."
+        },
+        "feedback": {
+          "success": {
+            "en": "Perfect! Transport sorted. Let's ask about safety tips!",
+            "pt": "Perfeito! Transporte resolvido. Vamos perguntar sobre dicas de segurança!"
+          },
+          "retry": {
+            "en": "Good try! Ask about transport options. Try again!",
+            "pt": "Boa tentativa! Pergunte sobre transporte. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "Safety and Awareness",
+        "instruction": {
+          "en": "It's good to be aware of your surroundings. Here's how to ask about safety:",
+          "pt": "É bom estar atento ao ambiente. Veja como perguntar sobre segurança:"
+        },
+        "options": [
+          {
+            "en": "Is this area safe to walk at night?",
+            "pt": "É seguro andar por aqui à noite?"
+          },
+          {
+            "en": "Should I avoid any streets?",
+            "pt": "Devo evitar alguma rua?"
+          },
+          {
+            "en": "Where's the nearest police station?",
+            "pt": "Onde fica a delegacia mais perto?"
+          },
+          {
+            "en": "Is it better to take the main road?",
+            "pt": "É melhor ir pela rua principal?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now ask about safety in the area.",
+          "pt": "Agora pergunte sobre segurança na área."
+        },
+        "feedback": {
+          "success": {
+            "en": "Smart question! Let's thank the person and go!",
+            "pt": "Pergunta inteligente! Vamos agradecer e ir!"
+          },
+          "retry": {
+            "en": "Good try! Ask about safety. Try again!",
+            "pt": "Boa tentativa! Pergunte sobre segurança. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 10,
+        "title": "Thanking and Moving On",
+        "instruction": {
+          "en": "Time to thank the helpful person and go. Here's how:",
+          "pt": "Hora de agradecer a pessoa útil e ir. Veja como:"
+        },
+        "options": [
+          {
+            "en": "Thank you so much for your help!",
+            "pt": "Muito obrigado pela sua ajuda!"
+          },
+          {
+            "en": "You've been really helpful, thanks!",
+            "pt": "Você foi muito útil, obrigado!"
+          },
+          {
+            "en": "I really appreciate your time!",
+            "pt": "Eu realmente agradeço seu tempo!"
+          },
+          {
+            "en": "Thanks! I think I can find it now!",
+            "pt": "Obrigado! Acho que consigo encontrar agora!"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now thank the person who helped you.",
+          "pt": "Agora agradeça a pessoa que ajudou."
+        },
+        "feedback": {
+          "success": {
+            "en": "Wonderful! You completed the entire street navigation!",
+            "pt": "Maravilha! Você completou toda a navegação na rua!"
+          },
+          "retry": {
+            "en": "Good try! Thank the person warmly. Try again!",
+            "pt": "Boa tentativa! Agradeça calorosamente. Tente novamente!"
           },
           "redirect": {
             "en": "Let's try again. Use the phrase from the reference card above.",
@@ -8592,6 +9648,182 @@
             "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
           }
         }
+      },
+      {
+        "id": 7,
+        "title": "Using Equipment",
+        "instruction": {
+          "en": "You're ready to work out. Here's how to ask about equipment:",
+          "pt": "Você está pronto para treinar. Veja como perguntar sobre equipamentos:"
+        },
+        "options": [
+          {
+            "en": "How do I use this machine?",
+            "pt": "Como uso essa máquina?"
+          },
+          {
+            "en": "Is this equipment available?",
+            "pt": "Esse equipamento está disponível?"
+          },
+          {
+            "en": "How long can I use the treadmill?",
+            "pt": "Quanto tempo posso usar a esteira?"
+          },
+          {
+            "en": "Can you show me the proper form?",
+            "pt": "Pode me mostrar a forma correta?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now ask about using the equipment.",
+          "pt": "Agora pergunte sobre usar os equipamentos."
+        },
+        "feedback": {
+          "success": {
+            "en": "Great form! Let's ask about personal training!",
+            "pt": "Ótima forma! Vamos perguntar sobre treino pessoal!"
+          },
+          "retry": {
+            "en": "Good try! Ask about the equipment. Try again!",
+            "pt": "Boa tentativa! Pergunte sobre o equipamento. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "Personal Training",
+        "instruction": {
+          "en": "Want a personal trainer? Here's how to ask:",
+          "pt": "Quer um personal trainer? Veja como perguntar:"
+        },
+        "options": [
+          {
+            "en": "Do you offer personal training?",
+            "pt": "Vocês oferecem treino pessoal?"
+          },
+          {
+            "en": "How much is a session with a trainer?",
+            "pt": "Quanto custa uma sessão com um treinador?"
+          },
+          {
+            "en": "Can I book a trial session?",
+            "pt": "Posso agendar uma sessão experimental?"
+          },
+          {
+            "en": "What qualifications do your trainers have?",
+            "pt": "Quais qualificações seus treinadores têm?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now ask about personal training.",
+          "pt": "Agora pergunte sobre treino pessoal."
+        },
+        "feedback": {
+          "success": {
+            "en": "Excellent! Let's cool down and use the facilities!",
+            "pt": "Excelente! Vamos relaxar e usar as instalações!"
+          },
+          "retry": {
+            "en": "Good try! Ask about training options. Try again!",
+            "pt": "Boa tentativa! Pergunte sobre treino. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "Locker Room and Facilities",
+        "instruction": {
+          "en": "Time to freshen up. Here's how to ask about the facilities:",
+          "pt": "Hora de se refrescar. Veja como perguntar sobre as instalações:"
+        },
+        "options": [
+          {
+            "en": "Where are the lockers?",
+            "pt": "Onde ficam os armários?"
+          },
+          {
+            "en": "Is there a sauna or steam room?",
+            "pt": "Tem sauna ou sala de vapor?"
+          },
+          {
+            "en": "Can I get a towel?",
+            "pt": "Posso pegar uma toalha?"
+          },
+          {
+            "en": "Where are the showers?",
+            "pt": "Onde ficam os chuveiros?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now ask about the facilities.",
+          "pt": "Agora pergunte sobre as instalações."
+        },
+        "feedback": {
+          "success": {
+            "en": "Perfect! All freshened up. Let's head out!",
+            "pt": "Perfeito! Todo renovado. Vamos sair!"
+          },
+          "retry": {
+            "en": "Good try! Ask about facilities. Try again!",
+            "pt": "Boa tentativa! Pergunte sobre instalações. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 10,
+        "title": "Leaving the Gym",
+        "instruction": {
+          "en": "Great workout! Here's how to wrap up and leave:",
+          "pt": "Ótimo treino! Veja como encerrar e sair:"
+        },
+        "options": [
+          {
+            "en": "Great workout! See you tomorrow!",
+            "pt": "Ótimo treino! Até amanhã!"
+          },
+          {
+            "en": "Thanks for the help today!",
+            "pt": "Obrigado pela ajuda hoje!"
+          },
+          {
+            "en": "What time does the gym open tomorrow?",
+            "pt": "A que horas a academia abre amanhã?"
+          },
+          {
+            "en": "Can I freeze my membership for a month?",
+            "pt": "Posso congelar minha matrícula por um mês?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now wrap up and leave the gym.",
+          "pt": "Agora encerre e saia da academia."
+        },
+        "feedback": {
+          "success": {
+            "en": "Wonderful! You completed the entire gym experience!",
+            "pt": "Maravilha! Você completou toda a experiência na academia!"
+          },
+          "retry": {
+            "en": "Good try! Wrap up your gym visit. Try again!",
+            "pt": "Boa tentativa! Encerre sua visita à academia. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
       }
     ],
     "conclusion": {
@@ -8872,6 +10104,182 @@
             "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
           }
         }
+      },
+      {
+        "id": 7,
+        "title": "International Shipping",
+        "instruction": {
+          "en": "Sending something abroad? Here's how to handle international mail:",
+          "pt": "Enviando algo para o exterior? Veja como lidar com correio internacional:"
+        },
+        "options": [
+          {
+            "en": "I need to send this to Brazil",
+            "pt": "Preciso enviar isso para o Brasil"
+          },
+          {
+            "en": "What's the fastest international option?",
+            "pt": "Qual é a opção internacional mais rápida?"
+          },
+          {
+            "en": "Do I need a customs form?",
+            "pt": "Preciso de um formulário de alfândega?"
+          },
+          {
+            "en": "How long does international shipping take?",
+            "pt": "Quanto tempo demora envio internacional?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now handle international shipping.",
+          "pt": "Agora lide com envio internacional."
+        },
+        "feedback": {
+          "success": {
+            "en": "Great! International sorted. Let's ask about other services!",
+            "pt": "Ótimo! Internacional resolvido. Vamos perguntar sobre outros serviços!"
+          },
+          "retry": {
+            "en": "Good try! Handle international shipping. Try again!",
+            "pt": "Boa tentativa! Lide com envio internacional. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "Other Services",
+        "instruction": {
+          "en": "Post offices offer many services. Here's how to ask:",
+          "pt": "Os correios oferecem muitos serviços. Veja como perguntar:"
+        },
+        "options": [
+          {
+            "en": "Do you sell stamps here?",
+            "pt": "Vocês vendem selos aqui?"
+          },
+          {
+            "en": "Can I get a P.O. box?",
+            "pt": "Posso ter uma caixa postal?"
+          },
+          {
+            "en": "Do you offer money orders?",
+            "pt": "Vocês oferecem ordens de pagamento?"
+          },
+          {
+            "en": "Can I pick up a held package?",
+            "pt": "Posso retirar um pacote retido?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now ask about other services.",
+          "pt": "Agora pergunte sobre outros serviços."
+        },
+        "feedback": {
+          "success": {
+            "en": "Perfect! Now let's ask about pickup or delivery options!",
+            "pt": "Perfeito! Agora vamos perguntar sobre retirada ou entrega!"
+          },
+          "retry": {
+            "en": "Good try! Ask about services. Try again!",
+            "pt": "Boa tentativa! Pergunte sobre serviços. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "Paying",
+        "instruction": {
+          "en": "Time to pay for everything. Here's how:",
+          "pt": "Hora de pagar por tudo. Veja como:"
+        },
+        "options": [
+          {
+            "en": "How much is everything?",
+            "pt": "Quanto é tudo?"
+          },
+          {
+            "en": "Can I pay by card?",
+            "pt": "Posso pagar com cartão?"
+          },
+          {
+            "en": "Do you have exact change?",
+            "pt": "Vocês têm troco exato?"
+          },
+          {
+            "en": "Can I get a receipt?",
+            "pt": "Posso ter um recibo?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now pay for your services.",
+          "pt": "Agora pague pelos serviços."
+        },
+        "feedback": {
+          "success": {
+            "en": "Great! Payment done. Let's wrap up!",
+            "pt": "Ótimo! Pagamento feito. Vamos encerrar!"
+          },
+          "retry": {
+            "en": "Good try! Pay for the services. Try again!",
+            "pt": "Boa tentativa! Pague pelos serviços. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 10,
+        "title": "Saying Goodbye",
+        "instruction": {
+          "en": "All done! Here's how to say goodbye at the post office:",
+          "pt": "Tudo pronto! Veja como se despedir nos correios:"
+        },
+        "options": [
+          {
+            "en": "Thank you for your help!",
+            "pt": "Obrigado pela sua ajuda!"
+          },
+          {
+            "en": "Thanks! When should I expect delivery?",
+            "pt": "Obrigado! Quando devo esperar a entrega?"
+          },
+          {
+            "en": "Have a great day!",
+            "pt": "Tenha um ótimo dia!"
+          },
+          {
+            "en": "Thanks a lot! Goodbye!",
+            "pt": "Muito obrigado! Até logo!"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now say goodbye.",
+          "pt": "Agora se despeça."
+        },
+        "feedback": {
+          "success": {
+            "en": "Wonderful! You completed the entire post office experience!",
+            "pt": "Maravilha! Você completou toda a experiência nos correios!"
+          },
+          "retry": {
+            "en": "Good try! Say goodbye. Try again!",
+            "pt": "Boa tentativa! Despeça-se. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
       }
     ],
     "conclusion": {
@@ -9145,6 +10553,182 @@
           "retry": {
             "en": "Good try! Thank them and follow up. Try again!",
             "pt": "Boa tentativa! Agradeça e acompanhe. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 7,
+        "title": "Checking Found Items",
+        "instruction": {
+          "en": "They might have your item! Here's how to identify it:",
+          "pt": "Eles podem ter seu item! Veja como identificá-lo:"
+        },
+        "options": [
+          {
+            "en": "Yes, that looks like mine!",
+            "pt": "Sim, isso parece ser meu!"
+          },
+          {
+            "en": "No, mine was a different color",
+            "pt": "Não, o meu era de outra cor"
+          },
+          {
+            "en": "Can I see it to confirm?",
+            "pt": "Posso ver para confirmar?"
+          },
+          {
+            "en": "It should have my name inside",
+            "pt": "Deveria ter meu nome dentro"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now identify your item.",
+          "pt": "Agora identifique seu item."
+        },
+        "feedback": {
+          "success": {
+            "en": "Great! Let's verify ownership!",
+            "pt": "Ótimo! Vamos verificar a propriedade!"
+          },
+          "retry": {
+            "en": "Good try! Identify the item. Try again!",
+            "pt": "Boa tentativa! Identifique o item. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "Proving Ownership",
+        "instruction": {
+          "en": "You need to prove the item is yours. Here's how:",
+          "pt": "Você precisa provar que o item é seu. Veja como:"
+        },
+        "options": [
+          {
+            "en": "I can show you a photo of it on my phone",
+            "pt": "Posso mostrar uma foto dele no meu celular"
+          },
+          {
+            "en": "I have the receipt right here",
+            "pt": "Tenho o recibo bem aqui"
+          },
+          {
+            "en": "There's a scratch on the left side",
+            "pt": "Tem um arranhão do lado esquerdo"
+          },
+          {
+            "en": "My initials are engraved on the back",
+            "pt": "Minhas iniciais estão gravadas atrás"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now prove the item is yours.",
+          "pt": "Agora prove que o item é seu."
+        },
+        "feedback": {
+          "success": {
+            "en": "Perfect proof! Let's fill out the claim form!",
+            "pt": "Prova perfeita! Vamos preencher o formulário!"
+          },
+          "retry": {
+            "en": "Good try! Prove it's yours. Try again!",
+            "pt": "Boa tentativa! Prove que é seu. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "Filling Out Forms",
+        "instruction": {
+          "en": "You need to fill out a claim form. Here's how to ask about it:",
+          "pt": "Você precisa preencher um formulário. Veja como perguntar:"
+        },
+        "options": [
+          {
+            "en": "What do I need to fill out?",
+            "pt": "O que preciso preencher?"
+          },
+          {
+            "en": "Do I need to show my ID?",
+            "pt": "Preciso mostrar meu documento?"
+          },
+          {
+            "en": "Where do I sign?",
+            "pt": "Onde assino?"
+          },
+          {
+            "en": "Is there a fee to claim it?",
+            "pt": "Tem alguma taxa para retirar?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now complete the claim process.",
+          "pt": "Agora complete o processo de retirada."
+        },
+        "feedback": {
+          "success": {
+            "en": "Great! Paperwork done. Let's get your item back!",
+            "pt": "Ótimo! Papelada pronta. Vamos pegar seu item!"
+          },
+          "retry": {
+            "en": "Good try! Complete the claim. Try again!",
+            "pt": "Boa tentativa! Complete a retirada. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 10,
+        "title": "Getting Your Item Back",
+        "instruction": {
+          "en": "You're getting your item back! Here's how to finish up:",
+          "pt": "Você está pegando seu item de volta! Veja como finalizar:"
+        },
+        "options": [
+          {
+            "en": "Thank you so much! I'm so relieved!",
+            "pt": "Muito obrigado! Estou tão aliviado!"
+          },
+          {
+            "en": "I really appreciate your help!",
+            "pt": "Eu realmente agradeço sua ajuda!"
+          },
+          {
+            "en": "You've been incredibly helpful!",
+            "pt": "Você foi incrivelmente útil!"
+          },
+          {
+            "en": "Thank you! Have a wonderful day!",
+            "pt": "Obrigado! Tenha um dia maravilhoso!"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now thank them and celebrate!",
+          "pt": "Agora agradeça e comemore!"
+        },
+        "feedback": {
+          "success": {
+            "en": "Wonderful! You completed the entire lost and found experience!",
+            "pt": "Maravilha! Você completou toda a experiência de achados e perdidos!"
+          },
+          "retry": {
+            "en": "Good try! Express your gratitude. Try again!",
+            "pt": "Boa tentativa! Expresse sua gratidão. Tente novamente!"
           },
           "redirect": {
             "en": "Let's try again. Use the phrase from the reference card above.",
@@ -9431,6 +11015,182 @@
             "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
           }
         }
+      },
+      {
+        "id": 7,
+        "title": "Care Instructions",
+        "instruction": {
+          "en": "Want your flowers to last? Here's how to ask about care:",
+          "pt": "Quer que suas flores durem? Veja como perguntar sobre cuidados:"
+        },
+        "options": [
+          {
+            "en": "How do I keep these fresh?",
+            "pt": "Como mantenho essas frescas?"
+          },
+          {
+            "en": "How often should I change the water?",
+            "pt": "Com que frequência devo trocar a água?"
+          },
+          {
+            "en": "Do they need direct sunlight?",
+            "pt": "Precisam de luz direta?"
+          },
+          {
+            "en": "How long will they last?",
+            "pt": "Quanto tempo duram?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now ask about flower care.",
+          "pt": "Agora pergunte sobre cuidados com flores."
+        },
+        "feedback": {
+          "success": {
+            "en": "Great tips! Let's ask about wrapping and packaging!",
+            "pt": "Ótimas dicas! Vamos perguntar sobre embalagem!"
+          },
+          "retry": {
+            "en": "Good try! Ask about care. Try again!",
+            "pt": "Boa tentativa! Pergunte sobre cuidados. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "Gift Wrapping",
+        "instruction": {
+          "en": "Make it special with wrapping. Here's how to ask:",
+          "pt": "Torne especial com embalagem. Veja como pedir:"
+        },
+        "options": [
+          {
+            "en": "Can you gift wrap them?",
+            "pt": "Pode embalar para presente?"
+          },
+          {
+            "en": "I'd like a nice ribbon, please",
+            "pt": "Gostaria de uma fita bonita, por favor"
+          },
+          {
+            "en": "Can you add some greenery?",
+            "pt": "Pode adicionar algumas folhagens?"
+          },
+          {
+            "en": "Make it look festive, please",
+            "pt": "Faça parecer festivo, por favor"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now ask about gift wrapping.",
+          "pt": "Agora peça uma embalagem para presente."
+        },
+        "feedback": {
+          "success": {
+            "en": "Beautiful! Now let's pay for everything!",
+            "pt": "Lindo! Agora vamos pagar por tudo!"
+          },
+          "retry": {
+            "en": "Good try! Ask about wrapping. Try again!",
+            "pt": "Boa tentativa! Pergunte sobre embalagem. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "Paying",
+        "instruction": {
+          "en": "Time to pay for your beautiful flowers:",
+          "pt": "Hora de pagar por suas lindas flores:"
+        },
+        "options": [
+          {
+            "en": "How much for everything?",
+            "pt": "Quanto é tudo?"
+          },
+          {
+            "en": "Can I pay by card?",
+            "pt": "Posso pagar com cartão?"
+          },
+          {
+            "en": "Do you have a loyalty program?",
+            "pt": "Vocês têm programa de fidelidade?"
+          },
+          {
+            "en": "Can I get a receipt?",
+            "pt": "Posso ter um recibo?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now pay for your flowers.",
+          "pt": "Agora pague por suas flores."
+        },
+        "feedback": {
+          "success": {
+            "en": "Great! Let's say goodbye!",
+            "pt": "Ótimo! Vamos nos despedir!"
+          },
+          "retry": {
+            "en": "Good try! Pay for the flowers. Try again!",
+            "pt": "Boa tentativa! Pague pelas flores. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 10,
+        "title": "Saying Goodbye",
+        "instruction": {
+          "en": "Time to leave with your beautiful bouquet! Here's how:",
+          "pt": "Hora de sair com seu lindo buquê! Veja como:"
+        },
+        "options": [
+          {
+            "en": "Thank you, these are gorgeous!",
+            "pt": "Obrigado, estão lindas!"
+          },
+          {
+            "en": "She's going to love these!",
+            "pt": "Ela vai adorar!"
+          },
+          {
+            "en": "Thanks for the great arrangement!",
+            "pt": "Obrigado pelo ótimo arranjo!"
+          },
+          {
+            "en": "I'll definitely come back!",
+            "pt": "Com certeza voltarei!"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now say goodbye with your flowers!",
+          "pt": "Agora se despeça com suas flores!"
+        },
+        "feedback": {
+          "success": {
+            "en": "Wonderful! You completed the entire flower shop experience!",
+            "pt": "Maravilha! Você completou toda a experiência na floricultura!"
+          },
+          "retry": {
+            "en": "Good try! Say goodbye. Try again!",
+            "pt": "Boa tentativa! Despeça-se. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
       }
     ],
     "conclusion": {
@@ -9704,6 +11464,182 @@
           "retry": {
             "en": "Good try! Pay for your purchases. Try again!",
             "pt": "Boa tentativa! Pague por suas compras. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 7,
+        "title": "Pet Health Questions",
+        "instruction": {
+          "en": "Ask about your pet's health needs. Here's how:",
+          "pt": "Pergunte sobre as necessidades de saúde do seu pet. Veja como:"
+        },
+        "options": [
+          {
+            "en": "Do you have flea treatment?",
+            "pt": "Vocês têm tratamento contra pulgas?"
+          },
+          {
+            "en": "What vitamins do you recommend?",
+            "pt": "Quais vitaminas vocês recomendam?"
+          },
+          {
+            "en": "My dog needs a new collar",
+            "pt": "Meu cachorro precisa de uma coleira nova"
+          },
+          {
+            "en": "Do you have any pet-safe cleaning products?",
+            "pt": "Vocês têm produtos de limpeza seguros para pets?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now ask about pet health products.",
+          "pt": "Agora pergunte sobre produtos de saúde para pets."
+        },
+        "feedback": {
+          "success": {
+            "en": "Great! Your pet will be healthy. Let's ask about services!",
+            "pt": "Ótimo! Seu pet vai estar saudável. Vamos perguntar sobre serviços!"
+          },
+          "retry": {
+            "en": "Good try! Ask about health products. Try again!",
+            "pt": "Boa tentativa! Pergunte sobre produtos de saúde. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "Booking Services",
+        "instruction": {
+          "en": "Need grooming or vet services? Here's how to book:",
+          "pt": "Precisa de banho e tosa ou veterinário? Veja como agendar:"
+        },
+        "options": [
+          {
+            "en": "Can I book a grooming appointment?",
+            "pt": "Posso agendar banho e tosa?"
+          },
+          {
+            "en": "Do you have a vet on site?",
+            "pt": "Vocês têm veterinário aqui?"
+          },
+          {
+            "en": "What time slots are available?",
+            "pt": "Quais horários estão disponíveis?"
+          },
+          {
+            "en": "How much is a full grooming session?",
+            "pt": "Quanto custa uma sessão completa de banho e tosa?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now book a service for your pet.",
+          "pt": "Agora agende um serviço para seu pet."
+        },
+        "feedback": {
+          "success": {
+            "en": "Perfect! Service booked. Let's pay for everything!",
+            "pt": "Perfeito! Serviço agendado. Vamos pagar por tudo!"
+          },
+          "retry": {
+            "en": "Good try! Book a pet service. Try again!",
+            "pt": "Boa tentativa! Agende um serviço para seu pet. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "Paying",
+        "instruction": {
+          "en": "Time to pay for all your pet supplies and services:",
+          "pt": "Hora de pagar por todos os suprimentos e serviços do pet:"
+        },
+        "options": [
+          {
+            "en": "How much is everything?",
+            "pt": "Quanto é tudo?"
+          },
+          {
+            "en": "Do you have a rewards card?",
+            "pt": "Vocês têm cartão fidelidade?"
+          },
+          {
+            "en": "Can I pay by card?",
+            "pt": "Posso pagar com cartão?"
+          },
+          {
+            "en": "Is there a discount for multiple items?",
+            "pt": "Tem desconto para vários itens?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now pay for your purchases.",
+          "pt": "Agora pague por suas compras."
+        },
+        "feedback": {
+          "success": {
+            "en": "Great! All paid. Let's wrap up!",
+            "pt": "Ótimo! Tudo pago. Vamos encerrar!"
+          },
+          "retry": {
+            "en": "Good try! Pay for your items. Try again!",
+            "pt": "Boa tentativa! Pague por seus itens. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 10,
+        "title": "Saying Goodbye",
+        "instruction": {
+          "en": "All done! Here's how to leave the pet shop:",
+          "pt": "Tudo pronto! Veja como sair do pet shop:"
+        },
+        "options": [
+          {
+            "en": "Thank you! My pet will love all of this!",
+            "pt": "Obrigado! Meu pet vai adorar tudo isso!"
+          },
+          {
+            "en": "Thanks for the great advice!",
+            "pt": "Obrigado pelos ótimos conselhos!"
+          },
+          {
+            "en": "See you at the grooming appointment!",
+            "pt": "Até a sessão de banho e tosa!"
+          },
+          {
+            "en": "Thanks! Have a great day!",
+            "pt": "Obrigado! Tenha um ótimo dia!"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now say goodbye.",
+          "pt": "Agora se despeça."
+        },
+        "feedback": {
+          "success": {
+            "en": "Wonderful! You completed the entire pet shop experience!",
+            "pt": "Maravilha! Você completou toda a experiência no pet shop!"
+          },
+          "retry": {
+            "en": "Good try! Say goodbye. Try again!",
+            "pt": "Boa tentativa! Despeça-se. Tente novamente!"
           },
           "redirect": {
             "en": "Let's try again. Use the phrase from the reference card above.",
@@ -9989,6 +11925,182 @@
             "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
           }
         }
+      },
+      {
+        "id": 7,
+        "title": "Using Study Spaces",
+        "instruction": {
+          "en": "Libraries have study areas. Here's how to use them:",
+          "pt": "Bibliotecas têm áreas de estudo. Veja como usá-las:"
+        },
+        "options": [
+          {
+            "en": "Are there any study rooms available?",
+            "pt": "Há salas de estudo disponíveis?"
+          },
+          {
+            "en": "Can I use the computers here?",
+            "pt": "Posso usar os computadores aqui?"
+          },
+          {
+            "en": "Is there Wi-Fi available?",
+            "pt": "Tem Wi-Fi disponível?"
+          },
+          {
+            "en": "Where can I plug in my laptop?",
+            "pt": "Onde posso conectar meu laptop?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now ask about study spaces.",
+          "pt": "Agora pergunte sobre espaços de estudo."
+        },
+        "feedback": {
+          "success": {
+            "en": "Great! Study spot found. Let's ask about events!",
+            "pt": "Ótimo! Lugar de estudo encontrado. Vamos perguntar sobre eventos!"
+          },
+          "retry": {
+            "en": "Good try! Ask about study spaces. Try again!",
+            "pt": "Boa tentativa! Pergunte sobre espaços de estudo. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "Library Events",
+        "instruction": {
+          "en": "Libraries host events! Here's how to find out about them:",
+          "pt": "Bibliotecas têm eventos! Veja como saber sobre eles:"
+        },
+        "options": [
+          {
+            "en": "Do you have any reading groups?",
+            "pt": "Vocês têm grupos de leitura?"
+          },
+          {
+            "en": "Are there any workshops this month?",
+            "pt": "Há workshops este mês?"
+          },
+          {
+            "en": "Do you host author talks?",
+            "pt": "Vocês fazem palestras com autores?"
+          },
+          {
+            "en": "Is there a children's story time?",
+            "pt": "Tem hora do conto para crianças?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now ask about library events.",
+          "pt": "Agora pergunte sobre eventos da biblioteca."
+        },
+        "feedback": {
+          "success": {
+            "en": "Exciting! Let's learn about returning books!",
+            "pt": "Empolgante! Vamos aprender sobre devolução de livros!"
+          },
+          "retry": {
+            "en": "Good try! Ask about events. Try again!",
+            "pt": "Boa tentativa! Pergunte sobre eventos. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "Returning Books",
+        "instruction": {
+          "en": "Time to learn about returning materials. Here's how:",
+          "pt": "Hora de aprender sobre devolução. Veja como:"
+        },
+        "options": [
+          {
+            "en": "Where do I return this book?",
+            "pt": "Onde devolvo este livro?"
+          },
+          {
+            "en": "Can I renew this for another week?",
+            "pt": "Posso renovar por mais uma semana?"
+          },
+          {
+            "en": "I lost my library book. What do I do?",
+            "pt": "Perdi meu livro da biblioteca. O que faço?"
+          },
+          {
+            "en": "Is there a late fee?",
+            "pt": "Tem multa por atraso?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now handle book returns.",
+          "pt": "Agora lide com devolução de livros."
+        },
+        "feedback": {
+          "success": {
+            "en": "Great! Returns handled. Let's say goodbye!",
+            "pt": "Ótimo! Devoluções resolvidas. Vamos nos despedir!"
+          },
+          "retry": {
+            "en": "Good try! Handle the return. Try again!",
+            "pt": "Boa tentativa! Faça a devolução. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 10,
+        "title": "Leaving the Library",
+        "instruction": {
+          "en": "Time to go! Here's how to wrap up your library visit:",
+          "pt": "Hora de ir! Veja como encerrar sua visita à biblioteca:"
+        },
+        "options": [
+          {
+            "en": "Thank you for your help!",
+            "pt": "Obrigado pela sua ajuda!"
+          },
+          {
+            "en": "I'll be back next week!",
+            "pt": "Voltarei na semana que vem!"
+          },
+          {
+            "en": "This is a great library!",
+            "pt": "Esta é uma ótima biblioteca!"
+          },
+          {
+            "en": "Thanks! Have a good day!",
+            "pt": "Obrigado! Tenha um bom dia!"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now say goodbye to the librarian.",
+          "pt": "Agora se despeça da bibliotecária."
+        },
+        "feedback": {
+          "success": {
+            "en": "Wonderful! You completed the entire library experience!",
+            "pt": "Maravilha! Você completou toda a experiência na biblioteca!"
+          },
+          "retry": {
+            "en": "Good try! Say goodbye. Try again!",
+            "pt": "Boa tentativa! Despeça-se. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
       }
     ],
     "conclusion": {
@@ -10262,6 +12374,182 @@
           "retry": {
             "en": "Good try! Share your museum experience. Try again!",
             "pt": "Boa tentativa! Compartilhe sua experiência no museu. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 7,
+        "title": "Guided Tours",
+        "instruction": {
+          "en": "Want a deeper experience? Here's how to ask about tours:",
+          "pt": "Quer uma experiência mais profunda? Veja como perguntar sobre visitas guiadas:"
+        },
+        "options": [
+          {
+            "en": "Do you offer guided tours?",
+            "pt": "Vocês oferecem visitas guiadas?"
+          },
+          {
+            "en": "When does the next tour start?",
+            "pt": "Quando começa a próxima visita guiada?"
+          },
+          {
+            "en": "Is there an audio guide available?",
+            "pt": "Tem audioguia disponível?"
+          },
+          {
+            "en": "How long is the tour?",
+            "pt": "Quanto tempo dura a visita?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now ask about guided tours.",
+          "pt": "Agora pergunte sobre visitas guiadas."
+        },
+        "feedback": {
+          "success": {
+            "en": "Great! Tour info received. Let's visit the café!",
+            "pt": "Ótimo! Informação do tour recebida. Vamos visitar o café!"
+          },
+          "retry": {
+            "en": "Good try! Ask about tours. Try again!",
+            "pt": "Boa tentativa! Pergunte sobre visitas. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "Museum Café",
+        "instruction": {
+          "en": "Time for a break at the museum café. Here's how to order:",
+          "pt": "Hora de uma pausa no café do museu. Veja como pedir:"
+        },
+        "options": [
+          {
+            "en": "I'll have a coffee and a sandwich",
+            "pt": "Vou querer um café e um sanduíche"
+          },
+          {
+            "en": "What's on the menu today?",
+            "pt": "O que tem no cardápio hoje?"
+          },
+          {
+            "en": "Can we sit by the garden?",
+            "pt": "Podemos sentar no jardim?"
+          },
+          {
+            "en": "Just a water, please",
+            "pt": "Só uma água, por favor"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now order something at the café.",
+          "pt": "Agora peça algo no café."
+        },
+        "feedback": {
+          "success": {
+            "en": "Nice break! Let's check out the gift shop!",
+            "pt": "Bom descanso! Vamos ver a loja de presentes!"
+          },
+          "retry": {
+            "en": "Good try! Order at the café. Try again!",
+            "pt": "Boa tentativa! Peça algo no café. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "Gift Shop",
+        "instruction": {
+          "en": "The museum gift shop has great souvenirs. Here's how to shop:",
+          "pt": "A loja do museu tem ótimas lembranças. Veja como comprar:"
+        },
+        "options": [
+          {
+            "en": "Do you have postcards of the exhibits?",
+            "pt": "Vocês têm cartões-postais das exposições?"
+          },
+          {
+            "en": "I'd like this art book, please",
+            "pt": "Gostaria deste livro de arte, por favor"
+          },
+          {
+            "en": "How much is this replica?",
+            "pt": "Quanto custa esta réplica?"
+          },
+          {
+            "en": "Can you gift wrap this?",
+            "pt": "Pode embalar para presente?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now shop for souvenirs!",
+          "pt": "Agora compre lembranças!"
+        },
+        "feedback": {
+          "success": {
+            "en": "Nice finds! Let's leave the museum!",
+            "pt": "Bons achados! Vamos sair do museu!"
+          },
+          "retry": {
+            "en": "Good try! Shop for souvenirs. Try again!",
+            "pt": "Boa tentativa! Compre lembranças. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's try again. Use the phrase from the reference card above.",
+            "pt": "Vamos tentar novamente. Use a frase do cartão de referência acima."
+          }
+        }
+      },
+      {
+        "id": 10,
+        "title": "Leaving the Museum",
+        "instruction": {
+          "en": "Time to go! Here's how to wrap up your museum visit:",
+          "pt": "Hora de ir! Veja como encerrar sua visita ao museu:"
+        },
+        "options": [
+          {
+            "en": "That was a wonderful exhibition!",
+            "pt": "Foi uma exposição maravilhosa!"
+          },
+          {
+            "en": "Thank you! We really enjoyed it!",
+            "pt": "Obrigado! Nós realmente gostamos!"
+          },
+          {
+            "en": "I'll definitely come back for the next exhibit!",
+            "pt": "Com certeza voltarei para a próxima exposição!"
+          },
+          {
+            "en": "What a great museum! Goodbye!",
+            "pt": "Que museu ótimo! Até logo!"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Now share your experience and leave.",
+          "pt": "Agora compartilhe sua experiência e vá embora."
+        },
+        "feedback": {
+          "success": {
+            "en": "Wonderful! You completed the entire museum experience!",
+            "pt": "Maravilha! Você completou toda a experiência no museu!"
+          },
+          "retry": {
+            "en": "Good try! Wrap up your visit. Try again!",
+            "pt": "Boa tentativa! Encerre sua visita. Tente novamente!"
           },
           "redirect": {
             "en": "Let's try again. Use the phrase from the reference card above.",
