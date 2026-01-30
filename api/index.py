@@ -679,6 +679,27 @@ ALLOWED BEHAVIOR:
 - Handle misunderstandings like a human (ask to repeat or clarify)
 - Ignore nonsense or redirect politely back to the order
 
+SIMPLE LANGUAGE (CRITICAL):
+- Use the SIMPLEST words possible. Avoid phrasal verbs when a simpler word exists.
+- Only use context-specific vocabulary that is truly necessary (e.g., "check-in", "boarding pass").
+- Replace advanced words with simple ones:
+  - "incidental charges" → "extra charges"
+  - "identification" → "ID"
+  - "beverage" → "drink"
+  - "accommodate" → "help"
+  - "inquire" → "ask"
+  - "proceed" → "go"
+  - "assist you with" → "help you with"
+  - "purchase" → "buy"
+  - "regarding" → "about"
+- The student is a beginner/intermediate learner. Speak clearly and simply.
+
+COMPLETE SENTENCES (CRITICAL):
+- NEVER end a sentence with "or", "and", a comma, or an ellipsis.
+- NEVER split options across multiple turns. List ALL options in one complete sentence.
+- WRONG: "I can take your ID, process your payment, or..."
+- RIGHT: "I can take your ID, process your payment, or give you your room keys."
+
 PROACTIVE SERVICE (CRITICAL):
 - NEVER ask generic questions like "Is there anything else I can assist you with?"
 - ALWAYS offer 2-3 concrete options relevant to the context
@@ -974,6 +995,11 @@ PROACTIVE SERVICE:
 
 CONVERSATION FLOW:
 - ALWAYS end with a question. Instead of "I need X", ask "May I have X?"
+
+SIMPLE LANGUAGE: Use simple words. No phrasal verbs when a simpler word exists.
+"incidental charges" → "extra charges", "identification" → "ID", "beverage" → "drink".
+
+COMPLETE SENTENCES: NEVER end with "or", "and", comma, or "...". Always finish the full list of options.
 
 Return JSON: {{"en": "your response", "pt": "traducao em portugues"}}"""
             elif is_grammar_topic:
