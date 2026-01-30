@@ -1,0 +1,59 @@
+LESSON PHRASES SUMMARY
+============================================================
+
+Total phrases: 3036
+Total lessons: 33
+
+By type:
+  - welcome: 33
+  - instruction: 330
+  - option: 1320
+  - practice_prompt: 330
+  - feedback_success: 330
+  - feedback_retry: 330
+  - feedback_redirect: 330
+  - conclusion: 33
+
+
+Sample phrases:
+------------------------------------------------------------
+
+[coffee_shop_welcome]
+  Type: welcome
+  Text: Welcome to today's lesson! We'll learn how to order at a coffee shop. When you'r...
+
+[coffee_shop_layer1_instruction]
+  Type: instruction
+  Text: When you enter a coffee shop, you walk up to the counter. Here are polite ways t...
+
+[coffee_shop_layer1_opt0]
+  Type: option
+  Text: I'd like a coffee, please
+
+[coffee_shop_layer1_opt1]
+  Type: option
+  Text: Can I have a latte?
+
+[coffee_shop_layer1_opt2]
+  Type: option
+  Text: Could I get a cappuccino?
+
+[coffee_shop_layer1_opt3]
+  Type: option
+  Text: I'll have an espresso
+
+[coffee_shop_layer1_practice]
+  Type: practice_prompt
+  Text: Great choice! Now try saying your chosen phrase to order a drink!
+
+[coffee_shop_layer1_fb_success]
+  Type: feedback_success
+  Text: Well done! You ordered perfectly. Let's move on to choosing the size!
+
+[coffee_shop_layer1_fb_retry]
+  Type: feedback_retry
+  Text: Good try! Remember to use the ordering phrase you selected. Try again!
+
+[coffee_shop_layer1_fb_redirect]
+  Type: feedback_redirect
+  Text: Let's focus on ordering your drink. Try using the phrase shown in the reference ...
