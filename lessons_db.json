@@ -24,6 +24,20 @@
         "practice_prompt": {
           "en": "Great choice! Now imagine you're at the counter. Use that phrase to order any coffee drink you like.",
           "pt": "Ótima escolha! Agora imagine que você está no balcão. Use essa frase para pedir qualquer bebida de café que quiser."
+        },
+        "feedback": {
+          "success": {
+            "en": "Well done! You ordered perfectly. Let's move on to choosing the size!",
+            "pt": "Muito bem! Você pediu perfeitamente. Vamos escolher o tamanho!"
+          },
+          "retry": {
+            "en": "Good try! Remember to use the ordering phrase you selected. Try again!",
+            "pt": "Boa tentativa! Lembre-se de usar a frase de pedido que você selecionou. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's focus on ordering your drink. Try using the phrase shown in the reference card above.",
+            "pt": "Vamos focar em pedir sua bebida. Tente usar a frase mostrada no cartão de referência acima."
+          }
         }
       },
       {
@@ -42,6 +56,20 @@
         "practice_prompt": {
           "en": "Perfect! Now combine what you learned. Order a coffee WITH the size. For example: 'I'd like a large latte, please.'",
           "pt": "Perfeito! Agora combine o que você aprendeu. Peça um café COM o tamanho. Por exemplo: 'I'd like a large latte, please.'"
+        },
+        "feedback": {
+          "success": {
+            "en": "Great job! You specified the size perfectly. Now let's choose hot or iced!",
+            "pt": "Ótimo trabalho! Você especificou o tamanho perfeitamente. Agora vamos escolher quente ou gelado!"
+          },
+          "retry": {
+            "en": "Nice effort! Try including the size in your order. Try again!",
+            "pt": "Bom esforço! Tente incluir o tamanho no seu pedido. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's practice choosing the size. Use the phrase from the reference card above.",
+            "pt": "Vamos praticar a escolha do tamanho. Use a frase do cartão de referência acima."
+          }
         }
       },
       {
@@ -60,6 +88,20 @@
         "practice_prompt": {
           "en": "Excellent! Now order a complete drink with size AND temperature. For example: 'I'd like a large iced latte, please.'",
           "pt": "Excelente! Agora peça uma bebida completa com tamanho E temperatura. Por exemplo: 'I'd like a large iced latte, please.'"
+        },
+        "feedback": {
+          "success": {
+            "en": "Excellent! You chose the temperature perfectly. Now let's customize your drink!",
+            "pt": "Excelente! Você escolheu a temperatura perfeitamente. Agora vamos personalizar sua bebida!"
+          },
+          "retry": {
+            "en": "Good attempt! Try mentioning hot or iced in your answer. Try again!",
+            "pt": "Boa tentativa! Tente mencionar quente ou gelado na sua resposta. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's practice the temperature choice. Use the phrase from the reference card above.",
+            "pt": "Vamos praticar a escolha de temperatura. Use a frase do cartão de referência acima."
+          }
         }
       },
       {
@@ -78,6 +120,20 @@
         "practice_prompt": {
           "en": "Great! Now make a complete customized order. For example: 'I'd like a large iced latte with oat milk, please.'",
           "pt": "Ótimo! Agora faça um pedido completo e personalizado. Por exemplo: 'I'd like a large iced latte with oat milk, please.'"
+        },
+        "feedback": {
+          "success": {
+            "en": "Perfect customization! You're getting really good at this. Let's decide: for here or to go?",
+            "pt": "Personalização perfeita! Você está ficando muito bom nisso. Vamos decidir: aqui ou para levar?"
+          },
+          "retry": {
+            "en": "Almost there! Try adding a customization like milk or sugar. Try again!",
+            "pt": "Quase lá! Tente adicionar uma personalização como leite ou açúcar. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's practice customizing your order. Use the phrase from the reference card above.",
+            "pt": "Vamos praticar a personalização do pedido. Use a frase do cartão de referência acima."
+          }
         }
       },
       {
@@ -96,6 +152,20 @@
         "practice_prompt": {
           "en": "Perfect! Now put it all together. Make a COMPLETE order including drink, size, temperature, customization, and where you'll have it.",
           "pt": "Perfeito! Agora junte tudo. Faça um pedido COMPLETO incluindo bebida, tamanho, temperatura, personalização e onde vai tomar."
+        },
+        "feedback": {
+          "success": {
+            "en": "Awesome! You answered perfectly. Now the barista wants to know if you'd like anything else!",
+            "pt": "Incrível! Você respondeu perfeitamente. Agora o barista quer saber se você quer mais alguma coisa!"
+          },
+          "retry": {
+            "en": "Good try! Remember to say whether it's for here or to go. Try again!",
+            "pt": "Boa tentativa! Lembre-se de dizer se é para cá ou para levar. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's practice saying where you'll have your drink. Use the phrase from the reference card above.",
+            "pt": "Vamos praticar dizendo onde vai tomar sua bebida. Use a frase do cartão de referência acima."
+          }
         }
       },
       {
@@ -114,6 +184,20 @@
         "practice_prompt": {
           "en": "Nice! If you want food, let's see what they have. If not, we'll go straight to paying.",
           "pt": "Legal! Se você quer comida, vamos ver o que eles têm. Se não, vamos direto para o pagamento."
+        },
+        "feedback": {
+          "success": {
+            "en": "Great! Let's see what else they have for you!",
+            "pt": "Ótimo! Vamos ver o que mais eles têm para você!"
+          },
+          "retry": {
+            "en": "Good try! Say whether you'd like something else or not. Try again!",
+            "pt": "Boa tentativa! Diga se gostaria de algo mais ou não. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's answer the barista's question. Use the phrase from the reference card above.",
+            "pt": "Vamos responder a pergunta do barista. Use a frase do cartão de referência acima."
+          }
         }
       },
       {
@@ -132,6 +216,20 @@
         "practice_prompt": {
           "en": "Delicious choice! Now order the food item using a complete sentence.",
           "pt": "Escolha deliciosa! Agora peça o item de comida usando uma frase completa."
+        },
+        "feedback": {
+          "success": {
+            "en": "Yummy! Great food order! Now the barista will ask if you want it warmed up.",
+            "pt": "Delícia! Ótimo pedido de comida! Agora o barista vai perguntar se quer aquecer."
+          },
+          "retry": {
+            "en": "Good try! Order a food item using a complete sentence. Try again!",
+            "pt": "Boa tentativa! Peça um item de comida usando uma frase completa. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's order some food. Use the phrase from the reference card above.",
+            "pt": "Vamos pedir algo para comer. Use a frase do cartão de referência acima."
+          }
         }
       },
       {
@@ -150,6 +248,20 @@
         "practice_prompt": {
           "en": "Great! Now tell the barista if you want your food warmed up or not.",
           "pt": "Ótimo! Agora diga ao barista se você quer a comida aquecida ou não."
+        },
+        "feedback": {
+          "success": {
+            "en": "Perfect! Now it's time to pay for your order!",
+            "pt": "Perfeito! Agora é hora de pagar pelo seu pedido!"
+          },
+          "retry": {
+            "en": "Good try! Say yes or no about warming up your food. Try again!",
+            "pt": "Boa tentativa! Diga sim ou não sobre aquecer sua comida. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's answer about warming your food. Use the phrase from the reference card above.",
+            "pt": "Vamos responder sobre aquecer a comida. Use a frase do cartão de referência acima."
+          }
         }
       },
       {
@@ -168,6 +280,20 @@
         "practice_prompt": {
           "en": "Almost done! Now ask for the total or how to pay.",
           "pt": "Quase lá! Agora pergunte o total ou como pagar."
+        },
+        "feedback": {
+          "success": {
+            "en": "Great! Payment done! Now let's say goodbye to the barista!",
+            "pt": "Ótimo! Pagamento feito! Agora vamos nos despedir do barista!"
+          },
+          "retry": {
+            "en": "Good try! Ask about the price or how to pay. Try again!",
+            "pt": "Boa tentativa! Pergunte sobre o preço ou como pagar. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's practice paying. Use the phrase from the reference card above.",
+            "pt": "Vamos praticar o pagamento. Use a frase do cartão de referência acima."
+          }
         }
       },
       {
@@ -186,6 +312,20 @@
         "practice_prompt": {
           "en": "Wonderful! Now say goodbye to the barista in a friendly way.",
           "pt": "Maravilha! Agora se despeça do barista de forma amigável."
+        },
+        "feedback": {
+          "success": {
+            "en": "Wonderful goodbye! You completed the entire coffee shop experience!",
+            "pt": "Despedida maravilhosa! Você completou toda a experiência na cafeteria!"
+          },
+          "retry": {
+            "en": "Good try! Say a friendly goodbye like thank you or have a nice day. Try again!",
+            "pt": "Boa tentativa! Diga um tchau amigável como obrigado ou tenha um bom dia. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's say goodbye politely. Use the phrase from the reference card above.",
+            "pt": "Vamos nos despedir educadamente. Use a frase do cartão de referência acima."
+          }
         }
       }
     ],

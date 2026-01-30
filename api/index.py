@@ -1655,7 +1655,9 @@ def lesson():
 
         return jsonify(response_data)
 
-    # ACTION: EVALUATE_PRACTICE - User spoke, evaluate with Gemini
+    # ACTION: EVALUATE_PRACTICE - Keyword-based evaluation (no Gemini)
+    # Uses pre-defined feedback templates from lessons_db.json so all audio
+    # can be pre-generated with the same voice (Vivian).
     if action == 'evaluate_practice':
         if current_layer >= total_layers:
             return jsonify({"error": "Invalid layer"}), 400
@@ -1663,68 +1665,64 @@ def lesson():
         layer = layers[current_layer]
         selected_phrase = data.get('selected_phrase', {})
         target_phrase = selected_phrase.get('en', '') if isinstance(selected_phrase, dict) else ''
+        feedback_templates = layer.get('feedback', {})
 
-        # Use Gemini to evaluate the student's practice
-        eval_prompt = f"""You are a friendly English teacher evaluating a student's practice.
+        # Simple keyword evaluation
+        user_lower = user_text.lower().strip()
+        target_lower = target_phrase.lower().strip()
 
-The student was asked to practice using this phrase pattern: "{target_phrase}"
-The student said: "{user_text}"
+        # Extract key words from target (remove common/stop words)
+        stop_words = {
+            'i', 'a', 'the', 'an', 'please', 'would', 'like', 'can', 'could',
+            'have', 'get', 'it', 'that', 'is', 'my', 'me', 'to', 'for', 'and',
+            'or', 'in', 'on', 'of', 'd', 'll', 's', 'no', 'yes', 'just', 'with'
+        }
+        target_words = set(target_lower.replace("'", " ").replace(",", "").replace(".", "").replace("?", "").replace("!", "").split()) - stop_words
+        user_words = set(user_lower.replace("'", " ").replace(",", "").replace(".", "").replace("?", "").replace("!", "").split()) - stop_words
 
-Evaluate their attempt and respond in this JSON format:
-{{
-    "feedback_en": "Your encouraging feedback in English (1-2 sentences). Be specific about what they did well or what to improve.",
-    "feedback_pt": "The same feedback in Portuguese.",
-    "score": 1-5 (1=needs work, 3=good effort, 5=excellent),
-    "ready_for_next": true/false (true if they demonstrated understanding)
-}}
+        # Calculate overlap
+        if target_words:
+            overlap = len(target_words & user_words) / len(target_words)
+        else:
+            overlap = 0
 
-Be encouraging! Even if they made mistakes, find something positive. If they said something completely unrelated, gently redirect them.
-Return ONLY the JSON, no other text."""
+        # Also check if user text contains the target or vice versa
+        contains_target = target_lower in user_lower or user_lower in target_lower
 
-        try:
-            response = model.generate_content(eval_prompt)
-            raw = response.text.strip()
+        if contains_target or overlap >= 0.4:
+            # SUCCESS - student used the phrase correctly
+            fb = feedback_templates.get('success', {})
+            ready_for_next = True
+        elif overlap > 0 or len(user_words) >= 2:
+            # RETRY - attempted but needs improvement
+            fb = feedback_templates.get('retry', {})
+            ready_for_next = False
+        else:
+            # REDIRECT - completely off topic (single word, dot, unrelated)
+            fb = feedback_templates.get('redirect', {})
+            ready_for_next = False
 
-            # Parse JSON
-            cleaned = raw.replace('```json', '').replace('```', '').strip()
-            start_idx = cleaned.find('{')
-            end_idx = cleaned.rfind('}')
+        # Fallback text if feedback templates not defined in lessons_db.json
+        text_en = fb.get('en', "Good try! Let's continue.")
+        text_pt = fb.get('pt', 'Boa tentativa! Vamos continuar.')
 
-            if start_idx != -1 and end_idx != -1:
-                eval_result = json.loads(cleaned[start_idx:end_idx+1])
-            else:
-                eval_result = {
-                    "feedback_en": "Great effort! Keep practicing.",
-                    "feedback_pt": "Ótimo esforço! Continue praticando.",
-                    "score": 3,
-                    "ready_for_next": True
-                }
-        except Exception as e:
-            print(f"[LESSON] Evaluation error: {e}")
-            eval_result = {
-                "feedback_en": "Good try! Let's continue with the lesson.",
-                "feedback_pt": "Boa tentativa! Vamos continuar com a aula.",
-                "score": 3,
-                "ready_for_next": True
-            }
-
-        # Determine next layer (use skip_to_layer if provided, otherwise increment by 1)
-        skip_to = data.get('skip_to_layer')
-        if eval_result.get('ready_for_next', True):
+        # Determine next layer
+        next_layer = current_layer
+        if ready_for_next:
+            skip_to = data.get('skip_to_layer')
             if skip_to is not None:
-                # Convert layer ID to index (layer IDs are 1-based in lessons_db.json)
+                # Convert layer ID to index (layer IDs are 1-based)
                 next_layer = skip_to - 1 if skip_to > 0 else skip_to
             else:
                 next_layer = current_layer + 1
-        else:
-            next_layer = current_layer
+
+        print(f"[LESSON] evaluate_practice: target='{target_phrase}', user='{user_text}', overlap={overlap:.2f}, ready={ready_for_next}")
 
         return jsonify({
             "type": "feedback",
-            "text": eval_result.get('feedback_en', 'Good job!'),
-            "translation": eval_result.get('feedback_pt', 'Bom trabalho!'),
-            "score": eval_result.get('score', 3),
-            "ready_for_next": eval_result.get('ready_for_next', True),
+            "text": text_en,
+            "translation": text_pt,
+            "ready_for_next": ready_for_next,
             "layer": current_layer,
             "next_layer": next_layer,
             "total_layers": total_layers,

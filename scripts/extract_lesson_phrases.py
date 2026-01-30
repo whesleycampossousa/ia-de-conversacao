@@ -86,6 +86,20 @@ def extract_phrases(lessons_db_path: str) -> list:
                     })
                     stats['practice_prompt'] += 1
 
+                # Feedback templates (success, retry, redirect)
+                if 'feedback' in layer:
+                    for fb_type in ['success', 'retry', 'redirect']:
+                        fb = layer['feedback'].get(fb_type, {})
+                        if 'en' in fb:
+                            phrases.append({
+                                "id": f"{lesson_id}_layer{layer_id}_fb_{fb_type}",
+                                "text": fb['en'],
+                                "type": f"feedback_{fb_type}",
+                                "lesson": lesson_id,
+                                "layer": layer_id
+                            })
+                            stats[f'feedback_{fb_type}'] += 1
+
         # Conclusion
         if 'conclusion' in lesson and 'en' in lesson['conclusion']:
             phrases.append({
