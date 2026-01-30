@@ -2783,11 +2783,11 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         // Add lesson-mode class to enable scrolling
         chatWindow.classList.add('lesson-mode');
 
-        // Remove any existing options and reference card
+        // Remove any existing options and hide reference card
         const existing = chatWindow.querySelector('.lesson-options-container');
         if (existing) existing.remove();
         const oldRef = document.getElementById('lesson-phrase-ref');
-        if (oldRef) oldRef.remove();
+        if (oldRef) oldRef.style.display = 'none';
 
         if (!Array.isArray(options) || options.length === 0) return;
 
@@ -2870,38 +2870,35 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         // Show what was selected
         addMessage('User', `Selected: "${phrase.en || phrase}"`, false, true);
 
-        // Add sticky reference card so beginner doesn't forget the phrase
-        const oldRef = document.getElementById('lesson-phrase-ref');
-        if (oldRef) oldRef.remove();
+        // Show sticky reference card so beginner doesn't forget the phrase
+        const refCard = document.getElementById('lesson-phrase-ref');
+        if (refCard) {
+            refCard.innerHTML = `
+                <div class="ref-header">
+                    <span class="ref-label">Frase para praticar:</span>
+                    <button class="ref-audio-btn" title="Ouvir / Listen">&#128264;</button>
+                </div>
+                <div class="ref-phrase-en">"${phrase.en || phrase}"</div>
+                ${phrase.pt ? `<div class="ref-phrase-pt">${phrase.pt}</div>` : ''}
+            `;
+            refCard.style.display = 'block';
 
-        const refCard = document.createElement('div');
-        refCard.className = 'lesson-phrase-reference';
-        refCard.id = 'lesson-phrase-ref';
-        refCard.innerHTML = `
-            <div class="ref-header">
-                <span class="ref-label">Frase para praticar:</span>
-                <button class="ref-audio-btn" title="Ouvir / Listen">&#128264;</button>
-            </div>
-            <div class="ref-phrase-en">"${phrase.en || phrase}"</div>
-            ${phrase.pt ? `<div class="ref-phrase-pt">${phrase.pt}</div>` : ''}
-        `;
-        chatWindow.appendChild(refCard);
-
-        // Audio button on the reference card
-        const refAudioBtn = refCard.querySelector('.ref-audio-btn');
-        refAudioBtn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            const refText = phrase.en || phrase;
-            try {
-                refAudioBtn.classList.add('playing');
-                const blob = await apiClient.getTTS(refText, ttsSpeed, 'en', currentVoice);
-                await playAudioBlob(blob);
-            } catch (err) {
-                console.error('Ref audio error:', err);
-            } finally {
-                refAudioBtn.classList.remove('playing');
-            }
-        });
+            // Audio button on the reference card
+            const refAudioBtn = refCard.querySelector('.ref-audio-btn');
+            refAudioBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const refText = phrase.en || phrase;
+                try {
+                    refAudioBtn.classList.add('playing');
+                    const blob = await apiClient.getTTS(refText, ttsSpeed, 'en', currentVoice);
+                    await playAudioBlob(blob);
+                } catch (err) {
+                    console.error('Ref audio error:', err);
+                } finally {
+                    refAudioBtn.classList.remove('playing');
+                }
+            });
+        }
 
         // Call backend to get practice prompt
         showLoadingIndicator();
