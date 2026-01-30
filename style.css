@@ -1958,6 +1958,73 @@ body {
     }
 }
 
+/* Lesson Phrase Reference Card (sticky during practice) */
+.lesson-phrase-reference {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(139, 92, 246, 0.08));
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-left: 4px solid #6366f1;
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin: 12px 0;
+    backdrop-filter: blur(10px);
+}
+
+.ref-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ref-label {
+    font-size: 0.8rem;
+    color: #9aa4b2;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.ref-audio-btn {
+    background: rgba(99, 102, 241, 0.2);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    color: #fff;
+}
+
+.ref-audio-btn:hover {
+    background: rgba(99, 102, 241, 0.4);
+    transform: scale(1.1);
+}
+
+.ref-audio-btn.playing {
+    background: rgba(99, 102, 241, 0.5);
+    animation: audioButtonPulse 0.6s infinite alternate;
+}
+
+.ref-phrase-en {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #fff;
+    margin-top: 8px;
+    line-height: 1.4;
+}
+
+.ref-phrase-pt {
+    font-size: 0.9rem;
+    color: #a5b4c8;
+    margin-top: 4px;
+    font-style: italic;
+}
+
 /* Lesson Start Button */
 .lesson-start-container {
     text-align: center;
