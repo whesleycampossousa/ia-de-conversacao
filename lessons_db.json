@@ -2041,7 +2041,51 @@
         }
       },
       {
-        "id": 4,
+        "title": "At the Produce Section",
+        "instruction": {
+          "en": "You're at the produce section. Ask about fresh items or quantities.",
+          "pt": "Você está na seção de hortifrúti. Pergunte sobre itens frescos ou quantidades."
+        },
+        "options": [
+          {
+            "en": "Are these strawberries fresh?",
+            "pt": "Esses morangos estão frescos?"
+          },
+          {
+            "en": "How much is a pound of tomatoes?",
+            "pt": "Quanto custa meio quilo de tomates?"
+          },
+          {
+            "en": "Can I get a bag for the apples?",
+            "pt": "Posso pegar um saco para as maçãs?"
+          },
+          {
+            "en": "Which vegetables are in season?",
+            "pt": "Quais legumes estão na safra?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Great choice! Now try asking about the fresh produce!",
+          "pt": "Ótima escolha! Agora tente perguntar sobre os produtos frescos!"
+        },
+        "feedback": {
+          "success": {
+            "en": "Nice! You're getting great fresh produce. Let's head to the deli counter!",
+            "pt": "Legal! Você está pegando ótimos produtos frescos. Vamos ao balcão de frios!"
+          },
+          "retry": {
+            "en": "Good try! Ask about the produce clearly. Try again!",
+            "pt": "Boa tentativa! Pergunte sobre os produtos com clareza. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's ask about the produce. Try using the phrase from the card above.",
+            "pt": "Vamos perguntar sobre os produtos. Tente usar a frase do cartão acima."
+          }
+        },
+        "id": 4
+      },
+      {
+        "id": 5,
         "title": "At the Bakery",
         "instruction": {
           "en": "At the bakery section. Here's how to order:",
@@ -2085,7 +2129,7 @@
         }
       },
       {
-        "id": 5,
+        "id": 6,
         "title": "Checking Prices",
         "instruction": {
           "en": "You want to know the price of something. Here's how to ask:",
@@ -2129,7 +2173,7 @@
         }
       },
       {
-        "id": 6,
+        "id": 7,
         "title": "At Checkout",
         "instruction": {
           "en": "You're at the checkout. Here are useful phrases:",
@@ -2173,7 +2217,7 @@
         }
       },
       {
-        "id": 7,
+        "id": 8,
         "title": "Payment",
         "instruction": {
           "en": "Time to pay! Here's how to handle payment:",
@@ -2217,7 +2261,51 @@
         }
       },
       {
-        "id": 8,
+        "title": "Bagging Groceries",
+        "instruction": {
+          "en": "The cashier asks about bags. Decide how you want your groceries packed.",
+          "pt": "O caixa pergunta sobre sacolas. Decida como quer embalar suas compras."
+        },
+        "options": [
+          {
+            "en": "Paper bags, please.",
+            "pt": "Sacolas de papel, por favor."
+          },
+          {
+            "en": "I brought my own bags.",
+            "pt": "Eu trouxe minhas próprias sacolas."
+          },
+          {
+            "en": "Can I get some plastic bags?",
+            "pt": "Posso pegar algumas sacolas plásticas?"
+          },
+          {
+            "en": "I don't need a bag, thanks.",
+            "pt": "Não preciso de sacola, obrigado."
+          }
+        ],
+        "practice_prompt": {
+          "en": "Great choice! Now tell the cashier about your bag preference!",
+          "pt": "Ótima escolha! Agora diga ao caixa sua preferência de sacola!"
+        },
+        "feedback": {
+          "success": {
+            "en": "Perfect! Your groceries are being bagged. Time to pay!",
+            "pt": "Perfeito! Suas compras estão sendo embaladas. Hora de pagar!"
+          },
+          "retry": {
+            "en": "Good effort! Tell the cashier about bags clearly. Try again!",
+            "pt": "Bom esforço! Diga ao caixa sobre as sacolas com clareza. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's tell the cashier about bags. Try the phrase from the card.",
+            "pt": "Vamos dizer ao caixa sobre as sacolas. Tente a frase do cartão."
+          }
+        },
+        "id": 9
+      },
+      {
+        "id": 10,
         "title": "Finishing Up",
         "instruction": {
           "en": "Almost done! Here's how to finish your shopping:",
@@ -2863,7 +2951,51 @@
         }
       },
       {
-        "id": 4,
+        "title": "Duration and Frequency",
+        "instruction": {
+          "en": "The doctor asks how long you've had these symptoms and how often they occur.",
+          "pt": "O médico pergunta há quanto tempo você tem esses sintomas e com que frequência ocorrem."
+        },
+        "options": [
+          {
+            "en": "It started about a week ago.",
+            "pt": "Começou há cerca de uma semana."
+          },
+          {
+            "en": "I've had this for a few months now.",
+            "pt": "Eu tenho isso há alguns meses."
+          },
+          {
+            "en": "It comes and goes every few days.",
+            "pt": "Vai e volta a cada poucos dias."
+          },
+          {
+            "en": "This just started yesterday.",
+            "pt": "Isso começou ontem."
+          }
+        ],
+        "practice_prompt": {
+          "en": "Great choice! Now tell the doctor how long you've had this symptom!",
+          "pt": "Ótima escolha! Agora diga ao médico há quanto tempo você tem esse sintoma!"
+        },
+        "feedback": {
+          "success": {
+            "en": "Good, the doctor is noting the timeline. Now let's discuss your medical history.",
+            "pt": "Bom, o médico está anotando o período. Agora vamos discutir seu histórico médico."
+          },
+          "retry": {
+            "en": "Nice try! Describe the duration more clearly. Try again!",
+            "pt": "Boa tentativa! Descreva a duração com mais clareza. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's tell the doctor the duration. Try the phrase from the card above.",
+            "pt": "Vamos dizer ao médico a duração. Tente a frase do cartão acima."
+          }
+        },
+        "id": 4
+      },
+      {
+        "id": 5,
         "title": "Medical History",
         "instruction": {
           "en": "The doctor asks about your medical history. Here's how to answer:",
@@ -2907,7 +3039,7 @@
         }
       },
       {
-        "id": 5,
+        "id": 6,
         "title": "Understanding the Diagnosis",
         "instruction": {
           "en": "The doctor explains the diagnosis. Here's how to ask for clarification:",
@@ -2951,7 +3083,7 @@
         }
       },
       {
-        "id": 6,
+        "id": 7,
         "title": "Treatment Options",
         "instruction": {
           "en": "The doctor discusses treatment. Here's how to ask about it:",
@@ -2995,7 +3127,7 @@
         }
       },
       {
-        "id": 7,
+        "id": 8,
         "title": "Getting a Prescription",
         "instruction": {
           "en": "The doctor gives you a prescription. Here are useful questions:",
@@ -3039,7 +3171,51 @@
         }
       },
       {
-        "id": 8,
+        "title": "Asking About Side Effects",
+        "instruction": {
+          "en": "Before leaving, ask the doctor about potential side effects or precautions.",
+          "pt": "Antes de sair, pergunte ao médico sobre possíveis efeitos colaterais ou precauções."
+        },
+        "options": [
+          {
+            "en": "Are there any side effects I should know about?",
+            "pt": "Existem efeitos colaterais que eu deveria saber?"
+          },
+          {
+            "en": "Can I take this with food?",
+            "pt": "Posso tomar isso com comida?"
+          },
+          {
+            "en": "Should I avoid any activities while taking this?",
+            "pt": "Devo evitar alguma atividade enquanto tomo isso?"
+          },
+          {
+            "en": "What should I do if the symptoms get worse?",
+            "pt": "O que devo fazer se os sintomas piorarem?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Great choice! Now ask the doctor about the medication!",
+          "pt": "Ótima escolha! Agora pergunte ao médico sobre a medicação!"
+        },
+        "feedback": {
+          "success": {
+            "en": "Great question! The doctor explains the precautions. Now let's schedule a follow-up.",
+            "pt": "Ótima pergunta! O médico explica as precauções. Agora vamos agendar um retorno."
+          },
+          "retry": {
+            "en": "Good try! Ask clearly about the medication. Try again!",
+            "pt": "Boa tentativa! Pergunte claramente sobre a medicação. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's ask about side effects. Try the phrase from the card.",
+            "pt": "Vamos perguntar sobre efeitos colaterais. Tente a frase do cartão."
+          }
+        },
+        "id": 9
+      },
+      {
+        "id": 10,
         "title": "Follow-up",
         "instruction": {
           "en": "Before leaving, you need to know about follow-up. Here's how to ask:",
@@ -3274,7 +3450,51 @@
         }
       },
       {
-        "id": 5,
+        "title": "Asking for Another Size or Style",
+        "instruction": {
+          "en": "The first item doesn't fit perfectly. Ask for a different size or style.",
+          "pt": "A primeira peça não ficou perfeita. Peça um tamanho ou estilo diferente."
+        },
+        "options": [
+          {
+            "en": "Do you have this in a smaller size?",
+            "pt": "Vocês têm isso em um tamanho menor?"
+          },
+          {
+            "en": "Can I try the next size up?",
+            "pt": "Posso experimentar um número acima?"
+          },
+          {
+            "en": "Do you have a similar style in cotton?",
+            "pt": "Vocês têm um estilo parecido em algodão?"
+          },
+          {
+            "en": "Is this available in a different cut?",
+            "pt": "Isso está disponível em um corte diferente?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Great choice! Now ask the clerk for a different size or style!",
+          "pt": "Ótima escolha! Agora peça ao vendedor um tamanho ou estilo diferente!"
+        },
+        "feedback": {
+          "success": {
+            "en": "The clerk brings you another option. Let's see how this one fits!",
+            "pt": "O vendedor traz outra opção. Vamos ver como esta fica!"
+          },
+          "retry": {
+            "en": "Good attempt! Ask clearly for what you need. Try again!",
+            "pt": "Boa tentativa! Peça claramente o que precisa. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's ask for a different size. Try the phrase from the card.",
+            "pt": "Vamos pedir um tamanho diferente. Tente a frase do cartão."
+          }
+        },
+        "id": 5
+      },
+      {
+        "id": 6,
         "title": "Feedback on the Fit",
         "instruction": {
           "en": "The sales associate asks how it fits. Here's how to respond:",
@@ -3318,7 +3538,7 @@
         }
       },
       {
-        "id": 6,
+        "id": 7,
         "title": "Asking About Price/Sales",
         "instruction": {
           "en": "You want to know about prices. Here's how to ask:",
@@ -3362,7 +3582,7 @@
         }
       },
       {
-        "id": 7,
+        "id": 8,
         "title": "Making a Decision",
         "instruction": {
           "en": "You're ready to decide. Here's what you might say:",
@@ -3406,7 +3626,51 @@
         }
       },
       {
-        "id": 8,
+        "title": "Asking About Returns and Exchanges",
+        "instruction": {
+          "en": "Before paying, ask about the store's return or exchange policy.",
+          "pt": "Antes de pagar, pergunte sobre a política de trocas e devoluções da loja."
+        },
+        "options": [
+          {
+            "en": "What is your return policy?",
+            "pt": "Qual é a política de devoluções?"
+          },
+          {
+            "en": "Can I exchange this if it doesn't fit?",
+            "pt": "Posso trocar se não servir?"
+          },
+          {
+            "en": "How many days do I have to return it?",
+            "pt": "Quantos dias eu tenho para devolver?"
+          },
+          {
+            "en": "Do I need the receipt for exchanges?",
+            "pt": "Preciso do recibo para trocas?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Great choice! Now ask about the return policy!",
+          "pt": "Ótima escolha! Agora pergunte sobre a política de devoluções!"
+        },
+        "feedback": {
+          "success": {
+            "en": "Good to know the policy! Now let's head to the register to pay.",
+            "pt": "Bom saber a política! Agora vamos ao caixa para pagar."
+          },
+          "retry": {
+            "en": "Nice try! Ask about returns clearly. Try again!",
+            "pt": "Boa tentativa! Pergunte sobre devoluções com clareza. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's ask about the return policy. Try the phrase from the card.",
+            "pt": "Vamos perguntar sobre a política de devoluções. Tente a frase do cartão."
+          }
+        },
+        "id": 9
+      },
+      {
+        "id": 10,
         "title": "At the Register",
         "instruction": {
           "en": "You're at the cash register. Here are useful phrases:",
@@ -3685,7 +3949,51 @@
         }
       },
       {
-        "id": 6,
+        "title": "Salary and Benefits",
+        "instruction": {
+          "en": "The interviewer asks about your salary expectations or you discuss benefits.",
+          "pt": "O entrevistador pergunta sobre suas expectativas salariais ou vocês discutem benefícios."
+        },
+        "options": [
+          {
+            "en": "I'm looking for a competitive salary based on the role.",
+            "pt": "Estou buscando um salário competitivo baseado na função."
+          },
+          {
+            "en": "Could you tell me about the benefits package?",
+            "pt": "Você poderia me falar sobre o pacote de benefícios?"
+          },
+          {
+            "en": "I'm flexible on salary. What's the range for this position?",
+            "pt": "Sou flexível quanto ao salário. Qual é a faixa para esta posição?"
+          },
+          {
+            "en": "My salary expectation is in the range of sixty to seventy thousand.",
+            "pt": "Minha expectativa salarial está na faixa de sessenta a setenta mil."
+          }
+        ],
+        "practice_prompt": {
+          "en": "Great choice! Now discuss salary or benefits with the interviewer!",
+          "pt": "Ótima escolha! Agora discuta salário ou benefícios com o entrevistador!"
+        },
+        "feedback": {
+          "success": {
+            "en": "Well handled! Discussing compensation confidently is important. Let's talk about strengths next.",
+            "pt": "Bem resolvido! Discutir compensação com confiança é importante. Vamos falar de pontos fortes."
+          },
+          "retry": {
+            "en": "Good effort! State your expectations clearly and professionally. Try again!",
+            "pt": "Bom esforço! Declare suas expectativas com clareza e profissionalismo. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's discuss salary expectations. Try the phrase from the card.",
+            "pt": "Vamos discutir expectativas salariais. Tente a frase do cartão."
+          }
+        },
+        "id": 6
+      },
+      {
+        "id": 7,
         "title": "Strengths and Weaknesses",
         "instruction": {
           "en": "The interviewer asks about strengths and weaknesses. Here's how to respond:",
@@ -3729,7 +4037,7 @@
         }
       },
       {
-        "id": 7,
+        "id": 8,
         "title": "Asking Questions",
         "instruction": {
           "en": "The interviewer asks: 'Do you have any questions?' Here are good questions to ask:",
@@ -3773,7 +4081,51 @@
         }
       },
       {
-        "id": 8,
+        "title": "Discussing Availability",
+        "instruction": {
+          "en": "The interviewer asks when you can start or about your availability.",
+          "pt": "O entrevistador pergunta quando você pode começar ou sobre sua disponibilidade."
+        },
+        "options": [
+          {
+            "en": "I can start immediately if needed.",
+            "pt": "Posso começar imediatamente se necessário."
+          },
+          {
+            "en": "I would need to give two weeks' notice at my current job.",
+            "pt": "Precisaria dar duas semanas de aviso no meu emprego atual."
+          },
+          {
+            "en": "I'm available to start at the beginning of next month.",
+            "pt": "Estou disponível para começar no início do próximo mês."
+          },
+          {
+            "en": "I'm flexible on the start date. What works best for you?",
+            "pt": "Sou flexível quanto à data de início. O que funciona melhor para vocês?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Great choice! Now tell the interviewer about your availability!",
+          "pt": "Ótima escolha! Agora diga ao entrevistador sobre sua disponibilidade!"
+        },
+        "feedback": {
+          "success": {
+            "en": "Perfect! The interviewer appreciates your clarity. Let's wrap up the interview!",
+            "pt": "Perfeito! O entrevistador aprecia sua clareza. Vamos encerrar a entrevista!"
+          },
+          "retry": {
+            "en": "Good try! State your availability clearly. Try again!",
+            "pt": "Boa tentativa! Diga sua disponibilidade com clareza. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's discuss when you can start. Try the phrase from the card.",
+            "pt": "Vamos discutir quando você pode começar. Tente a frase do cartão."
+          }
+        },
+        "id": 9
+      },
+      {
+        "id": 10,
         "title": "Ending the Interview",
         "instruction": {
           "en": "The interview is ending. Here's how to close professionally:",
@@ -4052,7 +4404,51 @@
         }
       },
       {
-        "id": 6,
+        "title": "Presenting Your Work",
+        "instruction": {
+          "en": "The teacher asks you to present your work or ideas to the class.",
+          "pt": "O professor pede para você apresentar seu trabalho ou ideias para a turma."
+        },
+        "options": [
+          {
+            "en": "Our group worked on the topic of climate change.",
+            "pt": "Nosso grupo trabalhou no tema de mudanças climáticas."
+          },
+          {
+            "en": "I'd like to share what we found during our research.",
+            "pt": "Eu gostaria de compartilhar o que encontramos em nossa pesquisa."
+          },
+          {
+            "en": "Can I use the projector for my presentation?",
+            "pt": "Posso usar o projetor para minha apresentação?"
+          },
+          {
+            "en": "We divided the project into three main parts.",
+            "pt": "Dividimos o projeto em três partes principais."
+          }
+        ],
+        "practice_prompt": {
+          "en": "Great choice! Now present your work to the class!",
+          "pt": "Ótima escolha! Agora apresente seu trabalho para a turma!"
+        },
+        "feedback": {
+          "success": {
+            "en": "Great presentation! Your classmates are impressed. Let's chat with them next.",
+            "pt": "Ótima apresentação! Seus colegas ficaram impressionados. Vamos conversar com eles."
+          },
+          "retry": {
+            "en": "Nice try! Present your ideas clearly and confidently. Try again!",
+            "pt": "Boa tentativa! Apresente suas ideias com clareza e confiança. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's present to the class. Try the phrase from the card above.",
+            "pt": "Vamos apresentar para a turma. Tente a frase do cartão acima."
+          }
+        },
+        "id": 6
+      },
+      {
+        "id": 7,
         "title": "Talking to Classmates",
         "instruction": {
           "en": "You're chatting with classmates. Here are conversation starters:",
@@ -4096,7 +4492,7 @@
         }
       },
       {
-        "id": 7,
+        "id": 8,
         "title": "During a Test",
         "instruction": {
           "en": "During a test, you might need help. Here's how to ask:",
@@ -4140,7 +4536,7 @@
         }
       },
       {
-        "id": 8,
+        "id": 9,
         "title": "After Class",
         "instruction": {
           "en": "Class is over. Here's how to communicate with your teacher or friends:",
@@ -4182,6 +4578,50 @@
             "pt": "Vamos praticar essa frase. Tente usar a frase mostrada no cartão de referência acima."
           }
         }
+      },
+      {
+        "title": "Planning a Study Session",
+        "instruction": {
+          "en": "After class, you plan a study session with classmates for the upcoming exam.",
+          "pt": "Depois da aula, você planeja uma sessão de estudo com colegas para a próxima prova."
+        },
+        "options": [
+          {
+            "en": "Do you want to study together for the exam?",
+            "pt": "Quer estudar junto para a prova?"
+          },
+          {
+            "en": "Let's meet at the library after lunch.",
+            "pt": "Vamos nos encontrar na biblioteca depois do almoço."
+          },
+          {
+            "en": "I can share my notes with you.",
+            "pt": "Posso compartilhar minhas anotações com você."
+          },
+          {
+            "en": "Which chapters should we focus on?",
+            "pt": "Em quais capítulos devemos nos concentrar?"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Great choice! Now invite your classmate to study together!",
+          "pt": "Ótima escolha! Agora convide seu colega para estudar junto!"
+        },
+        "feedback": {
+          "success": {
+            "en": "Awesome! You've organized a study session. Studying together helps a lot!",
+            "pt": "Incrível! Você organizou uma sessão de estudo. Estudar junto ajuda muito!"
+          },
+          "retry": {
+            "en": "Good effort! Try inviting your classmate clearly. Try again!",
+            "pt": "Bom esforço! Tente convidar seu colega com clareza. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's plan a study session. Try the phrase from the card.",
+            "pt": "Vamos planejar uma sessão de estudo. Tente a frase do cartão."
+          }
+        },
+        "id": 10
       }
     ],
     "conclusion": {
@@ -13937,7 +14377,51 @@
         }
       },
       {
-        "id": 5,
+        "title": "Meeting Other Guests",
+        "instruction": {
+          "en": "At the reception, you meet other guests and make small talk.",
+          "pt": "Na recepção, você conhece outros convidados e faz conversa informal."
+        },
+        "options": [
+          {
+            "en": "How do you know the bride and groom?",
+            "pt": "Como você conhece os noivos?"
+          },
+          {
+            "en": "This is such a beautiful venue, isn't it?",
+            "pt": "Este é um lugar tão bonito, não é?"
+          },
+          {
+            "en": "I'm a friend from college. And you?",
+            "pt": "Sou amigo da faculdade. E você?"
+          },
+          {
+            "en": "Have you tried the appetizers? They're delicious!",
+            "pt": "Você experimentou os aperitivos? Estão deliciosos!"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Great choice! Now make small talk with another guest!",
+          "pt": "Ótima escolha! Agora faça conversa informal com outro convidado!"
+        },
+        "feedback": {
+          "success": {
+            "en": "Wonderful! You're making new friends at the wedding. Let's enjoy dinner!",
+            "pt": "Maravilha! Você está fazendo novos amigos no casamento. Vamos aproveitar o jantar!"
+          },
+          "retry": {
+            "en": "Nice try! Keep the conversation friendly and light. Try again!",
+            "pt": "Boa tentativa! Mantenha a conversa amigável e leve. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's chat with other guests. Try the phrase from the card.",
+            "pt": "Vamos conversar com outros convidados. Tente a frase do cartão."
+          }
+        },
+        "id": 5
+      },
+      {
+        "id": 6,
         "title": "During Dinner",
         "instruction": {
           "en": "During the dinner, here's how to interact:",
@@ -13981,7 +14465,7 @@
         }
       },
       {
-        "id": 6,
+        "id": 7,
         "title": "Toasts and Speeches",
         "instruction": {
           "en": "During toasts, here's how to participate:",
@@ -14025,7 +14509,7 @@
         }
       },
       {
-        "id": 7,
+        "id": 8,
         "title": "Dancing and Fun",
         "instruction": {
           "en": "Time to dance! Here's how to interact:",
@@ -14069,7 +14553,51 @@
         }
       },
       {
-        "id": 8,
+        "title": "Sharing Memories and Well-Wishes",
+        "instruction": {
+          "en": "The evening is winding down. Share a fond memory or final well-wishes with the couple.",
+          "pt": "A noite está chegando ao fim. Compartilhe uma boa memória ou desejos finais com o casal."
+        },
+        "options": [
+          {
+            "en": "I remember when you two first met. You were meant for each other!",
+            "pt": "Eu lembro quando vocês se conheceram. Vocês foram feitos um para o outro!"
+          },
+          {
+            "en": "I wish you both a lifetime of happiness together.",
+            "pt": "Desejo a vocês uma vida inteira de felicidade juntos."
+          },
+          {
+            "en": "This was the most beautiful wedding I've ever been to.",
+            "pt": "Este foi o casamento mais lindo que já fui."
+          },
+          {
+            "en": "May your love grow stronger with each passing year.",
+            "pt": "Que o amor de vocês fique mais forte a cada ano que passa."
+          }
+        ],
+        "practice_prompt": {
+          "en": "Great choice! Now share your heartfelt wishes with the couple!",
+          "pt": "Ótima escolha! Agora compartilhe seus desejos sinceros com o casal!"
+        },
+        "feedback": {
+          "success": {
+            "en": "How touching! The couple is grateful for your kind words. Time to say goodbye!",
+            "pt": "Que lindo! O casal agradece suas palavras gentis. Hora de se despedir!"
+          },
+          "retry": {
+            "en": "Good try! Express your wishes warmly. Try again!",
+            "pt": "Boa tentativa! Expresse seus desejos com carinho. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's share your well-wishes. Try the phrase from the card.",
+            "pt": "Vamos compartilhar seus desejos. Tente a frase do cartão."
+          }
+        },
+        "id": 9
+      },
+      {
+        "id": 10,
         "title": "Saying Goodbye",
         "instruction": {
           "en": "The party is ending. Here's how to say goodbye:",
@@ -14304,7 +14832,51 @@
         }
       },
       {
-        "id": 5,
+        "title": "Talking to Teachers and Staff",
+        "instruction": {
+          "en": "You see some of your favorite teachers. Thank them for their guidance.",
+          "pt": "Você vê alguns dos seus professores favoritos. Agradeça pela orientação deles."
+        },
+        "options": [
+          {
+            "en": "Thank you for being such an inspiring teacher.",
+            "pt": "Obrigado por ser um professor tão inspirador."
+          },
+          {
+            "en": "Your class was my favorite. I learned so much!",
+            "pt": "Sua aula era minha favorita. Aprendi tanto!"
+          },
+          {
+            "en": "I couldn't have done it without your support.",
+            "pt": "Eu não teria conseguido sem seu apoio."
+          },
+          {
+            "en": "You really made a difference in my education.",
+            "pt": "Você realmente fez a diferença na minha educação."
+          }
+        ],
+        "practice_prompt": {
+          "en": "Great choice! Now thank your teacher for their guidance!",
+          "pt": "Ótima escolha! Agora agradeça ao professor pela orientação!"
+        },
+        "feedback": {
+          "success": {
+            "en": "Your teacher is touched by your words! Let's talk about future plans.",
+            "pt": "Seu professor ficou emocionado com suas palavras! Vamos falar sobre planos futuros."
+          },
+          "retry": {
+            "en": "Nice try! Express your gratitude clearly. Try again!",
+            "pt": "Boa tentativa! Expresse sua gratidão com clareza. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's thank your teacher. Try the phrase from the card above.",
+            "pt": "Vamos agradecer ao professor. Tente a frase do cartão acima."
+          }
+        },
+        "id": 5
+      },
+      {
+        "id": 6,
         "title": "Asking About Future Plans",
         "instruction": {
           "en": "You're curious about their plans. Here's how to ask:",
@@ -14348,7 +14920,7 @@
         }
       },
       {
-        "id": 6,
+        "id": 7,
         "title": "Giving Gifts",
         "instruction": {
           "en": "You have a gift for the graduate. Here's how to present it:",
@@ -14392,7 +14964,7 @@
         }
       },
       {
-        "id": 7,
+        "id": 8,
         "title": "At the Celebration",
         "instruction": {
           "en": "At the celebration party, here's how to interact:",
@@ -14436,7 +15008,51 @@
         }
       },
       {
-        "id": 8,
+        "title": "Reflecting on the Journey",
+        "instruction": {
+          "en": "At the celebration, someone asks you to reflect on your time as a student.",
+          "pt": "Na celebração, alguém pede que você reflita sobre seu tempo como estudante."
+        },
+        "options": [
+          {
+            "en": "These were the best years of my life. I grew so much!",
+            "pt": "Esses foram os melhores anos da minha vida. Eu cresci tanto!"
+          },
+          {
+            "en": "I'm going to miss my classmates, but I'm excited for what's next.",
+            "pt": "Vou sentir falta dos meus colegas, mas estou animado com o que vem pela frente."
+          },
+          {
+            "en": "The hardest part was balancing studies and work, but it was worth it.",
+            "pt": "A parte mais difícil foi equilibrar estudos e trabalho, mas valeu a pena."
+          },
+          {
+            "en": "I'm proud of everything I've accomplished.",
+            "pt": "Estou orgulhoso de tudo que conquistei."
+          }
+        ],
+        "practice_prompt": {
+          "en": "Great choice! Now share your reflections on your journey!",
+          "pt": "Ótima escolha! Agora compartilhe suas reflexões sobre sua jornada!"
+        },
+        "feedback": {
+          "success": {
+            "en": "What a beautiful reflection! Everyone is inspired. Time to say goodbye!",
+            "pt": "Que reflexão bonita! Todos estão inspirados. Hora de se despedir!"
+          },
+          "retry": {
+            "en": "Good try! Share your feelings about the journey. Try again!",
+            "pt": "Boa tentativa! Compartilhe seus sentimentos sobre a jornada. Tente novamente!"
+          },
+          "redirect": {
+            "en": "Let's reflect on your journey. Try the phrase from the card.",
+            "pt": "Vamos refletir sobre sua jornada. Tente a frase do cartão."
+          }
+        },
+        "id": 9
+      },
+      {
+        "id": 10,
         "title": "Saying Goodbye",
         "instruction": {
           "en": "Time to leave. Here's how to say goodbye:",
