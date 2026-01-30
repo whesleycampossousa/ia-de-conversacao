@@ -2231,7 +2231,7 @@ def tts_endpoint():
             # On Vercel, redirect to static CDN path for better performance
             if os.environ.get('VERCEL'):
                 from flask import redirect
-                return redirect(f"/audio_cache/lessons/{lesson_cache_filename}", code=302)
+                return redirect(f"/audio_cache/lessons/{lesson_cache_filename}?v=4", code=302)
             else:
                 return send_file(
                     lesson_cache_path,
