@@ -108,32 +108,44 @@ document.addEventListener('DOMContentLoaded', () => {
     // Inject Voice Selector into voice-selection-step container
     const voiceSelectionStep = document.getElementById('voice-selection-step');
 
+    // In structured lessons, voice is fixed (pre-generated Vivian audio).
+    // Voice selector only shown in free conversation mode.
+    const lessonVoice = isFreeConversation ? null : 'lesson';
+    function getActiveVoice() {
+        return lessonVoice || currentVoice;
+    }
+
     if (voiceSelectionStep) {
-        const displaySet = voiceDisplaySets[isPortugueseLesson ? 'pt' : 'en'];
-        const selectorHTML = `
-            <div style="margin-bottom: 10px; text-align: center;">
-            <div class="voice-label" style="color:rgba(255,255,255,0.7); margin-bottom:6px; font-size:0.75rem;">${isPortugueseLesson ? 'Selecione a voz' : 'Select voice'}</div>
-                <div class="voice-selector-container" style="display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;">
-                    ${displaySet.map(option => `
-                        <div class="voice-option ${currentVoice === option.id ? 'selected' : ''}" data-voice="${option.id}" style="width: 60px; padding: 6px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; cursor: pointer; text-align: center;">
-                            <div class="voice-avatar" style="font-size: 1.2rem;">${option.avatar}</div>
-                            <div class="voice-name" style="font-size: 0.6rem; color: white;">${option.label}</div>
-                        </div>
-                    `).join('')}
+        if (isFreeConversation) {
+            const displaySet = voiceDisplaySets[isPortugueseLesson ? 'pt' : 'en'];
+            const selectorHTML = `
+                <div style="margin-bottom: 10px; text-align: center;">
+                <div class="voice-label" style="color:rgba(255,255,255,0.7); margin-bottom:6px; font-size:0.75rem;">${isPortugueseLesson ? 'Selecione a voz' : 'Select voice'}</div>
+                    <div class="voice-selector-container" style="display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;">
+                        ${displaySet.map(option => `
+                            <div class="voice-option ${currentVoice === option.id ? 'selected' : ''}" data-voice="${option.id}" style="width: 60px; padding: 6px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; cursor: pointer; text-align: center;">
+                                <div class="voice-avatar" style="font-size: 1.2rem;">${option.avatar}</div>
+                                <div class="voice-name" style="font-size: 0.6rem; color: white;">${option.label}</div>
+                            </div>
+                        `).join('')}
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
 
-        voiceSelectionStep.innerHTML = selectorHTML;
+            voiceSelectionStep.innerHTML = selectorHTML;
 
-        voiceSelectionStep.querySelectorAll('.voice-option').forEach(opt => {
-            opt.addEventListener('click', () => {
-                currentVoice = opt.dataset.voice;
-                localStorage.setItem('preferred_voice', currentVoice);
-                voiceSelectionStep.querySelectorAll('.voice-option').forEach(o => o.classList.remove('selected'));
-                opt.classList.add('selected');
+            voiceSelectionStep.querySelectorAll('.voice-option').forEach(opt => {
+                opt.addEventListener('click', () => {
+                    currentVoice = opt.dataset.voice;
+                    localStorage.setItem('preferred_voice', currentVoice);
+                    voiceSelectionStep.querySelectorAll('.voice-option').forEach(o => o.classList.remove('selected'));
+                    opt.classList.add('selected');
+                });
             });
-        });
+        } else {
+            // Hide voice selector in structured lesson mode
+            voiceSelectionStep.style.display = 'none';
+        }
     }
 
 
@@ -851,7 +863,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (ttsCancelled) break;
                 let blob = null;
                 try {
-                    blob = await apiClient.getTTS(chunk, ttsSpeed, lessonLang, currentVoice);
+                    blob = await apiClient.getTTS(chunk, ttsSpeed, lessonLang, getActiveVoice());
                 } catch (err) {
                     console.error("TTS Error:", err);
                     continue;
@@ -1726,7 +1738,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (ttsCancelled) break;
                 let blob = null;
                 try {
-                    blob = await apiClient.getTTS(chunk, ttsSpeed, lessonLang, currentVoice);
+                    blob = await apiClient.getTTS(chunk, ttsSpeed, lessonLang, getActiveVoice());
                 } catch (err) {
                     console.error("TTS Error:", err);
                     continue;
@@ -1753,7 +1765,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!text) return;
 
         try {
-            const blob = await apiClient.getTTS(text, ttsSpeed, lessonLang, currentVoice);
+            const blob = await apiClient.getTTS(text, ttsSpeed, lessonLang, getActiveVoice());
             if (blob && blob.size > 0) {
                 await playAudioBlob(blob);
             }
@@ -2936,7 +2948,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 e.stopPropagation();
                 try {
                     refAudioBtn.classList.add('playing');
-                    const blob = await apiClient.getTTS(displayPhrase, ttsSpeed, 'en', currentVoice);
+                    const blob = await apiClient.getTTS(displayPhrase, ttsSpeed, 'en', getActiveVoice());
                     await playAudioBlob(blob);
                 } catch (err) {
                     console.error('Ref audio error:', err);
