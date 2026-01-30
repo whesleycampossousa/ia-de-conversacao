@@ -551,19 +551,31 @@
         "options": [
           {
             "en": "A table for two, please",
-            "pt": "Uma mesa para dois, por favor"
+            "pt": "Uma mesa para dois, por favor",
+            "slots": {
+              "greeting": "A table for two, please."
+            }
           },
           {
             "en": "We have a reservation under Smith",
-            "pt": "Temos uma reserva no nome Smith"
+            "pt": "Temos uma reserva no nome Smith",
+            "slots": {
+              "greeting": "We have a reservation under Smith."
+            }
           },
           {
             "en": "Do you have any tables available?",
-            "pt": "Vocês têm alguma mesa disponível?"
+            "pt": "Vocês têm alguma mesa disponível?",
+            "slots": {
+              "greeting": "Do you have any tables available?"
+            }
           },
           {
             "en": "Can we sit by the window?",
-            "pt": "Podemos sentar perto da janela?"
+            "pt": "Podemos sentar perto da janela?",
+            "slots": {
+              "greeting": "Can we sit by the window?"
+            }
           }
         ],
         "practice_prompt": {
@@ -595,19 +607,31 @@
         "options": [
           {
             "en": "I'll have a glass of water, please",
-            "pt": "Vou querer um copo de água, por favor"
+            "pt": "Vou querer um copo de água, por favor",
+            "slots": {
+              "drink": "I'll have water, please."
+            }
           },
           {
             "en": "Can I see the wine list?",
-            "pt": "Posso ver a carta de vinhos?"
+            "pt": "Posso ver a carta de vinhos?",
+            "slots": {
+              "drink": "Can I see the wine list?"
+            }
           },
           {
             "en": "I'd like a soda",
-            "pt": "Eu gostaria de um refrigerante"
+            "pt": "Eu gostaria de um refrigerante",
+            "slots": {
+              "drink": "I'd like a soda."
+            }
           },
           {
             "en": "Just water for now, thanks",
-            "pt": "Só água por enquanto, obrigado"
+            "pt": "Só água por enquanto, obrigado",
+            "slots": {
+              "drink": "Just water for now, thanks."
+            }
           }
         ],
         "practice_prompt": {
@@ -639,19 +663,31 @@
         "options": [
           {
             "en": "What do you recommend?",
-            "pt": "O que você recomenda?"
+            "pt": "O que você recomenda?",
+            "slots": {
+              "menu": "What do you recommend?"
+            }
           },
           {
             "en": "What's the special today?",
-            "pt": "Qual é o prato do dia?"
+            "pt": "Qual é o prato do dia?",
+            "slots": {
+              "menu": "What's the special today?"
+            }
           },
           {
             "en": "Is this dish spicy?",
-            "pt": "Este prato é apimentado?"
+            "pt": "Este prato é apimentado?",
+            "slots": {
+              "menu": "Is this dish spicy?"
+            }
           },
           {
             "en": "Does this contain nuts?",
-            "pt": "Isso contém nozes?"
+            "pt": "Isso contém nozes?",
+            "slots": {
+              "menu": "Does this contain nuts?"
+            }
           }
         ],
         "practice_prompt": {
@@ -683,19 +719,31 @@
         "options": [
           {
             "en": "I'll have the grilled salmon",
-            "pt": "Vou querer o salmão grelhado"
+            "pt": "Vou querer o salmão grelhado",
+            "slots": {
+              "food": "I'll have the grilled salmon."
+            }
           },
           {
             "en": "I'd like the chicken pasta, please",
-            "pt": "Eu gostaria do macarrão com frango, por favor"
+            "pt": "Eu gostaria do macarrão com frango, por favor",
+            "slots": {
+              "food": "I'd like the pasta, please."
+            }
           },
           {
             "en": "Can I get the steak, medium rare?",
-            "pt": "Posso pedir o bife ao ponto?"
+            "pt": "Posso pedir o bife ao ponto?",
+            "slots": {
+              "food": "Can I get the steak, medium rare?"
+            }
           },
           {
             "en": "I'll try the vegetarian option",
-            "pt": "Vou experimentar a opção vegetariana"
+            "pt": "Vou experimentar a opção vegetariana",
+            "slots": {
+              "food": "I'll try the chicken salad."
+            }
           }
         ],
         "practice_prompt": {
@@ -987,7 +1035,14 @@
     "conclusion": {
       "en": "Congratulations! You've completed the restaurant lesson! You now know how to: get a table, order drinks and food, make special requests, and pay the bill. You're ready to dine out with confidence!",
       "pt": "Parabéns! Você completou a aula de restaurante! Agora você sabe como: conseguir uma mesa, pedir bebidas e comida, fazer pedidos especiais e pagar a conta. Você está pronto para jantar fora com confiança!"
-    }
+    },
+    "composite_template": "{greeting} {drink} {menu} {food}",
+    "composite_layers": [
+      1,
+      2,
+      3,
+      4
+    ]
   },
   "hotel": {
     "id": "hotel",
@@ -1008,19 +1063,31 @@
         "options": [
           {
             "en": "Hi, I have a reservation",
-            "pt": "Oi, tenho uma reserva"
+            "pt": "Oi, tenho uma reserva",
+            "slots": {
+              "checkin": "Hi, I have a reservation."
+            }
           },
           {
             "en": "Good evening, I'd like to check in",
-            "pt": "Boa noite, gostaria de fazer check-in"
+            "pt": "Boa noite, gostaria de fazer check-in",
+            "slots": {
+              "checkin": "Good evening, I'd like to check in."
+            }
           },
           {
             "en": "Hello, I booked a room online",
-            "pt": "Olá, reservei um quarto online"
+            "pt": "Olá, reservei um quarto online",
+            "slots": {
+              "checkin": "Hello, I booked a room online."
+            }
           },
           {
             "en": "Hi, the reservation is under Johnson",
-            "pt": "Oi, a reserva está no nome Johnson"
+            "pt": "Oi, a reserva está no nome Johnson",
+            "slots": {
+              "checkin": "Hi, the reservation is under Johnson."
+            }
           }
         ],
         "practice_prompt": {
@@ -1052,19 +1119,31 @@
         "options": [
           {
             "en": "It's for three nights",
-            "pt": "É para três noites"
+            "pt": "É para três noites",
+            "slots": {
+              "booking": "It's for three nights."
+            }
           },
           {
             "en": "I booked a double room",
-            "pt": "Reservei um quarto de casal"
+            "pt": "Reservei um quarto de casal",
+            "slots": {
+              "booking": "I booked a double room."
+            }
           },
           {
             "en": "The confirmation number is 12345",
-            "pt": "O número de confirmação é 12345"
+            "pt": "O número de confirmação é 12345",
+            "slots": {
+              "booking": "The confirmation number is 12345."
+            }
           },
           {
             "en": "It should be under my email address",
-            "pt": "Deve estar no meu endereço de e-mail"
+            "pt": "Deve estar no meu endereço de e-mail",
+            "slots": {
+              "booking": "It should be under my email address."
+            }
           }
         ],
         "practice_prompt": {
@@ -1096,19 +1175,31 @@
         "options": [
           {
             "en": "Could I have a room with a view?",
-            "pt": "Poderia ter um quarto com vista?"
+            "pt": "Poderia ter um quarto com vista?",
+            "slots": {
+              "room": "Could I have a room with a view?"
+            }
           },
           {
             "en": "I'd prefer a quiet room",
-            "pt": "Preferiria um quarto silencioso"
+            "pt": "Preferiria um quarto silencioso",
+            "slots": {
+              "room": "I'd prefer a quiet room."
+            }
           },
           {
             "en": "Is there a room on a higher floor?",
-            "pt": "Tem um quarto em um andar mais alto?"
+            "pt": "Tem um quarto em um andar mais alto?",
+            "slots": {
+              "room": "Is there a room on a higher floor?"
+            }
           },
           {
             "en": "I need a non-smoking room",
-            "pt": "Preciso de um quarto para não fumantes"
+            "pt": "Preciso de um quarto para não fumantes",
+            "slots": {
+              "room": "I need a non-smoking room."
+            }
           }
         ],
         "practice_prompt": {
@@ -1442,7 +1533,13 @@
     "conclusion": {
       "en": "Congratulations! You've completed the hotel lesson! You now know how to: check in, ask about amenities, make requests, report problems, and check out. You're ready to stay at any hotel with confidence!",
       "pt": "Parabéns! Você completou a aula de hotel! Agora você sabe como: fazer check-in, perguntar sobre serviços, fazer solicitações, reportar problemas e fazer check-out. Você está pronto para se hospedar em qualquer hotel com confiança!"
-    }
+    },
+    "composite_template": "{checkin} {booking} {room}",
+    "composite_layers": [
+      1,
+      2,
+      3
+    ]
   },
   "airport": {
     "id": "airport",
@@ -1463,19 +1560,31 @@
         "options": [
           {
             "en": "Hi, I'd like to check in for my flight",
-            "pt": "Oi, gostaria de fazer check-in para meu voo"
+            "pt": "Oi, gostaria de fazer check-in para meu voo",
+            "slots": {
+              "checkin": "Hi, I'd like to check in for my flight"
+            }
           },
           {
             "en": "Here's my passport and ticket",
-            "pt": "Aqui está meu passaporte e passagem"
+            "pt": "Aqui está meu passaporte e passagem",
+            "slots": {
+              "checkin": "Here's my passport and ticket"
+            }
           },
           {
             "en": "I'm flying to London",
-            "pt": "Estou indo para Londres"
+            "pt": "Estou indo para Londres",
+            "slots": {
+              "checkin": "I'm flying to London"
+            }
           },
           {
             "en": "My flight is at 3 PM",
-            "pt": "Meu voo é às 15h"
+            "pt": "Meu voo é às 15h",
+            "slots": {
+              "checkin": "My flight is at 3 PM"
+            }
           }
         ],
         "practice_prompt": {
@@ -1507,19 +1616,31 @@
         "options": [
           {
             "en": "I have one bag to check",
-            "pt": "Tenho uma mala para despachar"
+            "pt": "Tenho uma mala para despachar",
+            "slots": {
+              "luggage": "I have one bag to check"
+            }
           },
           {
             "en": "Just carry-on luggage",
-            "pt": "Só bagagem de mão"
+            "pt": "Só bagagem de mão",
+            "slots": {
+              "luggage": "Just carry-on luggage"
+            }
           },
           {
             "en": "Is this bag too heavy?",
-            "pt": "Essa mala está pesada demais?"
+            "pt": "Essa mala está pesada demais?",
+            "slots": {
+              "luggage": "Is this bag too heavy?"
+            }
           },
           {
             "en": "Can I take this as hand luggage?",
-            "pt": "Posso levar isso como bagagem de mão?"
+            "pt": "Posso levar isso como bagagem de mão?",
+            "slots": {
+              "luggage": "Can I take this as hand luggage?"
+            }
           }
         ],
         "practice_prompt": {
@@ -1551,19 +1672,31 @@
         "options": [
           {
             "en": "Window seat, please",
-            "pt": "Assento na janela, por favor"
+            "pt": "Assento na janela, por favor",
+            "slots": {
+              "seat": "Window seat, please"
+            }
           },
           {
             "en": "I'd prefer an aisle seat",
-            "pt": "Prefiro um assento no corredor"
+            "pt": "Prefiro um assento no corredor",
+            "slots": {
+              "seat": "I'd prefer an aisle seat"
+            }
           },
           {
             "en": "Do you have any exit row seats?",
-            "pt": "Vocês têm assentos na saída de emergência?"
+            "pt": "Vocês têm assentos na saída de emergência?",
+            "slots": {
+              "seat": "Do you have any exit row seats?"
+            }
           },
           {
             "en": "Can I sit near the front?",
-            "pt": "Posso sentar na frente?"
+            "pt": "Posso sentar na frente?",
+            "slots": {
+              "seat": "Can I sit near the front?"
+            }
           }
         ],
         "practice_prompt": {
@@ -1897,7 +2030,13 @@
     "conclusion": {
       "en": "Congratulations! You've completed the airport lesson! You now know how to: check in, go through security, find your gate, board the plane, and handle immigration. You're ready to fly with confidence!",
       "pt": "Parabéns! Você completou a aula de aeroporto! Agora você sabe como: fazer check-in, passar pela segurança, encontrar seu portão, embarcar e passar pela imigração. Você está pronto para voar com confiança!"
-    }
+    },
+    "composite_template": "{checkin} {luggage} {seat}",
+    "composite_layers": [
+      1,
+      2,
+      3
+    ]
   },
   "supermarket": {
     "id": "supermarket",
@@ -1918,19 +2057,31 @@
         "options": [
           {
             "en": "Excuse me, where is the milk?",
-            "pt": "Com licença, onde fica o leite?"
+            "pt": "Com licença, onde fica o leite?",
+            "slots": {
+              "find": "Excuse me, where is the milk?"
+            }
           },
           {
             "en": "Which aisle is the bread in?",
-            "pt": "Em qual corredor fica o pão?"
+            "pt": "Em qual corredor fica o pão?",
+            "slots": {
+              "find": "Which aisle is the bread in?"
+            }
           },
           {
             "en": "Do you have organic vegetables?",
-            "pt": "Vocês têm vegetais orgânicos?"
+            "pt": "Vocês têm vegetais orgânicos?",
+            "slots": {
+              "find": "Do you have organic vegetables?"
+            }
           },
           {
             "en": "Where can I find the cleaning products?",
-            "pt": "Onde posso encontrar os produtos de limpeza?"
+            "pt": "Onde posso encontrar os produtos de limpeza?",
+            "slots": {
+              "find": "Where can I find the cleaning products?"
+            }
           }
         ],
         "practice_prompt": {
@@ -1962,19 +2113,31 @@
         "options": [
           {
             "en": "Is this product fresh?",
-            "pt": "Este produto está fresco?"
+            "pt": "Este produto está fresco?",
+            "slots": {
+              "product": "Is this product fresh?"
+            }
           },
           {
             "en": "What's the expiration date?",
-            "pt": "Qual é a data de validade?"
+            "pt": "Qual é a data de validade?",
+            "slots": {
+              "product": "What's the expiration date?"
+            }
           },
           {
             "en": "Is this on sale?",
-            "pt": "Isso está em promoção?"
+            "pt": "Isso está em promoção?",
+            "slots": {
+              "product": "Is this on sale?"
+            }
           },
           {
             "en": "Do you have a larger size?",
-            "pt": "Vocês têm um tamanho maior?"
+            "pt": "Vocês têm um tamanho maior?",
+            "slots": {
+              "product": "Do you have a larger size?"
+            }
           }
         ],
         "practice_prompt": {
@@ -2006,19 +2169,31 @@
         "options": [
           {
             "en": "Can I have 200 grams of ham?",
-            "pt": "Posso pedir 200 gramas de presunto?"
+            "pt": "Posso pedir 200 gramas de presunto?",
+            "slots": {
+              "deli": "Can I have 200 grams of ham?"
+            }
           },
           {
             "en": "I'd like some sliced cheese",
-            "pt": "Gostaria de queijo fatiado"
+            "pt": "Gostaria de queijo fatiado",
+            "slots": {
+              "deli": "I'd like some sliced cheese"
+            }
           },
           {
             "en": "A little more, please",
-            "pt": "Um pouco mais, por favor"
+            "pt": "Um pouco mais, por favor",
+            "slots": {
+              "deli": "A little more, please"
+            }
           },
           {
             "en": "That's enough, thank you",
-            "pt": "Está bom assim, obrigado"
+            "pt": "Está bom assim, obrigado",
+            "slots": {
+              "deli": "That's enough, thank you"
+            }
           }
         ],
         "practice_prompt": {
@@ -2352,7 +2527,13 @@
     "conclusion": {
       "en": "Congratulations! You've completed the supermarket lesson! You now know how to: find items, ask about products, order at the deli, and pay at checkout. You're ready to shop with confidence!",
       "pt": "Parabéns! Você completou a aula de supermercado! Agora você sabe como: encontrar itens, perguntar sobre produtos, pedir no balcão de frios e pagar no caixa. Você está pronto para fazer compras com confiança!"
-    }
+    },
+    "composite_template": "{find} {product} {deli}",
+    "composite_layers": [
+      1,
+      2,
+      3
+    ]
   },
   "bank": {
     "id": "bank",
@@ -3283,19 +3464,31 @@
         "options": [
           {
             "en": "Hi, I'm just looking, thanks",
-            "pt": "Oi, estou só olhando, obrigado"
+            "pt": "Oi, estou só olhando, obrigado",
+            "slots": {
+              "greeting": "Hi, I'm just looking, thanks"
+            }
           },
           {
             "en": "Yes, I'm looking for a dress",
-            "pt": "Sim, estou procurando um vestido"
+            "pt": "Sim, estou procurando um vestido",
+            "slots": {
+              "greeting": "Yes, I'm looking for a dress"
+            }
           },
           {
             "en": "Can you help me find something?",
-            "pt": "Pode me ajudar a encontrar algo?"
+            "pt": "Pode me ajudar a encontrar algo?",
+            "slots": {
+              "greeting": "Can you help me find something?"
+            }
           },
           {
             "en": "Where are the jeans?",
-            "pt": "Onde ficam os jeans?"
+            "pt": "Onde ficam os jeans?",
+            "slots": {
+              "greeting": "Where are the jeans?"
+            }
           }
         ],
         "practice_prompt": {
@@ -3327,19 +3520,31 @@
         "options": [
           {
             "en": "Do you have this in a medium?",
-            "pt": "Vocês têm isso em tamanho M?"
+            "pt": "Vocês têm isso em tamanho M?",
+            "slots": {
+              "size": "Do you have this in a medium?"
+            }
           },
           {
             "en": "What sizes do you have?",
-            "pt": "Quais tamanhos vocês têm?"
+            "pt": "Quais tamanhos vocês têm?",
+            "slots": {
+              "size": "What sizes do you have?"
+            }
           },
           {
             "en": "I'm a size 8",
-            "pt": "Eu uso tamanho 38"
+            "pt": "Eu uso tamanho 38",
+            "slots": {
+              "size": "I'm a size 8"
+            }
           },
           {
             "en": "Do you have a bigger size?",
-            "pt": "Vocês têm um tamanho maior?"
+            "pt": "Vocês têm um tamanho maior?",
+            "slots": {
+              "size": "Do you have a bigger size?"
+            }
           }
         ],
         "practice_prompt": {
@@ -3371,19 +3576,31 @@
         "options": [
           {
             "en": "Do you have this in black?",
-            "pt": "Vocês têm isso em preto?"
+            "pt": "Vocês têm isso em preto?",
+            "slots": {
+              "color": "Do you have this in black?"
+            }
           },
           {
             "en": "What other colors do you have?",
-            "pt": "Quais outras cores vocês têm?"
+            "pt": "Quais outras cores vocês têm?",
+            "slots": {
+              "color": "What other colors do you have?"
+            }
           },
           {
             "en": "I prefer something darker",
-            "pt": "Prefiro algo mais escuro"
+            "pt": "Prefiro algo mais escuro",
+            "slots": {
+              "color": "I prefer something darker"
+            }
           },
           {
             "en": "Do you have any bright colors?",
-            "pt": "Vocês têm cores vivas?"
+            "pt": "Vocês têm cores vivas?",
+            "slots": {
+              "color": "Do you have any bright colors?"
+            }
           }
         ],
         "practice_prompt": {
@@ -3717,7 +3934,13 @@
     "conclusion": {
       "en": "Congratulations! You've completed the clothing store lesson! You now know how to: ask for sizes and colors, try on clothes, give feedback on fit, and make purchases. You're ready to shop for clothes with confidence!",
       "pt": "Parabéns! Você completou a aula de loja de roupas! Agora você sabe como: perguntar sobre tamanhos e cores, experimentar roupas, dar feedback sobre o caimento e fazer compras. Você está pronto para comprar roupas com confiança!"
-    }
+    },
+    "composite_template": "{greeting} {size} {color}",
+    "composite_layers": [
+      1,
+      2,
+      3
+    ]
   },
   "job_interview": {
     "id": "job_interview",
@@ -4648,19 +4871,31 @@
         "options": [
           {
             "en": "Hi, I need some medication",
-            "pt": "Oi, preciso de um medicamento"
+            "pt": "Oi, preciso de um medicamento",
+            "slots": {
+              "greeting": "Hi, I need some medication"
+            }
           },
           {
             "en": "Good morning, can you help me?",
-            "pt": "Bom dia, pode me ajudar?"
+            "pt": "Bom dia, pode me ajudar?",
+            "slots": {
+              "greeting": "Good morning, can you help me?"
+            }
           },
           {
             "en": "I have a prescription to fill",
-            "pt": "Tenho uma receita para aviar"
+            "pt": "Tenho uma receita para aviar",
+            "slots": {
+              "greeting": "I have a prescription to fill"
+            }
           },
           {
             "en": "Where can I find pain relievers?",
-            "pt": "Onde posso encontrar analgésicos?"
+            "pt": "Onde posso encontrar analgésicos?",
+            "slots": {
+              "greeting": "Where can I find pain relievers?"
+            }
           }
         ],
         "practice_prompt": {
@@ -4692,19 +4927,31 @@
         "options": [
           {
             "en": "I have a headache",
-            "pt": "Estou com dor de cabeça"
+            "pt": "Estou com dor de cabeça",
+            "slots": {
+              "symptom": "I have a headache"
+            }
           },
           {
             "en": "I have a cold",
-            "pt": "Estou resfriado"
+            "pt": "Estou resfriado",
+            "slots": {
+              "symptom": "I have a cold"
+            }
           },
           {
             "en": "I have an upset stomach",
-            "pt": "Estou com dor de estômago"
+            "pt": "Estou com dor de estômago",
+            "slots": {
+              "symptom": "I have an upset stomach"
+            }
           },
           {
             "en": "I have allergies",
-            "pt": "Tenho alergias"
+            "pt": "Tenho alergias",
+            "slots": {
+              "symptom": "I have allergies"
+            }
           }
         ],
         "practice_prompt": {
@@ -4736,19 +4983,31 @@
         "options": [
           {
             "en": "What do you recommend for this?",
-            "pt": "O que você recomenda para isso?"
+            "pt": "O que você recomenda para isso?",
+            "slots": {
+              "recommendation": "What do you recommend for this?"
+            }
           },
           {
             "en": "Is there something without a prescription?",
-            "pt": "Tem algo sem receita?"
+            "pt": "Tem algo sem receita?",
+            "slots": {
+              "recommendation": "Is there something without a prescription?"
+            }
           },
           {
             "en": "Which one works faster?",
-            "pt": "Qual funciona mais rápido?"
+            "pt": "Qual funciona mais rápido?",
+            "slots": {
+              "recommendation": "Which one works faster?"
+            }
           },
           {
             "en": "Do you have a generic version?",
-            "pt": "Vocês têm uma versão genérica?"
+            "pt": "Vocês têm uma versão genérica?",
+            "slots": {
+              "recommendation": "Do you have a generic version?"
+            }
           }
         ],
         "practice_prompt": {
@@ -5083,7 +5342,13 @@
     "conclusion": {
       "en": "Congratulations! You've completed the pharmacy lesson! You now know how to: describe symptoms, ask for recommendations, understand dosage, and ask about side effects. You're ready to visit any pharmacy!",
       "pt": "Parabéns! Você completou a aula de farmácia! Agora você sabe como: descrever sintomas, pedir recomendações, entender dosagem e perguntar sobre efeitos colaterais. Você está pronto para visitar qualquer farmácia!"
-    }
+    },
+    "composite_template": "{greeting} {symptom} {recommendation}",
+    "composite_layers": [
+      1,
+      2,
+      3
+    ]
   },
   "train_station": {
     "id": "train_station",
@@ -5104,19 +5369,31 @@
         "options": [
           {
             "en": "I'd like a ticket to London, please",
-            "pt": "Gostaria de uma passagem para Londres, por favor"
+            "pt": "Gostaria de uma passagem para Londres, por favor",
+            "slots": {
+              "dest": "I'd like a ticket to London, please"
+            }
           },
           {
             "en": "How much is a round-trip ticket?",
-            "pt": "Quanto custa uma passagem de ida e volta?"
+            "pt": "Quanto custa uma passagem de ida e volta?",
+            "slots": {
+              "dest": "How much is a round-trip ticket?"
+            }
           },
           {
             "en": "When is the next train to Paris?",
-            "pt": "Quando é o próximo trem para Paris?"
+            "pt": "Quando é o próximo trem para Paris?",
+            "slots": {
+              "dest": "When is the next train to Paris?"
+            }
           },
           {
             "en": "One ticket to Manchester, please",
-            "pt": "Uma passagem para Manchester, por favor"
+            "pt": "Uma passagem para Manchester, por favor",
+            "slots": {
+              "dest": "One ticket to Manchester, please"
+            }
           }
         ],
         "practice_prompt": {
@@ -5148,19 +5425,31 @@
         "options": [
           {
             "en": "One-way, please",
-            "pt": "Só ida, por favor"
+            "pt": "Só ida, por favor",
+            "slots": {
+              "ticket": "One-way, please"
+            }
           },
           {
             "en": "Round-trip, please",
-            "pt": "Ida e volta, por favor"
+            "pt": "Ida e volta, por favor",
+            "slots": {
+              "ticket": "Round-trip, please"
+            }
           },
           {
             "en": "First class, please",
-            "pt": "Primeira classe, por favor"
+            "pt": "Primeira classe, por favor",
+            "slots": {
+              "ticket": "First class, please"
+            }
           },
           {
             "en": "Standard class is fine",
-            "pt": "Classe padrão está bom"
+            "pt": "Classe padrão está bom",
+            "slots": {
+              "ticket": "Standard class is fine"
+            }
           }
         ],
         "practice_prompt": {
@@ -5192,19 +5481,31 @@
         "options": [
           {
             "en": "What time does the train leave?",
-            "pt": "Que horas o trem parte?"
+            "pt": "Que horas o trem parte?",
+            "slots": {
+              "time": "What time does the train leave?"
+            }
           },
           {
             "en": "How long is the journey?",
-            "pt": "Quanto tempo dura a viagem?"
+            "pt": "Quanto tempo dura a viagem?",
+            "slots": {
+              "time": "How long is the journey?"
+            }
           },
           {
             "en": "What time does it arrive?",
-            "pt": "Que horas ele chega?"
+            "pt": "Que horas ele chega?",
+            "slots": {
+              "time": "What time does it arrive?"
+            }
           },
           {
             "en": "Are there any express trains?",
-            "pt": "Há trens expressos?"
+            "pt": "Há trens expressos?",
+            "slots": {
+              "time": "Are there any express trains?"
+            }
           }
         ],
         "practice_prompt": {
@@ -5538,7 +5839,13 @@
     "conclusion": {
       "en": "Congratulations! You've completed the train station lesson! You now know how to: buy tickets, ask about schedules, find your platform, and navigate the train. You're ready to travel by train!",
       "pt": "Parabéns! Você completou a aula de estação de trem! Agora você sabe como: comprar passagens, perguntar sobre horários, encontrar sua plataforma e navegar no trem. Você está pronto para viajar de trem!"
-    }
+    },
+    "composite_template": "{dest} {ticket} {time}",
+    "composite_layers": [
+      1,
+      2,
+      3
+    ]
   },
   "bus_stop": {
     "id": "bus_stop",
@@ -5559,19 +5866,31 @@
         "options": [
           {
             "en": "Excuse me, does this bus go to downtown?",
-            "pt": "Com licença, esse ônibus vai para o centro?"
+            "pt": "Com licença, esse ônibus vai para o centro?",
+            "slots": {
+              "route": "Excuse me, does this bus go to downtown?"
+            }
           },
           {
             "en": "Which bus goes to the airport?",
-            "pt": "Qual ônibus vai para o aeroporto?"
+            "pt": "Qual ônibus vai para o aeroporto?",
+            "slots": {
+              "route": "Which bus goes to the airport?"
+            }
           },
           {
             "en": "When is the next bus?",
-            "pt": "Quando é o próximo ônibus?"
+            "pt": "Quando é o próximo ônibus?",
+            "slots": {
+              "route": "When is the next bus?"
+            }
           },
           {
             "en": "Is this the right stop for bus 42?",
-            "pt": "Este é o ponto certo para o ônibus 42?"
+            "pt": "Este é o ponto certo para o ônibus 42?",
+            "slots": {
+              "route": "Is this the right stop for bus 42?"
+            }
           }
         ],
         "practice_prompt": {
@@ -5603,19 +5922,31 @@
         "options": [
           {
             "en": "How much is the fare?",
-            "pt": "Quanto custa a passagem?"
+            "pt": "Quanto custa a passagem?",
+            "slots": {
+              "ticket": "How much is the fare?"
+            }
           },
           {
             "en": "Can I pay with a card?",
-            "pt": "Posso pagar com cartão?"
+            "pt": "Posso pagar com cartão?",
+            "slots": {
+              "ticket": "Can I pay with a card?"
+            }
           },
           {
             "en": "I need a day pass, please",
-            "pt": "Preciso de um passe diário, por favor"
+            "pt": "Preciso de um passe diário, por favor",
+            "slots": {
+              "ticket": "I need a day pass, please"
+            }
           },
           {
             "en": "Do you have change for a $20?",
-            "pt": "Você tem troco para $20?"
+            "pt": "Você tem troco para $20?",
+            "slots": {
+              "ticket": "Do you have change for a $20?"
+            }
           }
         ],
         "practice_prompt": {
@@ -5647,19 +5978,31 @@
         "options": [
           {
             "en": "Could you tell me when we reach Main Street?",
-            "pt": "Poderia me avisar quando chegarmos na Main Street?"
+            "pt": "Poderia me avisar quando chegarmos na Main Street?",
+            "slots": {
+              "schedule": "Could you tell me when we reach Main Street?"
+            }
           },
           {
             "en": "How many stops until the museum?",
-            "pt": "Quantas paradas até o museu?"
+            "pt": "Quantas paradas até o museu?",
+            "slots": {
+              "schedule": "How many stops until the museum?"
+            }
           },
           {
             "en": "Is the next stop the train station?",
-            "pt": "A próxima parada é a estação de trem?"
+            "pt": "A próxima parada é a estação de trem?",
+            "slots": {
+              "schedule": "Is the next stop the train station?"
+            }
           },
           {
             "en": "Where should I get off for the hospital?",
-            "pt": "Onde devo descer para o hospital?"
+            "pt": "Onde devo descer para o hospital?",
+            "slots": {
+              "schedule": "Where should I get off for the hospital?"
+            }
           }
         ],
         "practice_prompt": {
@@ -5993,7 +6336,13 @@
     "conclusion": {
       "en": "Congratulations! You've completed the bus stop lesson! You now know how to: ask about buses, pay the fare, find your stop, and communicate on the bus. You're ready to take any bus!",
       "pt": "Parabéns! Você completou a aula de ponto de ônibus! Agora você sabe como: perguntar sobre ônibus, pagar a passagem, encontrar sua parada e se comunicar no ônibus. Você está pronto para pegar qualquer ônibus!"
-    }
+    },
+    "composite_template": "{route} {ticket} {schedule}",
+    "composite_layers": [
+      1,
+      2,
+      3
+    ]
   },
   "renting_car": {
     "id": "renting_car",
@@ -6014,19 +6363,31 @@
         "options": [
           {
             "en": "Hi, I have a reservation",
-            "pt": "Oi, tenho uma reserva"
+            "pt": "Oi, tenho uma reserva",
+            "slots": {
+              "greeting": "Hi, I have a reservation"
+            }
           },
           {
             "en": "I'd like to rent a car for three days",
-            "pt": "Gostaria de alugar um carro por três dias"
+            "pt": "Gostaria de alugar um carro por três dias",
+            "slots": {
+              "greeting": "I'd like to rent a car for three days"
+            }
           },
           {
             "en": "What cars do you have available?",
-            "pt": "Quais carros vocês têm disponíveis?"
+            "pt": "Quais carros vocês têm disponíveis?",
+            "slots": {
+              "greeting": "What cars do you have available?"
+            }
           },
           {
             "en": "How much is it per day?",
-            "pt": "Quanto custa por dia?"
+            "pt": "Quanto custa por dia?",
+            "slots": {
+              "greeting": "How much is it per day?"
+            }
           }
         ],
         "practice_prompt": {
@@ -6058,19 +6419,31 @@
         "options": [
           {
             "en": "I'd like a compact car",
-            "pt": "Gostaria de um carro compacto"
+            "pt": "Gostaria de um carro compacto",
+            "slots": {
+              "car": "I'd like a compact car"
+            }
           },
           {
             "en": "Do you have an SUV?",
-            "pt": "Vocês têm um SUV?"
+            "pt": "Vocês têm um SUV?",
+            "slots": {
+              "car": "Do you have an SUV?"
+            }
           },
           {
             "en": "I need an automatic transmission",
-            "pt": "Preciso de câmbio automático"
+            "pt": "Preciso de câmbio automático",
+            "slots": {
+              "car": "I need an automatic transmission"
+            }
           },
           {
             "en": "What's the most fuel-efficient option?",
-            "pt": "Qual é a opção mais econômica?"
+            "pt": "Qual é a opção mais econômica?",
+            "slots": {
+              "car": "What's the most fuel-efficient option?"
+            }
           }
         ],
         "practice_prompt": {
@@ -6102,19 +6475,31 @@
         "options": [
           {
             "en": "What insurance options do you have?",
-            "pt": "Quais opções de seguro vocês têm?"
+            "pt": "Quais opções de seguro vocês têm?",
+            "slots": {
+              "duration": "What insurance options do you have?"
+            }
           },
           {
             "en": "I'll take the full coverage",
-            "pt": "Vou querer a cobertura completa"
+            "pt": "Vou querer a cobertura completa",
+            "slots": {
+              "duration": "I'll take the full coverage"
+            }
           },
           {
             "en": "Is basic insurance included?",
-            "pt": "O seguro básico está incluído?"
+            "pt": "O seguro básico está incluído?",
+            "slots": {
+              "duration": "Is basic insurance included?"
+            }
           },
           {
             "en": "No extra insurance, thank you",
-            "pt": "Sem seguro extra, obrigado"
+            "pt": "Sem seguro extra, obrigado",
+            "slots": {
+              "duration": "No extra insurance, thank you"
+            }
           }
         ],
         "practice_prompt": {
@@ -6449,7 +6834,13 @@
     "conclusion": {
       "en": "Congratulations! You've completed the car rental lesson! You now know how to: reserve a car, choose insurance, ask about extras, and return the vehicle. You're ready to rent a car anywhere!",
       "pt": "Parabéns! Você completou a aula de aluguel de carro! Agora você sabe como: reservar um carro, escolher seguro, perguntar sobre extras e devolver o veículo. Você está pronto para alugar um carro em qualquer lugar!"
-    }
+    },
+    "composite_template": "{greeting} {car} {duration}",
+    "composite_layers": [
+      1,
+      2,
+      3
+    ]
   },
   "bakery": {
     "id": "bakery",
@@ -6470,19 +6861,31 @@
         "options": [
           {
             "en": "Good morning! What's fresh today?",
-            "pt": "Bom dia! O que está fresco hoje?"
+            "pt": "Bom dia! O que está fresco hoje?",
+            "slots": {
+              "greeting": "Good morning! What's fresh today?"
+            }
           },
           {
             "en": "Hi, I'd like some bread, please",
-            "pt": "Oi, gostaria de pão, por favor"
+            "pt": "Oi, gostaria de pão, por favor",
+            "slots": {
+              "greeting": "Hi, I'd like some bread, please"
+            }
           },
           {
             "en": "Hello, do you have croissants?",
-            "pt": "Olá, vocês têm croissants?"
+            "pt": "Olá, vocês têm croissants?",
+            "slots": {
+              "greeting": "Hello, do you have croissants?"
+            }
           },
           {
             "en": "What do you recommend?",
-            "pt": "O que você recomenda?"
+            "pt": "O que você recomenda?",
+            "slots": {
+              "greeting": "What do you recommend?"
+            }
           }
         ],
         "practice_prompt": {
@@ -6514,19 +6917,31 @@
         "options": [
           {
             "en": "I'll have a loaf of sourdough",
-            "pt": "Vou querer um pão de fermentação natural"
+            "pt": "Vou querer um pão de fermentação natural",
+            "slots": {
+              "bread": "I'll have a loaf of sourdough"
+            }
           },
           {
             "en": "Two baguettes, please",
-            "pt": "Duas baguetes, por favor"
+            "pt": "Duas baguetes, por favor",
+            "slots": {
+              "bread": "Two baguettes, please"
+            }
           },
           {
             "en": "Can I have that whole wheat bread?",
-            "pt": "Posso pedir aquele pão integral?"
+            "pt": "Posso pedir aquele pão integral?",
+            "slots": {
+              "bread": "Can I have that whole wheat bread?"
+            }
           },
           {
             "en": "I'd like a dozen rolls",
-            "pt": "Gostaria de uma dúzia de pãezinhos"
+            "pt": "Gostaria de uma dúzia de pãezinhos",
+            "slots": {
+              "bread": "I'd like a dozen rolls"
+            }
           }
         ],
         "practice_prompt": {
@@ -6558,19 +6973,31 @@
         "options": [
           {
             "en": "I'd like two chocolate croissants",
-            "pt": "Gostaria de dois croissants de chocolate"
+            "pt": "Gostaria de dois croissants de chocolate",
+            "slots": {
+              "pastry": "I'd like two chocolate croissants"
+            }
           },
           {
             "en": "Can I have that cinnamon roll?",
-            "pt": "Posso pedir aquele pão de canela?"
+            "pt": "Posso pedir aquele pão de canela?",
+            "slots": {
+              "pastry": "Can I have that cinnamon roll?"
+            }
           },
           {
             "en": "One apple turnover, please",
-            "pt": "Um folhado de maçã, por favor"
+            "pt": "Um folhado de maçã, por favor",
+            "slots": {
+              "pastry": "One apple turnover, please"
+            }
           },
           {
             "en": "What's in this pastry?",
-            "pt": "O que tem nesse doce?"
+            "pt": "O que tem nesse doce?",
+            "slots": {
+              "pastry": "What's in this pastry?"
+            }
           }
         ],
         "practice_prompt": {
@@ -6904,7 +7331,13 @@
     "conclusion": {
       "en": "Congratulations! You've completed the bakery lesson! You now know how to: order bread and pastries, ask about ingredients, and make special requests. You're ready to visit any bakery!",
       "pt": "Parabéns! Você completou a aula de padaria! Agora você sabe como: pedir pães e doces, perguntar sobre ingredientes e fazer pedidos especiais. Você está pronto para visitar qualquer padaria!"
-    }
+    },
+    "composite_template": "{greeting} {bread} {pastry}",
+    "composite_layers": [
+      1,
+      2,
+      3
+    ]
   },
   "pizza_delivery": {
     "id": "pizza_delivery",
@@ -6925,19 +7358,31 @@
         "options": [
           {
             "en": "Hi, I'd like to order a pizza for delivery",
-            "pt": "Oi, gostaria de pedir uma pizza para entrega"
+            "pt": "Oi, gostaria de pedir uma pizza para entrega",
+            "slots": {
+              "order": "Hi, I'd like to order a pizza for delivery"
+            }
           },
           {
             "en": "Hello, do you deliver to Main Street?",
-            "pt": "Olá, vocês entregam na Main Street?"
+            "pt": "Olá, vocês entregam na Main Street?",
+            "slots": {
+              "order": "Hello, do you deliver to Main Street?"
+            }
           },
           {
             "en": "Is this the pizza place?",
-            "pt": "É a pizzaria?"
+            "pt": "É a pizzaria?",
+            "slots": {
+              "order": "Is this the pizza place?"
+            }
           },
           {
             "en": "What are your specials today?",
-            "pt": "Quais são as promoções de hoje?"
+            "pt": "Quais são as promoções de hoje?",
+            "slots": {
+              "order": "What are your specials today?"
+            }
           }
         ],
         "practice_prompt": {
@@ -6969,19 +7414,31 @@
         "options": [
           {
             "en": "I'd like a large pepperoni pizza",
-            "pt": "Gostaria de uma pizza grande de pepperoni"
+            "pt": "Gostaria de uma pizza grande de pepperoni",
+            "slots": {
+              "pizza": "I'd like a large pepperoni pizza"
+            }
           },
           {
             "en": "Can I have a medium margherita?",
-            "pt": "Posso pedir uma margherita média?"
+            "pt": "Posso pedir uma margherita média?",
+            "slots": {
+              "pizza": "Can I have a medium margherita?"
+            }
           },
           {
             "en": "What toppings do you have?",
-            "pt": "Quais coberturas vocês têm?"
+            "pt": "Quais coberturas vocês têm?",
+            "slots": {
+              "pizza": "What toppings do you have?"
+            }
           },
           {
             "en": "I'll have a Hawaiian pizza",
-            "pt": "Vou querer uma pizza havaiana"
+            "pt": "Vou querer uma pizza havaiana",
+            "slots": {
+              "pizza": "I'll have a Hawaiian pizza"
+            }
           }
         ],
         "practice_prompt": {
@@ -7013,19 +7470,31 @@
         "options": [
           {
             "en": "Can I add extra cheese?",
-            "pt": "Posso adicionar queijo extra?"
+            "pt": "Posso adicionar queijo extra?",
+            "slots": {
+              "extras": "Can I add extra cheese?"
+            }
           },
           {
             "en": "No onions, please",
-            "pt": "Sem cebola, por favor"
+            "pt": "Sem cebola, por favor",
+            "slots": {
+              "extras": "No onions, please"
+            }
           },
           {
             "en": "Can I have half pepperoni, half mushroom?",
-            "pt": "Posso pedir metade pepperoni, metade cogumelo?"
+            "pt": "Posso pedir metade pepperoni, metade cogumelo?",
+            "slots": {
+              "extras": "Can I have half pepperoni, half mushroom?"
+            }
           },
           {
             "en": "I'd like a thin crust",
-            "pt": "Gostaria de massa fina"
+            "pt": "Gostaria de massa fina",
+            "slots": {
+              "extras": "I'd like a thin crust"
+            }
           }
         ],
         "practice_prompt": {
@@ -7360,7 +7829,13 @@
     "conclusion": {
       "en": "Congratulations! You've completed the pizza delivery lesson! You now know how to: order pizza, customize your order, give your address, and receive the delivery. You're ready to order pizza anytime!",
       "pt": "Parabéns! Você completou a aula de delivery de pizza! Agora você sabe como: pedir pizza, personalizar seu pedido, dar seu endereço e receber a entrega. Você está pronto para pedir pizza a qualquer momento!"
-    }
+    },
+    "composite_template": "{order} {pizza} {extras}",
+    "composite_layers": [
+      1,
+      2,
+      3
+    ]
   },
   "hair_salon": {
     "id": "hair_salon",
@@ -7381,19 +7856,31 @@
         "options": [
           {
             "en": "Hi, I have an appointment at 3 PM",
-            "pt": "Oi, tenho hora marcada às 15h"
+            "pt": "Oi, tenho hora marcada às 15h",
+            "slots": {
+              "greeting": "Hi, I have an appointment at 3 PM"
+            }
           },
           {
             "en": "Do you take walk-ins?",
-            "pt": "Vocês atendem sem hora marcada?"
+            "pt": "Vocês atendem sem hora marcada?",
+            "slots": {
+              "greeting": "Do you take walk-ins?"
+            }
           },
           {
             "en": "I'd like to book an appointment",
-            "pt": "Gostaria de marcar um horário"
+            "pt": "Gostaria de marcar um horário",
+            "slots": {
+              "greeting": "I'd like to book an appointment"
+            }
           },
           {
             "en": "How long is the wait?",
-            "pt": "Quanto tempo de espera?"
+            "pt": "Quanto tempo de espera?",
+            "slots": {
+              "greeting": "How long is the wait?"
+            }
           }
         ],
         "practice_prompt": {
@@ -7425,19 +7912,31 @@
         "options": [
           {
             "en": "I'd like a trim, please",
-            "pt": "Gostaria de aparar, por favor"
+            "pt": "Gostaria de aparar, por favor",
+            "slots": {
+              "service": "I'd like a trim, please"
+            }
           },
           {
             "en": "I want to cut it short",
-            "pt": "Quero cortar curto"
+            "pt": "Quero cortar curto",
+            "slots": {
+              "service": "I want to cut it short"
+            }
           },
           {
             "en": "Just a little off the ends",
-            "pt": "Só um pouco nas pontas"
+            "pt": "Só um pouco nas pontas",
+            "slots": {
+              "service": "Just a little off the ends"
+            }
           },
           {
             "en": "I'd like layers",
-            "pt": "Gostaria de camadas"
+            "pt": "Gostaria de camadas",
+            "slots": {
+              "service": "I'd like layers"
+            }
           }
         ],
         "practice_prompt": {
@@ -7469,19 +7968,31 @@
         "options": [
           {
             "en": "I have a picture of what I want",
-            "pt": "Tenho uma foto do que eu quero"
+            "pt": "Tenho uma foto do que eu quero",
+            "slots": {
+              "style": "I have a picture of what I want"
+            }
           },
           {
             "en": "Something like this, please",
-            "pt": "Algo assim, por favor"
+            "pt": "Algo assim, por favor",
+            "slots": {
+              "style": "Something like this, please"
+            }
           },
           {
             "en": "Can you do this style?",
-            "pt": "Você consegue fazer esse estilo?"
+            "pt": "Você consegue fazer esse estilo?",
+            "slots": {
+              "style": "Can you do this style?"
+            }
           },
           {
             "en": "I saw this on Instagram",
-            "pt": "Vi isso no Instagram"
+            "pt": "Vi isso no Instagram",
+            "slots": {
+              "style": "I saw this on Instagram"
+            }
           }
         ],
         "practice_prompt": {
@@ -7816,7 +8327,13 @@
     "conclusion": {
       "en": "Congratulations! You've completed the hair salon lesson! You now know how to: describe what you want, ask about services, communicate during the haircut, and pay. You're ready for your next salon visit!",
       "pt": "Parabéns! Você completou a aula de salão de cabeleireiro! Agora você sabe como: descrever o que você quer, perguntar sobre serviços, comunicar-se durante o corte e pagar. Você está pronto para sua próxima visita ao salão!"
-    }
+    },
+    "composite_template": "{greeting} {service} {style}",
+    "composite_layers": [
+      1,
+      2,
+      3
+    ]
   },
   "gas_station": {
     "id": "gas_station",
@@ -7837,19 +8354,31 @@
         "options": [
           {
             "en": "Fill it up, please",
-            "pt": "Tanque cheio, por favor"
+            "pt": "Tanque cheio, por favor",
+            "slots": {
+              "greeting": "Fill it up, please"
+            }
           },
           {
             "en": "Twenty dollars of regular, please",
-            "pt": "Vinte dólares de gasolina comum, por favor"
+            "pt": "Vinte dólares de gasolina comum, por favor",
+            "slots": {
+              "greeting": "Twenty dollars of regular, please"
+            }
           },
           {
             "en": "Which pump has diesel?",
-            "pt": "Qual bomba tem diesel?"
+            "pt": "Qual bomba tem diesel?",
+            "slots": {
+              "greeting": "Which pump has diesel?"
+            }
           },
           {
             "en": "Is this self-service?",
-            "pt": "É autoatendimento?"
+            "pt": "É autoatendimento?",
+            "slots": {
+              "greeting": "Is this self-service?"
+            }
           }
         ],
         "practice_prompt": {
@@ -7881,19 +8410,31 @@
         "options": [
           {
             "en": "Regular unleaded, please",
-            "pt": "Gasolina comum sem chumbo, por favor"
+            "pt": "Gasolina comum sem chumbo, por favor",
+            "slots": {
+              "fuel": "Regular unleaded, please"
+            }
           },
           {
             "en": "Premium gas, please",
-            "pt": "Gasolina premium, por favor"
+            "pt": "Gasolina premium, por favor",
+            "slots": {
+              "fuel": "Premium gas, please"
+            }
           },
           {
             "en": "Diesel, please",
-            "pt": "Diesel, por favor"
+            "pt": "Diesel, por favor",
+            "slots": {
+              "fuel": "Diesel, please"
+            }
           },
           {
             "en": "What's the difference in price?",
-            "pt": "Qual a diferença de preço?"
+            "pt": "Qual a diferença de preço?",
+            "slots": {
+              "fuel": "What's the difference in price?"
+            }
           }
         ],
         "practice_prompt": {
@@ -7925,19 +8466,31 @@
         "options": [
           {
             "en": "Can you check the oil?",
-            "pt": "Pode verificar o óleo?"
+            "pt": "Pode verificar o óleo?",
+            "slots": {
+              "service": "Can you check the oil?"
+            }
           },
           {
             "en": "Can you check the tire pressure?",
-            "pt": "Pode verificar a pressão dos pneus?"
+            "pt": "Pode verificar a pressão dos pneus?",
+            "slots": {
+              "service": "Can you check the tire pressure?"
+            }
           },
           {
             "en": "Where is the air pump?",
-            "pt": "Onde fica a bomba de ar?"
+            "pt": "Onde fica a bomba de ar?",
+            "slots": {
+              "service": "Where is the air pump?"
+            }
           },
           {
             "en": "Where can I wash my car?",
-            "pt": "Onde posso lavar meu carro?"
+            "pt": "Onde posso lavar meu carro?",
+            "slots": {
+              "service": "Where can I wash my car?"
+            }
           }
         ],
         "practice_prompt": {
@@ -8271,7 +8824,13 @@
     "conclusion": {
       "en": "Congratulations! You've completed the gas station lesson! You now know how to: get gas, ask about services, use the convenience store, and ask for directions. You're ready for your road trip!",
       "pt": "Parabéns! Você completou a aula de posto de gasolina! Agora você sabe como: abastecer, perguntar sobre serviços, usar a loja de conveniência e pedir direções. Você está pronto para sua viagem!"
-    }
+    },
+    "composite_template": "{greeting} {fuel} {service}",
+    "composite_layers": [
+      1,
+      2,
+      3
+    ]
   },
   "tech_support": {
     "id": "tech_support",
@@ -12389,19 +12948,31 @@
         "options": [
           {
             "en": "Hi, I'm looking for some flowers",
-            "pt": "Oi, estou procurando flores"
+            "pt": "Oi, estou procurando flores",
+            "slots": {
+              "occasion": "Hi, I'm looking for some flowers"
+            }
           },
           {
             "en": "I'd like to buy a bouquet",
-            "pt": "Gostaria de comprar um buquê"
+            "pt": "Gostaria de comprar um buquê",
+            "slots": {
+              "occasion": "I'd like to buy a bouquet"
+            }
           },
           {
             "en": "What flowers do you recommend?",
-            "pt": "Quais flores você recomenda?"
+            "pt": "Quais flores você recomenda?",
+            "slots": {
+              "occasion": "What flowers do you recommend?"
+            }
           },
           {
             "en": "These flowers are beautiful!",
-            "pt": "Essas flores são lindas!"
+            "pt": "Essas flores são lindas!",
+            "slots": {
+              "occasion": "These flowers are beautiful!"
+            }
           }
         ],
         "practice_prompt": {
@@ -12433,19 +13004,31 @@
         "options": [
           {
             "en": "I'd like a dozen red roses",
-            "pt": "Gostaria de uma dúzia de rosas vermelhas"
+            "pt": "Gostaria de uma dúzia de rosas vermelhas",
+            "slots": {
+              "flowers": "I'd like a dozen red roses"
+            }
           },
           {
             "en": "Can I have some sunflowers?",
-            "pt": "Posso pedir alguns girassóis?"
+            "pt": "Posso pedir alguns girassóis?",
+            "slots": {
+              "flowers": "Can I have some sunflowers?"
+            }
           },
           {
             "en": "I want something colorful",
-            "pt": "Quero algo colorido"
+            "pt": "Quero algo colorido",
+            "slots": {
+              "flowers": "I want something colorful"
+            }
           },
           {
             "en": "What's in season right now?",
-            "pt": "O que está na estação agora?"
+            "pt": "O que está na estação agora?",
+            "slots": {
+              "flowers": "What's in season right now?"
+            }
           }
         ],
         "practice_prompt": {
@@ -12477,19 +13060,31 @@
         "options": [
           {
             "en": "It's for my wife's birthday",
-            "pt": "É para o aniversário da minha esposa"
+            "pt": "É para o aniversário da minha esposa",
+            "slots": {
+              "arrangement": "It's for my wife's birthday"
+            }
           },
           {
             "en": "It's an anniversary gift",
-            "pt": "É um presente de aniversário de casamento"
+            "pt": "É um presente de aniversário de casamento",
+            "slots": {
+              "arrangement": "It's an anniversary gift"
+            }
           },
           {
             "en": "I want to apologize to someone",
-            "pt": "Quero pedir desculpas a alguém"
+            "pt": "Quero pedir desculpas a alguém",
+            "slots": {
+              "arrangement": "I want to apologize to someone"
+            }
           },
           {
             "en": "Just because! No special reason",
-            "pt": "Só porque sim! Sem motivo especial"
+            "pt": "Só porque sim! Sem motivo especial",
+            "slots": {
+              "arrangement": "Just because! No special reason"
+            }
           }
         ],
         "practice_prompt": {
@@ -12824,7 +13419,13 @@
     "conclusion": {
       "en": "Congratulations! You've completed the flower shop lesson! You now know how to: choose flowers, explain the occasion, customize arrangements, and arrange delivery. You're ready to buy flowers for any occasion!",
       "pt": "Parabéns! Você completou a aula de floricultura! Agora você sabe como: escolher flores, explicar a ocasião, personalizar arranjos e organizar entrega. Você está pronto para comprar flores para qualquer ocasião!"
-    }
+    },
+    "composite_template": "{occasion} {flowers} {arrangement}",
+    "composite_layers": [
+      1,
+      2,
+      3
+    ]
   },
   "pet_shop": {
     "id": "pet_shop",
