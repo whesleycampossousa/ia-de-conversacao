@@ -86,66 +86,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const suggestionsPanel = document.getElementById('suggestions-panel');
     const suggestionsList = document.getElementById('suggestions-list');
 
-    // --- VOICE SELECTION LOGIC (Dynamically Injected) ---
-    let currentVoice = localStorage.getItem('preferred_voice') || 'female1';
-    const normalizedLessonLang = (lessonLang || '').toLowerCase();
-    const isPortugueseLesson = normalizedLessonLang === 'pt' || normalizedLessonLang === 'pt-br' || normalizedLessonLang === 'pt_br';
-
-    // Voice metadata shown in the selector per lesson language
-    const voiceDisplaySets = {
-        en: [
-            { id: 'female1', avatar: '👩', label: 'Sarah', description: 'Warm American accent' },
-            { id: 'female2', avatar: '👩‍🦰', label: 'Emma', description: 'Crisp US pronunciation' },
-            { id: 'male1', avatar: '👨', label: 'James', description: 'Natural US voice' }
-        ],
-        pt: [
-            { id: 'female1', avatar: '👩', label: 'Bruna', description: 'PT-BR natural & acolhedora' },
-            { id: 'female2', avatar: '👩‍🦰', label: 'Camila', description: 'PT-BR calorosa com clareza' },
-            { id: 'male1', avatar: '👨', label: 'Rafael', description: 'PT-BR voz grave confiante' }
-        ]
-    };
-
-    // Inject Voice Selector into voice-selection-step container
-    const voiceSelectionStep = document.getElementById('voice-selection-step');
-
-    // In structured lessons, voice is fixed (pre-generated Vivian audio).
-    // Voice selector only shown in free conversation mode.
+    // --- VOICE: Single voice (Chirp3-HD-Achernar) for all interactions ---
+    // In structured lessons, pre-generated audio is served from cache.
+    // In free conversation, TTS API generates with Achernar voice.
     const lessonVoice = isFreeConversation ? null : 'lesson';
     function getActiveVoice() {
-        return lessonVoice || currentVoice;
+        return lessonVoice || 'achernar';
     }
 
+    // Hide voice selector (single voice, no selection needed)
+    const voiceSelectionStep = document.getElementById('voice-selection-step');
     if (voiceSelectionStep) {
-        if (isFreeConversation) {
-            const displaySet = voiceDisplaySets[isPortugueseLesson ? 'pt' : 'en'];
-            const selectorHTML = `
-                <div style="margin-bottom: 10px; text-align: center;">
-                <div class="voice-label" style="color:rgba(255,255,255,0.7); margin-bottom:6px; font-size:0.75rem;">${isPortugueseLesson ? 'Selecione a voz' : 'Select voice'}</div>
-                    <div class="voice-selector-container" style="display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;">
-                        ${displaySet.map(option => `
-                            <div class="voice-option ${currentVoice === option.id ? 'selected' : ''}" data-voice="${option.id}" style="width: 60px; padding: 6px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; cursor: pointer; text-align: center;">
-                                <div class="voice-avatar" style="font-size: 1.2rem;">${option.avatar}</div>
-                                <div class="voice-name" style="font-size: 0.6rem; color: white;">${option.label}</div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-
-            voiceSelectionStep.innerHTML = selectorHTML;
-
-            voiceSelectionStep.querySelectorAll('.voice-option').forEach(opt => {
-                opt.addEventListener('click', () => {
-                    currentVoice = opt.dataset.voice;
-                    localStorage.setItem('preferred_voice', currentVoice);
-                    voiceSelectionStep.querySelectorAll('.voice-option').forEach(o => o.classList.remove('selected'));
-                    opt.classList.add('selected');
-                });
-            });
-        } else {
-            // Hide voice selector in structured lesson mode
-            voiceSelectionStep.style.display = 'none';
-        }
+        voiceSelectionStep.style.display = 'none';
     }
 
 
@@ -1022,9 +974,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let sessionStartTime = null;
     let currentSessionSeconds = 0;
     let totalUsedToday = 0;
-    const DAILY_LIMIT_SECONDS = 600; // 10 minutes
+    const WEEKEND_LIMIT_SECONDS = 2400; // 40 minutes (weekend only)
     let usageUpdateInterval = null;
-    let remainingSeconds = DAILY_LIMIT_SECONDS;
+    let remainingSeconds = WEEKEND_LIMIT_SECONDS;
     let isUsageLimitReached = false;
 
     // Initialize usage tracking from login response
@@ -1033,7 +985,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const usageData = JSON.parse(storedUsage);
             totalUsedToday = usageData.seconds_used || 0;
-            remainingSeconds = usageData.remaining_seconds || DAILY_LIMIT_SECONDS;
+            remainingSeconds = usageData.remaining_seconds || WEEKEND_LIMIT_SECONDS;
             isUsageLimitReached = remainingSeconds <= 0;
         } catch (e) {
             console.log('Failed to parse usage data:', e);

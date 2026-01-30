@@ -290,49 +290,69 @@ def validate_text_input(text, max_length=1000):
 
     return True, text
 
-# Daily usage limit helpers
-DAILY_LIMIT_SECONDS = 600  # 10 minutes
+# Weekend usage limit helpers (available Saturday-Sunday, 48h window)
+WEEKEND_LIMIT_SECONDS = 2400  # 40 minutes per weekend
 
-def get_current_date():
-    """Get current date in UTC as string"""
-    return datetime.utcnow().strftime('%Y-%m-%d')
+def is_weekend():
+    """Check if today is Saturday or Sunday (UTC)"""
+    return datetime.utcnow().weekday() in (5, 6)  # 5=Sat, 6=Sun
+
+def get_weekend_key():
+    """Get the Saturday date for the current weekend period.
+    Returns the Saturday date string if it's a weekend, None otherwise."""
+    now = datetime.utcnow()
+    weekday = now.weekday()
+    if weekday == 5:  # Saturday
+        return now.strftime('%Y-%m-%d')
+    elif weekday == 6:  # Sunday - use yesterday (Saturday)
+        saturday = now - timedelta(days=1)
+        return saturday.strftime('%Y-%m-%d')
+    return None
 
 def get_user_usage_data(email):
-    """Get or initialize usage data for user, reset if new day"""
-    current_date = get_current_date()
-    
+    """Get or initialize usage data for user, reset each weekend"""
+    weekend_key = get_weekend_key()
+
+    if weekend_key is None:
+        # Weekday - return empty data (will be blocked by check_usage_limit)
+        return {'date': None, 'seconds_used': 0, 'session_start': None}
+
     if email not in user_daily_usage:
         user_daily_usage[email] = {
-            'date': current_date,
+            'date': weekend_key,
             'seconds_used': 0,
             'session_start': None
         }
     else:
-        # Check if it's a new day - reset counter
-        if user_daily_usage[email]['date'] != current_date:
+        # Check if it's a new weekend - reset counter
+        if user_daily_usage[email]['date'] != weekend_key:
             user_daily_usage[email] = {
-                'date': current_date,
+                'date': weekend_key,
                 'seconds_used': 0,
                 'session_start': None
             }
-    
+
     return user_daily_usage[email]
 
 def get_remaining_seconds(email):
-    """Get remaining seconds for user today"""
+    """Get remaining seconds for user this weekend"""
+    if not is_weekend():
+        return 0
     usage_data = get_user_usage_data(email)
     used = usage_data['seconds_used']
-    remaining = max(0, DAILY_LIMIT_SECONDS - used)
+    remaining = max(0, WEEKEND_LIMIT_SECONDS - used)
     return remaining
 
 def track_usage_time(email, seconds):
-    """Add seconds to user's daily usage"""
+    """Add seconds to user's weekend usage"""
     usage_data = get_user_usage_data(email)
     usage_data['seconds_used'] += seconds
-    usage_data['seconds_used'] = min(usage_data['seconds_used'], DAILY_LIMIT_SECONDS)
+    usage_data['seconds_used'] = min(usage_data['seconds_used'], WEEKEND_LIMIT_SECONDS)
 
 def check_usage_limit(email):
-    """Check if user is within daily limit"""
+    """Check if user is within weekend limit"""
+    if not is_weekend():
+        return False
     remaining = get_remaining_seconds(email)
     return remaining > 0
 
@@ -550,8 +570,9 @@ def login():
             "usage": {
                 "remaining_seconds": remaining,
                 "seconds_used": usage_data['seconds_used'],
-                "daily_limit_seconds": DAILY_LIMIT_SECONDS,
-                "is_blocked": remaining <= 0
+                "weekend_limit_seconds": WEEKEND_LIMIT_SECONDS,
+                "is_blocked": remaining <= 0,
+                "is_weekend": is_weekend()
             }
         })
     except Exception as e:
@@ -598,9 +619,10 @@ def chat():
     if not is_local_request() and not check_usage_limit(user_email):
         remaining = get_remaining_seconds(user_email)
         return jsonify({
-            "error": "Daily practice limit reached",
-            "message": "You've used your 10 minutes for today. Come back tomorrow!",
-            "remaining_seconds": remaining
+            "error": "Weekend practice limit reached",
+            "message": "Practice is available on weekends only (Saturday-Sunday), 40 minutes per weekend." if not is_weekend() else "You've used your 40 minutes for this weekend. See you next Saturday!",
+            "remaining_seconds": remaining,
+            "is_weekend": is_weekend()
         }), 429
 
     data = request.json
@@ -709,14 +731,17 @@ Examples:
 - Coffee: "Would you like that hot or iced? Small, medium, or large?"
 - Restaurant: "Would you prefer a table by the window, or our quieter section?"
 
-CONVERSATION FLOW (CRITICAL):
-- ALWAYS end your response with a question to keep the conversation moving
-- Instead of statements like "I need X", ask "May I have X?"
-- Examples:
-  - WRONG: "I just need your credit card."
-  - RIGHT: "May I have your credit card, please?"
-  - WRONG: "Your room is ready."
-  - RIGHT: "Your room is ready. Shall I show you the way?"
+CONVERSATION FLOW (MOST CRITICAL RULE):
+- Your response MUST ALWAYS end with a question mark (?). NO EXCEPTIONS.
+- NEVER end with just a statement or affirmation. NEVER leave the customer with nothing to respond to.
+- The question must be RELEVANT to the current context and advance the interaction toward the goal.
+- You must LEAD the conversation by asking for the next piece of information needed.
+- WRONG: "I'd be happy to get you checked in." (dead end — no question!)
+- WRONG: "Sure, I can help with that." (dead end — no question!)
+- RIGHT: "I'd be happy to help with check-in. May I see your ID, please?"
+- RIGHT: "Sure! Would you like a window seat or an aisle seat?"
+- WRONG: "Is there anything else?" (too generic)
+- RIGHT: "Your room is on the 5th floor. Would you like help with your bags?"
 
 RECAST RULE (VERY IMPORTANT):
 If the user says something incorrect in English:
@@ -740,6 +765,14 @@ If the user questions the simulation or asks meta questions:
 - Reaffirm the role
 - Immediately return to the scenario
 Example: User: "This is a simulator, not a lesson." → You: "Exactly — I'm the barista. What else can I get for you?"
+
+RESPONSE LENGTH (CRITICAL):
+- Keep responses short: 1-2 sentences max (under 30 words).
+- Structure: brief reaction/confirmation + one question. Like a real person, not an interrogation.
+- WRONG (too robotic): "Window seat or aisle seat?"
+- RIGHT (natural): "Sure thing. Would you prefer a window seat or an aisle seat?"
+- WRONG (too long): "That's a great choice. The grilled chicken is one of our most popular dishes. It comes with a side of vegetables and rice. Would you like to add a drink to your order?"
+- RIGHT (natural): "Great choice, the grilled chicken. Would you like fries or salad with that?"
 
 FLOW CONTROL:
 - One question at a time
@@ -849,11 +882,21 @@ The student just said: "{user_text}"
 4. Do NOT correct valid alternatives! "doing great" and "doing well" are BOTH correct - don't "fix" one to the other.
 5. If their English is correct, just continue the conversation naturally WITHOUT corrections.
 
+### NO TECHNICAL GRAMMAR TERMS (CRITICAL)
+- NEVER use grammar terminology like: "first conditional", "zero conditional", "present perfect",
+  "past simple", "vowel sound", "subject-verb agreement", "auxiliary verb", "conjugation", etc.
+- Instead of explaining rules, just show the correct form naturally.
+- WRONG: "That's a good example of a first conditional!"
+- RIGHT: "Nice sentence! So, what will you do if it rains?"
+- WRONG: "Since 'apple' starts with a vowel sound, we use 'an'."
+- RIGHT: "Instead of 'a apple', say: 'an apple'. What kind of apple do you like?"
+- The student is learning by DOING, not by studying theory.
+
 ### HOW TO RESPOND
 - React to what they said and keep the conversation flowing.
-- If there's a REAL error, correct it: "Instead of <short snippet>, say: <corrected>."
+- If there's a REAL error, correct it briefly: "Instead of <short snippet>, say: <corrected>."
 - Speak in English (simple, natural, friendly).
-- 1-2 short sentences.
+- Keep responses SHORT: max 2 sentences, under 30 words total. Correction + question.
 - **MANDATORY RULE**: Your response MUST ALWAYS end with a QUESTION for the student. NEVER end with just a statement! The student needs to know what to respond.
 - suggested_words: ONLY when there is a REAL GRAMMAR ERROR; otherwise [].
 - must_retry: true ONLY if suggested_words is not empty; else false.
@@ -989,12 +1032,17 @@ Example: "Exactly — I'm the barista. What else can I get for you?"
 
 FLOW: One question at a time. Never repeat answered questions.
 
+RESPONSE LENGTH: 1-2 sentences max (under 30 words). Brief reaction + one question. Natural, not an interrogation.
+
 PROACTIVE SERVICE:
 - NEVER say "Is there anything else I can assist you with?"
 - ALWAYS offer 2-3 concrete options (e.g., "I can help with check-in, room service, or local recommendations.")
 
-CONVERSATION FLOW:
-- ALWAYS end with a question. Instead of "I need X", ask "May I have X?"
+CONVERSATION FLOW (MOST CRITICAL):
+- EVERY response MUST end with a question mark (?). NO EXCEPTIONS.
+- NEVER end with just a statement. Always ask a RELEVANT follow-up question.
+- WRONG: "I'd be happy to get you checked in." → RIGHT: "I'd be happy to help with check-in. May I see your ID?"
+- Lead the conversation toward the goal with specific, contextual questions.
 
 SIMPLE LANGUAGE: Use simple words. No phrasal verbs when a simpler word exists.
 "incidental charges" → "extra charges", "identification" → "ID", "beverage" → "drink".
@@ -1045,9 +1093,10 @@ Retorne apenas JSON: {{"pt": "...", "suggested_words": ["...","...","...","..."]
 The student just said: "{user_text}"
 
 Respond like a real conversation partner. Use simple English and avoid "lesson/grammar/exercise".
-1-2 short sentences (max ~16 words each), end with one question.
+NEVER use grammar terms (conditional, present perfect, vowel sound, etc). Just show the correct form.
+1-2 short sentences (max 30 words total), end with one question.
 If you correct, use: "Instead of <short snippet>, say: <corrected>." (max 4 words from the student).
-Do not repeat the full student sentence.
+Do not repeat the full student sentence. Do not explain grammar rules.
 suggested_words: 4 short words/phrases when there is a mistake or clear improvement; otherwise [].
 must_retry: true if suggested_words is not empty; else false.
 Return only JSON: {{"en": "...", "suggested_words": ["...","...","...","..."], "must_retry": true}}.
@@ -1380,9 +1429,10 @@ def free_conversation_action():
     if not is_local_request() and not check_usage_limit(user_email):
         remaining = get_remaining_seconds(user_email)
         return jsonify({
-            "error": "Daily practice limit reached",
-            "message": "You've used your 10 minutes for today. Come back tomorrow!",
-            "remaining_seconds": remaining
+            "error": "Weekend practice limit reached",
+            "message": "Practice is available on weekends only (Saturday-Sunday), 40 minutes per weekend." if not is_weekend() else "You've used your 40 minutes for this weekend. See you next Saturday!",
+            "remaining_seconds": remaining,
+            "is_weekend": is_weekend()
         }), 429
 
     data = request.json or {}
@@ -2179,12 +2229,12 @@ def convert_to_bilingual_ssml(text):
 
     def pt_segment(value):
         safe = escape_ssml(value)
-        return f'<voice name="pt-BR-Wavenet-C"><lang xml:lang="pt-BR">{safe}</lang></voice>'
+        return f'<voice name="pt-BR-Chirp3-HD-Achernar"><lang xml:lang="pt-BR">{safe}</lang></voice>'
 
     def en_segment(value):
         safe = escape_ssml(value)
         # Slightly slower English for clarity
-        return f'<voice name="en-US-Neural2-F"><lang xml:lang="en-US"><prosody rate="95%">{safe}</prosody></lang></voice>'
+        return f'<voice name="en-US-Chirp3-HD-Achernar"><lang xml:lang="en-US"><prosody rate="95%">{safe}</prosody></lang></voice>'
 
     switch_pause_ms = 250
 
@@ -2246,22 +2296,14 @@ def tts_endpoint():
         text = data.get('text')
         speed = data.get('speed', 1.0) # Default to normal speed
         lesson_lang = data.get('lessonLang', 'en')
-        selected_voice = data.get('voice', 'female1')  # Default voice
-
-        # Available voices configuration
-        VOICE_OPTIONS = {
-            # English voices
-            'female1': {'en': 'en-US-Neural2-F', 'pt': 'pt-BR-Neural2-C', 'gender': 'FEMALE', 'name': 'Sarah'},
-            'female2': {'en': 'en-US-Neural2-C', 'pt': 'pt-BR-Neural2-A', 'gender': 'FEMALE', 'name': 'Emma'},
-            'male1': {'en': 'en-US-Neural2-D', 'pt': 'pt-BR-Neural2-B', 'gender': 'MALE', 'name': 'James'}
+        # Single voice for all interactions: Chirp3-HD-Achernar (natural female)
+        voice_config = {
+            'en': 'en-US-Chirp3-HD-Achernar',
+            'pt': 'pt-BR-Chirp3-HD-Achernar',
+            'gender': 'FEMALE',
+            'name': 'Achernar'
         }
-        
-        # Validate voice selection
-        if selected_voice not in VOICE_OPTIONS:
-            selected_voice = 'female1'
-        
-        voice_config = VOICE_OPTIONS[selected_voice]
-        print(f"[TTS] Selected voice: {selected_voice} ({voice_config['name']})")
+        print(f"[TTS] Voice: Chirp3-HD-Achernar")
 
         # Validate input
         is_valid, result = validate_text_input(text, max_length=500)
@@ -2332,14 +2374,8 @@ def tts_endpoint():
             qwen_tts_url = os.environ.get("QWEN_TTS_URL", "").strip()
             if qwen_tts_url:
                 try:
-                    # Map voices to Qwen3-TTS voices
-                    # Supported: aiden, dylan, eric, ono_anna, ryan, serena, sohee, uncle_fu, vivian
-                    qwen_voice_map = {
-                        'female1': 'serena',
-                        'female2': 'vivian',
-                        'male1': 'ryan'
-                    }
-                    qwen_voice = qwen_voice_map.get(voice, 'serena')
+                    # Single voice: serena (closest match to Achernar)
+                    qwen_voice = 'serena'
 
                     clean_text = clean_text_for_tts(text)
 
@@ -2634,8 +2670,9 @@ def get_usage_status():
     return jsonify({
         "seconds_used": usage_data['seconds_used'],
         "remaining_seconds": remaining,
-        "daily_limit_seconds": DAILY_LIMIT_SECONDS,
+        "weekend_limit_seconds": WEEKEND_LIMIT_SECONDS,
         "is_blocked": remaining <= 0,
+        "is_weekend": is_weekend(),
         "date": usage_data['date']
     })
 
@@ -2761,9 +2798,10 @@ def transcribe_audio():
     if not is_local_request() and not check_usage_limit(user_email):
         remaining = get_remaining_seconds(user_email)
         return jsonify({
-            "error": "Daily practice limit reached",
-            "message": "You've used your 10 minutes for today. Come back tomorrow!",
-            "remaining_seconds": remaining
+            "error": "Weekend practice limit reached",
+            "message": "Practice is available on weekends only (Saturday-Sunday), 40 minutes per weekend." if not is_weekend() else "You've used your 40 minutes for this weekend. See you next Saturday!",
+            "remaining_seconds": remaining,
+            "is_weekend": is_weekend()
         }), 429
     
     # Get audio file from request
@@ -2888,15 +2926,23 @@ def transcribe_audio():
             }
             # ... rest of Groq logic follows in existing code (we just flow into it)
             
+            # English prompt when student is practicing English (most common case)
+            if language_hint == 'en' or not language_hint:
+                whisper_prompt = "Transcribe the user's speech exactly as spoken in English."
+            else:
+                whisper_prompt = "Transcreva a fala do usuário exatamente."
+
             data = {
                 'model': 'whisper-large-v3',
                 'response_format': 'verbose_json',
                 'temperature': 0.0,
-                'prompt': "Transcreva a fala do usuário exatamente."
+                'prompt': whisper_prompt
             }
-            
+
             if language_hint:
                 data['language'] = language_hint
+            else:
+                data['language'] = 'en'
             
             headers = {
                 'Authorization': f'Bearer {GROQ_API_KEY}'
