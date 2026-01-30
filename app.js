@@ -40,7 +40,11 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedPhrase: null,    // The phrase object that was selected
         nextAction: 'start',     // What action to take next
         lessonTitle: '',         // Title of the lesson
-        skipToLayer: null        // For branching: skip to this layer after practice
+        skipToLayer: null,       // For branching: skip to this layer after practice
+        compositeTemplate: null, // Template for building cumulative phrase (e.g. "{verb} {size} {drink}{end}")
+        compositeLayers: null,   // Which layers participate in composite (e.g. [1,2,3,4,5])
+        phraseSlots: {},         // Accumulated slots from selections (e.g. {verb: "I'd like a", drink: "coffee"})
+        compositePhrase: null    // The built composite phrase for current practice
     };
 
     // Default: Audio-First (Subtitles OFF)
@@ -2858,11 +2862,53 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
     }
 
     /**
+     * Build a composite phrase from template + filled slots.
+     * Unfilled slots are removed, and grammar is cleaned up.
+     */
+    function buildCompositePhrase(template, slots) {
+        let phrase = template;
+        for (const [key, value] of Object.entries(slots)) {
+            phrase = phrase.replace(`{${key}}`, value);
+        }
+        // Remove unfilled slot placeholders
+        phrase = phrase.replace(/\{[^}]+\}/g, '');
+        // Clean up spacing and punctuation
+        phrase = phrase.replace(/\s+/g, ' ').trim();
+        // Fix "an" before consonant sounds when size is added (e.g. "I'll have an large" → "I'll have a large")
+        phrase = phrase.replace(/\ban\s+(small|medium|large|extra-large|big|biggest|hot|iced)/gi, 'a $1');
+        // Fix "a" before vowel sounds (e.g. "I'd like a iced" → "I'd like an iced")
+        phrase = phrase.replace(/\ba\s+(iced)/gi, 'an $1');
+        // Clean up double commas or trailing commas before end punctuation
+        phrase = phrase.replace(/ ,/g, ',').replace(/,,+/g, ',');
+        phrase = phrase.replace(/,\s*([?!])/g, '$1');
+        // Clean up ", ," patterns
+        phrase = phrase.replace(/,\s*,/g, ',');
+        return phrase;
+    }
+
+    /**
      * Handle lesson option selection (click)
      */
     async function selectLessonOption(index, phrase) {
         lessonState.selectedOption = index;
         lessonState.selectedPhrase = phrase;
+
+        // Merge slots if this option has them (for composite phrase building)
+        const layerId = lessonState.layer + 1; // layers are 1-indexed in DB
+        const isCompositeLayer = lessonState.compositeLayers &&
+            lessonState.compositeLayers.includes(layerId);
+
+        if (isCompositeLayer && phrase.slots) {
+            Object.assign(lessonState.phraseSlots, phrase.slots);
+        }
+
+        // Build composite phrase if applicable
+        let displayPhrase = phrase.en || phrase;
+        let compositePhrase = null;
+        if (isCompositeLayer && lessonState.compositeTemplate && Object.keys(lessonState.phraseSlots).length > 0) {
+            compositePhrase = buildCompositePhrase(lessonState.compositeTemplate, lessonState.phraseSlots);
+            displayPhrase = compositePhrase;
+        }
 
         // Remove options UI
         const existing = chatWindow.querySelector('.lesson-options-container');
@@ -2871,7 +2917,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         // Show what was selected
         addMessage('User', `Selected: "${phrase.en || phrase}"`, false, true);
 
-        // Show sticky reference card so beginner doesn't forget the phrase
+        // Show sticky reference card with the COMPOSITE phrase (or single phrase for non-composite layers)
         const refCard = document.getElementById('lesson-phrase-ref');
         if (refCard) {
             refCard.innerHTML = `
@@ -2879,7 +2925,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                     <span class="ref-label">Frase para praticar:</span>
                     <button class="ref-audio-btn" title="Ouvir / Listen">&#128264;</button>
                 </div>
-                <div class="ref-phrase-en">"${phrase.en || phrase}"</div>
+                <div class="ref-phrase-en">"${displayPhrase}"</div>
                 ${phrase.pt ? `<div class="ref-phrase-pt">${phrase.pt}</div>` : ''}
             `;
             refCard.style.display = 'block';
@@ -2888,10 +2934,9 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
             const refAudioBtn = refCard.querySelector('.ref-audio-btn');
             refAudioBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                const refText = phrase.en || phrase;
                 try {
                     refAudioBtn.classList.add('playing');
-                    const blob = await apiClient.getTTS(refText, ttsSpeed, 'en', currentVoice);
+                    const blob = await apiClient.getTTS(displayPhrase, ttsSpeed, 'en', currentVoice);
                     await playAudioBlob(blob);
                 } catch (err) {
                     console.error('Ref audio error:', err);
@@ -2900,6 +2945,9 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 }
             });
         }
+
+        // Store the composite phrase for evaluation
+        lessonState.compositePhrase = compositePhrase;
 
         // Call backend to get practice prompt
         showLoadingIndicator();
@@ -2941,6 +2989,10 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         lessonState.active = true;
         lessonState.layer = 0;
         lessonState.nextAction = 'start';
+        lessonState.compositeTemplate = null;
+        lessonState.compositeLayers = null;
+        lessonState.phraseSlots = {};
+        lessonState.compositePhrase = null;
 
         showLoadingIndicator();
         try {
@@ -2951,6 +3003,8 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
             lessonState.totalLayers = data.total_layers || 0;
             lessonState.lessonTitle = data.lesson_title || context;
             lessonState.nextAction = data.next_action;
+            lessonState.compositeTemplate = data.composite_template || null;
+            lessonState.compositeLayers = data.composite_layers || null;
 
             // Play welcome message
             playResponse(data.text, data.translation);
@@ -3033,6 +3087,11 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 text: userText,
                 selected_phrase: lessonState.selectedPhrase
             };
+
+            // Include composite phrase if built (for evaluation against full sentence)
+            if (lessonState.compositePhrase) {
+                payload.composite_phrase = lessonState.compositePhrase;
+            }
 
             // Include skip_to_layer if present (for branching)
             if (lessonState.skipToLayer !== null && lessonState.skipToLayer !== undefined) {

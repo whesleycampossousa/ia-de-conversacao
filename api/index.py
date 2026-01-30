@@ -1584,14 +1584,20 @@ def lesson():
     # ACTION: START - Show welcome message
     if action == 'start':
         welcome = lesson_data.get('welcome', {})
-        return jsonify({
+        resp = {
             "type": "welcome",
             "text": welcome.get('en', 'Welcome to the lesson!'),
             "translation": welcome.get('pt', 'Bem-vindo à aula!'),
             "lesson_title": lesson_data.get('title', context),
             "total_layers": total_layers,
             "next_action": "show_options"
-        })
+        }
+        # Include composite template info if lesson uses cumulative phrase building
+        if 'composite_template' in lesson_data:
+            resp['composite_template'] = lesson_data['composite_template']
+        if 'composite_layers' in lesson_data:
+            resp['composite_layers'] = lesson_data['composite_layers']
+        return jsonify(resp)
 
     # ACTION: SHOW_OPTIONS - Display layer options
     if action == 'show_options':
@@ -1666,6 +1672,10 @@ def lesson():
         layer = layers[current_layer]
         selected_phrase = data.get('selected_phrase', {})
         target_phrase = selected_phrase.get('en', '') if isinstance(selected_phrase, dict) else ''
+        # Use composite phrase if provided (cumulative phrase from previous layers)
+        composite_phrase = data.get('composite_phrase', '')
+        if composite_phrase:
+            target_phrase = composite_phrase
         feedback_templates = layer.get('feedback', {})
 
         # Robust evaluation with Unicode normalization and fuzzy matching

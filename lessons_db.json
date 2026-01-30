@@ -7,6 +7,8 @@
       "en": "Welcome to today's lesson! We'll learn how to order at a coffee shop. When you're ready, click the button below to start!",
       "pt": "Bem-vindo à aula de hoje! Vamos aprender a fazer pedidos em uma cafeteria. Quando estiver pronto, clique no botão abaixo para começar!"
     },
+    "composite_template": "{verb} {size} {temp} {drink}{custom}{location}{end}",
+    "composite_layers": [1, 2, 3, 4, 5],
     "layers": [
       {
         "id": 1,
@@ -16,10 +18,10 @@
           "pt": "Ao entrar em uma cafeteria, você vai até o balcão. Aqui estão formas educadas de começar seu pedido. Qual você gostaria de praticar?"
         },
         "options": [
-          {"en": "I'd like a coffee, please", "pt": "Eu gostaria de um café, por favor"},
-          {"en": "Can I have a latte?", "pt": "Posso pedir um latte?"},
-          {"en": "Could I get a cappuccino?", "pt": "Poderia me dar um cappuccino?"},
-          {"en": "I'll have an espresso", "pt": "Vou querer um espresso"}
+          {"en": "I'd like a coffee, please", "pt": "Eu gostaria de um café, por favor", "slots": {"verb": "I'd like a", "drink": "coffee", "end": ", please"}},
+          {"en": "Can I have a latte?", "pt": "Posso pedir um latte?", "slots": {"verb": "Can I have a", "drink": "latte", "end": "?"}},
+          {"en": "Could I get a cappuccino?", "pt": "Poderia me dar um cappuccino?", "slots": {"verb": "Could I get a", "drink": "cappuccino", "end": "?"}},
+          {"en": "I'll have an espresso", "pt": "Vou querer um espresso", "slots": {"verb": "I'll have an", "drink": "espresso", "end": ""}}
         ],
         "practice_prompt": {
           "en": "Great choice! Now try saying your chosen phrase to order a drink!",
@@ -48,10 +50,10 @@
           "pt": "O barista pergunta: 'Qual tamanho você gostaria?' Veja como especificar o tamanho da sua bebida:"
         },
         "options": [
-          {"en": "A small one, please", "pt": "Um pequeno, por favor"},
-          {"en": "Medium, please", "pt": "Médio, por favor"},
-          {"en": "I'd like a large", "pt": "Eu gostaria de um grande"},
-          {"en": "The biggest size you have", "pt": "O maior tamanho que vocês têm"}
+          {"en": "A small one, please", "pt": "Um pequeno, por favor", "slots": {"size": "small"}},
+          {"en": "Medium, please", "pt": "Médio, por favor", "slots": {"size": "medium"}},
+          {"en": "I'd like a large", "pt": "Eu gostaria de um grande", "slots": {"size": "large"}},
+          {"en": "The biggest size you have", "pt": "O maior tamanho que vocês têm", "slots": {"size": "extra-large"}}
         ],
         "practice_prompt": {
           "en": "Perfect! Now tell the barista what size you want. Try saying your phrase!",
@@ -80,10 +82,10 @@
           "pt": "O barista pergunta: 'Você quer quente ou gelado?' Veja como responder:"
         },
         "options": [
-          {"en": "Hot, please", "pt": "Quente, por favor"},
-          {"en": "Iced, please", "pt": "Gelado, por favor"},
-          {"en": "Can I have it iced?", "pt": "Posso pedir gelado?"},
-          {"en": "I'd like it hot", "pt": "Eu gostaria quente"}
+          {"en": "Hot, please", "pt": "Quente, por favor", "slots": {"temp": "hot"}},
+          {"en": "Iced, please", "pt": "Gelado, por favor", "slots": {"temp": "iced"}},
+          {"en": "Can I have it iced?", "pt": "Posso pedir gelado?", "slots": {"temp": "iced"}},
+          {"en": "I'd like it hot", "pt": "Eu gostaria quente", "slots": {"temp": "hot"}}
         ],
         "practice_prompt": {
           "en": "Excellent! Now tell the barista if you want it hot or iced. Try your phrase!",
@@ -112,10 +114,10 @@
           "pt": "Quer personalizar? Veja como adicionar extras ou fazer alterações:"
         },
         "options": [
-          {"en": "with extra milk", "pt": "com leite extra"},
-          {"en": "with no sugar", "pt": "sem açúcar"},
-          {"en": "with oat milk instead", "pt": "com leite de aveia no lugar"},
-          {"en": "with an extra shot of espresso", "pt": "com uma dose extra de espresso"}
+          {"en": "with extra milk", "pt": "com leite extra", "slots": {"custom": " with extra milk"}},
+          {"en": "with no sugar", "pt": "sem açúcar", "slots": {"custom": " with no sugar"}},
+          {"en": "with oat milk instead", "pt": "com leite de aveia no lugar", "slots": {"custom": " with oat milk"}},
+          {"en": "with an extra shot of espresso", "pt": "com uma dose extra de espresso", "slots": {"custom": " with an extra shot of espresso"}}
         ],
         "practice_prompt": {
           "en": "Great! Now add your customization to the order. Try saying your phrase!",
@@ -144,10 +146,10 @@
           "pt": "O barista pergunta: 'Para comer aqui ou levar?' Veja como responder:"
         },
         "options": [
-          {"en": "For here, please", "pt": "Para comer aqui, por favor"},
-          {"en": "To go, please", "pt": "Para levar, por favor"},
-          {"en": "I'll have it here", "pt": "Vou tomar aqui"},
-          {"en": "Can I get that to go?", "pt": "Posso levar?"}
+          {"en": "For here, please", "pt": "Para comer aqui, por favor", "slots": {"location": ", for here"}},
+          {"en": "To go, please", "pt": "Para levar, por favor", "slots": {"location": ", to go"}},
+          {"en": "I'll have it here", "pt": "Vou tomar aqui", "slots": {"location": ", for here"}},
+          {"en": "Can I get that to go?", "pt": "Posso levar?", "slots": {"location": ", to go"}}
         ],
         "practice_prompt": {
           "en": "Perfect! Now tell the barista where you'll have your drink. Try your phrase!",
