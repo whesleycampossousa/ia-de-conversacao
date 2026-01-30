@@ -22,8 +22,8 @@
           {"en": "I'll have an espresso", "pt": "Vou querer um espresso"}
         ],
         "practice_prompt": {
-          "en": "Great choice! Now imagine you're at the counter. Use that phrase to order any coffee drink you like.",
-          "pt": "Ótima escolha! Agora imagine que você está no balcão. Use essa frase para pedir qualquer bebida de café que quiser."
+          "en": "Great choice! Now try saying your chosen phrase to order a drink!",
+          "pt": "Ótima escolha! Agora tente dizer a frase que você escolheu para pedir uma bebida!"
         },
         "feedback": {
           "success": {
@@ -54,8 +54,8 @@
           {"en": "The biggest size you have", "pt": "O maior tamanho que vocês têm"}
         ],
         "practice_prompt": {
-          "en": "Perfect! Now combine what you learned. Order a coffee WITH the size. For example: 'I'd like a large latte, please.'",
-          "pt": "Perfeito! Agora combine o que você aprendeu. Peça um café COM o tamanho. Por exemplo: 'I'd like a large latte, please.'"
+          "en": "Perfect! Now tell the barista what size you want. Try saying your phrase!",
+          "pt": "Perfeito! Agora diga ao barista qual tamanho você quer. Tente dizer sua frase!"
         },
         "feedback": {
           "success": {
@@ -86,8 +86,8 @@
           {"en": "I'd like it hot", "pt": "Eu gostaria quente"}
         ],
         "practice_prompt": {
-          "en": "Excellent! Now order a complete drink with size AND temperature. For example: 'I'd like a large iced latte, please.'",
-          "pt": "Excelente! Agora peça uma bebida completa com tamanho E temperatura. Por exemplo: 'I'd like a large iced latte, please.'"
+          "en": "Excellent! Now tell the barista if you want it hot or iced. Try your phrase!",
+          "pt": "Excelente! Agora diga ao barista se quer quente ou gelado. Tente dizer sua frase!"
         },
         "feedback": {
           "success": {
@@ -118,8 +118,8 @@
           {"en": "with an extra shot of espresso", "pt": "com uma dose extra de espresso"}
         ],
         "practice_prompt": {
-          "en": "Great! Now make a complete customized order. For example: 'I'd like a large iced latte with oat milk, please.'",
-          "pt": "Ótimo! Agora faça um pedido completo e personalizado. Por exemplo: 'I'd like a large iced latte with oat milk, please.'"
+          "en": "Great! Now add your customization to the order. Try saying your phrase!",
+          "pt": "Ótimo! Agora adicione sua personalização ao pedido. Tente dizer sua frase!"
         },
         "feedback": {
           "success": {
@@ -150,8 +150,8 @@
           {"en": "Can I get that to go?", "pt": "Posso levar?"}
         ],
         "practice_prompt": {
-          "en": "Perfect! Now put it all together. Make a COMPLETE order including drink, size, temperature, customization, and where you'll have it.",
-          "pt": "Perfeito! Agora junte tudo. Faça um pedido COMPLETO incluindo bebida, tamanho, temperatura, personalização e onde vai tomar."
+          "en": "Perfect! Now tell the barista where you'll have your drink. Try your phrase!",
+          "pt": "Perfeito! Agora diga ao barista onde vai tomar sua bebida. Tente dizer sua frase!"
         },
         "feedback": {
           "success": {
@@ -214,8 +214,8 @@
           {"en": "A ham and cheese sandwich, please", "pt": "Um sanduíche de presunto e queijo, por favor"}
         ],
         "practice_prompt": {
-          "en": "Delicious choice! Now order the food item using a complete sentence.",
-          "pt": "Escolha deliciosa! Agora peça o item de comida usando uma frase completa."
+          "en": "Delicious choice! Now order your food item. Try saying your phrase!",
+          "pt": "Escolha deliciosa! Agora peça seu item de comida. Tente dizer sua frase!"
         },
         "feedback": {
           "success": {
@@ -278,8 +278,8 @@
           {"en": "Here you go, keep the change", "pt": "Aqui está, fique com o troco"}
         ],
         "practice_prompt": {
-          "en": "Almost done! Now ask for the total or how to pay.",
-          "pt": "Quase lá! Agora pergunte o total ou como pagar."
+          "en": "Almost done! Now ask about paying. Try saying your phrase!",
+          "pt": "Quase lá! Agora pergunte sobre o pagamento. Tente dizer sua frase!"
         },
         "feedback": {
           "success": {
@@ -310,8 +310,8 @@
           {"en": "Thank you so much! Take care!", "pt": "Muito obrigado! Se cuide!"}
         ],
         "practice_prompt": {
-          "en": "Wonderful! Now say goodbye to the barista in a friendly way.",
-          "pt": "Maravilha! Agora se despeça do barista de forma amigável."
+          "en": "Wonderful! Now say goodbye to the barista. Try saying your phrase!",
+          "pt": "Maravilha! Agora se despeça do barista. Tente dizer sua frase!"
         },
         "feedback": {
           "success": {
