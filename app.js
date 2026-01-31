@@ -1811,55 +1811,69 @@ document.addEventListener('DOMContentLoaded', () => {
         const wrapper = document.createElement('div');
         wrapper.className = 'report-card';
 
-        const pill = document.createElement('div');
-        pill.className = 'report-pill';
-        pill.textContent = 'Relatório final';
-        wrapper.appendChild(pill);
+        // Overall score section
+        const notaGeral = info.nota_geral !== null ? info.nota_geral : computeAvgNaturalidade(info.analise_frases);
+        const scoreColor = notaGeral >= 80 ? '#22c55e' : notaGeral >= 50 ? '#f59e0b' : '#ef4444';
+        const notaLabel = notaGeral >= 90 ? 'Excelente!' : notaGeral >= 75 ? 'Muito Bom!' : notaGeral >= 60 ? 'Bom progresso!' : notaGeral >= 40 ? 'Continue praticando!' : 'Vamos melhorar juntos!';
 
-        // Add export buttons
-        const exportButtons = document.createElement('div');
-        exportButtons.className = 'export-buttons';
-        exportButtons.style.cssText = 'display: flex; gap: 0.5rem; margin-bottom: 1rem;';
+        const scoreSection = document.createElement('div');
+        scoreSection.style.cssText = 'text-align:center;padding:20px 16px;margin-bottom:16px;';
+        scoreSection.innerHTML = `
+            <div style="font-size:3rem;font-weight:800;color:${scoreColor};">${notaGeral}</div>
+            <div style="font-size:0.8rem;color:#94a3b8;margin-bottom:4px;">Nota Geral</div>
+            <div style="padding:4px 14px;border-radius:20px;display:inline-block;background:${scoreColor}22;color:${scoreColor};font-weight:700;font-size:0.85rem;margin-bottom:12px;">${notaLabel}</div>
+            <div style="height:8px;background:rgba(255,255,255,0.1);border-radius:4px;overflow:hidden;">
+                <div style="width:${notaGeral}%;height:100%;background:${scoreColor};border-radius:4px;"></div>
+            </div>
+        `;
+        wrapper.appendChild(scoreSection);
 
-        const pdfBtn = document.createElement('button');
-        pdfBtn.className = 'action-btn';
-        pdfBtn.innerHTML = '📄 Exportar PDF';
-        pdfBtn.style.cssText = 'flex: 1; margin-top: 0; padding: 0.6rem;';
-        pdfBtn.onclick = () => exportReportPDF(info);
-        exportButtons.appendChild(pdfBtn);
-
-        const jsonBtn = document.createElement('button');
-        jsonBtn.className = 'action-btn';
-        jsonBtn.innerHTML = '💾 Exportar JSON';
-        jsonBtn.style.cssText = 'flex: 1; margin-top: 0; padding: 0.6rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%);';
-        jsonBtn.onclick = () => exportReportJSON(info);
-        exportButtons.appendChild(jsonBtn);
-
-        wrapper.appendChild(exportButtons);
-
+        // Title
         const titleRow = document.createElement('div');
         titleRow.className = 'report-title-row';
-
         const title = document.createElement('div');
         title.className = 'report-title';
         title.textContent = `${info.emoji} ${info.titulo}`;
         titleRow.appendChild(title);
-
-        const tone = document.createElement('span');
-        tone.className = 'report-tone';
-        tone.textContent = `Tom: ${info.tom}`;
-        titleRow.appendChild(tone);
         wrapper.appendChild(titleRow);
 
+        // Meta
         const meta = document.createElement('div');
         meta.className = 'report-meta';
         meta.appendChild(createChip('Contexto', contextName, '📍'));
         meta.appendChild(createChip('Trocas', `${stats.total} falas`, '🗣️'));
-        meta.appendChild(createChip('Voce', `${stats.user} mensagens`, '👤'));
-        meta.appendChild(createChip('AI', `${stats.ai} mensagens`, '🤖'));
+        meta.appendChild(createChip('Voce', `${stats.user} msg`, '👤'));
+        meta.appendChild(createChip('AI', `${stats.ai} msg`, '🤖'));
         wrapper.appendChild(meta);
 
-        // Phrase-by-phrase analysis block (before corrections)
+        // Elogios section
+        if (info.elogios && info.elogios.length) {
+            const elogiosBlock = document.createElement('div');
+            elogiosBlock.style.cssText = 'margin-top:16px;padding:14px;background:rgba(34,197,94,0.08);border-left:3px solid #22c55e;border-radius:8px;';
+            elogiosBlock.innerHTML = `<div style="font-weight:700;margin-bottom:8px;font-size:0.95rem;">🌟 O que você fez bem</div>` +
+                info.elogios.map(e => `<div style="margin-bottom:4px;font-size:0.9rem;color:#d1d5db;">• ${e}</div>`).join('');
+            wrapper.appendChild(elogiosBlock);
+        }
+
+        // Dicas section
+        if (info.dicas && info.dicas.length) {
+            const dicasBlock = document.createElement('div');
+            dicasBlock.style.cssText = 'margin-top:12px;padding:14px;background:rgba(245,158,11,0.08);border-left:3px solid #f59e0b;border-radius:8px;';
+            dicasBlock.innerHTML = `<div style="font-weight:700;margin-bottom:8px;font-size:0.95rem;">📈 O que melhorar</div>` +
+                info.dicas.map(d => `<div style="margin-bottom:4px;font-size:0.9rem;color:#d1d5db;">• ${d}</div>`).join('');
+            wrapper.appendChild(dicasBlock);
+        }
+
+        // Practice phrase
+        if (info.frase_pratica) {
+            const practiceBlock = document.createElement('div');
+            practiceBlock.style.cssText = 'text-align:center;padding:18px;margin:16px 0;background:rgba(99,102,241,0.1);border:2px solid rgba(99,102,241,0.3);border-radius:12px;';
+            practiceBlock.innerHTML = `<div style="font-size:0.8rem;color:#94a3b8;">🎯 Sua próxima missão</div>
+                <div style="font-size:1.05rem;font-weight:700;margin-top:8px;color:#fff;">"${info.frase_pratica}"</div>`;
+            wrapper.appendChild(practiceBlock);
+        }
+
+        // Phrase-by-phrase analysis block
         if (info.analise_frases && info.analise_frases.length) {
             wrapper.appendChild(buildAnaliseBlock(info.analise_frases));
         }
@@ -1868,7 +1882,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (info.correcoes && info.correcoes.length) {
             const correctionsToggle = document.createElement('button');
             correctionsToggle.className = 'action-btn';
-            correctionsToggle.textContent = 'Acessar correções mais detalhadas';
+            correctionsToggle.textContent = 'Ver correções detalhadas';
             correctionsToggle.style.cssText = 'width:100%;margin-top:1rem;padding:14px 20px;font-size:1rem;font-weight:700;color:#fff;background:linear-gradient(135deg,#6366f1 0%,#4f46e5 100%);border:none;border-radius:10px;cursor:pointer;box-shadow:0 4px 15px rgba(99,102,241,0.3);transition:all 0.3s ease;';
             correctionsToggle.onmouseenter = () => { correctionsToggle.style.transform = 'translateY(-2px)'; correctionsToggle.style.boxShadow = '0 6px 20px rgba(99,102,241,0.5)'; };
             correctionsToggle.onmouseleave = () => { correctionsToggle.style.transform = 'translateY(0)'; correctionsToggle.style.boxShadow = '0 4px 15px rgba(99,102,241,0.3)'; };
@@ -1886,11 +1900,32 @@ document.addEventListener('DOMContentLoaded', () => {
                     correctionsToggle.style.background = 'linear-gradient(135deg,#64748b 0%,#475569 100%)';
                 } else {
                     correctionsPanel.style.display = 'none';
-                    correctionsToggle.textContent = 'Acessar correções mais detalhadas';
+                    correctionsToggle.textContent = 'Ver correções detalhadas';
                     correctionsToggle.style.background = 'linear-gradient(135deg,#6366f1 0%,#4f46e5 100%)';
                 }
             });
         }
+
+        // Export buttons — PDF opens full report window, JSON exports data
+        const exportButtons = document.createElement('div');
+        exportButtons.className = 'export-buttons';
+        exportButtons.style.cssText = 'display: flex; gap: 0.5rem; margin-top: 1rem;';
+
+        const pdfBtn = document.createElement('button');
+        pdfBtn.className = 'action-btn';
+        pdfBtn.innerHTML = '📄 Ver Relatório Completo / PDF';
+        pdfBtn.style.cssText = 'flex: 1; margin-top: 0; padding: 0.6rem;';
+        pdfBtn.onclick = () => openReportWindow(apiPayload);
+        exportButtons.appendChild(pdfBtn);
+
+        const jsonBtn = document.createElement('button');
+        jsonBtn.className = 'action-btn';
+        jsonBtn.innerHTML = '💾 JSON';
+        jsonBtn.style.cssText = 'width: auto; margin-top: 0; padding: 0.6rem 1rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%);';
+        jsonBtn.onclick = () => exportReportJSON(info);
+        exportButtons.appendChild(jsonBtn);
+
+        wrapper.appendChild(exportButtons);
 
         if (info.raw && !info.wasStructured) {
             const rawNote = document.createElement('div');
@@ -1923,18 +1958,16 @@ document.addEventListener('DOMContentLoaded', () => {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
 
-        const resumoItens = [
-            ...(info.elogios || []).slice(0, 4),
-            ...(info.dicas || []).slice(0, 2)
-        ].filter(Boolean);
-
-        const resumoHtml = resumoItens.length
-            ? resumoItens.map(item => `<li>${escapeHtml(item)}</li>`).join('')
-            : `<li>Sem resumo disponível ainda.</li>`;
+        // Compute overall score (from Gemini or fallback)
+        const notaGeral = info.nota_geral !== null ? info.nota_geral : computeAvgNaturalidade(info.analise_frases);
+        const scoreColor = notaGeral >= 80 ? '#22c55e' : notaGeral >= 50 ? '#f59e0b' : '#ef4444';
+        const dashLength = (notaGeral / 100) * 326.7;
+        const notaLabel = notaGeral >= 90 ? 'Excelente!' : notaGeral >= 75 ? 'Muito Bom!' : notaGeral >= 60 ? 'Bom progresso!' : notaGeral >= 40 ? 'Continue praticando!' : 'Vamos melhorar juntos!';
 
         const correctionsHtml = (info.correcoes && info.correcoes.length)
             ? info.correcoes.map((correction) => {
                 const badge = escapeHtml(correction.avaliacaoGeral || 'Analisando');
+                const badgeColor = badge === 'Incorreta' ? '#ef4444' : badge === 'Aceitável' ? '#f59e0b' : '#22c55e';
                 const tag = correction.tag ? `<span class="tag">${escapeHtml(correction.tag)}</span>` : '';
                 const comentario = correction.comentarioBreve ? `<div class="note">${escapeHtml(correction.comentarioBreve)}</div>` : '';
                 const original = escapeHtml(correction.fraseOriginal || correction.ruim || '');
@@ -1944,7 +1977,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return `
                     <div class="correction-card">
                         <div class="badge-row">
-                            <span class="badge">${badge}</span>
+                            <span class="badge" style="background:${badgeColor}22;color:${badgeColor};">${badge}</span>
                             ${tag}
                         </div>
                         ${comentario}
@@ -1957,24 +1990,25 @@ document.addEventListener('DOMContentLoaded', () => {
             : `<div class="empty">Sem correções relevantes nesta sessão.</div>`;
 
         const elogiosHtml = (info.elogios && info.elogios.length)
-            ? info.elogios.map(item => `<li>${escapeHtml(item)}</li>`).join('')
+            ? info.elogios.map(item => `<li style="margin-bottom:8px;">${escapeHtml(item)}</li>`).join('')
             : `<li>Sem elogios registrados.</li>`;
 
         const dicasHtml = (info.dicas && info.dicas.length)
-            ? info.dicas.map(item => `<li>${escapeHtml(item)}</li>`).join('')
+            ? info.dicas.map(item => `<li style="margin-bottom:8px;">${escapeHtml(item)}</li>`).join('')
             : `<li>Sem dicas registradas.</li>`;
 
         const transcriptHtml = conversationLog.length
             ? conversationLog.map(entry => {
                 const sender = escapeHtml(entry.sender || '');
                 const text = escapeHtml(entry.text || '');
-                return `<div class="transcript-line"><strong>${sender}:</strong> ${text}</div>`;
+                const isAI = entry.sender === 'AI';
+                return `<div class="transcript-line" style="padding:8px 12px;border-radius:8px;margin-bottom:4px;${isAI ? 'background:rgba(99,102,241,0.08);' : 'background:rgba(255,255,255,0.03);'}"><strong style="color:${isAI ? '#a5b4fc' : '#fbbf24'};">${sender}:</strong> ${text}</div>`;
             }).join('')
             : `<div class="empty">Sem falas registradas.</div>`;
 
         // Phrase-by-phrase analysis HTML
         const analiseHtml = (info.analise_frases && info.analise_frases.length)
-            ? info.analise_frases.map((item) => {
+            ? info.analise_frases.map((item, idx) => {
                 const nat = typeof item.naturalidade === 'number' ? item.naturalidade : 50;
                 let barColor = '#ef4444';
                 if (nat >= 80) barColor = '#22c55e';
@@ -1983,7 +2017,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const explicacao = item.explicacao ? `<div style="font-size:0.85rem;color:var(--muted);padding:8px 10px;background:rgba(255,204,0,0.08);border-radius:6px;border-left:3px solid #f59e0b;margin-top:6px;">💡 ${escapeHtml(item.explicacao)}</div>` : '';
                 const naturalLine = item.frase_natural ? `<div style="margin-bottom:6px;font-size:0.95rem;"><span style="color:#22c55e;">✅ Mais natural:</span> <strong>"${escapeHtml(item.frase_natural)}"</strong></div>` : '';
                 return `
-                    <div class="analise-card">
+                    <div class="analise-card" style="page-break-inside:avoid;">
+                        <div style="font-size:0.7rem;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Frase ${idx + 1}</div>
                         <div style="margin-bottom:8px;font-size:0.95rem;"><span style="color:var(--muted);">🗣️ Você disse:</span> <strong>"${escapeHtml(item.frase_aluno || '')}"</strong></div>
                         <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
                             <div style="flex:1;height:8px;background:rgba(255,255,255,0.1);border-radius:4px;overflow:hidden;">
@@ -1999,19 +2034,31 @@ document.addEventListener('DOMContentLoaded', () => {
             }).join('')
             : `<div class="empty">Sem análise de frases disponível.</div>`;
 
-        const reportPayload = {
-            report: {
-                titulo: info.titulo,
-                emoji: info.emoji,
-                tom: info.tom,
-                correcoes: info.correcoes,
-                analise_frases: info.analise_frases,
-                elogios: info.elogios,
-                dicas: info.dicas,
-                frase_pratica: info.frase_pratica
-            },
-            user_name: userName
-        };
+        // Grammar/vocabulary summary tags
+        const grammarTagsHtml = (info.resumo_gramatical && info.resumo_gramatical.length)
+            ? info.resumo_gramatical.map(p => `<span style="padding:6px 14px;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);border-radius:20px;font-size:0.85rem;color:#a5b4fc;">${escapeHtml(p)}</span>`).join('')
+            : '';
+
+        // Practice phrase section
+        const practicePhraseHtml = info.frase_pratica ? `
+  <section class="mission-card" style="page-break-inside:avoid;background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(139,92,246,0.1));border:2px solid rgba(99,102,241,0.3);border-radius:16px;padding:24px;text-align:center;">
+    <div style="font-size:0.85rem;color:var(--muted);margin-bottom:4px;">🎯 Sua próxima missão</div>
+    <p style="font-size:1.3rem;font-weight:700;margin:12px 0 4px;color:#fff;">"${escapeHtml(info.frase_pratica)}"</p>
+    <p style="color:var(--muted);font-size:0.85rem;margin:0;">Tente falar esta frase na sua próxima prática!</p>
+  </section>` : '';
+
+        // Final grade banner
+        const gradeEmoji = notaGeral >= 80 ? '🏆' : notaGeral >= 60 ? '💪' : '📖';
+        const gradeMsg = notaGeral >= 80 ? 'Você está dominando o idioma! Continue com essa dedicação.' :
+            notaGeral >= 60 ? 'Ótimo progresso! Cada conversa te deixa mais fluente.' :
+            'Cada erro é uma oportunidade de aprender. Você já está no caminho certo!';
+        const gradeBg = notaGeral >= 70 ? 'rgba(34,197,94,0.1),rgba(16,185,129,0.05)' : 'rgba(245,158,11,0.1),rgba(234,88,12,0.05)';
+        const gradeBorder = notaGeral >= 70 ? 'rgba(34,197,94,0.2)' : 'rgba(245,158,11,0.2)';
+
+        const summaryText = [
+            ...(info.elogios || []).slice(0, 4),
+            ...(info.dicas || []).slice(0, 2)
+        ].filter(Boolean).join(' • ');
 
         let win = existingWindow;
         if (win && win.closed) {
@@ -2029,6 +2076,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Relatório da Conversa</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
 <style>
 :root {
   --bg: #0f1115;
@@ -2048,12 +2096,12 @@ body {
   color: var(--text);
 }
 header {
-  padding: 48px 8vw 24px;
+  padding: 40px 8vw 24px;
   background: linear-gradient(135deg, rgba(229,9,20,0.25), transparent 60%);
 }
 header h1 {
   font-family: 'Playfair Display', serif;
-  font-size: 2.6rem;
+  font-size: 2.2rem;
   margin: 0 0 8px;
 }
 header p {
@@ -2068,7 +2116,7 @@ main {
 .summary {
   display: grid;
   gap: 16px;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
 }
 .summary .card {
   background: var(--panel);
@@ -2076,7 +2124,8 @@ main {
   border-radius: 16px;
   padding: 16px;
 }
-.summary .card strong { display:block; margin-bottom: 6px; }
+.summary .card strong { display:block; margin-bottom: 6px; font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.summary .card .val { font-size: 1.4rem; font-weight: 700; }
 .highlight {
   background: var(--panel-2);
   border-radius: 16px;
@@ -2087,7 +2136,7 @@ main {
   margin-top: 0;
   font-size: 1.2rem;
 }
-.highlight ul { margin: 0; padding-left: 18px; }
+.highlight ul { margin: 0; padding-left: 18px; line-height: 1.7; }
 .corrections {
   display: grid;
   gap: 12px;
@@ -2097,11 +2146,10 @@ main {
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 14px;
   padding: 16px;
+  page-break-inside: avoid;
 }
 .badge-row { display: flex; gap: 8px; align-items: center; }
 .badge {
-  background: rgba(34,197,94,0.2);
-  color: var(--success);
   padding: 4px 10px;
   border-radius: 999px;
   font-size: 0.75rem;
@@ -2116,6 +2164,8 @@ main {
 }
 .line { margin-top: 8px; }
 .line span { color: #fff; }
+.line.bad { color: #fca5a5; }
+.line.good { color: #86efac; }
 .note {
   margin-top: 10px;
   padding: 8px 12px;
@@ -2136,10 +2186,10 @@ main {
   border-radius: 16px;
   padding: 16px;
   border: 1px solid rgba(255,255,255,0.08);
-  max-height: 320px;
+  max-height: 400px;
   overflow-y: auto;
 }
-.transcript-line { margin-bottom: 8px; color: var(--muted); }
+.transcript-line { margin-bottom: 4px; color: var(--muted); }
 .action-bar {
   display: flex;
   flex-wrap: wrap;
@@ -2154,11 +2204,15 @@ main {
   border-radius: 10px;
   font-weight: 700;
   cursor: pointer;
+  transition: all 0.2s;
 }
+.button:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(229,9,20,0.4); }
+.button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 .button.secondary {
   background: transparent;
   border: 1px solid rgba(255,255,255,0.2);
 }
+.button.secondary:hover { background: rgba(255,255,255,0.05); }
 .footer-note { color: var(--muted); font-size: 0.9rem; }
 .empty { color: var(--muted); }
 .analise-card {
@@ -2168,25 +2222,68 @@ main {
   padding: 16px;
   margin-bottom: 12px;
 }
+@media print {
+  body { background: #0f1115 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .action-bar, .no-print { display: none !important; }
+}
+@media (max-width: 600px) {
+  header { padding: 24px 5vw 16px; }
+  header h1 { font-size: 1.6rem; }
+  main { padding: 16px 5vw 40px; }
+  .summary { grid-template-columns: repeat(2, 1fr); }
+}
 </style>
 </head>
 <body>
 <header>
-  <h1>${escapeHtml(info.emoji)} ${escapeHtml(info.titulo)}</h1>
-  <p>${escapeHtml(contextName)} • ${escapeHtml(userName)} • ${escapeHtml(createdAt)}</p>
+  <div style="display:flex;align-items:center;gap:28px;flex-wrap:wrap;">
+    <div style="position:relative;width:110px;height:110px;flex-shrink:0;">
+      <svg viewBox="0 0 120 120" style="transform:rotate(-90deg);width:110px;height:110px;">
+        <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="10"/>
+        <circle cx="60" cy="60" r="52" fill="none" stroke="${scoreColor}" stroke-width="10"
+          stroke-dasharray="${dashLength} ${326.7 - dashLength}" stroke-linecap="round"/>
+      </svg>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <span style="font-size:2rem;font-weight:800;color:${scoreColor};">${notaGeral}</span>
+        <span style="font-size:0.65rem;color:var(--muted);">de 100</span>
+      </div>
+    </div>
+    <div>
+      <h1>${escapeHtml(info.emoji)} ${escapeHtml(info.titulo)}</h1>
+      <p>${escapeHtml(contextName)} &bull; ${escapeHtml(userName)} &bull; ${escapeHtml(createdAt)}</p>
+      <div style="margin-top:8px;padding:6px 16px;border-radius:20px;display:inline-block;background:${scoreColor}22;color:${scoreColor};font-weight:700;font-size:0.9rem;">
+        ${notaLabel}
+      </div>
+    </div>
+  </div>
 </header>
 <main>
   <section class="summary">
-    <div class="card"><strong>Tom da conversa</strong>${escapeHtml(info.tom)}</div>
-    <div class="card"><strong>Trocas</strong>${stats.total} falas</div>
-    <div class="card"><strong>Mensagens do aluno</strong>${stats.user}</div>
-    <div class="card"><strong>Mensagens da IA</strong>${stats.ai}</div>
+    <div class="card"><strong>Tom</strong><div class="val">${escapeHtml(info.tom)}</div></div>
+    <div class="card"><strong>Total de falas</strong><div class="val">${stats.total}</div></div>
+    <div class="card"><strong>Suas mensagens</strong><div class="val">${stats.user}</div></div>
+    <div class="card"><strong>Respostas da IA</strong><div class="val">${stats.ai}</div></div>
   </section>
 
-  <section class="highlight">
-    <h2>Resumo mais importante</h2>
-    <ul>${resumoHtml}</ul>
+  <section class="highlight" style="border-left:4px solid #22c55e;">
+    <h2>🌟 O que você fez bem</h2>
+    <ul>${elogiosHtml}</ul>
   </section>
+
+  <section class="highlight" style="border-left:4px solid #f59e0b;">
+    <h2>📈 O que melhorar</h2>
+    <ul>${dicasHtml}</ul>
+  </section>
+
+  ${practicePhraseHtml}
+
+  ${grammarTagsHtml ? `
+  <section class="highlight">
+    <h2>📚 Pontos de Gramática e Vocabulário</h2>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+      ${grammarTagsHtml}
+    </div>
+  </section>` : ''}
 
   <section class="highlight">
     <h2>🎯 Análise Frase a Frase</h2>
@@ -2194,43 +2291,39 @@ main {
   </section>
 
   <section class="highlight" style="text-align:center;">
-    <button id="toggle-corrections" style="
+    <button id="toggle-corrections" class="no-print" style="
       padding:14px 28px;font-size:1rem;font-weight:700;color:#fff;
       background:linear-gradient(135deg,#6366f1 0%,#4f46e5 100%);
       border:none;border-radius:10px;cursor:pointer;
       box-shadow:0 4px 15px rgba(99,102,241,0.3);transition:all 0.3s ease;
-    ">Acessar correções mais detalhadas</button>
+    ">Ver correções detalhadas</button>
     <div id="corrections-panel" style="display:none;margin-top:20px;text-align:left;">
-      <h2>Correções detalhadas</h2>
+      <h2>✏️ Correções detalhadas</h2>
       <div class="corrections">${correctionsHtml}</div>
     </div>
   </section>
 
+  <section style="text-align:center;padding:32px 20px;background:linear-gradient(135deg,${gradeBg});border-radius:16px;border:1px solid ${gradeBorder};page-break-inside:avoid;">
+    <div style="font-size:3rem;">${gradeEmoji}</div>
+    <h2 style="margin:8px 0;">Nota Final: ${notaGeral}/100</h2>
+    <p style="color:var(--muted);max-width:400px;margin:0 auto;">${escapeHtml(gradeMsg)}</p>
+  </section>
+
   <section class="highlight">
-    <h2>Transcrição da conversa</h2>
+    <h2>💬 Transcrição da conversa</h2>
     <div class="transcript">${transcriptHtml}</div>
   </section>
 
-  <section class="highlight">
+  <section class="highlight no-print">
     <h2>Exportar relatório</h2>
     <div class="action-bar">
-      <button class="button" id="download-pdf">Baixar PDF</button>
-      <button class="button secondary" id="copy-summary">Copiar resumo</button>
+      <button class="button" id="download-pdf">📄 Baixar PDF</button>
+      <button class="button secondary" id="copy-summary">📋 Copiar resumo</button>
     </div>
-    <p class="footer-note">O PDF usa o relatório gerado nesta sessão.</p>
+    <p class="footer-note">O PDF inclui todo o conteúdo desta página, colorido e completo.</p>
   </section>
 </main>
 <script>
-window.__REPORT_PAYLOAD__ = ${JSON.stringify(reportPayload).replace(/</g, '\u003c')};
-window.__SUMMARY_TEXT__ = ${JSON.stringify(resumoItens.join(' • ')).replace(/</g, '\u003c')};
-
-const getAuthHeaders = () => {
-  const headers = { 'Content-Type': 'application/json' };
-  const token = localStorage.getItem('auth_token');
-  if (token) headers['Authorization'] = 'Bearer ' + token;
-  return headers;
-};
-
 document.getElementById('toggle-corrections').addEventListener('click', () => {
   const panel = document.getElementById('corrections-panel');
   const btn = document.getElementById('toggle-corrections');
@@ -2240,7 +2333,7 @@ document.getElementById('toggle-corrections').addEventListener('click', () => {
     btn.style.background = 'linear-gradient(135deg,#64748b 0%,#475569 100%)';
   } else {
     panel.style.display = 'none';
-    btn.textContent = 'Acessar correções mais detalhadas';
+    btn.textContent = 'Ver correções detalhadas';
     btn.style.background = 'linear-gradient(135deg,#6366f1 0%,#4f46e5 100%)';
   }
 });
@@ -2249,39 +2342,44 @@ document.getElementById('download-pdf').addEventListener('click', async () => {
   const btn = document.getElementById('download-pdf');
   btn.disabled = true;
   btn.textContent = 'Gerando PDF...';
+
+  // Expand corrections before generating PDF
+  const panel = document.getElementById('corrections-panel');
+  const wasHidden = panel.style.display === 'none';
+  if (wasHidden) panel.style.display = 'block';
+
   try {
-    const res = await fetch('/api/export/pdf', {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(window.__REPORT_PAYLOAD__)
-    });
-    if (!res.ok) throw new Error('Falha ao gerar PDF');
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'relatorio_' + new Date().toISOString().slice(0,10) + '.pdf';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const element = document.querySelector('main');
+    const opt = {
+      margin: [8, 8, 8, 8],
+      filename: 'relatorio_' + new Date().toISOString().slice(0,10) + '.pdf',
+      image: { type: 'jpeg', quality: 0.95 },
+      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#0f1115' },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    };
+    await html2pdf().set(opt).from(element).save();
   } catch (err) {
-    alert('Nao foi possivel gerar o PDF agora. Tente novamente.');
+    console.error('PDF error:', err);
+    alert('Erro ao gerar PDF. Tente novamente.');
   } finally {
+    if (wasHidden) panel.style.display = 'none';
     btn.disabled = false;
-    btn.textContent = 'Baixar PDF';
+    btn.textContent = '📄 Baixar PDF';
   }
 });
 
 document.getElementById('copy-summary').addEventListener('click', async () => {
   try {
-    await navigator.clipboard.writeText(window.__SUMMARY_TEXT__ || '');
-    alert('Resumo copiado!');
+    await navigator.clipboard.writeText(${JSON.stringify(summaryText).replace(/</g, '\u003c')} || '');
+    const btn = document.getElementById('copy-summary');
+    btn.textContent = '✅ Copiado!';
+    setTimeout(() => { btn.textContent = '📋 Copiar resumo'; }, 2000);
   } catch (err) {
-    alert('Nao foi possivel copiar o resumo.');
+    alert('Não foi possível copiar o resumo.');
   }
 });
-</script>
+<\/script>
 </body>
 </html>`;
 
@@ -2303,6 +2401,12 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
     // Make closeReportModal available globally
     window.closeReportModal = closeReportModal;
 
+    function computeAvgNaturalidade(frases) {
+        if (!frases || !frases.length) return 50;
+        const sum = frases.reduce((a, f) => a + (typeof f.naturalidade === 'number' ? f.naturalidade : 50), 0);
+        return Math.round(sum / frases.length);
+    }
+
     function normalizeReportData(payload) {
         const base = {
             titulo: "Resumo da sessao",
@@ -2313,6 +2417,8 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
             elogios: [],
             dicas: [],
             frase_pratica: "",
+            nota_geral: null,
+            resumo_gramatical: [],
             raw: "",
             wasStructured: false
         };
@@ -2338,6 +2444,8 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         base.analise_frases = Array.isArray(source.analise_frases) ? source.analise_frases.filter(Boolean) : [];
         base.elogios = Array.isArray(source.elogios) ? source.elogios.filter(Boolean) : [];
         base.dicas = Array.isArray(source.dicas) ? source.dicas.filter(Boolean) : [];
+        base.nota_geral = typeof source.nota_geral === 'number' ? source.nota_geral : null;
+        base.resumo_gramatical = Array.isArray(source.resumo_gramatical) ? source.resumo_gramatical.filter(Boolean) : [];
 
         return base;
     }
@@ -3171,23 +3279,6 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
     }
 
     // Export functions
-    async function exportReportPDF(reportData) {
-        try {
-            const blob = await apiClient.exportPDF(reportData, user.name);
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `relatorio_${new Date().toISOString().split('T')[0]}.pdf`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        } catch (err) {
-            console.error('Export PDF error:', err);
-            alert('Erro ao exportar PDF. Tente novamente.');
-        }
-    }
-
     function exportReportJSON(reportData) {
         const dataStr = JSON.stringify(reportData, null, 2);
         const blob = new Blob([dataStr], { type: 'application/json' });

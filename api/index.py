@@ -1927,7 +1927,9 @@ Retorne APENAS um JSON válido seguindo EXATAMENTE este formato:
   ],
   "elogios": ["estrutura que usou bem 1", "estrutura que usou bem 2", "estrutura que usou bem 3"],
   "dicas": ["estude esta estrutura: ...", "pratique usar: ..."],
-  "frase_pratica": "How would you politely ask someone to open the window?"
+  "frase_pratica": "How would you politely ask someone to open the window?",
+  "nota_geral": 75,
+  "resumo_gramatical": ["Estruturas de pedido educado", "Uso de would/could"]
 }}
 
 REGRAS:
@@ -1937,6 +1939,8 @@ REGRAS:
 - Pelo menos 3 elogios sobre estruturas que usou bem
 - Dicas devem sugerir estruturas específicas para estudar
 - Tom sempre positivo e motivador
+- "nota_geral": número de 0 a 100 representando a performance geral (60% naturalidade média das frases + 20% frases corretas + 20% variedade de vocabulário)
+- "resumo_gramatical": lista de 2-4 pontos gramaticais ou de vocabulário cobertos na conversa (ex: "Estruturas de pedido educado", "Uso de would/could")
 - SEM texto fora do JSON
 """
     else:
@@ -1981,7 +1985,9 @@ Gere um relatório em português e retorne APENAS um JSON válido seguindo EXATA
   ],
   "elogios": ["elogio específico 1", "elogio específico 2", "elogio específico 3", "elogio específico 4"],
   "dicas": ["dica construtiva 1", "dica construtiva 2"],
-  "frase_pratica": "próxima frase em inglês para o aluno treinar neste contexto"
+  "frase_pratica": "próxima frase em inglês para o aluno treinar neste contexto",
+  "nota_geral": 75,
+  "resumo_gramatical": ["ponto gramatical coberto 1", "ponto de vocabulário coberto 2"]
 }}
 
 ANÁLISE FRASE A FRASE (use em "analise_frases"):
@@ -2011,6 +2017,8 @@ REGRAS CRÍTICAS:
 - Elogios devem ser ESPECÍFICOS sobre o que o aluno fez bem
 - Dicas devem ser construtivas, não críticas
 - Se o aluno estiver muito bem, elogie ainda mais!
+- "nota_geral": número de 0 a 100 representando a performance geral do aluno (60% naturalidade média das frases + 20% quantidade de frases corretas + 20% variedade de vocabulário)
+- "resumo_gramatical": lista de 2-4 pontos gramaticais ou de vocabulário cobertos na conversa (ex: "Simple Past", "Phrasal verbs com 'get'", "Vocabulário de restaurante")
 - SEM texto fora do JSON
 """
 
@@ -2056,7 +2064,8 @@ REGRAS CRÍTICAS:
 @limiter.limit("5 per minute")
 @require_auth
 def export_pdf():
-    """Export conversation report as PDF"""
+    """DEPRECATED: PDF generation now handled client-side via html2pdf.js.
+    Kept as fallback for older clients. Will be removed in a future version."""
     data = request.json or {}
     report_data = data.get('report')
     user_name = data.get('user_name', 'Student')
