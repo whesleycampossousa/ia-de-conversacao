@@ -385,7 +385,7 @@
         let selectedMode = localStorage.getItem('practice_mode') || null;
 
         // Grammar topics only support learning mode — hide simulator card
-        const urlParams = new URLSearchParams(window.location.search);
+        // urlParams already declared above (line 181)
         const isGrammarMode = urlParams.get('type') === 'grammar';
         if (isGrammarMode) {
             const simCard = document.getElementById('mode-simulator');
