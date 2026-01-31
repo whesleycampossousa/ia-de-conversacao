@@ -385,6 +385,7 @@ def load_json_file(path):
 SCENARIOS = []
 GRAMMAR_TOPICS = []
 GRAMMAR_TOPIC_IDS = set()
+GRAMMAR_TOPIC_TITLES = {}
 CONTEXT_PROMPTS = {}
 SIMULATOR_PROMPTS = {}  # Simulator mode prompts for realistic roleplay
 LESSONS_DB = {}  # Structured lessons for Learning mode
@@ -418,10 +419,11 @@ def get_cached_model_for_context(context_key, system_prompt):
 
 def load_context_data():
     """Reload scenarios/grammar so new topics are available without restart."""
-    global SCENARIOS, GRAMMAR_TOPICS, GRAMMAR_TOPIC_IDS, CONTEXT_PROMPTS, SIMULATOR_PROMPTS, LESSONS_DB
+    global SCENARIOS, GRAMMAR_TOPICS, GRAMMAR_TOPIC_IDS, GRAMMAR_TOPIC_TITLES, CONTEXT_PROMPTS, SIMULATOR_PROMPTS, LESSONS_DB
     SCENARIOS = load_json_file(SCENARIOS_PATH)
     GRAMMAR_TOPICS = load_json_file(GRAMMAR_PATH)
     GRAMMAR_TOPIC_IDS = {g.get('id') for g in GRAMMAR_TOPICS}
+    GRAMMAR_TOPIC_TITLES = {g.get('id'): g.get('title', g.get('id', '').replace('_', ' ').title()) for g in GRAMMAR_TOPICS}
     CONTEXT_PROMPTS = {s.get('id'): s.get('prompt', '') for s in SCENARIOS}
     CONTEXT_PROMPTS.update({g.get('id'): g.get('prompt', '') for g in GRAMMAR_TOPICS})
     # Load simulator prompts (realistic roleplay mode)
@@ -653,6 +655,11 @@ def chat():
             if history_lines:
                 conversation_history = "\n### CONVERSATION HISTORY (for context):\n" + "\n".join(history_lines) + "\n"
 
+    # Grammar topics don't support simulator mode — force to learning
+    if practice_mode == 'simulator' and context_key in GRAMMAR_TOPIC_IDS:
+        practice_mode = 'learning'
+        print(f"[CHAT] Grammar topic '{context_key}' forced from simulator to learning mode")
+
     # Get System Prompt based on context and practice mode
     if practice_mode == 'simulator' and context_key in SIMULATOR_PROMPTS:
         system_prompt = SIMULATOR_PROMPTS.get(context_key)
@@ -841,7 +848,8 @@ The student just said: "{user_text}"
 Return ONLY JSON: {{"en": "...", "suggested_words": ["word1","word2","word3","word4"], "must_retry": true}}
 """
         elif lesson_lang == 'pt':
-            # PORTUGUESE MODE: Explanations in PT-BR with English examples marked
+            # PORTUGUESE MODE: Topic-focused bilingual approach
+            topic_title = GRAMMAR_TOPIC_TITLES.get(context_key, context_key.replace('_', ' ').title())
             full_prompt = f"""{system_prompt}
 
 ### MODO PORTUGUES-INGLES (BILINGUAL)
@@ -851,36 +859,51 @@ Quando usar exemplos em ingles, marque com [EN]exemplo em ingles[/EN].
 ### SITUACAO ATUAL
 O aluno disse: "{user_text}"
 
-### REGRAS CRITICAS (MUITO IMPORTANTE!)
-1. Se o aluno fizer uma PERGUNTA, voce DEVE responder PRIMEIRO antes de continuar. Nunca ignore perguntas!
-2. Seja uma parceira de conversa REAL, nao uma maquina de correcao.
-3. So corrija ERROS GRAMATICAIS REAIS (tempo verbal errado, concordancia errada, preposicao errada).
-4. NAO corrija alternativas validas! Ex: [EN]doing great[/EN] e [EN]doing well[/EN] sao AMBOS corretos - nao "corrija" um para o outro.
-5. Se o ingles do aluno estiver correto, apenas continue a conversa naturalmente SEM correcoes.
+### FOCO DO TOPICO: {topic_title} (REGRA MAIS IMPORTANTE)
+- Voce esta ensinando **{topic_title}**. TODA resposta DEVE incluir um exemplo natural deste ponto gramatical.
+- Se o aluno mudar de assunto, reconheca brevemente e redirecione: "Interessante! A proposito..." e volte para {topic_title}.
+- Suas perguntas devem fazer o aluno USAR {topic_title} na resposta.
+- ERRADO: Conversa generica que ignora o topico gramatical.
+- CERTO: Cada resposta modela e pratica {topic_title} naturalmente.
+
+### REGRAS CRITICAS
+1. Se o aluno fizer uma PERGUNTA, responda PRIMEIRO, depois redirecione para {topic_title}.
+2. Seja uma parceira de conversa REAL que naturalmente inclui {topic_title} em toda resposta.
+3. So corrija ERROS GRAMATICAIS REAIS (especialmente erros relacionados a {topic_title}).
+4. NAO corrija alternativas validas! Ex: [EN]doing great[/EN] e [EN]doing well[/EN] sao AMBOS corretos.
+5. Se o ingles do aluno estiver correto, continue a conversa usando exemplos de {topic_title}.
 
 ### COMO RESPONDER
-- Reaja ao conteudo e mantenha a conversa fluindo.
+- Reaja ao conteudo e mantenha a conversa fluindo EM TORNO DE {topic_title}.
 - Se houver ERRO REAL, corrija: "Em vez de [EN]trecho curto[/EN], diga: [EN]frase correta[/EN]."
 - Responda em PORTUGUES BRASILEIRO. Ingles sempre em [EN]...[/EN].
 - 1 a 2 frases curtas.
-- **REGRA OBRIGATORIA**: Sua resposta DEVE SEMPRE terminar com uma PERGUNTA para o aluno. NUNCA termine apenas com uma afirmacao! O aluno precisa saber o que responder.
+- **REGRA OBRIGATORIA**: Sua resposta DEVE SEMPRE terminar com uma PERGUNTA que faca o aluno praticar {topic_title}.
 - suggested_words: APENAS quando houver ERRO GRAMATICAL REAL; senao [].
 - must_retry: true APENAS se suggested_words nao estiver vazio; senao false.
 - Retorne JSON: {{"pt": "...", "suggested_words": [], "must_retry": false}}
 """
         else:
-            # ENGLISH MODE: Original immersion-based approach
+            # ENGLISH MODE: Topic-focused immersion approach
+            topic_title = GRAMMAR_TOPIC_TITLES.get(context_key, context_key.replace('_', ' ').title())
             full_prompt = f"""{system_prompt}
 {conversation_history}
 ### CURRENT SITUATION
 The student just said: "{user_text}"
 
-### CRITICAL RULES (VERY IMPORTANT!)
-1. If the student asks you a QUESTION, you MUST answer it FIRST before continuing. Never ignore questions!
-2. Be a REAL conversation partner, NOT a correction machine.
-3. Only correct REAL GRAMMAR ERRORS (wrong verb tense, subject-verb disagreement, wrong preposition).
-4. Do NOT correct valid alternatives! "doing great" and "doing well" are BOTH correct - don't "fix" one to the other.
-5. If their English is correct, just continue the conversation naturally WITHOUT corrections.
+### TOPIC FOCUS: {topic_title} (MOST IMPORTANT RULE)
+- You are teaching **{topic_title}**. EVERY response MUST include a natural example of this grammar point.
+- If the student drifts off topic, acknowledge briefly, then redirect: "That's interesting! By the way..." and bring back {topic_title}.
+- Your questions must be designed to make the student USE {topic_title} in their answer.
+- WRONG: Generic conversation that ignores the grammar topic.
+- RIGHT: Every response naturally models and practices {topic_title}.
+
+### CRITICAL RULES
+1. If the student asks you a QUESTION, answer it FIRST, then redirect back to {topic_title}.
+2. Be a REAL conversation partner who naturally weaves {topic_title} into every response.
+3. Only correct REAL GRAMMAR ERRORS (especially errors related to {topic_title}).
+4. Do NOT correct valid alternatives! "doing great" and "doing well" are BOTH correct.
+5. If their English is correct, continue the conversation using {topic_title} examples.
 
 ### NO TECHNICAL GRAMMAR TERMS (CRITICAL)
 - NEVER use grammar terminology like: "first conditional", "zero conditional", "present perfect",
@@ -888,16 +911,14 @@ The student just said: "{user_text}"
 - Instead of explaining rules, just show the correct form naturally.
 - WRONG: "That's a good example of a first conditional!"
 - RIGHT: "Nice sentence! So, what will you do if it rains?"
-- WRONG: "Since 'apple' starts with a vowel sound, we use 'an'."
-- RIGHT: "Instead of 'a apple', say: 'an apple'. What kind of apple do you like?"
 - The student is learning by DOING, not by studying theory.
 
 ### HOW TO RESPOND
-- React to what they said and keep the conversation flowing.
+- React to what they said and keep the conversation flowing AROUND {topic_title}.
 - If there's a REAL error, correct it briefly: "Instead of <short snippet>, say: <corrected>."
 - Speak in English (simple, natural, friendly).
 - Keep responses SHORT: max 2 sentences, under 30 words total. Correction + question.
-- **MANDATORY RULE**: Your response MUST ALWAYS end with a QUESTION for the student. NEVER end with just a statement! The student needs to know what to respond.
+- **MANDATORY RULE**: Your response MUST ALWAYS end with a QUESTION that makes the student practice {topic_title}.
 - suggested_words: ONLY when there is a REAL GRAMMAR ERROR; otherwise [].
 - must_retry: true ONLY if suggested_words is not empty; else false.
 - Return JSON: {{"en": "...", "suggested_words": [], "must_retry": false}}
@@ -1076,12 +1097,15 @@ Teacher mode (demonstratives):
 Return only JSON: {{"en": "...", "suggested_words": ["...","...","...","..."], "must_retry": true}}.
 """
                 elif lesson_lang == 'pt':
+                    topic_title = GRAMMAR_TOPIC_TITLES.get(context_key, context_key.replace('_', ' ').title())
                     minimal_prompt = f"""### SITUACAO ATUAL
 O aluno disse: "{user_text}"
 
-Responda de forma humana e conversacional. Use portugues e marque ingles com [EN]...[/EN].
-Evite "aula/licao/exercicio/gramatica".
-1-2 frases curtas (max ~16 palavras cada) e termine com uma pergunta.
+FOCO DO TOPICO: {topic_title}
+TODA resposta DEVE incluir exemplo natural de {topic_title}. Se o aluno mudar de assunto, redirecione para {topic_title}.
+Suas perguntas devem fazer o aluno USAR {topic_title} na resposta.
+Use portugues e marque ingles com [EN]...[/EN]. Evite "aula/licao/exercicio/gramatica".
+1-2 frases curtas (max ~16 palavras cada) e termine com uma pergunta sobre {topic_title}.
 Se corrigir, use: "Em vez de [EN]trecho curto[/EN], diga: [EN]frase correta[/EN]." (max 4 palavras do aluno).
 Nao repita a frase inteira do aluno.
 suggested_words: 4 palavras/expressoes curtas quando houver erro ou oportunidade; senao [].
@@ -1089,12 +1113,15 @@ must_retry: true se suggested_words nao estiver vazio; senao false.
 Retorne apenas JSON: {{"pt": "...", "suggested_words": ["...","...","...","..."], "must_retry": true}}.
 """
                 else:
+                    topic_title = GRAMMAR_TOPIC_TITLES.get(context_key, context_key.replace('_', ' ').title())
                     minimal_prompt = f"""### CURRENT SITUATION
 The student just said: "{user_text}"
 
-Respond like a real conversation partner. Use simple English and avoid "lesson/grammar/exercise".
-NEVER use grammar terms (conditional, present perfect, vowel sound, etc). Just show the correct form.
-1-2 short sentences (max 30 words total), end with one question.
+TOPIC FOCUS: {topic_title}
+EVERY response MUST include a natural example of {topic_title}. If the student drifts off topic, redirect back to {topic_title}.
+Your questions must make the student USE {topic_title} in their answer.
+Use simple English. Avoid "lesson/grammar/exercise". No grammar terms (conditional, present perfect, etc).
+1-2 short sentences (max 30 words total), end with a question about {topic_title}.
 If you correct, use: "Instead of <short snippet>, say: <corrected>." (max 4 words from the student).
 Do not repeat the full student sentence. Do not explain grammar rules.
 suggested_words: 4 short words/phrases when there is a mistake or clear improvement; otherwise [].
@@ -1325,7 +1352,11 @@ Original message: "{ai_text}"
             return ' '.join(words[:max_words]).rstrip() + '...'
 
         user_words = _word_count(user_text)
-        max_words = max(20, int(user_words * 2.0)) if user_words else 20
+        # Learning mode needs more words for teaching + translation + question
+        if practice_mode == 'learning':
+            max_words = max(40, int(user_words * 2.5)) if user_words else 40
+        else:
+            max_words = max(20, int(user_words * 2.0)) if user_words else 20
 
         if ai_text and '[EN]' not in ai_text and not is_demonstratives:
             if _word_count(ai_text) > max_words:
@@ -1349,32 +1380,32 @@ Original message: "{ai_text}"
             # Check if already ends with a question
             if text.endswith('?'):
                 return text
-            
-            # Practice commands (NOT banned questions)
+
+            import random
+            # Natural conversational follow-up questions (NOT robotic commands)
             follow_up_questions_en = [
-                "Now repeat this sentence.",
-                "Say this phrase out loud.",
-                "Try saying this in English.",
-                "Now practice this phrase.",
-                "Repeat after me."
+                "What about you?",
+                "How about you?",
+                "What do you think?",
+                "Do you agree?",
+                "And you?",
             ]
             follow_up_questions_pt = [
-                "Agora repita essa frase.",
-                "Diga essa frase em voz alta.",
-                "Tente dizer isso em inglês.",
-                "Agora pratique essa frase.",
-                "Repita comigo."
+                "E voce?",
+                "O que voce acha?",
+                "Voce concorda?",
+                "E ai, o que me diz?",
+                "Me conta mais?",
             ]
-            
-            import random
+
             if lang == 'pt' or '[EN]' in text:
                 question = random.choice(follow_up_questions_pt)
             else:
                 question = random.choice(follow_up_questions_en)
-            
+
             # Append the question
             return f"{text} {question}"
-        
+
         # Strip "Today you will learn" from non-first messages in learning mode
         if practice_mode == 'learning' and conversation_history:
             import re as _re
@@ -1382,10 +1413,13 @@ Original message: "{ai_text}"
             if ai_trans:
                 ai_trans = _re.sub(r'Hoje você (vai|irá) aprender[^.]*\.?\s*', '', ai_trans, flags=_re.IGNORECASE).strip()
 
-        # Apply question enforcement ONLY for free conversation mode
-        # Learning mode: prompt already handles conversational endings
+        # Apply question enforcement for all modes EXCEPT simulator
         # Simulator mode: natural roleplay flow without forced questions
-        if practice_mode not in ('simulator', 'learning'):
+        # Learning mode (grammar + regular): always ensure questions for engagement
+        should_enforce_question = (
+            practice_mode != 'simulator'
+        )
+        if should_enforce_question:
             ai_text = _ensure_ends_with_question(ai_text, lesson_lang if is_grammar_topic else 'en', context_key)
             if ai_trans:
                 ai_trans = _ensure_ends_with_question(ai_trans, 'pt', context_key)

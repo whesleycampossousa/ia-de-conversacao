@@ -384,6 +384,17 @@
         // ===== MODE SELECTION LOGIC =====
         let selectedMode = localStorage.getItem('practice_mode') || null;
 
+        // Grammar topics only support learning mode — hide simulator card
+        const urlParams = new URLSearchParams(window.location.search);
+        const isGrammarMode = urlParams.get('type') === 'grammar';
+        if (isGrammarMode) {
+            const simCard = document.getElementById('mode-simulator');
+            if (simCard) simCard.style.display = 'none';
+            // Force learning mode for grammar
+            selectedMode = 'learning';
+            localStorage.setItem('practice_mode', 'learning');
+        }
+
         // Initialize mode selection
         function initModeSelection() {
             const modeCards = document.querySelectorAll('.pmode-card');
