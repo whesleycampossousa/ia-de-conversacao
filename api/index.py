@@ -805,7 +805,7 @@ Quando usar exemplos em ingles, marque com [EN]exemplo em ingles[/EN].
 ### TEACHER MODE — DEMONSTRATIVOS (INTERMEDIARIO)
 REGRAS DURAS:
 - Cada mensagem deve terminar com uma tarefa/pergunta aberta que obrigue o aluno a responder.
-- Cada mensagem deve ter entre 40 e 110 palavras.
+- Cada mensagem deve ter entre 20 e 60 palavras.
 - Estrutura obrigatoria: (A) 1 frase amigavel curta + (B) 1 frase curta de ensino + (C) 1 tarefa/pergunta.
 - Depois de cumprimentar, volte ao tema na mesma mensagem.
 - Em cada turno, exija que o aluno use pelo menos um de: [EN]this[/EN], [EN]that[/EN], [EN]these[/EN], [EN]those[/EN].
@@ -1077,7 +1077,7 @@ Return JSON: {{"en": "your response", "pt": "traducao em portugues"}}"""
 O aluno disse: "{user_text}"
 
 Teacher mode (demonstrativos):
-- 40-110 palavras.
+- 20-60 palavras.
 - Estrutura: 1 frase amigavel + 1 frase de ensino + 1 tarefa/pergunta.
 - Exigir uso de [EN]this/that/these/those[/EN] pelo aluno.
 - No maximo 2 exemplos.
@@ -1164,10 +1164,13 @@ CRITICAL RULES:
 suggested_words: ONLY for real grammar errors; otherwise [].
 must_retry: true ONLY if suggested_words not empty; else false.
 Return JSON: {{"en": "...", "pt": "...", "suggested_words": [], "must_retry": false}}."""
-            response = context_model.generate_content(minimal_prompt)
+            # Mode-aware token limits: grammar=256 (brief), simulator/free=512 (rich)
+            mode_gen_config = {"max_output_tokens": 256} if practice_mode == 'learning' else {"max_output_tokens": 512}
+            response = context_model.generate_content(minimal_prompt, generation_config=mode_gen_config)
         else:
             # Fallback to basic model with full prompt
-            response = model.generate_content(full_prompt)
+            mode_gen_config = {"max_output_tokens": 256} if practice_mode == 'learning' else {"max_output_tokens": 512}
+            response = model.generate_content(full_prompt, generation_config=mode_gen_config)
         
         print(f"[CHAT] User: {user_text[:50]}... | Response: {response.text[:100]}...")
 
@@ -1254,7 +1257,7 @@ Return JSON: {{"en": "...", "pt": "...", "suggested_words": [], "must_retry": fa
                         if lesson_lang == 'pt':
                             repair_prompt = f"""Reescreva a mensagem do assistente para seguir TODAS as regras:
 - Tema: demonstrativos (this/that/these/those).
-- 40 a 110 palavras.
+- 20 a 60 palavras.
 - Estrutura: 1 frase amigavel + 1 frase de ensino + 1 tarefa/pergunta.
 - Termine com pergunta/tarefa obrigatoria.
 - Use [EN]this/that/these/those[/EN].
@@ -1267,7 +1270,7 @@ Mensagem original: "{ai_text}"
                         else:
                             repair_prompt = f"""Rewrite the assistant message to satisfy ALL rules:
 - Topic: this/that/these/those.
-- 40 to 110 words.
+- 20 to 60 words.
 - Structure: 1 friendly line + 1 teaching line + 1 task/question.
 - End with an open question/task.
 - Include this/that/these/those.

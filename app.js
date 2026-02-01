@@ -809,17 +809,20 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             ttsCancelled = false;
             const chunks = splitTtsText(text, 480);
+            if (chunks.length === 0) { finalizePlayback(); return; }
             const skipBtn = showSkipAudioButton();
 
-            for (const chunk of chunks) {
+            // Prefetch pipeline: fetch next chunk while current plays
+            let nextBlobPromise = fetchTTSSafe(chunks[0]);
+
+            for (let i = 0; i < chunks.length; i++) {
                 if (ttsCancelled) break;
-                let blob = null;
-                try {
-                    blob = await apiClient.getTTS(chunk, ttsSpeed, lessonLang, getActiveVoice());
-                } catch (err) {
-                    console.error("TTS Error:", err);
-                    continue;
+                const blob = await nextBlobPromise;
+
+                if (i + 1 < chunks.length) {
+                    nextBlobPromise = fetchTTSSafe(chunks[i + 1]);
                 }
+
                 if (ttsCancelled) break;
                 if (blob && blob.size > 0) {
                     await playAudioBlob(blob);
@@ -1078,13 +1081,13 @@ document.addEventListener('DOMContentLoaded', () => {
         overlay.innerHTML = `
             <div class="usage-exceeded-modal">
                 <div class="modal-icon">⏰</div>
-                <h2>Limite Diário Atingido</h2>
-                <p>Você usou seus 10 minutos de prática de hoje!</p>
+                <h2>Tempo Esgotado</h2>
+                <p>Você usou seus 40 minutos de prática deste fim de semana!</p>
                 <div class="time-info">
                     <p><strong>Tempo usado:</strong> ${Math.floor(totalUsedToday / 60)} minutos</p>
-                    <p><strong>Próximo reset:</strong> Amanhã às 00:00 UTC</p>
+                    <p><strong>Próximo acesso:</strong> Sábado que vem</p>
                 </div>
-                <p style="font-size: 0.9rem; color: #94a3b8;">Continue praticando amanhã para manter seu progresso! 🚀</p>
+                <p style="font-size: 0.9rem; color: #94a3b8;">Continue praticando no próximo fim de semana!</p>
                 <button class="close-btn" onclick="this.closest('.usage-exceeded-overlay').remove()">Entendi</button>
             </div>
         `;
@@ -1494,7 +1497,9 @@ document.addEventListener('DOMContentLoaded', () => {
             hideLoadingIndicator();
 
             let errorMessage = "Connection error. Please check your internet and try again.";
-            if (err.message.includes('Session expired')) {
+            if (err.name === 'AbortError') {
+                errorMessage = "The server took too long to respond. Please try again.";
+            } else if (err.message.includes('Session expired')) {
                 errorMessage = "Your session has expired. Redirecting to login...";
             } else if (err.message.includes('Text too long')) {
                 errorMessage = "Your message is too long. Please keep it under 500 characters.";
@@ -1673,27 +1678,41 @@ document.addEventListener('DOMContentLoaded', () => {
         if (skipBtn) skipBtn.remove();
     }
 
-    async function playResponse(text, translation = "") {
-        // Show text
-        addMessage("AI", text, true, true, translation);
+    async function fetchTTSSafe(chunk) {
+        try {
+            return await apiClient.getTTS(chunk, ttsSpeed, lessonLang, getActiveVoice());
+        } catch (err) {
+            console.error("TTS prefetch error:", err);
+            return null;
+        }
+    }
 
-        // Save conversation
+    async function playResponse(text, translation = "") {
+        // Split text and start fetching first chunk BEFORE DOM work
+        const chunks = splitTtsText(text, 480);
+        let firstBlobPromise = chunks.length > 0 ? fetchTTSSafe(chunks[0]) : null;
+
+        // Show text and save (runs while first TTS chunk is being fetched)
+        addMessage("AI", text, true, true, translation);
         saveConversation();
 
-        // Generate Audio in safe chunks to avoid TTS length errors
+        // Play audio with prefetch pipeline
         try {
             ttsCancelled = false;
-            const chunks = splitTtsText(text, 480);
+            if (chunks.length === 0) return;
             const skipBtn = showSkipAudioButton();
 
-            for (const chunk of chunks) {
+            let nextBlobPromise = firstBlobPromise;
+
+            for (let i = 0; i < chunks.length; i++) {
                 if (ttsCancelled) break;
-                let blob = null;
-                try {
-                    blob = await apiClient.getTTS(chunk, ttsSpeed, lessonLang, getActiveVoice());
-                } catch (err) {
-                    console.error("TTS Error:", err);
-                    continue;
+
+                // Await the blob that was already being fetched
+                const blob = await nextBlobPromise;
+
+                // Start prefetching the NEXT chunk while this one plays
+                if (i + 1 < chunks.length) {
+                    nextBlobPromise = fetchTTSSafe(chunks[i + 1]);
                 }
 
                 if (ttsCancelled) break;
@@ -1878,54 +1897,9 @@ document.addEventListener('DOMContentLoaded', () => {
             wrapper.appendChild(buildAnaliseBlock(info.analise_frases));
         }
 
-        // Expandable corrections section (hidden by default)
-        if (info.correcoes && info.correcoes.length) {
-            const correctionsToggle = document.createElement('button');
-            correctionsToggle.className = 'action-btn';
-            correctionsToggle.textContent = 'Ver correções detalhadas';
-            correctionsToggle.style.cssText = 'width:100%;margin-top:1rem;padding:14px 20px;font-size:1rem;font-weight:700;color:#fff;background:linear-gradient(135deg,#6366f1 0%,#4f46e5 100%);border:none;border-radius:10px;cursor:pointer;box-shadow:0 4px 15px rgba(99,102,241,0.3);transition:all 0.3s ease;';
-            correctionsToggle.onmouseenter = () => { correctionsToggle.style.transform = 'translateY(-2px)'; correctionsToggle.style.boxShadow = '0 6px 20px rgba(99,102,241,0.5)'; };
-            correctionsToggle.onmouseleave = () => { correctionsToggle.style.transform = 'translateY(0)'; correctionsToggle.style.boxShadow = '0 4px 15px rgba(99,102,241,0.3)'; };
-            wrapper.appendChild(correctionsToggle);
+        // Corrections section removed
 
-            const correctionsPanel = document.createElement('div');
-            correctionsPanel.style.cssText = 'display:none;margin-top:1rem;';
-            correctionsPanel.appendChild(buildCorrectionsBlock(info.correcoes, info.raw));
-            wrapper.appendChild(correctionsPanel);
-
-            correctionsToggle.addEventListener('click', () => {
-                if (correctionsPanel.style.display === 'none') {
-                    correctionsPanel.style.display = 'block';
-                    correctionsToggle.textContent = 'Fechar correções detalhadas';
-                    correctionsToggle.style.background = 'linear-gradient(135deg,#64748b 0%,#475569 100%)';
-                } else {
-                    correctionsPanel.style.display = 'none';
-                    correctionsToggle.textContent = 'Ver correções detalhadas';
-                    correctionsToggle.style.background = 'linear-gradient(135deg,#6366f1 0%,#4f46e5 100%)';
-                }
-            });
-        }
-
-        // Export buttons — PDF opens full report window, JSON exports data
-        const exportButtons = document.createElement('div');
-        exportButtons.className = 'export-buttons';
-        exportButtons.style.cssText = 'display: flex; gap: 0.5rem; margin-top: 1rem;';
-
-        const pdfBtn = document.createElement('button');
-        pdfBtn.className = 'action-btn';
-        pdfBtn.innerHTML = '📄 Ver Relatório Completo / PDF';
-        pdfBtn.style.cssText = 'flex: 1; margin-top: 0; padding: 0.6rem;';
-        pdfBtn.onclick = () => openReportWindow(apiPayload);
-        exportButtons.appendChild(pdfBtn);
-
-        const jsonBtn = document.createElement('button');
-        jsonBtn.className = 'action-btn';
-        jsonBtn.innerHTML = '💾 JSON';
-        jsonBtn.style.cssText = 'width: auto; margin-top: 0; padding: 0.6rem 1rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%);';
-        jsonBtn.onclick = () => exportReportJSON(info);
-        exportButtons.appendChild(jsonBtn);
-
-        wrapper.appendChild(exportButtons);
+        // Export buttons removed — report shown in modal only
 
         if (info.raw && !info.wasStructured) {
             const rawNote = document.createElement('div');

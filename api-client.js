@@ -60,6 +60,19 @@ class APIClient {
     }
 
     /**
+     * Fetch with timeout using AbortController
+     */
+    fetchWithTimeout(url, options, timeoutMs = 20000) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+        return fetch(url, {
+            ...options,
+            signal: controller.signal
+        }).finally(() => clearTimeout(timeoutId));
+    }
+
+    /**
      * Handle API errors
      */
     async handleResponse(response) {
@@ -115,19 +128,23 @@ class APIClient {
         this.token = null;
         this.user = null;
         localStorage.removeItem('auth_token');
+        localStorage.removeItem('conversation_token');
         localStorage.removeItem('conversation_user');
         localStorage.removeItem('conversation_backup');
+        localStorage.removeItem('usage_data');
+        localStorage.removeItem('last_context');
+        localStorage.removeItem('practice_mode');
     }
 
     /**
      * Send chat message
      */
     async chat(text, context, lessonLang = 'en', practiceMode = 'learning') {
-        const response = await fetch(`${this.baseURL}/api/chat`, {
+        const response = await this.fetchWithTimeout(`${this.baseURL}/api/chat`, {
             method: 'POST',
             headers: this.getHeaders(),
             body: JSON.stringify({ text, context, lessonLang, practiceMode })
-        });
+        }, 20000);
 
         await this.handleResponse(response);
         return await response.json();
@@ -137,11 +154,11 @@ class APIClient {
      * Free conversation actions (guided flow)
      */
     async freeConversationAction(action, payload = {}) {
-        const response = await fetch(`${this.baseURL}/api/free-conversation`, {
+        const response = await this.fetchWithTimeout(`${this.baseURL}/api/free-conversation`, {
             method: 'POST',
             headers: this.getHeaders(),
             body: JSON.stringify({ action, ...payload })
-        });
+        }, 20000);
 
         await this.handleResponse(response);
         return await response.json();
@@ -151,11 +168,11 @@ class APIClient {
      * Structured lesson actions (Learning mode with predefined layers)
      */
     async lesson(action, context, payload = {}) {
-        const response = await fetch(`${this.baseURL}/api/lesson`, {
+        const response = await this.fetchWithTimeout(`${this.baseURL}/api/lesson`, {
             method: 'POST',
             headers: this.getHeaders(),
             body: JSON.stringify({ action, context, ...payload })
-        });
+        }, 20000);
 
         await this.handleResponse(response);
         return await response.json();
@@ -186,11 +203,11 @@ class APIClient {
         
         console.log(`[api-client] getTTS called with voice: ${voice}, lessonLang: ${lessonLang}`);
         
-        const response = await fetch(`${this.baseURL}/api/tts`, {
+        const response = await this.fetchWithTimeout(`${this.baseURL}/api/tts`, {
             method: 'POST',
             headers: this.getHeaders(),
             body: JSON.stringify({ text, speed, lessonLang, voice })
-        });
+        }, 12000);
 
         await this.handleResponse(response);
         return await response.blob();
