@@ -29,6 +29,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const isFreeConversation = context === 'free_conversation';
     const user = apiClient.isAuthenticated() ? apiClient.getUser() : { name: 'Visitante', is_admin: false };
 
+    // Check for Carnival blocking - February 17, 2026
+    const currentDate = new Date();
+    const isCarnivalDate = currentDate.getFullYear() === 2026 && 
+                          currentDate.getMonth() === 1 && // February (0-indexed)
+                          currentDate.getDate() === 17;
+    
+    if (isCarnivalDate && !user.is_admin) {
+        // Immediately block non-admin users on Carnival day
+        showUsageExceededModal();
+    }
+
     // =============================================
     // STRUCTURED LESSON STATE (Learning Mode)
     // =============================================
