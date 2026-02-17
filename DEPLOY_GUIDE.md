@@ -26,7 +26,26 @@ Ou acesse manualmente: https://aistudio.google.com/app/apikey
 4. Abra o arquivo `.env`
 5. Substitua `your_api_key_here` pela sua chave
 
-### 2️⃣ Testar Localmente
+### 2️⃣ Configurar Emails Autorizados
+
+**IMPORTANTE**: O sistema usa uma lista de emails autorizados (whitelist) para controlar o acesso.
+
+**Para configurar:**
+1. Certifique-se de que o arquivo `sales_aohqw_1768560610634.xlsx` está presente (contém os emails dos clientes)
+2. Execute o script de extração:
+```bash
+pip install pandas openpyxl
+python extract_emails.py
+```
+
+Este script irá:
+- Ler o arquivo Excel com os dados dos clientes
+- Extrair todos os emails únicos
+- Criar o arquivo `authorized_emails.json` com 300+ emails autorizados
+
+**Nota**: O arquivo `authorized_emails.json` não é versionado (está no .gitignore) por questões de privacidade. Você precisa gerá-lo localmente e, se necessário, fazer o upload manual para o servidor de produção.
+
+### 3️⃣ Testar Localmente
 
 **Execute:**
 ```bash
@@ -47,7 +66,7 @@ python api/index.py
 
 Acesse: http://localhost:4004
 
-### 3️⃣ Deploy no Vercel
+### 4️⃣ Deploy no Vercel
 
 **Via CLI:**
 ```bash
@@ -67,6 +86,12 @@ vercel env add RATE_LIMIT_WINDOW
 # Deploy
 vercel --prod
 ```
+
+**⚠️ IMPORTANTE - Arquivo authorized_emails.json em Produção:**
+Como o arquivo `authorized_emails.json` não é versionado, você precisa enviá-lo manualmente para o Vercel:
+1. Após o primeiro deploy, use um método seguro para copiar o arquivo para o servidor
+2. Ou configure um endpoint admin para fazer upload do arquivo
+3. **Alternativa**: Considere migrar para um banco de dados para gerenciar os emails autorizados em produção
 
 **Valores das variáveis:**
 - `GOOGLE_API_KEY`: Sua chave do Gemini
@@ -97,10 +122,12 @@ Para instruções detalhadas, consulte:
 │    ↓                                 │
 │ 2. Editar .env                      │
 │    ↓                                 │
-│ 3. setup.bat (testar local)         │
+│ 3. python extract_emails.py         │
 │    ↓                                 │
-│ 4. vercel --prod (deploy)           │
+│ 4. setup.bat (testar local)         │
+│    ↓                                 │
+│ 5. vercel --prod (deploy)           │
 └─────────────────────────────────────┘
 ```
 
-🎯 **Seu objetivo**: Executar esses 4 passos e sua aplicação estará no ar!
+🎯 **Seu objetivo**: Executar esses 5 passos e sua aplicação estará no ar!
