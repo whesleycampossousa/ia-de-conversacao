@@ -32,10 +32,10 @@ Ou acesse manualmente: https://aistudio.google.com/app/apikey
 
 **Para configurar:**
 1. Certifique-se de que o arquivo `sales_aohqw_1768560610634.xlsx` está presente (contém os emails dos clientes)
-2. Execute o script de extração:
+2. Execute o script de restauração:
 ```bash
 pip install pandas openpyxl
-python extract_emails.py
+python restore_authorized_emails.py
 ```
 
 Este script irá:

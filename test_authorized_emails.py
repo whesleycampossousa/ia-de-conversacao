@@ -81,7 +81,10 @@ def test_authorized_emails():
     
     # Test 7: All emails are valid format
     print("\nTest 7: Checking email format...")
-    invalid_emails = [email for email in emails if '@' not in email or '.' not in email]
+    # Basic email validation: should have @ and at least one character before and after
+    import re
+    email_pattern = re.compile(r'^[^@\s]+@[^@\s]+$')
+    invalid_emails = [email for email in emails if not email_pattern.match(email)]
     if len(invalid_emails) == 0:
         print("✅ PASS: All emails have valid format")
         test_results.append(True)

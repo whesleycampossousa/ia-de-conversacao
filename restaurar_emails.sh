@@ -11,12 +11,10 @@ read -p "Pressione Enter para continuar..."
 
 echo ""
 echo "⏳ Verificando dependências..."
-python3 -c "import pandas, openpyxl" 2>/dev/null
-if [ $? -ne 0 ]; then
+if ! python3 -c "import pandas, openpyxl" 2>&1; then
     echo "❌ Pandas ou openpyxl não instalados."
     echo "📦 Instalando dependências..."
-    pip3 install pandas openpyxl
-    if [ $? -ne 0 ]; then
+    if ! pip3 install pandas openpyxl; then
         echo "❌ Erro ao instalar dependências."
         echo "💡 Tente executar manualmente: pip3 install pandas openpyxl"
         exit 1

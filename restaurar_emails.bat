@@ -10,7 +10,7 @@ pause
 
 echo.
 echo ⏳ Verificando dependencias...
-python -c "import pandas, openpyxl" 2>nul
+python -c "import pandas, openpyxl"
 if %errorlevel% neq 0 (
     echo ❌ Pandas ou openpyxl nao instalados.
     echo 📦 Instalando dependencias...
