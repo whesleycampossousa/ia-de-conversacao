@@ -1087,6 +1087,11 @@ document.addEventListener('DOMContentLoaded', () => {
         let modalContent;
         if (isCarnival) {
             // Carnival holiday block message
+            const formattedDate = currentDate.toLocaleDateString('pt-BR', { 
+                day: 'numeric', 
+                month: 'long', 
+                year: 'numeric' 
+            });
             modalContent = `
                 <div class="usage-exceeded-modal">
                     <div class="modal-icon">🎭</div>
@@ -1094,7 +1099,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p>O acesso ao sistema está temporariamente bloqueado devido ao feriado de Carnaval.</p>
                     <div class="time-info">
                         <p><strong>Motivo:</strong> Feriado de Carnaval</p>
-                        <p><strong>Data:</strong> 17 de fevereiro de 2026</p>
+                        <p><strong>Data:</strong> ${formattedDate}</p>
                     </div>
                     <p style="font-size: 0.9rem; color: #94a3b8;">Aproveite o feriado e volte logo!</p>
                     <p style="margin-top: 15px; font-weight: bold; color: #3b82f6; font-size: 0.95rem;">Ass: Equipe ADM Everyday conversation</p>
