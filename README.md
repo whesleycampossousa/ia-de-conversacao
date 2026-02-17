@@ -67,14 +67,38 @@ RATE_LIMIT_WINDOW=60
 
 **⚠️ IMPORTANTE:** Nunca commite o arquivo `.env` com suas chaves reais!
 
-### 4. Execute o servidor
+### 4. Configure os emails autorizados
+
+O sistema usa uma lista de emails autorizados para controlar o acesso. Execute o script de restauração:
+
+**Windows:**
+```bash
+restaurar_emails.bat
+```
+
+**Linux/Mac:**
+```bash
+./restaurar_emails.sh
+```
+
+**Ou manualmente:**
+```bash
+pip install pandas openpyxl
+python restore_authorized_emails.py
+```
+
+Este script irá extrair 300+ emails do arquivo Excel e criar o arquivo `authorized_emails.json`.
+
+📖 **Para mais detalhes, veja:** [COMO_RESTAURAR_EMAILS.md](COMO_RESTAURAR_EMAILS.md)
+
+### 5. Execute o servidor
 ```bash
 python api/index.py
 ```
 
 O servidor estará rodando em `http://localhost:4004`
 
-### 5. Acesse a aplicação
+### 6. Acesse a aplicação
 Abra o navegador e acesse: `http://localhost:4004`
 
 ## 📖 Como Usar
