@@ -1657,7 +1657,7 @@ def _classify_turn_feedback(user_text, ai_text, practice_mode, must_retry=False,
                     "kind": "style_upgrade",
                     "user_text": student,
                     "suggested_text": right,
-                    "reason": explanation or "Sugestao opcional de naturalidade/polidez.",
+                    "reason": explanation or "Sua frase funciona. Se quiser soar mais natural, use a sugestao.",
                     "retry_required": False
                 }
             else:
@@ -1665,7 +1665,7 @@ def _classify_turn_feedback(user_text, ai_text, practice_mode, must_retry=False,
                     "kind": "error_correction",
                     "user_text": student,
                     "suggested_text": right,
-                    "reason": explanation or "Correcao de erro gramatical/estrutura para esta resposta.",
+                    "reason": explanation or "Troque pela frase sugerida e tente responder de novo.",
                     "retry_required": True
                 }
 
@@ -1677,7 +1677,7 @@ def _classify_turn_feedback(user_text, ai_text, practice_mode, must_retry=False,
             "kind": "none",
             "user_text": student,
             "suggested_text": student,
-            "reason": "Sua frase esta correta para este contexto.",
+            "reason": "Sua resposta funciona bem para este contexto.",
             "retry_required": False
         }
 
@@ -1721,14 +1721,14 @@ def _classify_turn_feedback(user_text, ai_text, practice_mode, must_retry=False,
                 "kind": "error_correction",
                 "user_text": student,
                 "suggested_text": corrected,
-                "reason": "Correcao de erro gramatical/estrutura para esta resposta.",
+                "reason": "Troque pela frase sugerida e tente responder de novo.",
                 "retry_required": True
             }
         return {
             "kind": "style_upgrade",
             "user_text": student,
             "suggested_text": corrected,
-            "reason": "Sugestao opcional de naturalidade/polidez.",
+            "reason": "Sua frase funciona. Se quiser soar mais natural, use a sugestao.",
             "retry_required": False
         }
 
@@ -1741,7 +1741,7 @@ def _classify_turn_feedback(user_text, ai_text, practice_mode, must_retry=False,
                 "kind": "error_correction",
                 "user_text": student,
                 "suggested_text": corrected if corrected else ", ".join(suggested_words),
-                "reason": "Correcao de erro gramatical/estrutura para esta resposta.",
+                "reason": "Troque pela frase sugerida e tente responder de novo.",
                 "retry_required": True
             }
 
@@ -1753,7 +1753,7 @@ def _classify_turn_feedback(user_text, ai_text, practice_mode, must_retry=False,
                 "kind": "style_upgrade",
                 "user_text": student,
                 "suggested_text": candidate,
-                "reason": "Sugestao opcional de naturalidade/polidez.",
+                "reason": "Sua frase funciona. Se quiser soar mais natural, use a sugestao.",
                 "retry_required": False
             }
 
@@ -1765,7 +1765,7 @@ def _classify_turn_feedback(user_text, ai_text, practice_mode, must_retry=False,
             "kind": "error_correction",
             "user_text": student,
             "suggested_text": student,
-            "reason": "Correcao de erro gramatical/estrutura para esta resposta.",
+            "reason": "Revise a estrutura da frase e tente responder de novo.",
             "retry_required": True
         }
 
@@ -1773,7 +1773,7 @@ def _classify_turn_feedback(user_text, ai_text, practice_mode, must_retry=False,
         "kind": "none",
         "user_text": student,
         "suggested_text": student,
-        "reason": "Sua frase esta correta para este contexto.",
+        "reason": "Sua resposta funciona bem para este contexto.",
         "retry_required": False
     }
 
@@ -3214,7 +3214,7 @@ FLOW CONTROL:
 Your ONLY goal: Simulate a real interaction so naturally that the user forgets this is an AI.
 
 ### RESPONSE FORMAT
-Return JSON: {{"en": "your response", "pt": "traducao em portugues", "feedback": "Quick grammar tip or encouragement about what the student just said (1 sentence max, in Portuguese). Example: 'Otimo vocabulario!' or 'Dica: use could ao inves de can para ser mais educado.' If nothing to correct, just encourage briefly."}}
+Return JSON: {{"en": "your response", "pt": "traducao em portugues", "feedback": "Feedback curto e acolhedor em portugues (1 frase curta, maximo 12 palavras). Comece positivo. Se corrigir, cite apenas 1 ajuste em linguagem simples, sem termos tecnicos. Se estiver correto, elogie algo especifico."}}
 """
     elif is_grammar_topic:
         if is_demonstratives and lesson_lang == 'pt':
@@ -3233,6 +3233,8 @@ REGRAS DURAS:
 - Em cada turno, exija que o aluno use pelo menos um de: [EN]this[/EN], [EN]that[/EN], [EN]these[/EN], [EN]those[/EN].
 - No maximo 2 exemplos por turno.
 - Nao repita a frase inteira do aluno. Se corrigir, use: "Em vez de [EN]trecho curto[/EN], diga: [EN]frase correta[/EN]."
+- Ensine UM ajuste por vez, sem termos tecnicos de gramatica.
+- Evite "voce errou"; prefira linguagem acolhedora e direta.
 
 ### MICRO-ENSINO
 [EN]This/These[/EN] = perto (singular/plural)
@@ -3259,6 +3261,8 @@ HARD RULES:
 - In each turn, require the student to use at least one of: this, that, these, those.
 - Provide at most 2 examples per turn.
 - Do not repeat the student's full sentence. If correcting, use: "Instead of <short snippet>, say: <corrected>."
+- Teach ONE adjustment at a time, in plain student-friendly language.
+- Never use grammar jargon or blame language.
 
 ### MICRO-TEACHING
 This/These = near (singular/plural)
@@ -3300,10 +3304,12 @@ O aluno disse: "{user_text}"
 3. So corrija ERROS GRAMATICAIS REAIS (especialmente erros relacionados a {topic_title}).
 4. NAO corrija alternativas validas! Ex: [EN]doing great[/EN] e [EN]doing well[/EN] sao AMBOS corretos.
 5. Se o ingles do aluno estiver correto, continue a conversa usando exemplos de {topic_title}.
+6. Ensine um ajuste por turno, em linguagem simples e acolhedora.
 
 ### COMO RESPONDER
 - Reaja ao conteudo e mantenha a conversa fluindo EM TORNO DE {topic_title}.
-- Se houver ERRO REAL, corrija: "Em vez de [EN]trecho curto[/EN], diga: [EN]frase correta[/EN]."
+- Se houver ERRO REAL, corrija com leveza: "Em vez de [EN]trecho curto[/EN], diga: [EN]frase correta[/EN]."
+- Nunca use termos tecnicos; mostre o padrao e faca o aluno praticar.
 - Responda em PORTUGUES BRASILEIRO. Ingles sempre em [EN]...[/EN].
 - 1 a 2 frases curtas.
 - **REGRA OBRIGATORIA**: Sua resposta DEVE SEMPRE terminar com uma PERGUNTA que faca o aluno praticar {topic_title}.
@@ -3342,10 +3348,11 @@ The student just said: "{user_text}"
 - WRONG: "That's a good example of a first conditional!"
 - RIGHT: "Nice sentence! So, what will you do if it rains?"
 - The student is learning by DOING, not by studying theory.
+- Teach one adjustment per turn. Be brief, warm, and practical.
 
 ### HOW TO RESPOND
 - React to what they said and keep the conversation flowing AROUND {topic_title}.
-- If there's a REAL error, correct it briefly: "Instead of <short snippet>, say: <corrected>."
+- If there's a REAL error, correct it briefly and gently: "Instead of <short snippet>, say: <corrected>."
 - Speak in English (simple, natural, friendly).
 - Keep responses SHORT: max 2 sentences, under 30 words total. Correction + question.
 - **MANDATORY RULE**: Your response MUST ALWAYS end with a QUESTION that makes the student practice {topic_title}.
@@ -3411,6 +3418,13 @@ After the first message, just keep advancing the scenario naturally.
 - NEVER stay on the same topic for more than 2 exchanges
 - Offer concrete options when relevant (e.g., "small, medium, or large?")
 
+### DIDACTIC TONE FOR "correction"
+- "explanation_pt" must be 1-2 short sentences in Brazilian Portuguese.
+- Sentence 1: say exactly what to change.
+- Sentence 2 (optional): invite the student to try again or say why it sounds better.
+- No grammar jargon, no blame, no long lectures.
+- Prefer warm openings like: "Quase isso.", "Melhor assim.", "Sua ideia foi boa; ajuste..."
+
 ### CORRECTIONS — USE ONLY THE "correction" JSON FIELD
 If the student uses WORDS THAT DO NOT EXIST in English (e.g., "chole", "buyed", "goed", "maked"):
 - This is ALWAYS an error — set "correction" with what they likely meant
@@ -3438,7 +3452,7 @@ IMPORTANT: ONLY mark as correct if ALL words in the sentence are real English wo
 ### EXAMPLE WITH ERROR (Coffee Shop):
 Student: "I wants two coffee"
 CORRECT JSON:
-{{"en": "Sure, two coffees coming right up! Would you like those hot or iced?", "pt": "Claro, dois cafes saindo! Voce quer quente ou gelado?", "suggested_words": ["I", "want", "two", "coffees"], "must_retry": true, "correction": {{"wrong": "I wants two coffee", "right": "I want two coffees, please", "explanation_pt": "Use 'I want' (sem 's') e 'coffees' no plural."}}}}
+{{"en": "Sure, two coffees coming right up! Would you like those hot or iced?", "pt": "Claro, dois cafes saindo! Voce quer quente ou gelado?", "suggested_words": ["I", "want", "two", "coffees"], "must_retry": true, "correction": {{"wrong": "I wants two coffee", "right": "I want two coffees, please", "explanation_pt": "Quase isso. Troque 'wants' por 'want' e use 'coffees' no plural. Agora tente repetir a frase inteira."}}}}
 
 ### EXAMPLE WITHOUT ERROR (Coffee Shop):
 Student: "Can I have a medium latte with oat milk?"
@@ -3448,7 +3462,7 @@ CORRECT JSON:
 ### EXAMPLE STYLE UPGRADE (Coffee Shop):
 Student: "Give me coffee"
 CORRECT JSON:
-{{"en": "Sure thing! What size would you like?", "pt": "Pode deixar! Qual tamanho?", "suggested_words": [], "must_retry": false, "correction": {{"wrong": "Give me coffee", "right": "Can I have a coffee, please?", "explanation_pt": "Dica opcional: 'Can I have...' soa mais educado que 'Give me...'."}}}}
+{{"en": "Sure thing! What size would you like?", "pt": "Pode deixar! Qual tamanho?", "suggested_words": [], "must_retry": false, "correction": {{"wrong": "Give me coffee", "right": "Can I have a coffee, please?", "explanation_pt": "Sua frase funciona. Se quiser soar mais educado, use 'Can I have...'."}}}}
 
 ### RESPONSE FORMAT
 Return ONLY valid JSON:
@@ -3537,7 +3551,7 @@ CONVERSATION FLOW (MOST CRITICAL):
 
 COMPLETE SENTENCES: NEVER end with "or", "and", comma, or "...". Always finish the full list of options.
 
-Return JSON: {{"en": "your response", "pt": "traducao em portugues", "feedback": "Quick grammar tip or encouragement about what the student just said (1 sentence max, in Portuguese). Example: 'Otimo vocabulario!' or 'Dica: use could ao inves de can para ser mais educado.' If nothing to correct, just encourage briefly."}}"""
+Return JSON: {{"en": "your response", "pt": "traducao em portugues", "feedback": "Feedback curto e acolhedor em portugues (1 frase curta, maximo 12 palavras). Comece positivo. Se corrigir, cite apenas 1 ajuste em linguagem simples, sem termos tecnicos. Se estiver correto, elogie algo especifico."}}"""
             elif is_grammar_topic:
                 if is_demonstratives and lesson_lang == 'pt':
                     minimal_prompt = f"""### SITUACAO ATUAL
@@ -3551,6 +3565,7 @@ Teacher mode (demonstrativos):
 - Exigir uso de [EN]this/that/these/those[/EN] pelo aluno.
 - No maximo 2 exemplos.
 - Se corrigir, use: "Em vez de [EN]trecho curto[/EN], diga: [EN]frase correta[/EN]."
+- Ensine um ajuste por vez, sem termos tecnicos.
 Retorne apenas JSON: {{"pt": "...", "suggested_words": ["...","...","...","..."], "must_retry": true}}.
 """
                 elif is_demonstratives and lesson_lang != 'pt':
@@ -3565,6 +3580,7 @@ Teacher mode (demonstratives):
 - Require the student to use this/that/these/those.
 - Max 2 examples.
 - If correcting, use: "Instead of <short snippet>, say: <corrected>."
+- Teach one adjustment at a time. No grammar jargon.
 Return only JSON: {{"en": "...", "suggested_words": ["...","...","...","..."], "must_retry": true}}.
 """
                 elif lesson_lang == 'pt':
@@ -3580,6 +3596,7 @@ Suas perguntas devem fazer o aluno USAR {topic_title} na resposta.
 Use portugues e marque ingles com [EN]...[/EN]. Evite "aula/licao/exercicio/gramatica".
 1-2 frases curtas (max ~16 palavras cada) e termine com uma pergunta sobre {topic_title}.
 Se corrigir, use: "Em vez de [EN]trecho curto[/EN], diga: [EN]frase correta[/EN]." (max 4 palavras do aluno).
+Corrija com leveza e foque em um ajuste por turno.
 Nao repita a frase inteira do aluno.
 suggested_words: 4 palavras/expressoes curtas quando houver erro ou oportunidade; senao [].
 must_retry: true se suggested_words nao estiver vazio; senao false.
@@ -3598,6 +3615,7 @@ Your questions must make the student USE {topic_title} in their answer.
 Use simple English. Avoid "lesson/grammar/exercise". No grammar terms (conditional, present perfect, etc).
 1-2 short sentences (max 30 words total), end with a question about {topic_title}.
 If you correct, use: "Instead of <short snippet>, say: <corrected>." (max 4 words from the student).
+Correct gently and focus on one adjustment per turn.
 Do not repeat the full student sentence. Do not explain grammar rules.
 suggested_words: 4 short words/phrases when there is a mistake or clear improvement; otherwise [].
 must_retry: true if suggested_words is not empty; else false.
@@ -3626,6 +3644,12 @@ Example: Student: "I wants coffee" → You: "Sure, I can get that coffee for you
 
 All corrections go ONLY in the "correction" JSON field.
 
+DIDACTIC TONE FOR "correction":
+- "explanation_pt" = 1-2 short sentences in Portuguese.
+- First say what to change. Then, if useful, ask the student to try again.
+- No grammar jargon, no blame, no long explanation.
+- Keep the tone warm and direct.
+
 GRAMMAR ERROR DETECTION (CRITICAL):
 - If the student uses WORDS THAT DO NOT EXIST in English (e.g., "chole", "buyed", "goed", "maked"), this is ALWAYS an error
 - If the student's sentence has a CLEAR grammar error (wrong verb form, wrong tense), you MUST:
@@ -3638,8 +3662,8 @@ GRAMMAR ERROR DETECTION (CRITICAL):
 - Only set must_retry to true for REAL grammar mistakes, never for style preferences.
 
 Return JSON: {{"en": "natural response as character", "pt": "traducao", "suggested_words": [], "must_retry": false, "correction": null}}
-If there IS an error: {{"en": "natural response with recast", "pt": "traducao", "suggested_words": ["w1","w2","w3"], "must_retry": true, "correction": {{"wrong": "I wants a coffee", "right": "I want a coffee, please.", "explanation_pt": "explicacao em portugues"}}}}
-For style suggestion (no retry): {{"en": "...", "pt": "...", "suggested_words": [], "must_retry": false, "correction": {{"wrong": "Give me coffee", "right": "Can I have a coffee, please?", "explanation_pt": "dica opcional..."}}}}"""
+If there IS an error: {{"en": "natural response with recast", "pt": "traducao", "suggested_words": ["w1","w2","w3"], "must_retry": true, "correction": {{"wrong": "I wants a coffee", "right": "I want a coffee, please.", "explanation_pt": "Quase isso. Troque 'wants' por 'want' e tente a frase inteira de novo."}}}}
+For style suggestion (no retry): {{"en": "...", "pt": "...", "suggested_words": [], "must_retry": false, "correction": {{"wrong": "Give me coffee", "right": "Can I have a coffee, please?", "explanation_pt": "Sua frase funciona. Se quiser soar mais natural, use esta versao."}}}}"""
                 else:
                     # FREE CONVERSATION MODE: Casual conversation partner
                     minimal_prompt = f"""{conversation_history}
@@ -5139,6 +5163,8 @@ REGRAS DE QUALIDADE:
 - Se houver erros, inclua pelo menos 3 correções importantes.
 - Se houver poucos erros, use "Correta, mas Pouco Natural" para sugerir formas mais naturais.
 - Dicas devem ser acionáveis e ligadas a erros reais observados.
+- Ensine um ajuste por vez em cada correção.
+- Evite termos técnicos; escreva como um professor explicando para um iniciante.
 
 Retorne APENAS um JSON válido seguindo EXATAMENTE este formato:
 {{
@@ -5146,7 +5172,7 @@ Retorne APENAS um JSON válido seguindo EXATAMENTE este formato:
   "emoji": "🎓",
   "tom": "educacional e encorajador",
   "correcoes": [
-    {{"ruim": "frase EXATA do aluno", "boa": "forma mais natural/educada", "explicacao": "por que essa forma é melhor"}}
+    {{"ruim": "frase EXATA do aluno", "boa": "forma mais natural/educada", "explicacao": "1-2 frases simples: o que ajustar e como tentar de novo"}}
   ],
   "analise_frases": [
     {{
@@ -5154,7 +5180,7 @@ Retorne APENAS um JSON válido seguindo EXATAMENTE este formato:
       "naturalidade": 50,
       "nivel": "Compreensível, mas não natural",
       "frase_natural": "como um nativo diria a mesma coisa",
-      "explicacao": "breve explicação de por que a versão natural é melhor"
+      "explicacao": "breve explicação simples, sem termos técnicos"
     }}
   ],
   "elogios": ["estrutura que usou bem 1", "estrutura que usou bem 2", "estrutura que usou bem 3"],
@@ -5175,6 +5201,7 @@ REGRAS:
 - "erros_recorrentes": 2-4 padrões observados com base nas falas do aluno
 - "plano_estudo": 3 ações claras e curtas para a próxima semana (baseadas nos erros)
 - Tom sempre positivo e motivador
+- Correções devem soar acolhedoras, nunca punitivas.
 - "nota_geral": número de 0 a 100 representando a performance geral (60% naturalidade média das frases + 20% frases corretas + 20% variedade de vocabulário)
 - "resumo_gramatical": lista de 2-4 pontos gramaticais ou de vocabulário cobertos na conversa (ex: "Estruturas de pedido educado", "Uso de would/could")
 - SEM texto fora do JSON
@@ -5201,6 +5228,8 @@ REGRAS DE QUALIDADE:
 - Se houver poucos erros, use "Correta, mas Pouco Natural" para sugerir formas mais naturais.
 - Dicas devem ser acionáveis e ligadas a erros reais observados.
 - Evite elogios genéricos: cite evidências concretas do que o aluno fez bem.
+- Ensine um ajuste por vez em cada correção.
+- Evite termos técnicos; explique como falaria com um aluno iniciante.
 
 Gere um relatório em português e retorne APENAS um JSON válido seguindo EXATAMENTE este formato:
 {{
@@ -5212,9 +5241,9 @@ Gere um relatório em português e retorne APENAS um JSON válido seguindo EXATA
       "fraseOriginal": "frase EXATA como o aluno falou",
       "fraseCorrigida": "versão corrigida da frase",
       "avaliacaoGeral": "Correta|Aceitável|Incorreta",
-      "comentarioBreve": "Comentário de 1 frase simples, como um professor explicaria na sala de aula",
+      "comentarioBreve": "1 frase curta, positiva e direta sobre o principal ajuste",
       "tag": "Estrutura Incorreta|Incorreta, mas Compreensível|Correta, mas Pouco Natural",
-      "explicacaoDetalhada": "Explicação DIDÁTICA e SIMPLES como um professor falaria para o aluno em sala de aula. SEM termos técnicos de gramática. Use exemplos do dia a dia, analogias e linguagem acessível. Ex: 'Em inglês, quando você quer pedir algo educadamente, é como dizer Eu gostaria em vez de Eu quero: soa mais gentil!'"
+      "explicacaoDetalhada": "2-3 frases curtas: diga o que ajustar, por que soa melhor e uma micro-orientação para repetir. SEM termos técnicos de gramática."
     }}
   ],
   "analise_frases": [
@@ -5223,7 +5252,7 @@ Gere um relatório em português e retorne APENAS um JSON válido seguindo EXATA
       "naturalidade": 50,
       "nivel": "Compreensível, mas não natural",
       "frase_natural": "como um nativo diria a mesma coisa",
-      "explicacao": "breve explicação de por que a versão natural é melhor"
+      "explicacao": "breve explicação simples de por que a versão natural é melhor"
     }}
   ],
   "elogios": ["elogio específico 1", "elogio específico 2", "elogio específico 3", "elogio específico 4"],
@@ -5242,6 +5271,7 @@ ANÁLISE FRASE A FRASE (use em "analise_frases"):
 - "nivel" deve descrever o nível em português (ex: "Perfeita!", "Boa, mas pode melhorar", "Compreensível, mas não natural", "Precisa de correção")
 - "frase_natural" deve ser EXATAMENTE como um nativo falaria (mesmo que a original já esteja correta, repita-a)
 - Se a frase do aluno já for perfeita, dê 90-100% e elogie na explicação
+- Em cada explicação, destaque um único ajuste principal.
 
 TAGS DE CLASSIFICACAO (use em "tag"):
 - "Estrutura Incorreta": Erro gramatical grave que compromete a compreensão
@@ -5261,6 +5291,8 @@ REGRAS CRÍTICAS:
 - Tom SEMPRE positivo e motivador
 - Elogios devem ser ESPECÍFICOS sobre o que o aluno fez bem
 - Dicas devem ser construtivas, não críticas
+- Nunca use tom duro, punitivo ou humilhante.
+- Prefira verbos como "ajuste", "troque", "tente", "experimente".
 - "erros_recorrentes": 2-4 padrões observados com base nas falas do aluno
 - "plano_estudo": 3 ações claras e curtas para a próxima semana (baseadas nos erros)
 - Se o aluno estiver muito bem, elogie ainda mais!

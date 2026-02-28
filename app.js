@@ -4258,7 +4258,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 // 5. Frase Corrigida
                 const goodLine = document.createElement('div');
                 goodLine.className = 'correction-line good';
-                goodLine.innerHTML = `<span style="color:#10b981;">✓ Melhor forma:</span> "${escapeHtml(correction.fraseCorrigida || correction.boa || '')}"`;
+                goodLine.innerHTML = `<span style="color:#10b981;">✓ Tente assim:</span> "${escapeHtml(correction.fraseCorrigida || correction.boa || '')}"`;
                 li.appendChild(goodLine);
 
                 // 6. Explicação Detalhada
@@ -4274,7 +4274,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                         border-radius: 6px;
                         border-left: 3px solid #8b5cf6;
                     `;
-                    explanationLine.innerHTML = `💡 <strong>Por que mudar:</strong> ${escapeHtml(correction.explicacaoDetalhada || correction.explicacao)}`;
+                    explanationLine.innerHTML = `💡 <strong>Como pensar nisso:</strong> ${escapeHtml(correction.explicacaoDetalhada || correction.explicacao)}`;
                     li.appendChild(explanationLine);
                 }
 
@@ -4368,7 +4368,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 kind,
                 user_text: String(source.user_text || baseUserText).trim() || baseUserText,
                 suggested_text: suggested,
-                reason: reason || 'Aqui esta uma forma melhor para esta resposta.'
+                reason: reason || 'Veja uma forma mais clara de responder.'
             };
         }
 
@@ -4384,7 +4384,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 kind: 'style_upgrade',
                 user_text: baseUserText,
                 suggested_text: suggestion,
-                reason: 'Para soar mais natural e educado, prefira "I\'d like ... , please."'
+                reason: 'Para soar mais natural, faca o pedido com "I\'d like ... , please."'
             };
         }
 
@@ -4397,7 +4397,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 kind: 'error_correction',
                 user_text: baseUserText,
                 suggested_text: suggestedWords.join(' '),
-                reason: 'Ajuste a estrutura para ficar mais natural neste contexto.'
+                reason: 'Troque pela frase sugerida e tente responder de novo.'
             };
         }
 
@@ -4405,7 +4405,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
             kind: 'ok',
             user_text: baseUserText,
             suggested_text: baseUserText,
-            reason: 'Sua resposta esta correta para o contexto.'
+            reason: 'Sua resposta funciona bem nesse contexto.'
         };
     }
 
@@ -4446,7 +4446,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 kind: 'error_correction',
                 user_text: text,
                 suggested_text: "I'd like a hot coffee, please.",
-                reason: 'A ordem das palavras ficou incorreta. Use: adjective + drink.'
+                reason: 'Coloque primeiro a caracteristica e depois a bebida.'
             };
         }
 
@@ -4459,7 +4459,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 kind: 'error_correction',
                 user_text: text,
                 suggested_text: `I'd like a ${adjective} ${drink}, please.`,
-                reason: 'Use primeiro o adjetivo e depois a bebida.'
+                reason: 'Primeiro diga a caracteristica e depois a bebida.'
             };
         }
 
@@ -4471,7 +4471,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                     kind: 'style_upgrade',
                     user_text: text,
                     suggested_text: "I'd like a hot coffee, please.",
-                    reason: 'Responda com bebida + forma educada.'
+                    reason: 'Diga a bebida e faca o pedido de forma educada.'
                 };
             }
         }
@@ -4637,7 +4637,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
             title.className = 'learning-feedback-title';
             title.textContent = aiQuestionDisplay
                 ? `\u{1F5E3}\uFE0F "${aiQuestionDisplay}"`
-                : 'Sobre a sua resposta';
+                : 'Vamos ajustar sua resposta';
             modal.appendChild(title);
 
             const stepBadge = document.createElement('div');
@@ -4657,8 +4657,8 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 const status = document.createElement('div');
                 status.className = 'learning-guidance-status';
                 status.textContent = kind === 'error_correction'
-                    ? '⚠️ Precisa ajustar'
-                    : (kind === 'style_upgrade' ? '💡 Pode melhorar' : '✅ Resposta correta');
+                    ? '⚠️ Ajuste rapido'
+                    : (kind === 'style_upgrade' ? '💡 Pode soar mais natural' : '✅ Sua resposta funcionou');
                 contentWrap.appendChild(status);
 
                 const saidLine = document.createElement('div');
@@ -4669,10 +4669,10 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 const suggestionLine = document.createElement('div');
                 suggestionLine.className = 'learning-feedback-line suggestion';
                 suggestionLine.innerHTML = kind === 'error_correction'
-                    ? `<span>✨ Forma sugerida:</span> "${escapeHtml(suggested)}"`
+                    ? `<span>✨ Tente assim:</span> "${escapeHtml(suggested)}"`
                     : (kind === 'style_upgrade'
-                        ? `<span>✨ Forma mais natural:</span> "${escapeHtml(suggested)}"`
-                        : `<span>✅ Está correto:</span> "${escapeHtml(suggested)}"`);
+                        ? `<span>✨ Uma forma mais natural:</span> "${escapeHtml(suggested)}"`
+                        : `<span>✅ Voce pode manter:</span> "${escapeHtml(suggested)}"`);
                 contentWrap.appendChild(suggestionLine);
 
                 if (reason) {
@@ -4685,7 +4685,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 const useBtn = document.createElement('button');
                 useBtn.type = 'button';
                 useBtn.className = 'learning-feedback-btn secondary';
-                useBtn.textContent = 'Usar frase sugerida';
+                useBtn.textContent = 'Colocar no campo';
                 useBtn.addEventListener('click', () => {
                     if (textInput) {
                         textInput.value = suggested;
@@ -4699,7 +4699,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 contentWrap.innerHTML = '';
                 const stepTitle = document.createElement('div');
                 stepTitle.className = 'learning-guidance-options-title';
-                stepTitle.innerHTML = 'Outras formas de responder: <span style="color:#FFD700;font-weight:bold;font-size:0.85em;">(Opcional)</span>';
+                stepTitle.innerHTML = 'Outras respostas possiveis: <span style="color:#FFD700;font-weight:bold;font-size:0.85em;">(Opcional)</span>';
                 contentWrap.appendChild(stepTitle);
 
                 const list = document.createElement('div');
@@ -4767,12 +4767,12 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 if (step === 'feedback') {
                     title.textContent = aiQuestionDisplay
                         ? `\u{1F5E3}\uFE0F "${aiQuestionDisplay}"`
-                        : 'Sobre a sua resposta';
+                        : 'Vamos ajustar sua resposta';
                     renderFeedbackStep();
                 } else {
                     title.textContent = aiQuestionDisplay
                         ? `\u{1F5E3}\uFE0F "${aiQuestionDisplay}"`
-                        : 'Outras formas de responder';
+                        : 'Outras respostas possiveis';
                     renderAnswersStep();
                 }
 
@@ -4797,7 +4797,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
 
             const helper = document.createElement('div');
             helper.className = 'learning-feedback-helper';
-            helper.textContent = 'Depois de continuar, a conversa segue normalmente com a proxima pergunta.';
+            helper.textContent = 'Depois de continuar, voce pode responder com a sugestao ou com a sua propria versao.';
             modal.appendChild(helper);
 
             modal.appendChild(actions);
@@ -4821,7 +4821,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
 
         const title = document.createElement('div');
         title.className = kind === 'error_correction' ? 'turn-correction-title' : 'turn-style-title';
-        title.textContent = kind === 'error_correction' ? 'Correção da interação' : 'Sugestão de naturalidade';
+        title.textContent = kind === 'error_correction' ? 'Ajuste rapido da sua frase' : 'Jeito mais natural de dizer';
         card.appendChild(title);
 
         const studentLine = document.createElement('div');
@@ -4833,7 +4833,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
 
         const suggestedLine = document.createElement('div');
         suggestedLine.className = kind === 'error_correction' ? 'turn-correction-line good' : 'turn-style-line good';
-        suggestedLine.innerHTML = `<span>${kind === 'error_correction' ? '✅ Mais natural:' : '✅ Sugestão:'}</span> "${escapeHtml(suggested)}"`;
+        suggestedLine.innerHTML = `<span>${kind === 'error_correction' ? '✅ Tente assim:' : '✅ Sugestao:'}</span> "${escapeHtml(suggested)}"`;
         card.appendChild(suggestedLine);
 
         const reason = String(feedback.reason || '').trim();
@@ -4847,7 +4847,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         const useBtn = document.createElement('button');
         useBtn.type = 'button';
         useBtn.className = 'correction-use-btn';
-        useBtn.textContent = kind === 'error_correction' ? 'Usar frase corrigida' : 'Usar sugestão';
+        useBtn.textContent = 'Colocar no campo';
         useBtn.addEventListener('click', () => {
             if (textInput) {
                 textInput.value = suggested;
