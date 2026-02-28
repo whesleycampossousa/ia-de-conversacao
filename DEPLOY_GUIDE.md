@@ -45,7 +45,7 @@ pip install -r requirements.txt
 python api/index.py
 ```
 
-Acesse: http://localhost:4004
+Acesse: http://localhost:8912
 
 ### 3️⃣ Deploy no Vercel
 
@@ -59,7 +59,14 @@ vercel login
 
 # Configurar variáveis de ambiente
 vercel env add GOOGLE_API_KEY
+vercel env add QWEN_API_KEY
+vercel env add QWEN_TTS_MODEL
+vercel env add QWEN_TTS_CLONE_MODEL
+vercel env add QWEN_TTS_VOICE
+vercel env add QWEN_TTS_CLONE_VOICE
 vercel env add SESSION_SECRET
+vercel env add ADMIN_EMAIL
+vercel env add ADMIN_PASSWORD
 vercel env add ALLOWED_ORIGINS
 vercel env add RATE_LIMIT_REQUESTS
 vercel env add RATE_LIMIT_WINDOW
@@ -70,7 +77,14 @@ vercel --prod
 
 **Valores das variáveis:**
 - `GOOGLE_API_KEY`: Sua chave do Gemini
-- `SESSION_SECRET`: `bed48c5f0f5d6fea2adc7da413b0f798c10c6de0218e16d7e9ca5a65b4bccace`
+- `QWEN_API_KEY`: sua chave do DashScope/Model Studio (Qwen TTS online)
+- `QWEN_TTS_MODEL`: `qwen3-tts-flash`
+- `QWEN_TTS_CLONE_MODEL`: `qwen3-tts-vc-2026-01-22`
+- `QWEN_TTS_VOICE`: voz padrão (ex: `Cherry`)
+- `QWEN_TTS_CLONE_VOICE`: nome da voz clonada criada na nuvem (ex: `Clone16...`)
+- `SESSION_SECRET`: gere um segredo aleatório forte (mínimo 32 caracteres)
+- `ADMIN_EMAIL`: email administrativo exclusivo (ex: `admin@seu-dominio.com`)
+- `ADMIN_PASSWORD`: senha forte e única (não reutilizar)
 - `ALLOWED_ORIGINS`: `https://seu-app.vercel.app` (atualizar após primeiro deploy)
 - `RATE_LIMIT_REQUESTS`: `30`
 - `RATE_LIMIT_WINDOW`: `60`

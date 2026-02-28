@@ -121,6 +121,8 @@ def main():
         print("  [ERROR] ffmpeg not found. Please install ffmpeg.")
         print("  On Windows: choco install ffmpeg")
         print("  Or download from: https://ffmpeg.org/download.html")
+        print("  Note: pydub fallback also depends on ffmpeg/libav binaries.")
+        print("  Python 3.14 does not change this requirement.")
 
         # Alternative: try using pydub
         print("\n  [INFO] Attempting fallback with pydub...")
@@ -140,6 +142,11 @@ def main():
 
         except ImportError:
             print("  [ERROR] pydub not installed. Run: pip install pydub")
+            print("  [ERROR] Recommended path: install ffmpeg and rerun this script.")
+            sys.exit(1)
+        except Exception as e:
+            print(f"  [ERROR] pydub fallback failed: {e}")
+            print("  [ERROR] Ensure ffmpeg is installed and available in PATH.")
             sys.exit(1)
 
     except subprocess.CalledProcessError as e:

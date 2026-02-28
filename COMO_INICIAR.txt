@@ -1,0 +1,48 @@
+============================================================
+  COMO INICIAR O SERVIDOR LOCAL
+============================================================
+
+OPCAO 1 - MAIS SIMPLES:
+-----------------------
+1. Clique duas vezes no arquivo: INICIAR.bat
+2. Aguarde o servidor iniciar
+3. Acesse: http://localhost:8912 no navegador
+
+OPCAO 2 - CONFIGURACAO COMPLETA:
+--------------------------------
+1. Clique duas vezes no arquivo: EXECUTAR_TUDO_AUTOMATICO.bat
+2. O script vai:
+   - Verificar Python
+   - Instalar dependencias (se necessario)
+   - Verificar arquivo .env
+   - Iniciar o servidor
+   - Abrir o navegador automaticamente
+
+OPCAO 3 - MANUAL:
+-----------------
+1. Abra o terminal (cmd) na pasta do projeto
+2. Execute: python api\index.py
+3. Acesse: http://localhost:8912
+
+============================================================
+  TROUBLESHOOTING
+============================================================
+
+PROBLEMA: "Python nao encontrado"
+SOLUCAO: Instale Python de https://www.python.org/downloads/
+         Certifique-se de marcar "Add Python to PATH" na instalacao
+
+PROBLEMA: "Porta 8912 ja esta em uso"
+SOLUCAO: O servidor ja esta rodando. Acesse: http://localhost:8912
+         Ou encerre o processo anterior e tente novamente
+
+PROBLEMA: "ModuleNotFoundError"
+SOLUCAO: Execute: pip install -r requirements.txt
+
+PROBLEMA: "localhost nao funciona"
+SOLUCAO: 
+1. Verifique se o servidor esta rodando (veja a janela do terminal)
+2. Verifique se a porta 8912 esta correta
+3. Tente acessar: http://127.0.0.1:8912
+
+============================================================

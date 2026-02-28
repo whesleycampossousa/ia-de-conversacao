@@ -1,0 +1,997 @@
+{
+  "timestamp": "2026-02-20T21:49:13.065704",
+  "summary": {
+    "rounds": 3,
+    "contexts": [
+      "hotel",
+      "coffee_shop",
+      "airport",
+      "pharmacy",
+      "bank",
+      "tech_support"
+    ],
+    "total_turns": 108,
+    "critical_findings": 0,
+    "warning_findings": 0,
+    "turns_with_critical": 0,
+    "turns_with_warning": 0,
+    "turns_clean": 108,
+    "pass_rate_critical_only": 100.0,
+    "pass_rate_strict_clean": 100.0
+  },
+  "findings": [],
+  "turns": [
+    {
+      "id": "r1:hotel:t1",
+      "round": 1,
+      "context": "hotel",
+      "turn": 1,
+      "user": "Hi, I'm checking in.",
+      "status": 200,
+      "ai": "Welcome to The Grand View Hotel! Could you please tell me your name or provide your reservation number?"
+    },
+    {
+      "id": "r1:hotel:t2",
+      "round": 1,
+      "context": "hotel",
+      "turn": 2,
+      "user": "I have a reservation under Wesley.",
+      "status": 200,
+      "ai": "Thank you, Mr. Wesley. I see your booking for a King Room until Friday; is that correct?"
+    },
+    {
+      "id": "r1:hotel:t3",
+      "round": 1,
+      "context": "hotel",
+      "turn": 3,
+      "user": "I will stay three nights.",
+      "status": 200,
+      "ai": "Perfect, three nights until Friday. May I see your ID and a credit card for the incidentals?"
+    },
+    {
+      "id": "r1:hotel:t4",
+      "round": 1,
+      "context": "hotel",
+      "turn": 4,
+      "user": "Is breakfast included?",
+      "status": 200,
+      "ai": "Yes, breakfast is included every morning from 7:00 to 10:00 AM. May I have your ID and credit card to finalize the paperwork?"
+    },
+    {
+      "id": "r1:hotel:t5",
+      "round": 1,
+      "context": "hotel",
+      "turn": 5,
+      "user": "Can you teach me English now?",
+      "status": 200,
+      "ai": "I can help you with your room and check-in right now. May I see your ID and credit card to finish the paperwork?"
+    },
+    {
+      "id": "r1:hotel:t6",
+      "round": 1,
+      "context": "hotel",
+      "turn": 6,
+      "user": "Could I have a late check-out tomorrow?",
+      "status": 200,
+      "ai": "I can certainly check our availability for a late check-out tomorrow morning. May I please see your ID and credit card to finalize the check-in first?"
+    },
+    {
+      "id": "r1:coffee_shop:t1",
+      "round": 1,
+      "context": "coffee_shop",
+      "turn": 1,
+      "user": "Hi there.",
+      "status": 200,
+      "ai": "Morning! What can I get started for you today?"
+    },
+    {
+      "id": "r1:coffee_shop:t2",
+      "round": 1,
+      "context": "coffee_shop",
+      "turn": 2,
+      "user": "I want a coffee big.",
+      "status": 200,
+      "ai": "Sure thing, one large coffee coming up. Do you want any room for cream or sugar?"
+    },
+    {
+      "id": "r1:coffee_shop:t3",
+      "round": 1,
+      "context": "coffee_shop",
+      "turn": 3,
+      "user": "Make it hot please.",
+      "status": 200,
+      "ai": "You got it, one large hot coffee. Would you like our breakfast blend or the dark roast?"
+    },
+    {
+      "id": "r1:coffee_shop:t4",
+      "round": 1,
+      "context": "coffee_shop",
+      "turn": 4,
+      "user": "What time do you close?",
+      "status": 200,
+      "ai": "We're here until 6:00 PM today. So, would you like the breakfast blend or the dark roast for that large coffee?"
+    },
+    {
+      "id": "r1:coffee_shop:t5",
+      "round": 1,
+      "context": "coffee_shop",
+      "turn": 5,
+      "user": "Can you explain grammar to me?",
+      "status": 200,
+      "ai": "I'm not really an expert on that, I just make the coffee. Do you want the breakfast blend or the dark roast?"
+    },
+    {
+      "id": "r1:coffee_shop:t6",
+      "round": 1,
+      "context": "coffee_shop",
+      "turn": 6,
+      "user": "Can I pay by card?",
+      "status": 200,
+      "ai": "Of course, we take all major credit cards. Since you're paying now, should I go with the breakfast blend or the dark roast for your coffee?"
+    },
+    {
+      "id": "r1:airport:t1",
+      "round": 1,
+      "context": "airport",
+      "turn": 1,
+      "user": "Hello.",
+      "status": 200,
+      "ai": "Hello! Welcome to Heathrow. May I have your passport and booking reference, please?"
+    },
+    {
+      "id": "r1:airport:t2",
+      "round": 1,
+      "context": "airport",
+      "turn": 2,
+      "user": "I have a flight to New York.",
+      "status": 200,
+      "ai": "Thank you. How many bags will you be checking in today, and do you have any carry-on luggage?"
+    },
+    {
+      "id": "r1:airport:t3",
+      "round": 1,
+      "context": "airport",
+      "turn": 3,
+      "user": "I have two bags to check.",
+      "status": 200,
+      "ai": "Perfect, please place them on the scale. Would you prefer a window seat or an aisle seat for your flight to New York?"
+    },
+    {
+      "id": "r1:airport:t4",
+      "round": 1,
+      "context": "airport",
+      "turn": 4,
+      "user": "Can I choose a window seat?",
+      "status": 200,
+      "ai": "Of course, I have a window seat available for you. Can I confirm you are on the 2:00 PM flight to New York?"
+    },
+    {
+      "id": "r1:airport:t5",
+      "round": 1,
+      "context": "airport",
+      "turn": 5,
+      "user": "Please teach me how to answer check-in questions.",
+      "status": 200,
+      "ai": "I can help you with your check-in right now. Is it okay if we confirm your flight details for the 2:00 PM departure to New York?"
+    },
+    {
+      "id": "r1:airport:t6",
+      "round": 1,
+      "context": "airport",
+      "turn": 6,
+      "user": "What is my gate?",
+      "status": 200,
+      "ai": "Your flight will depart from Gate 24. Here is your boarding pass; do you have any other questions before you head to security?"
+    },
+    {
+      "id": "r1:pharmacy:t1",
+      "round": 1,
+      "context": "pharmacy",
+      "turn": 1,
+      "user": "Hi, I need medicine.",
+      "status": 200,
+      "ai": "Hello, I am Dr. Chen. Are you looking for a specific prescription or do you need help with symptoms like a cold or pain?"
+    },
+    {
+      "id": "r1:pharmacy:t2",
+      "round": 1,
+      "context": "pharmacy",
+      "turn": 2,
+      "user": "I have a headache since yesterday.",
+      "status": 200,
+      "ai": "I'm sorry to hear that. Is the pain mostly in the front of your head or behind your eyes?"
+    },
+    {
+      "id": "r1:pharmacy:t3",
+      "round": 1,
+      "context": "pharmacy",
+      "turn": 3,
+      "user": "I am allergic to penicillin.",
+      "status": 200,
+      "ai": "Thank you for letting me know. Are you taking any other medications at the moment?"
+    },
+    {
+      "id": "r1:pharmacy:t4",
+      "round": 1,
+      "context": "pharmacy",
+      "turn": 4,
+      "user": "Do you have syrup?",
+      "status": 200,
+      "ai": "Yes, we have several types of syrup. Is your cough dry or are you bringing up mucus?"
+    },
+    {
+      "id": "r1:pharmacy:t5",
+      "round": 1,
+      "context": "pharmacy",
+      "turn": 5,
+      "user": "Can you correct my English sentence?",
+      "status": 200,
+      "ai": "I can help with your symptoms right now. Would you like a cough syrup for a dry cough or one for mucus?"
+    },
+    {
+      "id": "r1:pharmacy:t6",
+      "round": 1,
+      "context": "pharmacy",
+      "turn": 6,
+      "user": "How many times a day should I take it?",
+      "status": 200,
+      "ai": "You should take 10 milliliters every six hours. Do you have a measuring cup at home?"
+    },
+    {
+      "id": "r1:bank:t1",
+      "round": 1,
+      "context": "bank",
+      "turn": 1,
+      "user": "Hello, I need to use the bank.",
+      "status": 200,
+      "ai": "Hello! Welcome to First National. Would you like to open an account, make a deposit, or apply for a loan?"
+    },
+    {
+      "id": "r1:bank:t2",
+      "round": 1,
+      "context": "bank",
+      "turn": 2,
+      "user": "I want to open an account.",
+      "status": 200,
+      "ai": "I can certainly help you with that today. May I see your ID and a proof of address to get started?"
+    },
+    {
+      "id": "r1:bank:t3",
+      "round": 1,
+      "context": "bank",
+      "turn": 3,
+      "user": "I need to withdraw 200 dollars.",
+      "status": 200,
+      "ai": "I can help you with that withdrawal. May I see your ID and the account number you would like to use?"
+    },
+    {
+      "id": "r1:bank:t4",
+      "round": 1,
+      "context": "bank",
+      "turn": 4,
+      "user": "What documents do you need?",
+      "status": 200,
+      "ai": "I need your driver's license and a recent utility bill for proof of address. Do you have those documents with you today?"
+    },
+    {
+      "id": "r1:bank:t5",
+      "round": 1,
+      "context": "bank",
+      "turn": 5,
+      "user": "Can you teach me English instead?",
+      "status": 200,
+      "ai": "I'm sorry, I'm only authorized to handle banking transactions. Do you want to make a deposit, withdraw cash, or check your account balance?"
+    },
+    {
+      "id": "r1:bank:t6",
+      "round": 1,
+      "context": "bank",
+      "turn": 6,
+      "user": "Can I do this transfer today?",
+      "status": 200,
+      "ai": "I can process that transfer for you right now. Do you have your ID and the account number for the recipient?"
+    },
+    {
+      "id": "r1:tech_support:t1",
+      "round": 1,
+      "context": "tech_support",
+      "turn": 1,
+      "user": "Hi, my internet is not working.",
+      "status": 200,
+      "ai": "I am sorry to hear that. When did your internet stop working and what were you doing at the time?"
+    },
+    {
+      "id": "r1:tech_support:t2",
+      "round": 1,
+      "context": "tech_support",
+      "turn": 2,
+      "user": "The router light is red.",
+      "status": 200,
+      "ai": "A red light usually means there's a connection issue. Have you tried unplugging the power cord from the back of the router for thirty seconds?"
+    },
+    {
+      "id": "r1:tech_support:t3",
+      "round": 1,
+      "context": "tech_support",
+      "turn": 3,
+      "user": "I already restarted it.",
+      "status": 200,
+      "ai": "I understand. Is the internet cable plugged securely into the wall and the back of your router?"
+    },
+    {
+      "id": "r1:tech_support:t4",
+      "round": 1,
+      "context": "tech_support",
+      "turn": 4,
+      "user": "What should I do now?",
+      "status": 200,
+      "ai": "Since the cable is secure, are there any other devices in the house that can connect to the Wi-Fi?"
+    },
+    {
+      "id": "r1:tech_support:t5",
+      "round": 1,
+      "context": "tech_support",
+      "turn": 5,
+      "user": "Can you give me an English lesson?",
+      "status": 200,
+      "ai": "I can only help with your technical issues. Are any other devices in the house able to connect to the Wi-Fi?"
+    },
+    {
+      "id": "r1:tech_support:t6",
+      "round": 1,
+      "context": "tech_support",
+      "turn": 6,
+      "user": "Is there another troubleshooting step?",
+      "status": 200,
+      "ai": "Yes, we can try to reset the router to factory settings. Can you find the small reset hole on the back of the device?"
+    },
+    {
+      "id": "r2:hotel:t1",
+      "round": 2,
+      "context": "hotel",
+      "turn": 1,
+      "user": "Hi, I'm checking in.",
+      "status": 200,
+      "ai": "Welcome to The Grand View Hotel! Could you please tell me your name or provide your reservation number?"
+    },
+    {
+      "id": "r2:hotel:t2",
+      "round": 2,
+      "context": "hotel",
+      "turn": 2,
+      "user": "I have a reservation under Wesley.",
+      "status": 200,
+      "ai": "Thank you, Mr. Wesley. I see your booking for a King Room for three nights; may I see your ID and a credit card for incidentals?"
+    },
+    {
+      "id": "r2:hotel:t3",
+      "round": 2,
+      "context": "hotel",
+      "turn": 3,
+      "user": "I will stay three nights.",
+      "status": 200,
+      "ai": "Understood, three nights until Friday. May I please see your ID and a credit card for the incidentals?"
+    },
+    {
+      "id": "r2:hotel:t4",
+      "round": 2,
+      "context": "hotel",
+      "turn": 4,
+      "user": "Is breakfast included?",
+      "status": 200,
+      "ai": "Yes, breakfast is served daily from 7:00 to 10:00 AM in the lobby. May I please see your ID and credit card to finish the check-in?"
+    },
+    {
+      "id": "r2:hotel:t5",
+      "round": 2,
+      "context": "hotel",
+      "turn": 5,
+      "user": "Can you teach me English now?",
+      "status": 200,
+      "ai": "I can assist you with your room and check-in right now. May I please see your ID and credit card to finish the paperwork?"
+    },
+    {
+      "id": "r2:hotel:t6",
+      "round": 2,
+      "context": "hotel",
+      "turn": 6,
+      "user": "Could I have a late check-out tomorrow?",
+      "status": 200,
+      "ai": "I can check our availability for a late check-out tomorrow morning. May I please see your ID and credit card to finalize the check-in first?"
+    },
+    {
+      "id": "r2:coffee_shop:t1",
+      "round": 2,
+      "context": "coffee_shop",
+      "turn": 1,
+      "user": "Hi there.",
+      "status": 200,
+      "ai": "Oh, hey again! Did you still want that large coffee, or are you looking for something else now?"
+    },
+    {
+      "id": "r2:coffee_shop:t2",
+      "round": 2,
+      "context": "coffee_shop",
+      "turn": 2,
+      "user": "I want a coffee big.",
+      "status": 200,
+      "ai": "Sure, one large coffee. Do you want the breakfast blend or the dark roast?"
+    },
+    {
+      "id": "r2:coffee_shop:t3",
+      "round": 2,
+      "context": "coffee_shop",
+      "turn": 3,
+      "user": "Make it hot please.",
+      "status": 200,
+      "ai": "Got it, one large hot coffee. Do you want the breakfast blend or the dark roast?"
+    },
+    {
+      "id": "r2:coffee_shop:t4",
+      "round": 2,
+      "context": "coffee_shop",
+      "turn": 4,
+      "user": "What time do you close?",
+      "status": 200,
+      "ai": "We close at 6:00 PM tonight. So, do you want the breakfast blend or the dark roast?"
+    },
+    {
+      "id": "r2:coffee_shop:t5",
+      "round": 2,
+      "context": "coffee_shop",
+      "turn": 5,
+      "user": "Can you explain grammar to me?",
+      "status": 200,
+      "ai": "I can help with your order right now. Do you want the breakfast blend or the dark roast?"
+    },
+    {
+      "id": "r2:coffee_shop:t6",
+      "round": 2,
+      "context": "coffee_shop",
+      "turn": 6,
+      "user": "Can I pay by card?",
+      "status": 200,
+      "ai": "Yes, card is fine. Should I go ahead and pour the breakfast blend or the dark roast for you?"
+    },
+    {
+      "id": "r2:airport:t1",
+      "round": 2,
+      "context": "airport",
+      "turn": 1,
+      "user": "Hello.",
+      "status": 200,
+      "ai": "Hello! Welcome to Heathrow. May I have your passport and booking reference, please?"
+    },
+    {
+      "id": "r2:airport:t2",
+      "round": 2,
+      "context": "airport",
+      "turn": 2,
+      "user": "I have a flight to New York.",
+      "status": 200,
+      "ai": "Thank you. How many bags are you checking in today, and do you have any carry-on luggage?"
+    },
+    {
+      "id": "r2:airport:t3",
+      "round": 2,
+      "context": "airport",
+      "turn": 3,
+      "user": "I have two bags to check.",
+      "status": 200,
+      "ai": "Two bags, perfect. Would you prefer a window seat or an aisle seat for your flight?"
+    },
+    {
+      "id": "r2:airport:t4",
+      "round": 2,
+      "context": "airport",
+      "turn": 4,
+      "user": "Can I choose a window seat?",
+      "status": 200,
+      "ai": "Certainly, I have a window seat available for you. Can I confirm you are on the 2:00 PM flight to New York?"
+    },
+    {
+      "id": "r2:airport:t5",
+      "round": 2,
+      "context": "airport",
+      "turn": 5,
+      "user": "Please teach me how to answer check-in questions.",
+      "status": 200,
+      "ai": "I can help you with your check-in right now. Can I confirm you are on the 2:00 PM flight to New York?"
+    },
+    {
+      "id": "r2:airport:t6",
+      "round": 2,
+      "context": "airport",
+      "turn": 6,
+      "user": "What is my gate?",
+      "status": 200,
+      "ai": "Your flight will depart from Gate 24. Here is your boarding pass; would you like me to confirm your boarding time?"
+    },
+    {
+      "id": "r2:pharmacy:t1",
+      "round": 2,
+      "context": "pharmacy",
+      "turn": 1,
+      "user": "Hi, I need medicine.",
+      "status": 200,
+      "ai": "Hello, I am Dr. Chen. Are you looking for a specific prescription or do you need help with symptoms like a cold or pain?"
+    },
+    {
+      "id": "r2:pharmacy:t2",
+      "round": 2,
+      "context": "pharmacy",
+      "turn": 2,
+      "user": "I have a headache since yesterday.",
+      "status": 200,
+      "ai": "I'm sorry you're feeling unwell. Is the pain mostly in the front of your head or behind your eyes?"
+    },
+    {
+      "id": "r2:pharmacy:t3",
+      "round": 2,
+      "context": "pharmacy",
+      "turn": 3,
+      "user": "I am allergic to penicillin.",
+      "status": 200,
+      "ai": "Thank you for letting me know about your penicillin allergy. Are you currently taking any other medications for your headache?"
+    },
+    {
+      "id": "r2:pharmacy:t4",
+      "round": 2,
+      "context": "pharmacy",
+      "turn": 4,
+      "user": "Do you have syrup?",
+      "status": 200,
+      "ai": "Yes, we have syrups for coughs and congestion. Is your cough dry or are you bringing up mucus?"
+    },
+    {
+      "id": "r2:pharmacy:t5",
+      "round": 2,
+      "context": "pharmacy",
+      "turn": 5,
+      "user": "Can you correct my English sentence?",
+      "status": 200,
+      "ai": "I can help with your symptoms right now. Do you need a cough syrup for a dry cough or one for mucus?"
+    },
+    {
+      "id": "r2:pharmacy:t6",
+      "round": 2,
+      "context": "pharmacy",
+      "turn": 6,
+      "user": "How many times a day should I take it?",
+      "status": 200,
+      "ai": "You should take the cough syrup four times a day. Do you have a measuring cup or a spoon to measure the dose?"
+    },
+    {
+      "id": "r2:bank:t1",
+      "round": 2,
+      "context": "bank",
+      "turn": 1,
+      "user": "Hello, I need to use the bank.",
+      "status": 200,
+      "ai": "Hello! Welcome to First National Bank. How can I help you today?"
+    },
+    {
+      "id": "r2:bank:t2",
+      "round": 2,
+      "context": "bank",
+      "turn": 2,
+      "user": "I want to open an account.",
+      "status": 200,
+      "ai": "I can certainly help you open an account today. May I see your ID and a proof of address document?"
+    },
+    {
+      "id": "r2:bank:t3",
+      "round": 2,
+      "context": "bank",
+      "turn": 3,
+      "user": "I need to withdraw 200 dollars.",
+      "status": 200,
+      "ai": "I can help with that $200 withdrawal. May I please see your ID and your account number?"
+    },
+    {
+      "id": "r2:bank:t4",
+      "round": 2,
+      "context": "bank",
+      "turn": 4,
+      "user": "What documents do you need?",
+      "status": 200,
+      "ai": "To open your account, I need a government-issued ID and a utility bill for proof of address. Do you have those documents with you today?"
+    },
+    {
+      "id": "r2:bank:t5",
+      "round": 2,
+      "context": "bank",
+      "turn": 5,
+      "user": "Can you teach me English instead?",
+      "status": 200,
+      "ai": "I am only authorized to process banking transactions here. Would you like to open a savings account, make a deposit, or apply for a loan?"
+    },
+    {
+      "id": "r2:bank:t6",
+      "round": 2,
+      "context": "bank",
+      "turn": 6,
+      "user": "Can I do this transfer today?",
+      "status": 200,
+      "ai": "I can process that transfer for you right now. Do you have your ID and the recipient's account number?"
+    },
+    {
+      "id": "r2:tech_support:t1",
+      "round": 2,
+      "context": "tech_support",
+      "turn": 1,
+      "user": "Hi, my internet is not working.",
+      "status": 200,
+      "ai": "I'm sorry to hear that your internet is down. When did the connection stop working and what were you doing at the time?"
+    },
+    {
+      "id": "r2:tech_support:t2",
+      "round": 2,
+      "context": "tech_support",
+      "turn": 2,
+      "user": "The router light is red.",
+      "status": 200,
+      "ai": "A red light usually means there is a connection failure. Have you tried unplugging the power cord from the back of the router for thirty seconds?"
+    },
+    {
+      "id": "r2:tech_support:t3",
+      "round": 2,
+      "context": "tech_support",
+      "turn": 3,
+      "user": "I already restarted it.",
+      "status": 200,
+      "ai": "I understand. Is the internet cable plugged securely into the wall and the back of your router?"
+    },
+    {
+      "id": "r2:tech_support:t4",
+      "round": 2,
+      "context": "tech_support",
+      "turn": 4,
+      "user": "What should I do now?",
+      "status": 200,
+      "ai": "Since the cable is secure, are there any other devices in your home that can connect to the Wi-Fi?"
+    },
+    {
+      "id": "r2:tech_support:t5",
+      "round": 2,
+      "context": "tech_support",
+      "turn": 5,
+      "user": "Can you give me an English lesson?",
+      "status": 200,
+      "ai": "I can only assist with your internet connection. Are any other devices in the house able to connect to the Wi-Fi?"
+    },
+    {
+      "id": "r2:tech_support:t6",
+      "round": 2,
+      "context": "tech_support",
+      "turn": 6,
+      "user": "Is there another troubleshooting step?",
+      "status": 200,
+      "ai": "Yes, we can try to reset the router to its factory defaults. Can you find the small 'Reset' hole on the back of the device?"
+    },
+    {
+      "id": "r3:hotel:t1",
+      "round": 3,
+      "context": "hotel",
+      "turn": 1,
+      "user": "Hi, I'm checking in.",
+      "status": 200,
+      "ai": "Welcome to The Grand View Hotel! Could you please provide your name or reservation number so I can find your booking?"
+    },
+    {
+      "id": "r3:hotel:t2",
+      "round": 3,
+      "context": "hotel",
+      "turn": 2,
+      "user": "I have a reservation under Wesley.",
+      "status": 200,
+      "ai": "Thank you, Mr. Wesley. I see your booking for a King Room for three nights; may I see your ID and a credit card for incidentals?"
+    },
+    {
+      "id": "r3:hotel:t3",
+      "round": 3,
+      "context": "hotel",
+      "turn": 3,
+      "user": "I will stay three nights.",
+      "status": 200,
+      "ai": "That is correct, three nights in our King Room. May I please see your ID and a credit card for the incidentals?"
+    },
+    {
+      "id": "r3:hotel:t4",
+      "round": 3,
+      "context": "hotel",
+      "turn": 4,
+      "user": "Is breakfast included?",
+      "status": 200,
+      "ai": "Yes, breakfast is included every morning from 7:00 to 10:00 AM. May I please see your ID and a credit card to finish the check-in?"
+    },
+    {
+      "id": "r3:hotel:t5",
+      "round": 3,
+      "context": "hotel",
+      "turn": 5,
+      "user": "Can you teach me English now?",
+      "status": 200,
+      "ai": "I can help with your check-in and room details right now. May I please see your ID and credit card to finalize the paperwork?"
+    },
+    {
+      "id": "r3:hotel:t6",
+      "round": 3,
+      "context": "hotel",
+      "turn": 6,
+      "user": "Could I have a late check-out tomorrow?",
+      "status": 200,
+      "ai": "I can check our availability for a late check-out tomorrow morning. May I please see your ID and credit card to finalize the check-in?"
+    },
+    {
+      "id": "r3:coffee_shop:t1",
+      "round": 3,
+      "context": "coffee_shop",
+      "turn": 1,
+      "user": "Hi there.",
+      "status": 200,
+      "ai": "Hey there! Are you ready to order that large coffee now, or did you need another minute to look at the menu?"
+    },
+    {
+      "id": "r3:coffee_shop:t2",
+      "round": 3,
+      "context": "coffee_shop",
+      "turn": 2,
+      "user": "I want a coffee big.",
+      "status": 200,
+      "ai": "Sure thing, one large coffee coming up. Do you want the breakfast blend or the dark roast?"
+    },
+    {
+      "id": "r3:coffee_shop:t3",
+      "round": 3,
+      "context": "coffee_shop",
+      "turn": 3,
+      "user": "Make it hot please.",
+      "status": 200,
+      "ai": "You got it, one large hot coffee. Do you want the breakfast blend or the dark roast?"
+    },
+    {
+      "id": "r3:coffee_shop:t4",
+      "round": 3,
+      "context": "coffee_shop",
+      "turn": 4,
+      "user": "What time do you close?",
+      "status": 200,
+      "ai": "Like I mentioned, we're open until 6:00 PM tonight. So, are you going with the breakfast blend or the dark roast for your coffee?"
+    },
+    {
+      "id": "r3:coffee_shop:t5",
+      "round": 3,
+      "context": "coffee_shop",
+      "turn": 5,
+      "user": "Can you explain grammar to me?",
+      "status": 200,
+      "ai": "I can help with your order right now. Are you going to take the breakfast blend or the dark roast?"
+    },
+    {
+      "id": "r3:coffee_shop:t6",
+      "round": 3,
+      "context": "coffee_shop",
+      "turn": 6,
+      "user": "Can I pay by card?",
+      "status": 200,
+      "ai": "Yes, we accept cards. Do you want the breakfast blend or the dark roast?"
+    },
+    {
+      "id": "r3:airport:t1",
+      "round": 3,
+      "context": "airport",
+      "turn": 1,
+      "user": "Hello.",
+      "status": 200,
+      "ai": "Hello! Welcome to Heathrow. May I have your passport and booking reference, please?"
+    },
+    {
+      "id": "r3:airport:t2",
+      "round": 3,
+      "context": "airport",
+      "turn": 2,
+      "user": "I have a flight to New York.",
+      "status": 200,
+      "ai": "Thank you. How many bags will you be checking in today, and do you have any carry-on luggage?"
+    },
+    {
+      "id": "r3:airport:t3",
+      "round": 3,
+      "context": "airport",
+      "turn": 3,
+      "user": "I have two bags to check.",
+      "status": 200,
+      "ai": "Two bags, perfect. Would you prefer a window seat or an aisle seat for your flight to New York?"
+    },
+    {
+      "id": "r3:airport:t4",
+      "round": 3,
+      "context": "airport",
+      "turn": 4,
+      "user": "Can I choose a window seat?",
+      "status": 200,
+      "ai": "Certainly, I have a window seat available for you. Can I confirm you are on the 2:00 PM flight to New York?"
+    },
+    {
+      "id": "r3:airport:t5",
+      "round": 3,
+      "context": "airport",
+      "turn": 5,
+      "user": "Please teach me how to answer check-in questions.",
+      "status": 200,
+      "ai": "I can help you with your check-in right now. May I have your passport and booking reference, please?"
+    },
+    {
+      "id": "r3:airport:t6",
+      "round": 3,
+      "context": "airport",
+      "turn": 6,
+      "user": "What is my gate?",
+      "status": 200,
+      "ai": "Your flight will depart from Gate 24. May I have your passport and booking reference to get started?"
+    },
+    {
+      "id": "r3:pharmacy:t1",
+      "round": 3,
+      "context": "pharmacy",
+      "turn": 1,
+      "user": "Hi, I need medicine.",
+      "status": 200,
+      "ai": "Hello, I am Dr. Chen. Are you looking for a specific prescription or do you need help with symptoms like a cold or pain?"
+    },
+    {
+      "id": "r3:pharmacy:t2",
+      "round": 3,
+      "context": "pharmacy",
+      "turn": 2,
+      "user": "I have a headache since yesterday.",
+      "status": 200,
+      "ai": "I'm sorry you've had a headache since yesterday. Is the pain mostly in the front of your head or behind your eyes?"
+    },
+    {
+      "id": "r3:pharmacy:t3",
+      "round": 3,
+      "context": "pharmacy",
+      "turn": 3,
+      "user": "I am allergic to penicillin.",
+      "status": 200,
+      "ai": "Thank you for letting me know about your allergy. Are you currently taking any other medications for your headache?"
+    },
+    {
+      "id": "r3:pharmacy:t4",
+      "round": 3,
+      "context": "pharmacy",
+      "turn": 4,
+      "user": "Do you have syrup?",
+      "status": 200,
+      "ai": "We have syrup for coughs and congestion. Is your cough dry or are you bringing up mucus?"
+    },
+    {
+      "id": "r3:pharmacy:t5",
+      "round": 3,
+      "context": "pharmacy",
+      "turn": 5,
+      "user": "Can you correct my English sentence?",
+      "status": 200,
+      "ai": "I can help with your symptoms right now. Do you need a cough syrup for a dry cough or one for mucus?"
+    },
+    {
+      "id": "r3:pharmacy:t6",
+      "round": 3,
+      "context": "pharmacy",
+      "turn": 6,
+      "user": "How many times a day should I take it?",
+      "status": 200,
+      "ai": "You should take 10 milliliters of the syrup every six hours. Do you have a measuring cup or a spoon at home to measure the dose?"
+    },
+    {
+      "id": "r3:bank:t1",
+      "round": 3,
+      "context": "bank",
+      "turn": 1,
+      "user": "Hello, I need to use the bank.",
+      "status": 200,
+      "ai": "Hello! Welcome to First National Bank. Do you want to deposit or withdraw?"
+    },
+    {
+      "id": "r3:bank:t2",
+      "round": 3,
+      "context": "bank",
+      "turn": 2,
+      "user": "I want to open an account.",
+      "status": 200,
+      "ai": "I can certainly help you open an account today. May I see your government-issued ID and a proof of address document?"
+    },
+    {
+      "id": "r3:bank:t3",
+      "round": 3,
+      "context": "bank",
+      "turn": 3,
+      "user": "I need to withdraw 200 dollars.",
+      "status": 200,
+      "ai": "I can certainly help with that $200 withdrawal. May I see your government-issued ID and your account number?"
+    },
+    {
+      "id": "r3:bank:t4",
+      "round": 3,
+      "context": "bank",
+      "turn": 4,
+      "user": "What documents do you need?",
+      "status": 200,
+      "ai": "For this transaction, I need your government-issued ID and your account number. Do you have those documents with you today?"
+    },
+    {
+      "id": "r3:bank:t5",
+      "round": 3,
+      "context": "bank",
+      "turn": 5,
+      "user": "Can you teach me English instead?",
+      "status": 200,
+      "ai": "I'm only authorized to handle banking transactions. Do you want to make a deposit, withdraw cash, or check your account balance?"
+    },
+    {
+      "id": "r3:bank:t6",
+      "round": 3,
+      "context": "bank",
+      "turn": 6,
+      "user": "Can I do this transfer today?",
+      "status": 200,
+      "ai": "I can process that transfer for you right now. Do you have your ID and the account number for the recipient?"
+    },
+    {
+      "id": "r3:tech_support:t1",
+      "round": 3,
+      "context": "tech_support",
+      "turn": 1,
+      "user": "Hi, my internet is not working.",
+      "status": 200,
+      "ai": "I'm sorry to hear that. When did your internet stop working and what were you doing at the time?"
+    },
+    {
+      "id": "r3:tech_support:t2",
+      "round": 3,
+      "context": "tech_support",
+      "turn": 2,
+      "user": "The router light is red.",
+      "status": 200,
+      "ai": "A red light usually means there is a connection failure. Have you tried unplugging the power cord from the back of the router for thirty seconds?"
+    },
+    {
+      "id": "r3:tech_support:t3",
+      "round": 3,
+      "context": "tech_support",
+      "turn": 3,
+      "user": "I already restarted it.",
+      "status": 200,
+      "ai": "I understand. Is the internet cable plugged securely into the wall and the back of your router?"
+    },
+    {
+      "id": "r3:tech_support:t4",
+      "round": 3,
+      "context": "tech_support",
+      "turn": 4,
+      "user": "What should I do now?",
+      "status": 200,
+      "ai": "Since the cable is secure, are there any other devices in your home that can connect to the Wi-Fi?"
+    },
+    {
+      "id": "r3:tech_support:t5",
+      "round": 3,
+      "context": "tech_support",
+      "turn": 5,
+      "user": "Can you give me an English lesson?",
+      "status": 200,
+      "ai": "I only handle technical support for your internet connection. Are any other devices in your home currently able to connect to the Wi-Fi?"
+    },
+    {
+      "id": "r3:tech_support:t6",
+      "round": 3,
+      "context": "tech_support",
+      "turn": 6,
+      "user": "Is there another troubleshooting step?",
+      "status": 200,
+      "ai": "Yes, we can try to reset the router to its factory defaults. Can you find the small 'Reset' hole on the back of the device?"
+    }
+  ]
+}

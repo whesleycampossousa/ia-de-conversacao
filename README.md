@@ -7,11 +7,13 @@ Uma aplicação interativa para prática de conversação em inglês usando IA (
 ### 🎯 Principais
 - **34 cenários de conversação** (cafeteria, aeroporto, hospital, etc.)
 - **Reconhecimento de voz** com Web Speech API
-- **Text-to-Speech** com Google Cloud TTS Standard Voices em português brasileiro
+- **Text-to-Speech** com Qwen online (DashScope) e fallback no Google Cloud TTS
 - **Traduções em tempo real** para português
 - **Relatórios de performance** com correções gramaticais
 - **Exportação de relatórios** em PDF e JSON
 - **Persistência automática** de conversas no navegador
+- **Progressão por nível com meta de sessão** (A1/A2/B1/B2)
+- **Painel admin com observador ao vivo** (usuários ativos, latência, erros)
 
 ### 🔒 Segurança
 - Autenticação JWT com tokens de 7 dias
@@ -30,6 +32,7 @@ Uma aplicação interativa para prática de conversação em inglês usando IA (
 ### Pré-requisitos
 - Python 3.8+
 - Conta Google Cloud com Gemini API habilitada
+- Conta Alibaba Cloud Model Studio (opcional para Qwen TTS online)
 
 ### 1. Clone o repositório
 ```bash
@@ -40,6 +43,12 @@ cd "IA de conversação"
 ### 2. Instale as dependências
 ```bash
 pip install -r requirements.txt
+```
+
+Para rodar a suite de testes local:
+```bash
+pip install -r requirements-dev.txt
+pytest tests/test_context_history_isolation.py -q
 ```
 
 ### 3. Configure as variáveis de ambiente
@@ -54,8 +63,11 @@ Edite o arquivo `.env`:
 # Google Gemini API Key - Obtenha em: https://makersuite.google.com/app/apikey
 GOOGLE_API_KEY=sua_chave_api_aqui
 
+# Qwen TTS online (DashScope / Model Studio)
+QWEN_API_KEY=sua_chave_qwen_aqui
+
 # Origens permitidas para CORS (separadas por vírgula)
-ALLOWED_ORIGINS=http://localhost:4004,http://localhost:3000
+ALLOWED_ORIGINS=http://localhost:8912,http://localhost:3000
 
 # Chave secreta para sessões (gere uma aleatória forte)
 SESSION_SECRET=sua_chave_secreta_aqui
@@ -72,17 +84,17 @@ RATE_LIMIT_WINDOW=60
 python api/index.py
 ```
 
-O servidor estará rodando em `http://localhost:4004`
+O servidor estará rodando em `http://localhost:8912`
 
 ### 5. Acesse a aplicação
-Abra o navegador e acesse: `http://localhost:4004`
+Abra o navegador e acesse: `http://localhost:8912`
 
 ## 📖 Como Usar
 
 ### Login
 1. Acesse a página inicial
-2. Digite seu nome e email
-3. Clique em "Start Practice"
+2. Digite seu email (e senha, apenas para admin)
+3. Clique em "Entrar"
 
 ### Praticando Conversação
 1. Escolha um cenário (ex: Coffee Shop, Airport, etc.)
@@ -171,7 +183,8 @@ A aplicação já está configurada para deploy no Vercel via `vercel.json`.
 
 - **Backend:**
   - Flask 3.0
-  - Google Generative AI (Gemini 3.0 Flash Preview)
+  - Google GenAI SDK (Gemini)
+  - Qwen TTS (DashScope API)
   - Flask-CORS
   - Flask-Limiter
   - PyJWT
@@ -213,7 +226,7 @@ A aplicação já está configurada para deploy no Vercel via `vercel.json`.
 ## 🐛 Troubleshooting
 
 ### Problema: "AI service not configured"
-**Solução:** Verifique se `GOOGLE_API_KEY` está definida no `.env`
+**Solu��o:** Verifique se `GOOGLE_API_KEY` (chat) e/ou `QWEN_API_KEY` (tts) est�o definidas no `.env`
 
 ### Problema: "Session expired"
 **Solução:** Faça login novamente. Tokens expiram após 7 dias.
@@ -267,3 +280,6 @@ Para questões ou problemas, abra uma issue no repositório.
 ---
 
 Desenvolvido com ❤️ para prática de conversação em inglês.
+
+
+

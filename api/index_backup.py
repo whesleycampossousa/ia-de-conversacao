@@ -2,7 +2,7 @@ import os
 import io
 import json
 import jwt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 from flask import Flask, request, jsonify, send_file, send_from_directory, session
 
@@ -107,8 +107,6 @@ elif not GENAI_AVAILABLE:
     print(f"WARNING: Google GenAI not available: {globals().get('GENAI_ERROR')}")
 else:
     print("WARNING: GOOGLE_API_KEY not set!")
-else:
-    print("WARNING: GOOGLE_API_KEY not set!")
 
 # Configure Groq Whisper for speech-to-text
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
@@ -191,9 +189,13 @@ def validate_text_input(text, max_length=1000):
 # Daily usage limit helpers
 DAILY_LIMIT_SECONDS = 600  # 10 minutes
 
+def _utc_now():
+    """Return naive UTC datetime while avoiding datetime.utcnow() deprecation warnings."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
 def get_current_date():
     """Get current date in UTC as string"""
-    return datetime.utcnow().strftime('%Y-%m-%d')
+    return _utc_now().strftime('%Y-%m-%d')
 
 def get_user_usage_data(email):
     """Get or initialize usage data for user, reset if new day"""
@@ -357,7 +359,7 @@ def login():
             'name': name,
             'email': email,
             'is_admin': is_admin,
-            'exp': datetime.utcnow() + timedelta(days=7)
+            'exp': _utc_now() + timedelta(days=7)
         }
 
         token = jwt.encode(token_payload, app.config['SECRET_KEY'], algorithm='HS256')
@@ -401,18 +403,6 @@ def login():
             "details": str(e),
             "trace": traceback.format_exc()
         }), 500
-            "user_id": user_id,
-            "name": name,
-            "email": email,
-            "is_admin": is_admin
-        },
-        "usage": {
-            "seconds_used": usage_data['seconds_used'],
-            "remaining_seconds": remaining,
-            "daily_limit_seconds": DAILY_LIMIT_SECONDS,
-            "is_blocked": remaining <= 0
-        }
-    })
 
 @app.route('/api/scenarios', methods=['GET'])
 def get_scenarios():

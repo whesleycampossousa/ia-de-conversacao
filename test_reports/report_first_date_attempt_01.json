@@ -1,0 +1,110 @@
+{
+    "context": "first_date",
+    "attempt": 1,
+    "profile": "impatient_customer",
+    "pass": false,
+    "avg_score": 7.625,
+    "stats": {
+        "score_sum": 61,
+        "violations": 3
+    },
+    "turns": [
+        {
+            "turn": 1,
+            "student": "(System Trigger)",
+            "ai": "Hello, welcome to the First Date. How can I help you today?",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "Response contains robotic header 'Sure!' and ends without a question",
+                "score": 4,
+                "improvement_suggestion": "Remove robotic headers and ensure all responses end with a question to maintain natural conversation flow",
+                "first_message_matches_required_opening": true
+            }
+        },
+        {
+            "turn": 2,
+            "student": "\"Thanks, I'm here for the date. Let's get started.\"",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 9,
+                "improvement_suggestion": "Consider using more open-ended questions to encourage deeper conversation (e.g., 'What's your favorite part about coffee?')"
+            }
+        },
+        {
+            "turn": 3,
+            "student": "\"Ugh, this isn\u2019t helping. Let\u2019s just talk.\"",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Consider adding a friendly tone or contextual detail (e.g., 'Would you like a latte or cappuccino?') to enhance engagement while maintaining service role compliance."
+            }
+        },
+        {
+            "turn": 4,
+            "student": "\"Ugh, that's not cool. Let's just order.\"",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain natural flow by keeping responses concise and question-ended."
+            }
+        },
+        {
+            "turn": 5,
+            "student": "\"Error? Not impressed. Let's move on.\"",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Response is natural and role-appropriate. No changes needed."
+            }
+        },
+        {
+            "turn": 6,
+            "student": "\"That's not working. Let's try something else.\"",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "Robotic header (Sure!)",
+                "score": 4,
+                "improvement_suggestion": "Remove the 'Sure!' header and start with a natural question like 'What can I help you with today?'"
+            }
+        },
+        {
+            "turn": 7,
+            "student": "\"Uh, did you mean something else? I'm trying to chat here.\"",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "Response contains robotic header 'Sure!' and ends with a question (violates Rule 2)",
+                "score": 4,
+                "improvement_suggestion": "Remove 'Sure!' header and structure response as a natural question without robotic phrases"
+            }
+        },
+        {
+            "turn": 8,
+            "student": "\"What's with the tech support vibe? Let's talk about something real.\"",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain the natural flow by ensuring questions are open-ended and contextually relevant to the role."
+            }
+        }
+    ]
+}

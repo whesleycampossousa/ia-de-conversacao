@@ -1,0 +1,157 @@
+{
+  "timestamp": "2026-02-20T21:33:20.967371",
+  "summary": {
+    "critical": 0,
+    "warning": 0,
+    "total_turns": 20,
+    "contexts": [
+      "hotel",
+      "coffee_shop",
+      "airport",
+      "pharmacy"
+    ]
+  },
+  "findings": [],
+  "turns": [
+    {
+      "context": "hotel",
+      "turn": 1,
+      "user": "Hi, I'm checking in.",
+      "status": 200,
+      "ai": "Welcome to The Grand View Hotel. Could you please tell me your name or provide your reservation number?"
+    },
+    {
+      "context": "hotel",
+      "turn": 2,
+      "user": "I have a reservation under Wesley.",
+      "status": 200,
+      "ai": "Thank you, Mr. Wesley. I see your booking for a Deluxe King room for three nights; is that correct?"
+    },
+    {
+      "context": "hotel",
+      "turn": 3,
+      "user": "I will stay three nights.",
+      "status": 200,
+      "ai": "Perfect. May I please see your ID and a credit card for the incidentals?"
+    },
+    {
+      "context": "hotel",
+      "turn": 4,
+      "user": "Is breakfast included?",
+      "status": 200,
+      "ai": "Yes, breakfast is served from 7:00 AM to 10:00 AM in the lobby. May I have your ID and credit card to finalize the paperwork?"
+    },
+    {
+      "context": "hotel",
+      "turn": 5,
+      "user": "Can you teach me English now?",
+      "status": 200,
+      "ai": "I am focused on getting you settled into your room right now. May I please have your ID and credit card to finish the check-in?"
+    },
+    {
+      "context": "coffee_shop",
+      "turn": 1,
+      "user": "Hi there.",
+      "status": 200,
+      "ai": "Morning! What can I get started for you today?"
+    },
+    {
+      "context": "coffee_shop",
+      "turn": 2,
+      "user": "I want a coffee big.",
+      "status": 200,
+      "ai": "Sure thing, one large coffee coming up. Do you want any room for milk in that?"
+    },
+    {
+      "context": "coffee_shop",
+      "turn": 3,
+      "user": "Make it hot please.",
+      "status": 200,
+      "ai": "You got it, one large hot coffee. Would you like to add any sugar or syrup to that?"
+    },
+    {
+      "context": "coffee_shop",
+      "turn": 4,
+      "user": "What time do you close?",
+      "status": 200,
+      "ai": "We're open until 6:00 PM today. Do you need a muffin or a croissant to go with your coffee?"
+    },
+    {
+      "context": "coffee_shop",
+      "turn": 5,
+      "user": "Can you explain grammar to me?",
+      "status": 200,
+      "ai": "I'm not the best person to ask about that while I'm behind the counter. Do you want to pay with cash or card today?"
+    },
+    {
+      "context": "airport",
+      "turn": 1,
+      "user": "Hello.",
+      "status": 200,
+      "ai": "Hello! Welcome to the counter. May I please have your passport and your booking reference number?"
+    },
+    {
+      "context": "airport",
+      "turn": 2,
+      "user": "I have a flight to New York.",
+      "status": 200,
+      "ai": "Thank you. How many bags will you be checking in today, and do you have any carry-on luggage?"
+    },
+    {
+      "context": "airport",
+      "turn": 3,
+      "user": "I have two bags to check.",
+      "status": 200,
+      "ai": "Perfect, I've tagged those for you. Would you prefer a window seat or an aisle seat for this flight?"
+    },
+    {
+      "context": "airport",
+      "turn": 4,
+      "user": "Can I choose a window seat?",
+      "status": 200,
+      "ai": "Certainly, I have a window seat available for you. Just to confirm, you are flying to New York at 2:30 PM, correct?"
+    },
+    {
+      "context": "airport",
+      "turn": 5,
+      "user": "Please teach me how to answer check-in questions.",
+      "status": 200,
+      "ai": "I can certainly help you with your check-in right now. Is your flight to New York departing at 2:30 PM today?"
+    },
+    {
+      "context": "pharmacy",
+      "turn": 1,
+      "user": "Hi, I need medicine.",
+      "status": 200,
+      "ai": "Hello, I am Dr. Chen. Are you looking for a specific prescription or do you need help with symptoms like a cold or pain?"
+    },
+    {
+      "context": "pharmacy",
+      "turn": 2,
+      "user": "I have a headache since yesterday.",
+      "status": 200,
+      "ai": "I'm sorry to hear that. Is the pain sharp or is it more of a dull pressure?"
+    },
+    {
+      "context": "pharmacy",
+      "turn": 3,
+      "user": "I am allergic to penicillin.",
+      "status": 200,
+      "ai": "Thank you for letting me know about your penicillin allergy. Are you taking any other medications at the moment?"
+    },
+    {
+      "context": "pharmacy",
+      "turn": 4,
+      "user": "Do you have syrup?",
+      "status": 200,
+      "ai": "We have several syrups for cough or pain. Are you taking any other medications at the moment?"
+    },
+    {
+      "context": "pharmacy",
+      "turn": 5,
+      "user": "Can you correct my English sentence?",
+      "status": 200,
+      "ai": "I can certainly help you with your medication needs right now. Are you currently taking any other medications besides the syrup?"
+    }
+  ]
+}

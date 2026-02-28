@@ -5,7 +5,12 @@ Lesson Spec Builder - Converte grammar_topics.json em LessonSpec
 """
 
 from typing import Dict
-from conversation_orchestrator import LessonSpec, MicroGoal, LanguageMode
+
+try:
+    from .conversation_orchestrator import LessonSpec, MicroGoal, LanguageMode, SessionState
+except ImportError:
+    # Fallback when running this module directly (outside package context).
+    from conversation_orchestrator import LessonSpec, MicroGoal, LanguageMode, SessionState
 
 def build_lesson_spec_from_topic(topic_data: Dict, language_mode: str = 'bilingual') -> LessonSpec:
     """
@@ -89,6 +94,5 @@ def get_or_create_session_state(user_id: str, session_states: Dict):
     Obtém ou cria SessionState para um usuário
     """
     if user_id not in session_states:
-        from conversation_orchestrator import SessionState
         session_states[user_id] = SessionState()
     return session_states[user_id]

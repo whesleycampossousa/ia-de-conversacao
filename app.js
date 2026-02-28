@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+﻿document.addEventListener('DOMContentLoaded', () => {
     // 1. Auth Check with JWT
     const isLoginPage = document.body.classList.contains('login-page') || window.location.href.includes('login.html') || window.location.href.includes('index.html') || window.location.pathname === '/' || window.location.pathname === '';
 
@@ -27,7 +27,43 @@ document.addEventListener('DOMContentLoaded', () => {
     const lessonLang = urlParams.get('lessonLang') || 'en'; // 'en' or 'pt' for bilingual
     const isGrammarMode = urlParams.get('type') === 'grammar';
     const isFreeConversation = context === 'free_conversation';
+    const structuredModeParam = (urlParams.get('structured') || '').toLowerCase();
     const user = apiClient.isAuthenticated() ? apiClient.getUser() : { name: 'Visitante', is_admin: false };
+
+    // studentLevel is derived from the difficulty selector when practice starts
+    let studentLevel = '';
+
+
+    const MODE_LABELS = {
+        learning: 'Learning',
+        simulator: 'Simulator'
+    };
+
+    const COMMUNICATIVE_OBJECTIVES = {
+        coffee_shop: 'Objective: order a drink and confirm options.',
+        restaurant: 'Objective: order food, sides, and drinks politely.',
+        airport: 'Objective: check in, confirm flight details, and baggage.',
+        hotel: 'Objective: check in and resolve stay details.',
+        supermarket: 'Objective: ask for items and handle checkout.',
+        doctor: 'Objective: explain symptoms and understand advice.',
+        bank: 'Objective: handle a basic transaction clearly.',
+        pharmacy: 'Objective: describe symptoms and request medicine.',
+        gym: 'Objective: discuss goals and choose a workout.',
+        job_interview: 'Objective: present experience and answer key questions.',
+        tech_support: 'Objective: describe a problem and follow steps.',
+        hair_salon: 'Objective: request a style and confirm details.',
+        clothing_store: 'Objective: ask about size, color, and try-on.',
+        train_station: 'Objective: buy a ticket and confirm schedule.',
+        bus_stop: 'Objective: ask about routes and tickets.',
+        renting_car: 'Objective: choose a car and rental terms.',
+        pizza_delivery: 'Objective: place an order and confirm delivery.',
+        bakery: 'Objective: order items and quantities.',
+        library: 'Objective: ask for materials and rules.',
+        cinema: 'Objective: buy tickets and choose seats.',
+        lost_found: 'Objective: report a lost item with details.'
+    };
+
+    let recentCorrections = [];
 
     // =============================================
     // STRUCTURED LESSON STATE (Learning Mode)
@@ -44,7 +80,8 @@ document.addEventListener('DOMContentLoaded', () => {
         compositeTemplate: null, // Template for building cumulative phrase (e.g. "{verb} {size} {drink}{end}")
         compositeLayers: null,   // Which layers participate in composite (e.g. [1,2,3,4,5])
         phraseSlots: {},         // Accumulated slots from selections (e.g. {verb: "I'd like a", drink: "coffee"})
-        compositePhrase: null    // The built composite phrase for current practice
+        compositePhrase: null,   // The built composite phrase for current practice
+        currentOptions: []       // Available options for voice matching
     };
 
     // Default: Audio-First (Subtitles OFF)
@@ -66,10 +103,36 @@ document.addEventListener('DOMContentLoaded', () => {
             recordText.innerText = text;
         }
     };
-    const setStatusText = (text) => {
-        if (statusIndicator) {
-            statusIndicator.textContent = text;
+    function syncMicTurnCue(statusText = '') {
+        if (!recordBtn) return;
+        const normalized = String(statusText || '').toLowerCase();
+        const shouldShowCue = normalized.includes('listening');
+        if (shouldShowCue && !recordBtn.classList.contains('recording')) {
+            recordBtn.classList.add('mic-turn-highlight');
+        } else {
+            recordBtn.classList.remove('mic-turn-highlight');
         }
+    }
+
+    const setStatusText = (text) => {
+        const friendlyStatus = {
+            'Listening...': '🎤 Escutando... fale agora.',
+            'Thinking...': '⏳ Pensando... preparando resposta.',
+            'Speaking...': '🔊 Falando... escute e responda.',
+            'Choose a question': 'Escolha uma pergunta para continuar.'
+        };
+        if (statusIndicator) {
+            statusIndicator.textContent = friendlyStatus[text] || text;
+            const normalized = String(text || '').toLowerCase();
+            const isListening = normalized.includes('listening');
+            statusIndicator.classList.toggle('listening', isListening);
+        }
+        if (recordBtn) {
+            const normalized = String(text || '').toLowerCase();
+            const isListening = normalized.includes('listening') && !recordBtn.classList.contains('recording');
+            recordBtn.classList.toggle('listening', isListening);
+        }
+        syncMicTurnCue(text);
     };
     const reportBtn = document.getElementById('report-btn');
     const reportBarBtn = document.getElementById('report-bar-btn');
@@ -81,10 +144,158 @@ document.addEventListener('DOMContentLoaded', () => {
     const freeQuestionText = document.getElementById('free-question-text');
     const freeQuestionRefresh = document.getElementById('free-question-refresh');
     const freeQuestionOk = document.getElementById('free-question-ok');
+    const freeSessionModeWrap = document.getElementById('free-session-mode');
+    const freeMissionPreview = document.getElementById('free-mission-preview');
+    const freeTopicInput = document.getElementById('free-topic-input');
+    const freeTopicChipsWrap = document.getElementById('topic-chips');
     // Barra de relatório agora é gerenciada por updateReportButton()
     const suggestionsToggleBtn = document.getElementById('suggestions-toggle-btn');
     const suggestionsPanel = document.getElementById('suggestions-panel');
     const suggestionsList = document.getElementById('suggestions-list');
+
+    // Keep more visible turns to preserve context and reduce repetition.
+    const MAX_VISIBLE_GROUPS = 12;
+    const CLEAN_VIEW_VISIBLE_GROUPS = 2;
+    const CLEAN_VIEW_STORAGE_KEY = 'clean_practice_view_enabled';
+    const cleanPracticeViewEnabled = localStorage.getItem(CLEAN_VIEW_STORAGE_KEY) !== 'false';
+    let historyExpanded = false;
+    let historyToggleBtn = null;
+    let historyControls = null;
+
+    function shuffleArray(items) {
+        const arr = [...items];
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    function escapeHtml(value) {
+        return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function pickNonRepeatingVariant(memoryKey, variants) {
+        if (!Array.isArray(variants) || variants.length === 0) return null;
+        const storageKey = `variant_memory_${memoryKey}`;
+        let lastIndex = -1;
+        try {
+            const raw = localStorage.getItem(storageKey);
+            const parsed = Number.parseInt(raw, 10);
+            if (Number.isInteger(parsed) && parsed >= 0 && parsed < variants.length) {
+                lastIndex = parsed;
+            }
+        } catch (err) {
+            lastIndex = -1;
+        }
+
+        let candidateIndexes = variants.map((_, idx) => idx);
+        if (candidateIndexes.length > 1 && lastIndex >= 0) {
+            candidateIndexes = candidateIndexes.filter(idx => idx !== lastIndex);
+            if (!candidateIndexes.length) {
+                candidateIndexes = variants.map((_, idx) => idx);
+            }
+        }
+
+        const pickedIndex = candidateIndexes[Math.floor(Math.random() * candidateIndexes.length)];
+        try {
+            localStorage.setItem(storageKey, String(pickedIndex));
+        } catch (err) {
+            // ignore localStorage write issues (private mode, quota, etc.)
+        }
+        return variants[pickedIndex];
+    }
+
+    function getSubtitleGroups() {
+        if (!chatWindow) return [];
+        return Array.from(chatWindow.querySelectorAll('.subtitle-group'));
+    }
+
+    function updateHistoryToggleUI() {
+        if (!cleanPracticeViewEnabled || !historyToggleBtn) return;
+        const totalGroups = getSubtitleGroups().length;
+        const hiddenCount = Math.max(0, totalGroups - Math.min(CLEAN_VIEW_VISIBLE_GROUPS, totalGroups));
+        const hasHistory = hiddenCount > 0 || historyExpanded;
+
+        historyToggleBtn.classList.toggle('has-history', hasHistory);
+        historyToggleBtn.setAttribute('aria-expanded', historyExpanded ? 'true' : 'false');
+        historyToggleBtn.disabled = !hasHistory && !historyExpanded;
+
+        if (historyExpanded) {
+            historyToggleBtn.textContent = '▴ Ocultar histórico';
+            historyToggleBtn.title = 'Fechar histórico e voltar ao modo limpo';
+            return;
+        }
+
+        if (hiddenCount > 0) {
+            historyToggleBtn.textContent = `▾ Ver histórico (${hiddenCount})`;
+            historyToggleBtn.title = 'Abrir histórico de interações anteriores';
+        } else {
+            historyToggleBtn.textContent = '▾ Ver histórico';
+            historyToggleBtn.title = 'Sem histórico ainda';
+        }
+    }
+
+    function refreshConversationFocusView() {
+        if (!chatWindow || !cleanPracticeViewEnabled) return;
+        const groups = getSubtitleGroups();
+        const keepFromIndex = Math.max(0, groups.length - CLEAN_VIEW_VISIBLE_GROUPS);
+
+        groups.forEach((group, idx) => {
+            const hideGroup = !historyExpanded && idx < keepFromIndex;
+            group.classList.toggle('history-hidden', hideGroup);
+        });
+
+        chatWindow.classList.toggle('history-expanded', historyExpanded);
+        updateHistoryToggleUI();
+
+        if (!historyExpanded) {
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+    }
+
+    function toggleConversationHistory(forceExpanded = null) {
+        if (!cleanPracticeViewEnabled) return;
+        if (typeof forceExpanded === 'boolean') {
+            historyExpanded = forceExpanded;
+        } else {
+            historyExpanded = !historyExpanded;
+        }
+        refreshConversationFocusView();
+    }
+
+    function ensureHistoryControls() {
+        if (!chatWindow || !cleanPracticeViewEnabled) return;
+        if (historyControls && historyToggleBtn) {
+            updateHistoryToggleUI();
+            return;
+        }
+
+        historyControls = document.createElement('div');
+        historyControls.className = 'conversation-history-controls';
+
+        historyToggleBtn = document.createElement('button');
+        historyToggleBtn.type = 'button';
+        historyToggleBtn.className = 'history-toggle-btn';
+        historyToggleBtn.addEventListener('click', () => toggleConversationHistory());
+
+        historyControls.appendChild(historyToggleBtn);
+
+        const parent = chatWindow.parentElement;
+        if (parent) {
+            parent.insertBefore(historyControls, chatWindow);
+        }
+
+        updateHistoryToggleUI();
+    }
+
+    window.toggleConversationHistory = toggleConversationHistory;
+    ensureHistoryControls();
 
     // --- VOICE: Single voice (Chirp3-HD-Achernar) for all interactions ---
     // In structured lessons, pre-generated audio is served from cache.
@@ -468,84 +679,348 @@ document.addEventListener('DOMContentLoaded', () => {
         ]
     };
 
-    function getSuggestionsForContext(contextId) {
-        return suggestionSets[contextId] || suggestionSets['default'];
+    function normalizeIntentSource(text) {
+        return String(text || '')
+            .toLowerCase()
+            .replace(/[^\p{L}\p{N}\s?']/gu, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    function detectQuestionIntent(text) {
+        const source = normalizeIntentSource(text);
+        if (!source) return 'general';
+
+        if (/(what would you like|what can i get|what can i get started|what do you want|o que voce gostaria|o que voce quer|o que posso preparar|como posso te ajudar|como posso ajudar|como posso ajudar voce)/i.test(source)) return 'order_request';
+        if (/(what kind of coffee|which coffee|kind of coffee|tipo de caf[eé]|que tipo de caf[eé])/i.test(source)) return 'coffee_kind';
+        if (/(what size|which size|size would you like|qual tamanho|tamanho)/i.test(source)) return 'size';
+        if (/(to go|for here|take away|takeaway|para levar|consumir aqui|consumir no local)/i.test(source)) return 'to_go_here';
+        if (/(hot or iced|iced or hot|quente ou gelado|gelado ou quente)/i.test(source)) return 'hot_iced';
+        if (/(with sugar|with milk|sugar or milk|acucar|a[cç]ucar|leite)/i.test(source)) return 'milk_sugar';
+        if (/(anything else|something else|mais alguma coisa|mais algo)/i.test(source)) return 'anything_else';
+        return 'general';
+    }
+
+    const questionReplyPools = {
+        order_request: [
+            { en: 'I would like a hot coffee, please.', pt: 'Eu gostaria de um cafe quente, por favor.' },
+            { en: 'Can I have a medium latte, please?', pt: 'Pode ser um latte medio, por favor?' },
+            { en: 'Just a small black coffee, please.', pt: 'So um cafe preto pequeno, por favor.' }
+        ],
+        coffee_kind: [
+            { en: 'A latte, please.', pt: 'Um latte, por favor.' },
+            { en: 'A cappuccino, please.', pt: 'Um cappuccino, por favor.' },
+            { en: 'A small black coffee, please.', pt: 'Um café preto pequeno, por favor.' }
+        ],
+        size: [
+            { en: 'A small size, please.', pt: 'Um tamanho pequeno, por favor.' },
+            { en: 'Medium is fine, thank you.', pt: 'Médio está ótimo, obrigado.' },
+            { en: 'Large, please.', pt: 'Grande, por favor.' }
+        ],
+        to_go_here: [
+            { en: 'For here, please.', pt: 'Para consumir aqui, por favor.' },
+            { en: 'To go, please.', pt: 'Para viagem, por favor.' },
+            { en: 'For here is fine, thanks.', pt: 'Aqui está ótimo, obrigado.' }
+        ],
+        hot_iced: [
+            { en: 'Hot, please.', pt: 'Quente, por favor.' },
+            { en: 'Iced, please.', pt: 'Gelado, por favor.' },
+            { en: 'Hot is better for me.', pt: 'Quente é melhor para mim.' }
+        ],
+        milk_sugar: [
+            { en: 'No sugar, please.', pt: 'Sem açúcar, por favor.' },
+            { en: 'With milk, please.', pt: 'Com leite, por favor.' },
+            { en: 'A little sugar, please.', pt: 'Um pouco de açúcar, por favor.' }
+        ],
+        anything_else: [
+            { en: 'That is all, thank you.', pt: 'Isso é tudo, obrigado.' },
+            { en: 'Yes, a cookie too, please.', pt: 'Sim, um cookie também, por favor.' },
+            { en: 'No, thanks. That is all.', pt: 'Não, obrigado. Isso é tudo.' }
+        ],
+        general: [
+            { en: 'Sure, thank you.', pt: 'Claro, obrigado.' },
+            { en: 'Yes, please.', pt: 'Sim, por favor.' },
+            { en: 'No, thank you.', pt: 'Não, obrigado.' }
+        ]
+    };
+
+    function replyMatchesIntent(reply, intent) {
+        const text = normalizeIntentSource(reply && reply.en ? reply.en : reply);
+        if (!text) return false;
+        if (intent === 'general') return true;
+        if (intent === 'order_request') return /(i would like|i'?d like|can i have|just|coffee|latte|cappuccino|tea|espresso)/i.test(text);
+        if (intent === 'coffee_kind') return /(latte|cappuccino|espresso|americano|mocha|black coffee|coffee)/i.test(text);
+        if (intent === 'size') return /\b(small|medium|large)\b/i.test(text);
+        if (intent === 'to_go_here') return /(to go|for here|take ?away|for here)/i.test(text);
+        if (intent === 'hot_iced') return /\b(hot|iced)\b/i.test(text);
+        if (intent === 'milk_sugar') return /(milk|sugar|no sugar)/i.test(text);
+        if (intent === 'anything_else') return /\b(no|yes)\b|that is all|no thanks|nothing else|and also|another|one more/i.test(text);
+        return true;
+    }
+
+    function dedupeSuggestionItems(items = []) {
+        const seen = new Set();
+        const result = [];
+        items.forEach(item => {
+            const candidate = item && typeof item === 'object'
+                ? { en: String(item.en || '').trim(), pt: String(item.pt || '').trim() }
+                : { en: String(item || '').trim(), pt: '' };
+            if (!candidate.en) return;
+            const key = candidate.en.toLowerCase();
+            if (seen.has(key)) return;
+            seen.add(key);
+            result.push(candidate);
+        });
+        return result;
+    }
+
+    function prioritizeRepliesByIntent(items = [], intentSource = '') {
+        const intent = detectQuestionIntent(intentSource);
+        const normalized = normalizeSuggestionItems(items);
+        if (!normalized.length) return [];
+        if (intent === 'general') return dedupeSuggestionItems(normalized);
+
+        const matches = normalized.filter(item => replyMatchesIntent(item, intent));
+        const rest = normalized.filter(item => !replyMatchesIntent(item, intent));
+        return dedupeSuggestionItems([...matches, ...rest]);
+    }
+
+    function getIntentMatchedReplies(items = [], intentSource = '') {
+        const intent = detectQuestionIntent(intentSource);
+        const normalized = normalizeSuggestionItems(items);
+        if (!normalized.length) return [];
+        if (intent === 'general') return dedupeSuggestionItems(normalized);
+        return dedupeSuggestionItems(normalized.filter(item => replyMatchesIntent(item, intent)));
+    }
+
+    function getQuestionSpecificFallbackReplies(intentSource = '') {
+        const intent = detectQuestionIntent(intentSource);
+        return questionReplyPools[intent] || questionReplyPools.general;
+    }
+
+    function getSuggestionsForContext(contextId, intentSource = '') {
+        const intent = detectQuestionIntent(intentSource);
+        const base = suggestionSets[contextId] || suggestionSets['default'];
+        const prioritized = prioritizeRepliesByIntent(base, intentSource);
+        const questionPool = getQuestionSpecificFallbackReplies(intentSource);
+        if (intent === 'general') {
+            return dedupeSuggestionItems([...prioritized, ...questionPool]);
+        }
+        return dedupeSuggestionItems([...questionPool, ...prioritized]);
+    }
+
+    function extractLatestQuestionFromText(text) {
+        const source = sanitizeCoachDisplayText(text || '');
+        if (!source) return '';
+        const sentences = splitMessageIntoSentences(source).map(cleanScenarioSentence).filter(Boolean);
+        return [...sentences].reverse().find(sentence => isLikelyQuestionSentence(sentence)) || '';
+    }
+
+    function rememberAIQuestionPrompt(text) {
+        const question = extractLatestQuestionFromText(text);
+        if (question) {
+            lastAIQuestionPrompt = question;
+        }
+        return question;
+    }
+
+    function getLatestAIQuestionPrompt() {
+        if (lastAIQuestionPrompt) return lastAIQuestionPrompt;
+        if (!Array.isArray(conversationLog) || !conversationLog.length) return '';
+
+        let fallbackSource = '';
+        for (let i = conversationLog.length - 1; i >= 0; i--) {
+            const item = conversationLog[i];
+            if (!item || String(item.sender || '').toLowerCase() !== 'ai') continue;
+            const source = sanitizeCoachDisplayText(item.text || '');
+            if (!source) continue;
+
+            const question = rememberAIQuestionPrompt(source);
+            if (question) return question;
+            if (!fallbackSource) fallbackSource = source;
+        }
+        return fallbackSource;
+    }
+
+    function getLearningPopupReplyOptions(contextId, questionPrompt = '', limit = 3) {
+        const intentSource = sanitizeCoachDisplayText(questionPrompt) || String(questionPrompt || '');
+        const questionPool = getQuestionSpecificFallbackReplies(intentSource);
+        const contextPool = getSuggestionsForContext(contextId, intentSource);
+        const matchedContext = getIntentMatchedReplies(contextPool, intentSource);
+        return dedupeSuggestionItems([
+            ...questionPool,
+            ...matchedContext,
+            ...contextPool
+        ]).slice(0, Math.max(1, limit));
+    }
+
+    function normalizeSuggestionItems(rawItems = []) {
+        if (!Array.isArray(rawItems)) return [];
+        return rawItems.map(item => {
+            if (item && typeof item === 'object') {
+                const en = String(item.en || item.text || '').trim();
+                const pt = String(item.pt || '').trim();
+                if (!en) return null;
+                return { en, pt };
+            }
+            const en = String(item || '').trim();
+            if (!en) return null;
+            return { en, pt: '' };
+        }).filter(Boolean);
     }
 
     // Fetch dynamic suggestions from API based on AI's last message
     let lastAIMessage = ''; // Store last AI message for suggestions
 
-    async function fetchDynamicSuggestions(aiMessage) {
-        if (!suggestionsList || !aiMessage) return;
+    async function fetchDynamicSuggestions(aiMessage, forceOpen = false) {
+        if (!aiMessage) return [];
 
         // Store for later use
         lastAIMessage = aiMessage;
+        const intentSource = sanitizeCoachDisplayText(aiMessage) || aiMessage;
 
         try {
             // Show loading state
-            suggestionsList.innerHTML = '<div class="suggestions-loading">Gerando sugestões...</div>';
+            if (suggestionsList) {
+                suggestionsList.innerHTML = '<div class="suggestions-loading">Gerando sugestoes...</div>';
+            }
 
-            const response = await apiClient.fetch('/api/suggestions', {
+            const baseURL = apiClient.baseURL || '';
+            const response = await apiClient.fetchWithTimeout(`${baseURL}/api/suggestions`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: apiClient.getHeaders(),
                 body: JSON.stringify({
                     aiMessage: aiMessage,
                     context: context,
                     lessonLang: lessonLang
                 })
-            });
+            }, 12000);
 
             if (!response.ok) throw new Error('Failed to fetch suggestions');
 
             const data = await response.json();
-            const suggestions = data.suggestions || [];
+            const rawSuggestions = normalizeSuggestionItems(data.suggestions || data.data || data || []);
+
+            // Priority: Gemini results FIRST, fallbacks ONLY if Gemini returned nothing
+            let suggestions;
+            if (rawSuggestions.length >= 3) {
+                // Gemini returned enough good suggestions — use them directly
+                suggestions = dedupeSuggestionItems(rawSuggestions).slice(0, 4);
+            } else if (rawSuggestions.length > 0) {
+                // Gemini returned some — supplement with intent-specific fallbacks only
+                const intent = detectQuestionIntent(intentSource);
+                const intentPool = questionReplyPools[intent] || [];
+                suggestions = dedupeSuggestionItems([
+                    ...rawSuggestions,
+                    ...intentPool
+                ]).slice(0, 4);
+            } else {
+                // Gemini returned nothing — use intent-specific fallback, then context
+                const intentFallback = getQuestionSpecificFallbackReplies(intentSource);
+                const isGrammarContext = suggestionSets.hasOwnProperty(context);
+                const contextFallback = isGrammarContext ? getSuggestionsForContext(context, intentSource) : [];
+                suggestions = dedupeSuggestionItems([
+                    ...intentFallback,
+                    ...contextFallback
+                ]).slice(0, 4);
+            }
 
             // Render suggestions
-            suggestionsList.innerHTML = '';
-            suggestions.forEach(item => {
-                const card = document.createElement('div');
-                card.className = 'suggestion-card';
-                card.innerHTML = `
-                    <div class="suggestion-en">${item.en}</div>
-                    <div class="suggestion-pt">${item.pt}</div>
-                `;
-                // Add click handler to use suggestion
-                card.addEventListener('click', () => {
-                    // Find text input and submit with this suggestion
-                    const textInput = document.getElementById('text-input');
-                    const sendBtn = document.getElementById('send-btn');
-                    if (textInput && sendBtn) {
-                        textInput.value = item.en;
-                        sendBtn.click();
-                    }
-                    // Close suggestions panel
-                    if (suggestionsPanel) {
-                        suggestionsPanel.classList.remove('active');
-                    }
-                    if (suggestionsToggleBtn) {
-                        suggestionsToggleBtn.textContent = 'Ver sugestoes';
-                    }
+            if (suggestionsList) {
+                suggestionsList.innerHTML = '';
+                suggestions.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'suggestion-card';
+                    const enDiv = document.createElement('div');
+                    enDiv.className = 'suggestion-en';
+                    enDiv.textContent = item.en;
+                    card.appendChild(enDiv);
+
+                    const ptDiv = document.createElement('div');
+                    ptDiv.className = 'suggestion-pt';
+                    ptDiv.textContent = item.pt || '';
+                    card.appendChild(ptDiv);
+                    // Add click handler to use suggestion
+                    card.addEventListener('click', () => {
+                        // Find text input and submit with this suggestion
+                        const textInput = document.getElementById('text-input');
+                        const sendBtn = document.getElementById('send-btn');
+                        if (textInput && sendBtn) {
+                            textInput.value = item.en;
+                            sendBtn.click();
+                        }
+                        // Close suggestions panel
+                        if (suggestionsPanel) {
+                            suggestionsPanel.classList.remove('active');
+                        }
+                        if (suggestionsToggleBtn) {
+                            suggestionsToggleBtn.textContent = 'Ver sugestoes';
+                        }
+                    });
+                    suggestionsList.appendChild(card);
                 });
-                suggestionsList.appendChild(card);
-            });
+            }
+
+            if (forceOpen && suggestions.length) {
+                const isHidden = suggestionsToggleBtn && suggestionsToggleBtn.style.display === 'none';
+                if (!isHidden && suggestionsPanel && suggestionsToggleBtn) {
+                    suggestionsPanel.classList.add('active');
+                    suggestionsToggleBtn.textContent = 'Ocultar sugestoes';
+                }
+            }
+
+            return suggestions;
 
         } catch (error) {
             console.error('[SUGGESTIONS] Error:', error);
-            suggestionsList.innerHTML = '<div class="suggestions-error">Erro ao carregar sugestões</div>';
+            if (suggestionsList) {
+                suggestionsList.innerHTML = '<div class="suggestions-error">Erro ao carregar sugestoes</div>';
+            }
+            // On API failure, use intent-specific fallback only (no generic defaults for conversation contexts)
+            const intent = detectQuestionIntent(intentSource);
+            const intentPool = questionReplyPools[intent] || questionReplyPools.general || [];
+            const isGrammarContext = suggestionSets.hasOwnProperty(context);
+            if (isGrammarContext) {
+                return dedupeSuggestionItems([...intentPool, ...getSuggestionsForContext(context, intentSource)]).slice(0, 4);
+            }
+            return intentPool.slice(0, 4);
+        }
+    }
+
+    // Fetch suggestions for popup only (no DOM rendering), based on the question being answered
+    // excludeSuggestions: array of {en, pt} already shown inline — popup must show DIFFERENT ones
+    async function fetchPopupSuggestions(questionText, excludeSuggestions = []) {
+        if (!questionText) return [];
+        try {
+            const excludeList = excludeSuggestions.map(s => String(s.en || '').trim()).filter(Boolean);
+            const baseURL = apiClient.baseURL || '';
+            const response = await apiClient.fetchWithTimeout(`${baseURL}/api/suggestions`, {
+                method: 'POST',
+                headers: apiClient.getHeaders(),
+                body: JSON.stringify({
+                    aiMessage: questionText,
+                    context: context,
+                    lessonLang: lessonLang,
+                    exclude: excludeList
+                })
+            }, 10000);
+            if (!response.ok) return [];
+            const data = await response.json();
+            const results = normalizeSuggestionItems(data.suggestions || data.data || data || []);
+            // Extra frontend dedup: remove any that still match inline suggestions
+            if (excludeList.length) {
+                const excludeSet = new Set(excludeList.map(t => t.toLowerCase()));
+                return results.filter(r => !excludeSet.has(String(r.en || '').trim().toLowerCase()));
+            }
+            return results;
+        } catch (e) {
+            return [];
         }
     }
 
     function setupSuggestionsUI() {
         if (!suggestionsToggleBtn || !suggestionsPanel) return;
-        if (!isGrammarMode) {
-            suggestionsToggleBtn.style.display = 'none';
-            suggestionsPanel.style.display = 'none';
-            return;
-        }
-
-
+        updateSuggestionsVisibility();
 
         suggestionsToggleBtn.addEventListener('click', () => {
             const isActive = suggestionsPanel.classList.toggle('active');
@@ -555,11 +1030,72 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setupSuggestionsUI();
 
-    if (isFreeConversation) {
-        if (chatWindow) chatWindow.style.display = 'none';
-        if (subtitleToggleBtn) subtitleToggleBtn.style.display = 'none';
-        if (suggestionsToggleBtn) suggestionsToggleBtn.style.display = 'none';
-        if (suggestionsPanel) suggestionsPanel.style.display = 'none';
+    function updateSuggestionsVisibility() {
+        if (!suggestionsToggleBtn || !suggestionsPanel) return;
+        const selectedMode = window.getSelectedMode ? window.getSelectedMode() : 'learning';
+        const shouldHide = isFreeConversation || lessonState.active || selectedMode === 'simulator';
+        suggestionsToggleBtn.style.display = shouldHide ? 'none' : '';
+        suggestionsPanel.style.display = shouldHide ? 'none' : '';
+    }
+
+    window.updateSuggestionsVisibility = updateSuggestionsVisibility;
+
+    function getObjectiveText() {
+        const goalNote = (typeof sessionGoalTurns !== 'undefined') ? ` Meta da sessão: ${sessionGoalTurns} turnos.` : '';
+        if (isGrammarMode) {
+            const topic = contextName || context;
+            return `Objetivo: praticar ${topic.toLowerCase()}.${goalNote}`;
+        }
+        const objective = COMMUNICATIVE_OBJECTIVES[context] || 'Objetivo: praticar conversa real no contexto.';
+        return `${objective}${goalNote}`;
+    }
+
+    function updateHeaderInfo() {
+        const modeBadge = document.getElementById('player-mode-badge');
+        const levelBadge = document.getElementById('player-level-badge');
+        const objectiveEl = document.getElementById('player-objective');
+        const scenarioTitle = document.getElementById('player-scenario-title');
+        const selectedMode = window.getSelectedMode ? window.getSelectedMode() : 'learning';
+        if (scenarioTitle && contextName) scenarioTitle.textContent = contextName;
+        if (modeBadge) modeBadge.textContent = `Mode: ${MODE_LABELS[selectedMode] || selectedMode}`;
+        if (levelBadge) levelBadge.textContent = `Nivel: ${studentLevel || '--'}`;
+        if (objectiveEl) objectiveEl.textContent = getObjectiveText();
+        if (typeof sessionGoalTurns !== 'undefined') {
+            sessionGoalTurns = resolveSessionGoalByLevel();
+            updateSessionProgress({ quiet: true });
+        }
+    }
+
+    function resolveSessionGoalByLevel() {
+        if (isFreeConversation) return 14;
+        if (studentLevel === 'A1') return 8;
+        if (studentLevel === 'A2') return 10;
+        if (studentLevel === 'B1') return 12;
+        return 10;
+    }
+
+    window.updateHeaderInfo = updateHeaderInfo;
+
+    function extractCorrection(text) {
+        if (!text) return null;
+        const enMatch = text.match(/say:\s*([^.?!]*)/i);
+        if (enMatch && enMatch[1]) return enMatch[1].trim();
+        const ptMatch = text.match(/diga:\s*([^.?!]*)/i);
+        if (ptMatch && ptMatch[1]) return ptMatch[1].trim();
+        return null;
+    }
+
+    function updateRecentCorrections(text) {
+        const correction = extractCorrection(text);
+        if (!correction) return;
+        if (!recentCorrections.includes(correction)) {
+            recentCorrections.push(correction);
+        }
+        recentCorrections = recentCorrections.slice(-5);
+    }
+
+    if (isFreeConversation && chatWindow) {
+        chatWindow.style.display = '';
     }
 
     if (isFreeConversation) {
@@ -572,17 +1108,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (freeQuestionOk) {
             freeQuestionOk.addEventListener('click', async () => {
-                if (!questionBank) return;
-                currentMainQuestion = questionBank.confirmPreview();
-                if (freeQuestionRefresh) freeQuestionRefresh.disabled = true;
                 if (freeQuestionOk) freeQuestionOk.disabled = true;
-                showQuestionPicker(currentMainQuestion);
-                freeState = FREE_STATES.AI_READS_MAIN_QUESTION;
-                const prompt = `Great. Let's practice with this question: ${currentMainQuestion}. Please answer it.`;
-                logConversationEntry('AI', prompt);
-                await playTtsOnly(prompt);
-                freeState = FREE_STATES.STUDENT_ANSWERS_MAIN;
-                setStatusText('Listening...');
+                try {
+                    await launchSelectedFreeMode();
+                } catch (err) {
+                    console.error('Free mode launch error:', err);
+                    if (freeQuestionOk) freeQuestionOk.disabled = false;
+                    setStatusText('Error');
+                }
             });
         }
     }
@@ -614,14 +1147,67 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const startBtn = document.getElementById('start-btn');
     const messageCounter = document.getElementById('message-counter');
+    const sessionProgressBadge = document.getElementById('player-session-progress');
     const autoTranslateToggle = document.getElementById('auto-translate-toggle');
 
     let isRecording = false;
     let isProcessing = false;
     const conversationLog = [];
+    let lastAIQuestionPrompt = '';
     let currentAudio = null; // Track current audio for skip functionality
+    let mobileAudioUnlocked = false; // Track if audio playback has been unlocked on mobile
+
+    // --- Mobile Audio Unlock ---
+    // iOS Safari and Chrome Android block audio.play() unless triggered by a user gesture.
+    // We unlock audio on the first tap/click anywhere on the page.
+    function unlockMobileAudio() {
+        if (mobileAudioUnlocked) return;
+        const silentAudio = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=');
+        silentAudio.volume = 0;
+        silentAudio.play().then(() => {
+            mobileAudioUnlocked = true;
+            console.log('[Mobile] Audio playback unlocked');
+            silentAudio.pause();
+        }).catch(() => {
+            // Will retry on next user gesture
+        });
+    }
+    document.addEventListener('touchstart', unlockMobileAudio, { once: false, passive: true });
+    document.addEventListener('click', unlockMobileAudio, { once: false, passive: true });
+
     let ttsCancelled = false;
     let userMessageCount = 0; // Track user messages for report button
+    let hasPracticeStarted = false;
+    let learningFeedbackPending = false;
+    let sessionGoalTurns = resolveSessionGoalByLevel();
+    const seenMilestones = new Set();
+    const milestoneTips = {
+        2: "Bom ritmo. Tente respostas com pelo menos 6 palavras para acelerar sua fluência.",
+        5: "Excelente consistência. Agora varie conectores: because, but, so, then.",
+        8: "Ótimo avanço. Foque em uma resposta mais detalhada com exemplo pessoal.",
+        12: "Você está sustentando conversa real. Continue por mais alguns turnos para consolidar."
+    };
+
+    function updateSessionProgress(options = {}) {
+        if (!sessionProgressBadge) return;
+        const turns = Math.max(0, userMessageCount);
+        const clamped = Math.min(turns, sessionGoalTurns);
+        sessionProgressBadge.textContent = `Progress: ${clamped}/${sessionGoalTurns}`;
+
+        if (options.quiet || !hasPracticeStarted) return;
+        if (!Object.prototype.hasOwnProperty.call(milestoneTips, turns)) return;
+        if (seenMilestones.has(turns)) return;
+        seenMilestones.add(turns);
+        addMessage('System', milestoneTips[turns], true);
+    }
+
+    updateHeaderInfo();
+    updateSessionProgress({ quiet: true });
+
+    function setMicReadyState() {
+        if (!recordBtn) return;
+        recordBtn.disabled = Boolean(isUsageLimitReached || isProcessing || learningFeedbackPending);
+    }
 
     // --- Free Conversation (Guided Cycles) ---
     const FREE_STATES = {
@@ -636,8 +1222,110 @@ document.addEventListener('DOMContentLoaded', () => {
         AI_ASK_ADDITIONAL_QUESTIONS: 'AI_ASK_ADDITIONAL_QUESTIONS',
         STUDENT_ADDITIONAL_INTENT: 'STUDENT_ADDITIONAL_INTENT',
         STUDENT_ASKS_QUESTION: 'STUDENT_ASKS_QUESTION',
-        AI_ANSWERS_STUDENT_QUESTION: 'AI_ANSWERS_STUDENT_QUESTION'
+        AI_ANSWERS_STUDENT_QUESTION: 'AI_ANSWERS_STUDENT_QUESTION',
+        MISSION_WAIT_ANSWER: 'MISSION_WAIT_ANSWER'
     };
+
+    const FREE_SESSION_MODES = {
+        MISSION: 'mission',
+        CHAT: 'chat'
+    };
+    let selectedFreeSessionMode = localStorage.getItem('free_session_mode') || FREE_SESSION_MODES.MISSION;
+    if (![FREE_SESSION_MODES.MISSION, FREE_SESSION_MODES.CHAT].includes(selectedFreeSessionMode)) {
+        selectedFreeSessionMode = FREE_SESSION_MODES.MISSION;
+    }
+
+    const EASY_MISSIONS = [
+        {
+            id: 'daily_routine',
+            title: 'Daily Routine',
+            objective: 'Talk about your day with easy words.',
+            steps: [
+                'What time do you wake up?',
+                'What do you do first in the morning?',
+                'What do you do before sleep?'
+            ]
+        },
+        {
+            id: 'food_choices',
+            title: 'Food Choices',
+            objective: 'Talk about food and simple preferences.',
+            steps: [
+                'What do you usually eat for lunch?',
+                'What food do you like most?',
+                'What new food do you want to try?'
+            ]
+        },
+        {
+            id: 'week_plan',
+            title: 'Week Plan',
+            objective: 'Talk about simple plans for this week.',
+            steps: [
+                'What is one plan for this week?',
+                'When will you do it?',
+                'Who can help you with this plan?'
+            ]
+        },
+        {
+            id: 'city_life',
+            title: 'My City',
+            objective: 'Describe your city in simple sentences.',
+            steps: [
+                'What is your favorite place in your city?',
+                'Why do you like this place?',
+                'Who do you go there with?'
+            ]
+        },
+        {
+            id: 'work_or_study',
+            title: 'Work or Study',
+            objective: 'Talk about work or school in a natural way.',
+            steps: [
+                'What do you do now: work or study?',
+                'What part is easy for you?',
+                'What part is hard for you?'
+            ]
+        },
+        {
+            id: 'free_time',
+            title: 'Free Time',
+            objective: 'Talk about your free time activities.',
+            steps: [
+                'What do you do on weekends?',
+                'What activity helps you relax?',
+                'What activity do you want to do more?'
+            ]
+        },
+        {
+            id: 'family_friends',
+            title: 'Family and Friends',
+            objective: 'Talk about people close to you.',
+            steps: [
+                'Who is important in your life?',
+                'What do you like to do together?',
+                'What did you do together recently?'
+            ]
+        },
+        {
+            id: 'small_goals',
+            title: 'Small Goals',
+            objective: 'Practice clear goals and next actions.',
+            steps: [
+                'What is one small goal for this month?',
+                'What is your first step?',
+                'How will you know you finished it?'
+            ]
+        }
+    ];
+
+    const missionState = {
+        active: false,
+        mission: null,
+        stepIndex: 0,
+        answers: []
+    };
+    const LAST_EASY_MISSION_ID_KEY = 'last_easy_mission_id';
+    let queuedMission = null;
 
     let freeState = null;
     let questionBank = null;
@@ -645,6 +1333,17 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentFollowupQuestion = '';
     let lastMainAnswer = '';
     let lastFollowupAnswer = '';
+    let lastTransitionText = '';
+    let recentTransitionHistory = [];
+    const TRANSITION_HISTORY_LIMIT = 12;
+    const TRANSITION_FALLBACKS = [
+        'What do you want to share next?',
+        'Want to continue with one more idea?',
+        'What is one more point for this?',
+        'Do you want a new simple question?',
+        'What can we explore now?'
+    ];
+    let lastPickerQuestion = '';
 
     class QuestionBank {
         constructor(questions = [], storageKey = 'free_conversation_questions_state') {
@@ -723,8 +1422,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.getPreview();
             }
             const confirmed = this.preview;
-            this.remaining = this.remaining.filter(q => q !== confirmed);
-            this.used.push(confirmed);
+            this.markUsed(confirmed);
             this.preview = null;
             if (!this.remaining.length) {
                 this.resetPool();
@@ -732,6 +1430,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.saveState();
             }
             return confirmed;
+        }
+
+        markUsed(question) {
+            const normalized = (question || '').trim();
+            if (!normalized) return;
+            this.remaining = this.remaining.filter(q => q !== normalized);
+            if (!this.used.includes(normalized)) {
+                this.used.push(normalized);
+            }
+            if (this.preview === normalized) {
+                this.preview = null;
+            }
         }
     }
 
@@ -762,18 +1472,172 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         return [
-            'What is a habit that helped you recently?',
+            'What did you learn this week?',
             'What do you like to do after work or school?',
-            'Describe a place you would like to visit.'
+            'Where do you want to travel next?'
         ];
     }
 
+    function pickFreeConversationIntro() {
+        const intros = [
+            "How are you today?",
+            "How's your day going so far?",
+            "How are you feeling right now?",
+            "How has your week been?"
+        ];
+        return pickNonRepeatingVariant('free_conversation_intro', intros) || intros[0];
+    }
+
+    function queueEasyMission(forceNew = false) {
+        if (!Array.isArray(EASY_MISSIONS) || !EASY_MISSIONS.length) return null;
+        if (!forceNew && queuedMission) return queuedMission;
+
+        const lastMissionId = localStorage.getItem(LAST_EASY_MISSION_ID_KEY) || '';
+        let pool = EASY_MISSIONS;
+        if (EASY_MISSIONS.length > 1 && lastMissionId) {
+            pool = EASY_MISSIONS.filter(mission => mission.id !== lastMissionId);
+        }
+        if (!pool.length) {
+            pool = EASY_MISSIONS;
+        }
+
+        queuedMission = pool[Math.floor(Math.random() * pool.length)];
+        return queuedMission;
+    }
+
+    function consumeQueuedEasyMission() {
+        const mission = queueEasyMission(false);
+        if (mission && mission.id) {
+            localStorage.setItem(LAST_EASY_MISSION_ID_KEY, mission.id);
+        }
+        queuedMission = null;
+        return mission;
+    }
+
+    function getMissionStepText(stepIndex, questionText) {
+        const phaseLabels = ['Warm-up', 'Practice', 'Close'];
+        const phase = phaseLabels[stepIndex] || 'Step';
+        const labelVariants = [
+            `Mission ${stepIndex + 1}/3 (${phase}):`,
+            `Step ${stepIndex + 1}/3 (${phase}):`,
+            `Round ${stepIndex + 1}/3 (${phase}):`
+        ];
+        const label = pickNonRepeatingVariant(`mission_step_label_${stepIndex}`, labelVariants) || labelVariants[0];
+        return `${label} ${questionText}`;
+    }
+
+    function updateFreeSessionModeUI() {
+        if (!freeSessionModeWrap) return;
+        const modeButtons = freeSessionModeWrap.querySelectorAll('.free-session-chip');
+        modeButtons.forEach(btn => {
+            const isSelected = btn.dataset.freeMode === selectedFreeSessionMode;
+            btn.classList.toggle('selected', isSelected);
+        });
+
+        const isMissionMode = selectedFreeSessionMode === FREE_SESSION_MODES.MISSION;
+        if (freeQuestionText) {
+            if (isMissionMode) {
+                freeQuestionText.textContent = 'Escolha como quer praticar agora.';
+            } else {
+                freeQuestionText.textContent = lastPickerQuestion || (questionBank ? questionBank.getPreview() : '');
+            }
+        }
+        if (freeTopicInput) {
+            freeTopicInput.style.display = isMissionMode ? 'none' : '';
+        }
+        if (freeTopicChipsWrap) {
+            freeTopicChipsWrap.style.display = isMissionMode ? 'none' : '';
+        }
+
+        if (freeMissionPreview) {
+            if (isMissionMode) {
+                const mission = queueEasyMission(false);
+                if (mission) {
+                    freeMissionPreview.textContent = `Missao Easy: ${mission.title}. Objetivo: ${mission.objective}`;
+                } else {
+                    freeMissionPreview.textContent = 'Missao Easy com 3 perguntas curtas.';
+                }
+                freeMissionPreview.style.display = '';
+            } else {
+                freeMissionPreview.textContent = 'Conversa livre com tema escolhido por voce.';
+                freeMissionPreview.style.display = '';
+            }
+        }
+    }
+
+    function bindFreeSessionModeButtons() {
+        if (!freeSessionModeWrap || freeSessionModeWrap.dataset.bound === '1') return;
+        freeSessionModeWrap.dataset.bound = '1';
+        const modeButtons = freeSessionModeWrap.querySelectorAll('.free-session-chip');
+        modeButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const nextMode = btn.dataset.freeMode || FREE_SESSION_MODES.MISSION;
+                selectedFreeSessionMode = nextMode;
+                localStorage.setItem('free_session_mode', selectedFreeSessionMode);
+                updateFreeSessionModeUI();
+            });
+        });
+    }
+
+    function resolveFreeTopicFromPicker() {
+        const topicInput = document.getElementById('free-topic-input');
+        const typedTopic = (topicInput && topicInput.value.trim()) || '';
+        const previewTopic = questionBank ? questionBank.getPreview() : '';
+        const chosenTopic = typedTopic || previewTopic || 'anything you want';
+
+        if (questionBank && previewTopic && chosenTopic === previewTopic) {
+            questionBank.confirmPreview();
+        } else if (questionBank && chosenTopic) {
+            questionBank.markUsed(chosenTopic);
+            questionBank.saveState();
+        }
+
+        return chosenTopic;
+    }
+
     function showQuestionPicker(question) {
-        if (!freeQuestionPanel || !freeQuestionText) return;
-        freeQuestionText.textContent = question;
-        if (freeQuestionRefresh) freeQuestionRefresh.disabled = false;
-        if (freeQuestionOk) freeQuestionOk.disabled = false;
+        if (!freeQuestionPanel) return;
+        lastPickerQuestion = question || '';
         freeQuestionPanel.classList.remove('hidden');
+        bindFreeSessionModeButtons();
+        updateFreeSessionModeUI();
+        if (freeQuestionOk) {
+            freeQuestionOk.disabled = false;
+        }
+
+        // Setup topic chips
+        const topicChips = freeQuestionPanel.querySelectorAll('.topic-chip');
+        const topicInput = document.getElementById('free-topic-input');
+        if (topicInput) {
+            if (question) {
+                topicInput.value = question;
+            } else {
+                topicInput.value = '';
+            }
+        }
+
+        topicChips.forEach(chip => {
+            if (chip.dataset.bound === '1') return;
+            chip.dataset.bound = '1';
+            chip.addEventListener('click', () => {
+                topicChips.forEach(c => c.classList.remove('selected'));
+                chip.classList.add('selected');
+                if (topicInput) topicInput.value = chip.dataset.topic;
+            });
+        });
+
+        // Focus input
+        if (topicInput) {
+            if (topicInput.dataset.bound !== '1') {
+                topicInput.dataset.bound = '1';
+                topicInput.addEventListener('focus', () => {
+                    topicChips.forEach(c => c.classList.remove('selected'));
+                });
+                topicInput.addEventListener('input', () => {
+                    topicChips.forEach(c => c.classList.remove('selected'));
+                });
+            }
+        }
     }
 
     function hideQuestionPicker() {
@@ -781,9 +1645,155 @@ document.addEventListener('DOMContentLoaded', () => {
         freeQuestionPanel.classList.add('hidden');
     }
 
+    async function startEasyMissionFlow() {
+        const mission = consumeQueuedEasyMission();
+        missionState.active = true;
+        missionState.mission = mission;
+        missionState.stepIndex = 0;
+        missionState.answers = [];
+
+        if (!mission || !Array.isArray(mission.steps) || mission.steps.length < 3) {
+            missionState.active = false;
+            freeState = FREE_STATES.SHOW_QUESTION_PICKER;
+            if (questionBank) {
+                showQuestionPicker(questionBank.getPreview());
+            } else {
+                showQuestionPicker('');
+            }
+            setStatusText('Choose a question');
+            return;
+        }
+
+        const missionIntros = [
+            `Today's Easy Mission: ${mission.title}. Three short questions.`,
+            `New Easy Mission: ${mission.title}. Three quick answers.`,
+            `Mission mode on: ${mission.title}. Let's do 3 short questions.`,
+            `Easy Mission: ${mission.title}. Ready for three questions?`
+        ];
+        const intro = pickNonRepeatingVariant(`mission_intro_${mission.id}`, missionIntros) || missionIntros[0];
+        logConversationEntry('AI', intro);
+        await playTtsOnly(intro);
+
+        const stepText = getMissionStepText(0, mission.steps[0]);
+        logConversationEntry('AI', stepText);
+        await playTtsOnly(stepText);
+
+        freeState = FREE_STATES.MISSION_WAIT_ANSWER;
+        setStatusText('Listening...');
+    }
+
+    async function launchSelectedFreeMode() {
+        if (selectedFreeSessionMode === FREE_SESSION_MODES.MISSION) {
+            hideQuestionPicker();
+            freeState = FREE_STATES.AI_READS_MAIN_QUESTION;
+            setStatusText('Thinking...');
+            await startEasyMissionFlow();
+            return;
+        }
+
+        const chosenTopic = resolveFreeTopicFromPicker();
+        currentMainQuestion = chosenTopic;
+        if (freeQuestionOk) freeQuestionOk.disabled = true;
+        hideQuestionPicker();
+        freeState = FREE_STATES.AI_READS_MAIN_QUESTION;
+        setStatusText('Thinking...');
+        const introData = await apiClient.freeConversationAction('introduce_topic', {
+            main_question: chosenTopic
+        });
+        const introText = introData.text || `Let's talk about ${chosenTopic}. What comes to mind?`;
+        logConversationEntry('AI', introText);
+        await playTtsOnly(introText);
+        freeState = FREE_STATES.STUDENT_ANSWERS_MAIN;
+        setStatusText('Listening...');
+    }
+
+    async function handleMissionInput(text) {
+        if (!missionState.active || freeState !== FREE_STATES.MISSION_WAIT_ANSWER) return false;
+
+        const mission = missionState.mission;
+        if (!mission || !Array.isArray(mission.steps)) return false;
+
+        missionState.answers.push(text);
+        const currentQuestion = mission.steps[missionState.stepIndex] || mission.steps[0];
+
+        setStatusText('Thinking...');
+        if (recordBtn) {
+            recordBtn.disabled = true;
+            setRecordText("⏳ Pensando...");
+        }
+
+        try {
+            const reactionData = await apiClient.freeConversationAction('opinion', {
+                main_question: currentQuestion,
+                student_answer: text
+            });
+            const reactionText = reactionData.text || 'Good answer. Nice and clear.';
+            logConversationEntry('AI', reactionText);
+            await playTtsOnly(reactionText);
+        } catch (error) {
+            logConversationEntry('AI', 'Good answer. Nice and clear.');
+            await playTtsOnly('Good answer. Nice and clear.');
+        }
+
+        missionState.stepIndex += 1;
+        if (missionState.stepIndex < 3) {
+            const nextStep = getMissionStepText(
+                missionState.stepIndex,
+                mission.steps[missionState.stepIndex]
+            );
+            logConversationEntry('AI', nextStep);
+            await playTtsOnly(nextStep);
+            freeState = FREE_STATES.MISSION_WAIT_ANSWER;
+            setStatusText('Listening...');
+            return true;
+        }
+
+        let finalFeedback = '';
+        try {
+            const feedbackData = await apiClient.freeConversationAction('mission_feedback', {
+                mission_title: mission.title,
+                mission_objective: mission.objective,
+                mission_steps: mission.steps,
+                mission_answers: missionState.answers
+            });
+            finalFeedback = feedbackData.text || '';
+        } catch (error) {
+            finalFeedback = '';
+        }
+
+        if (!finalFeedback) {
+            finalFeedback = 'Strong point: your answers were clear. Next step: add one extra detail in each answer.';
+        }
+
+        logConversationEntry('AI', finalFeedback);
+        await playTtsOnly(finalFeedback);
+
+        const completionPrompt = 'Mission complete. Do you want a new mission or free chat?';
+        logConversationEntry('AI', completionPrompt);
+        await playTtsOnly(completionPrompt);
+
+        missionState.active = false;
+        missionState.mission = null;
+        missionState.stepIndex = 0;
+        missionState.answers = [];
+
+        freeState = FREE_STATES.SHOW_QUESTION_PICKER;
+        if (questionBank) {
+            const preview = questionBank.getPreview();
+            showQuestionPicker(preview);
+        } else {
+            showQuestionPicker('');
+        }
+        setStatusText('Choose a question');
+        return true;
+    }
+
     function logConversationEntry(sender, text) {
         if (!text) return;
         conversationLog.push({ sender, text });
+        // Also render in DOM so subtitles/captions work in free conversation
+        const isAI = sender === 'AI' || sender === 'System';
+        addMessage(sender, text, isAI, false); // false = don't double-log
         updateMessageCounter();
         updateReportButton();
         saveConversation();
@@ -797,6 +1807,67 @@ document.addEventListener('DOMContentLoaded', () => {
         ].some(phrase => normalized === phrase || normalized.startsWith(phrase));
     }
 
+    function normalizeTransitionText(text) {
+        return String(text || '')
+            .toLowerCase()
+            .replace(/[^a-z0-9\s]/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    function rememberTransitionText(text) {
+        if (!text) return;
+        recentTransitionHistory.push(text);
+        if (recentTransitionHistory.length > TRANSITION_HISTORY_LIMIT) {
+            recentTransitionHistory = recentTransitionHistory.slice(-TRANSITION_HISTORY_LIMIT);
+        }
+    }
+
+    function getTransitionFallbackQuestion() {
+        const used = new Set(recentTransitionHistory.map(normalizeTransitionText));
+        const available = TRANSITION_FALLBACKS.filter(option => !used.has(normalizeTransitionText(option)));
+        const pool = available.length ? available : TRANSITION_FALLBACKS;
+        return pool[Math.floor(Math.random() * pool.length)];
+    }
+
+    function sanitizeTransitionQuestion(candidateText) {
+        const bannedSnippets = [
+            'what else is on your mind',
+            'what would you like to talk about next',
+            'do you want to talk about something else',
+            'what do you want to talk about now',
+            'do you have any additional questions',
+            'that was interesting'
+        ];
+
+        let text = String(candidateText || '').replace(/\s+/g, ' ').trim();
+        if (!text) return getTransitionFallbackQuestion();
+        if (!text.endsWith('?')) {
+            text = text.replace(/[.!]+$/g, '') + '?';
+        }
+
+        const normalized = normalizeTransitionText(text);
+        const looksGeneric = bannedSnippets.some(snippet => normalized.includes(normalizeTransitionText(snippet)));
+        const looksRepeated = recentTransitionHistory.some(previous => {
+            const prevNorm = normalizeTransitionText(previous);
+            if (!prevNorm || !normalized) return false;
+            return prevNorm === normalized || prevNorm.includes(normalized) || normalized.includes(prevNorm);
+        });
+
+        if (looksGeneric || looksRepeated) {
+            return getTransitionFallbackQuestion();
+        }
+        return text;
+    }
+
+    function buildTransitionPayload() {
+        return {
+            main_question: currentMainQuestion,
+            previous_transition: lastTransitionText,
+            previous_transitions: recentTransitionHistory.slice(-TRANSITION_HISTORY_LIMIT)
+        };
+    }
+
     async function playTtsOnly(text) {
         if (!text) return;
         isProcessing = true;
@@ -808,7 +1879,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             ttsCancelled = false;
-            const chunks = splitTtsText(text, 480);
+            const ttsText = cleanTextForTts(text);
+            const chunks = splitTtsText(ttsText, 480);
             if (chunks.length === 0) { finalizePlayback(); return; }
             const skipBtn = showSkipAudioButton();
 
@@ -841,9 +1913,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const questions = await loadFreeConversationQuestions();
             questionBank = new QuestionBank(questions);
         }
+        missionState.active = false;
+        missionState.mission = null;
+        missionState.stepIndex = 0;
+        missionState.answers = [];
+        currentMainQuestion = '';
+        currentFollowupQuestion = '';
+        lastMainAnswer = '';
+        lastFollowupAnswer = '';
+        lastTransitionText = '';
+        recentTransitionHistory = [];
         hideQuestionPicker();
         freeState = FREE_STATES.INTRO_AI_ASK_HOW_ARE_YOU;
-        const introQuestion = "How are you today?";
+        const introQuestion = pickFreeConversationIntro();
         logConversationEntry('AI', introQuestion);
         await playTtsOnly(introQuestion);
         freeState = FREE_STATES.INTRO_STUDENT_ANSWER;
@@ -855,9 +1937,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             logConversationEntry(user ? user.name : "User", text);
+            userMessageCount += 1;
+            updateSessionProgress();
+
+            if (missionState.active && freeState === FREE_STATES.MISSION_WAIT_ANSWER) {
+                await handleMissionInput(text);
+                return;
+            }
 
             if (freeState === FREE_STATES.INTRO_STUDENT_ANSWER) {
                 freeState = FREE_STATES.SHOW_QUESTION_PICKER;
+                setStatusText('Thinking...');
+                const reactData = await apiClient.freeConversationAction('react_intro', {
+                    student_answer: text
+                });
+                const reactText = reactData.text || "That's great to hear!";
+                logConversationEntry('AI', reactText);
+                await playTtsOnly(reactText);
                 const preview = questionBank.getPreview();
                 showQuestionPicker(preview);
                 setStatusText('Choose a question');
@@ -865,10 +1961,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (freeState === FREE_STATES.SHOW_QUESTION_PICKER) {
-                const nudge = "Please choose a question and tap OK.";
-                logConversationEntry('AI', nudge);
-                await playTtsOnly(nudge);
-                freeState = FREE_STATES.SHOW_QUESTION_PICKER;
+                await launchSelectedFreeMode();
                 return;
             }
 
@@ -904,7 +1997,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const opinionData = await apiClient.freeConversationAction('opinion', {
                     main_question: currentMainQuestion,
-                    main_answer: lastMainAnswer,
+                    student_answer: lastMainAnswer,
                     followup_question: currentFollowupQuestion,
                     followup_answer: lastFollowupAnswer
                 });
@@ -912,10 +2005,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 logConversationEntry('AI', opinionText);
                 await playTtsOnly(opinionText);
 
-                freeState = FREE_STATES.AI_ASK_ADDITIONAL_QUESTIONS;
-                const additionalPrompt = "Do you have any additional questions for me about this?";
-                logConversationEntry('AI', additionalPrompt);
-                await playTtsOnly(additionalPrompt);
+                const transData = await apiClient.freeConversationAction('transition', buildTransitionPayload());
+                const transText = sanitizeTransitionQuestion(transData.text);
+                lastTransitionText = transText;
+                rememberTransitionText(transText);
+                logConversationEntry('AI', transText);
+                await playTtsOnly(transText);
                 freeState = FREE_STATES.STUDENT_ADDITIONAL_INTENT;
                 setStatusText('Listening...');
                 return;
@@ -924,16 +2019,57 @@ document.addEventListener('DOMContentLoaded', () => {
             if (freeState === FREE_STATES.STUDENT_ADDITIONAL_INTENT) {
                 if (isNegativeResponse(text)) {
                     freeState = FREE_STATES.SHOW_QUESTION_PICKER;
-                    const preview = questionBank.getPreview();
+                    const preview = questionBank.refreshPreview();
                     showQuestionPicker(preview);
                     setStatusText('Choose a question');
                     return;
                 }
 
-                freeState = FREE_STATES.STUDENT_ASKS_QUESTION;
-                const askQuestionPrompt = "Great. What is your question?";
-                logConversationEntry('AI', askQuestionPrompt);
-                await playTtsOnly(askQuestionPrompt);
+                // If the text already contains a question, answer it directly
+                if (text.includes('?')) {
+                    freeState = FREE_STATES.AI_ANSWERS_STUDENT_QUESTION;
+                    setStatusText('Thinking...');
+                    if (recordBtn) {
+                        recordBtn.disabled = true;
+                        setRecordText("⏳ Pensando...");
+                    }
+                    const answerData = await apiClient.freeConversationAction('answer', {
+                        main_question: currentMainQuestion,
+                        student_answer: lastMainAnswer,
+                        followup_question: currentFollowupQuestion,
+                        followup_answer: lastFollowupAnswer,
+                        student_question: text
+                    });
+                    const answerText = answerData.text || answerData.response || '';
+                    logConversationEntry('AI', answerText);
+                    await playTtsOnly(answerText);
+
+                    const transData = await apiClient.freeConversationAction('transition', buildTransitionPayload());
+                    const transText = sanitizeTransitionQuestion(transData.text);
+                    lastTransitionText = transText;
+                    rememberTransitionText(transText);
+                    logConversationEntry('AI', transText);
+                    await playTtsOnly(transText);
+                    freeState = FREE_STATES.STUDENT_ADDITIONAL_INTENT;
+                    setStatusText('Listening...');
+                    return;
+                }
+
+                // Continue naturally when student adds more information (instead of forcing "ask me a question")
+                setStatusText('Thinking...');
+                if (recordBtn) {
+                    recordBtn.disabled = true;
+                    setRecordText("⏳ Pensando...");
+                }
+                lastMainAnswer = text;
+                const moreData = await apiClient.freeConversationAction('followup', {
+                    main_question: currentMainQuestion,
+                    student_answer: text
+                });
+                currentFollowupQuestion = moreData.text || "Could you tell me a little more about that?";
+                logConversationEntry('AI', currentFollowupQuestion);
+                await playTtsOnly(currentFollowupQuestion);
+                freeState = FREE_STATES.STUDENT_ANSWERS_FOLLOWUP;
                 setStatusText('Listening...');
                 return;
             }
@@ -947,7 +2083,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 const answerData = await apiClient.freeConversationAction('answer', {
                     main_question: currentMainQuestion,
-                    main_answer: lastMainAnswer,
+                    student_answer: lastMainAnswer,
                     followup_question: currentFollowupQuestion,
                     followup_answer: lastFollowupAnswer,
                     student_question: text
@@ -956,18 +2092,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 logConversationEntry('AI', answerText);
                 await playTtsOnly(answerText);
 
-                const additionalPrompt = "Do you have any additional questions for me about this?";
-                logConversationEntry('AI', additionalPrompt);
-                await playTtsOnly(additionalPrompt);
+                const transData2 = await apiClient.freeConversationAction('transition', buildTransitionPayload());
+                const transText2 = sanitizeTransitionQuestion(transData2.text);
+                lastTransitionText = transText2;
+                rememberTransitionText(transText2);
+                logConversationEntry('AI', transText2);
+                await playTtsOnly(transText2);
                 freeState = FREE_STATES.STUDENT_ADDITIONAL_INTENT;
                 setStatusText('Listening...');
                 return;
             }
         } catch (err) {
             console.error(err);
+            const backendError = extractBackendErrorPayload(err);
+            if (err?.status === 429 && isWeekendLimitError(backendError || {})) {
+                const usageMessage = applyUsageLimitFromServer(backendError || {});
+                addMessage('System', usageMessage, true);
+                showUsageExceededModal(backendError || {});
+            }
             setStatusText('Error');
             if (recordBtn) {
-                recordBtn.disabled = false;
+                setMicReadyState();
                 setRecordText("🎤 Clique para Falar");
             }
         }
@@ -977,19 +2122,119 @@ document.addEventListener('DOMContentLoaded', () => {
     let sessionStartTime = null;
     let currentSessionSeconds = 0;
     let totalUsedToday = 0;
-    const WEEKEND_LIMIT_SECONDS = 2400; // 40 minutes (weekend only)
+    let weekendLimitSeconds = 10800; // Fallback if backend value is unavailable
     let usageUpdateInterval = null;
-    let remainingSeconds = WEEKEND_LIMIT_SECONDS;
+    let remainingSeconds = weekendLimitSeconds;
     let isUsageLimitReached = false;
+    let usageIsWeekend = true;
+
+    function persistUsageData() {
+        try {
+            const payload = {
+                seconds_used: totalUsedToday,
+                remaining_seconds: remainingSeconds,
+                weekend_limit_seconds: weekendLimitSeconds,
+                is_blocked: isUsageLimitReached
+            };
+            localStorage.setItem('usage_data', JSON.stringify(payload));
+        } catch (e) {
+            console.log('Failed to update usage_data cache:', e);
+        }
+    }
+
+    function applyUsageData(usageData = {}) {
+        if (!usageData || typeof usageData !== 'object') return;
+
+        if (typeof usageData.seconds_used === 'number' && usageData.seconds_used >= 0) {
+            totalUsedToday = usageData.seconds_used;
+        }
+        if (typeof usageData.weekend_limit_seconds === 'number' && usageData.weekend_limit_seconds > 0) {
+            weekendLimitSeconds = usageData.weekend_limit_seconds;
+        }
+        if (typeof usageData.remaining_seconds === 'number') {
+            remainingSeconds = Math.max(0, usageData.remaining_seconds);
+        } else if (usageData.is_blocked === true) {
+            remainingSeconds = 0;
+        }
+        if (typeof usageData.is_weekend === 'boolean') {
+            usageIsWeekend = usageData.is_weekend;
+        }
+
+        if (typeof usageData.is_blocked === 'boolean') {
+            isUsageLimitReached = usageData.is_blocked;
+        } else {
+            isUsageLimitReached = remainingSeconds <= 0;
+        }
+
+        updateTimerDisplay(remainingSeconds);
+        persistUsageData();
+    }
+
+    function extractBackendErrorPayload(err) {
+        if (err && err.originalError && typeof err.originalError === 'object') {
+            return err.originalError;
+        }
+        const rawMessage = typeof err?.message === 'string' ? err.message.trim() : '';
+        if (!rawMessage || !rawMessage.startsWith('{')) return null;
+        try {
+            const parsed = JSON.parse(rawMessage);
+            return parsed && typeof parsed === 'object' ? parsed : null;
+        } catch (parseErr) {
+            return null;
+        }
+    }
+
+    function isWeekendLimitError(payload = {}) {
+        const baseError = String(payload?.error || payload?.message || '');
+        return /weekend practice limit reached/i.test(baseError);
+    }
+
+    function getUsageBlockedMessage(payload = {}) {
+        if (typeof payload?.message === 'string' && payload.message.trim()) {
+            return payload.message.trim();
+        }
+        const blockedDuringWeekend = typeof payload?.is_weekend === 'boolean' ? payload.is_weekend : usageIsWeekend;
+        if (blockedDuringWeekend === false) {
+            return 'A prática está disponível apenas aos finais de semana (sábado e domingo).';
+        }
+        return 'Você atingiu seu limite de prática deste fim de semana.';
+    }
+
+    function applyUsageLimitFromServer(payload = {}) {
+        const normalized = {
+            is_blocked: true,
+            remaining_seconds: typeof payload.remaining_seconds === 'number' ? payload.remaining_seconds : 0
+        };
+
+        if (typeof payload.weekend_limit_seconds === 'number' && payload.weekend_limit_seconds > 0) {
+            normalized.weekend_limit_seconds = payload.weekend_limit_seconds;
+        }
+        if (typeof payload.seconds_used === 'number' && payload.seconds_used >= 0) {
+            normalized.seconds_used = payload.seconds_used;
+        }
+        if (typeof payload.is_weekend === 'boolean') {
+            normalized.is_weekend = payload.is_weekend;
+        }
+
+        applyUsageData(normalized);
+        isUsageLimitReached = true;
+        return getUsageBlockedMessage(payload);
+    }
+
+    async function refreshUsageStatusFromServer() {
+        try {
+            const usageData = await apiClient.getUsageStatus();
+            applyUsageData(usageData || {});
+        } catch (err) {
+            console.warn('[Usage] Could not refresh usage status:', err);
+        }
+    }
 
     // Initialize usage tracking from login response
     const storedUsage = localStorage.getItem('usage_data');
     if (storedUsage && user) {
         try {
-            const usageData = JSON.parse(storedUsage);
-            totalUsedToday = usageData.seconds_used || 0;
-            remainingSeconds = usageData.remaining_seconds || WEEKEND_LIMIT_SECONDS;
-            isUsageLimitReached = remainingSeconds <= 0;
+            applyUsageData(JSON.parse(storedUsage));
         } catch (e) {
             console.log('Failed to parse usage data:', e);
         }
@@ -1000,11 +2245,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const timerDisplay = document.getElementById('timer-display');
         const usageTimer = document.getElementById('usage-timer');
 
-        if (!timerDisplay || !usageTimer) return;
+        if (!timerDisplay) return;
 
         const minutes = Math.floor(seconds / 60);
         const secs = seconds % 60;
         timerDisplay.textContent = `${minutes}:${secs.toString().padStart(2, '0')}`;
+
+        if (!usageTimer) return;
 
         // Update color based on remaining time
         usageTimer.classList.remove('timer-normal', 'timer-warning', 'timer-critical');
@@ -1048,10 +2295,17 @@ document.addEventListener('DOMContentLoaded', () => {
         setInterval(async () => {
             if (currentSessionSeconds > 0) {
                 try {
-                    await apiClient.trackUsage(currentSessionSeconds);
+                    const usageRes = await apiClient.trackUsage(currentSessionSeconds);
                     // Reset session counter after successful sync
                     sessionStartTime = Date.now();
-                    remainingSeconds = Math.max(0, remainingSeconds - currentSessionSeconds);
+                    if (usageRes) {
+                        applyUsageData(usageRes);
+                    } else {
+                        remainingSeconds = Math.max(0, remainingSeconds - currentSessionSeconds);
+                        isUsageLimitReached = remainingSeconds <= 0;
+                        updateTimerDisplay(remainingSeconds);
+                        persistUsageData();
+                    }
                     currentSessionSeconds = 0;
                 } catch (err) {
                     console.error('Failed to sync usage:', err);
@@ -1061,70 +2315,49 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Check if user can send message
-    function checkUsageLimit() {
+    function checkUsageLimit(limitPayload = null) {
         if (isUsageLimitReached || remainingSeconds <= 0) {
-            showUsageExceededModal();
+            showUsageExceededModal(limitPayload || {});
             return false;
         }
         return true;
     }
 
     // Show usage exceeded modal
-    function showUsageExceededModal() {
+    function showUsageExceededModal(limitPayload = {}) {
         // Check if already showing
         if (document.getElementById('usage-exceeded-overlay')) return;
+
+        const blockedMessage = getUsageBlockedMessage(limitPayload);
+        const blockedDuringWeekend = typeof limitPayload?.is_weekend === 'boolean' ? limitPayload.is_weekend : usageIsWeekend;
+        const title = blockedDuringWeekend ? 'Tempo Esgotado' : 'Prática Fora do Horário';
+        const nextAccess = blockedDuringWeekend ? 'Sábado que vem' : 'Neste sábado';
+        const footerText = blockedDuringWeekend
+            ? 'Continue praticando no próximo fim de semana!'
+            : 'A prática por voz fica disponível aos fins de semana.';
 
         const overlay = document.createElement('div');
         overlay.id = 'usage-exceeded-overlay';
         overlay.className = 'usage-exceeded-overlay';
+        const limitMinutes = Math.round(weekendLimitSeconds / 60);
+        const limitLabel = limitMinutes >= 60
+            ? `${(limitMinutes / 60).toFixed(limitMinutes % 60 === 0 ? 0 : 1)} hora(s)`
+            : `${limitMinutes} minutos`;
 
-        // Check if current date is February 17, 2026 (Carnival)
-        const currentDate = new Date();
-        const isCarnival = currentDate.getFullYear() === 2026 && 
-                          currentDate.getMonth() === 1 && // February (0-indexed)
-                          currentDate.getDate() === 17;
-
-        let modalContent;
-        if (isCarnival) {
-            // Carnival holiday block message
-            const formattedDate = currentDate.toLocaleDateString('pt-BR', { 
-                day: 'numeric', 
-                month: 'long', 
-                year: 'numeric' 
-            });
-            modalContent = `
-                <div class="usage-exceeded-modal">
-                    <div class="modal-icon">🎭</div>
-                    <h2>Acesso Bloqueado</h2>
-                    <p>O acesso ao sistema está temporariamente bloqueado devido ao feriado de Carnaval.</p>
-                    <div class="time-info">
-                        <p><strong>Motivo:</strong> Feriado de Carnaval</p>
-                        <p><strong>Data:</strong> ${formattedDate}</p>
-                    </div>
-                    <p style="font-size: 0.9rem; color: #94a3b8;">Aproveite o feriado e volte logo!</p>
-                    <p style="margin-top: 15px; font-weight: bold; color: #3b82f6; font-size: 0.95rem;">Ass: Equipe ADM Everyday conversation</p>
-                    <button class="close-btn" onclick="this.closest('.usage-exceeded-overlay').remove()">Entendi</button>
+        overlay.innerHTML = `
+            <div class="usage-exceeded-modal">
+                <div class="modal-icon">⏰</div>
+                <h2>${title}</h2>
+                <p>${escapeHtml(blockedMessage)}</p>
+                <div class="time-info">
+                    <p><strong>Tempo usado:</strong> ${Math.floor(totalUsedToday / 60)} minutos</p>
+                    <p><strong>Limite:</strong> ${limitLabel}</p>
+                    <p><strong>Próximo acesso:</strong> ${nextAccess}</p>
                 </div>
-            `;
-        } else {
-            // Original time limit exceeded message
-            modalContent = `
-                <div class="usage-exceeded-modal">
-                    <div class="modal-icon">⏰</div>
-                    <h2>Tempo Esgotado</h2>
-                    <p>Você usou seus 40 minutos de prática deste fim de semana!</p>
-                    <div class="time-info">
-                        <p><strong>Tempo usado:</strong> ${Math.floor(totalUsedToday / 60)} minutos</p>
-                        <p><strong>Próximo acesso:</strong> Sábado que vem</p>
-                    </div>
-                    <p style="font-size: 0.9rem; color: #94a3b8;">Continue praticando no próximo fim de semana!</p>
-                    <p style="margin-top: 15px; font-weight: bold; color: #3b82f6; font-size: 0.95rem;">Ass: Equipe ADM Everyday conversation</p>
-                    <button class="close-btn" onclick="this.closest('.usage-exceeded-overlay').remove()">Entendi</button>
-                </div>
-            `;
-        }
-
-        overlay.innerHTML = modalContent;
+                <p style="font-size: 0.9rem; color: #94a3b8;">${footerText}</p>
+                <button class="close-btn" onclick="this.closest('.usage-exceeded-overlay').remove()">Entendi</button>
+            </div>
+        `;
 
         document.body.appendChild(overlay);
 
@@ -1136,16 +2369,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize timer display
     updateTimerDisplay(remainingSeconds);
+    refreshUsageStatusFromServer();
 
-    // SUBTITLES OFF BY DEFAULT - do not load saved preference
-    // User must explicitly enable subtitles each session
-    // Initialize subtitles as disabled (show dots by default)
+    // Subtitles default to ON unless user explicitly disables them.
     if (typeof window.subtitlesEnabled === 'undefined') {
-        window.subtitlesEnabled = false;
+        const savedPref = localStorage.getItem('auto_translate');
+        window.subtitlesEnabled = savedPref === null ? true : savedPref === 'true';
     }
 
     if (autoTranslateToggle) {
-        autoTranslateToggle.checked = false; // Force OFF
+        autoTranslateToggle.checked = !!window.subtitlesEnabled;
     }
 
     // Save auto-translate preference when changed
@@ -1169,6 +2402,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
             }
+            refreshConversationFocusView();
             updateMessageCounter();
             updateReportButton();
         } catch (e) {
@@ -1181,11 +2415,49 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('conversation_backup', JSON.stringify(conversationLog));
     }
 
+    let tipsModalPromise = null;
+    async function showPracticeTipsModalIfNeeded() {
+        if (window.__tipsModalShownThisSession) return;
+        if (tipsModalPromise) return tipsModalPromise;
+
+        const tipsModal = document.getElementById('tips-modal');
+        if (!tipsModal) {
+            window.__tipsModalShownThisSession = true;
+            return;
+        }
+
+        tipsModalPromise = new Promise(resolve => {
+            tipsModal.style.display = 'flex';
+            const okBtn = document.getElementById('tips-modal-ok');
+            if (!okBtn) {
+                tipsModal.style.display = 'none';
+                window.__tipsModalShownThisSession = true;
+                resolve();
+                return;
+            }
+
+            okBtn.addEventListener('click', () => {
+                tipsModal.style.display = 'none';
+                window.__tipsModalShownThisSession = true;
+                resolve();
+            }, { once: true });
+        });
+
+        try {
+            await tipsModalPromise;
+        } finally {
+            tipsModalPromise = null;
+        }
+    }
+    window.showPracticeTipsModalIfNeeded = showPracticeTipsModalIfNeeded;
+
     if (startBtn) {
         // Add pulse animation to start button
         startBtn.classList.add('pulse-animation');
 
         startBtn.addEventListener('click', async () => {
+            await showPracticeTipsModalIfNeeded();
+
             const startOverlay = document.getElementById('start-overlay');
             if (startOverlay) startOverlay.style.display = 'none';
             const startMessage = document.getElementById('start-message');
@@ -1196,19 +2468,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Remove hint and enable buttons
             if (micHint) micHint.style.display = 'none';
-            if (recordBtn) recordBtn.disabled = false;
+            if (recordBtn) setMicReadyState();
 
             // Start usage timer
             startUsageTimer();
 
             // Clear conversation and UI when starting fresh
             conversationLog.length = 0;
+            lastAIQuestionPrompt = '';
             userMessageCount = 0;
+            seenMilestones.clear();
+            hasPracticeStarted = true;
+            sessionGoalTurns = resolveSessionGoalByLevel();
+            updateSessionProgress({ quiet: true });
             localStorage.removeItem('conversation_backup');
+            try {
+                await apiClient.clearConversations();
+            } catch (err) {
+                console.warn('[SESSION] Could not clear server-side history:', err);
+            }
 
             // Remove all messages except the start message
-            const messages = chatWindow.querySelectorAll('.message:not(#start-message)');
+            const messages = chatWindow.querySelectorAll(
+                '.message:not(#start-message), .subtitle-group, .lesson-start-container, .lesson-options-container, .suggested-words-card'
+            );
             messages.forEach(msg => msg.remove());
+            toggleConversationHistory(false);
+            refreshConversationFocusView();
 
             // Free Conversation guided cycles
             if (isFreeConversation) {
@@ -1217,153 +2503,165 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Check if we should use structured lesson mode (Learning mode with predefined layers)
-            const practiceMode = window.getSelectedMode ? window.getSelectedMode() : 'learning';
-            if (practiceMode === 'learning' && !isGrammarMode && shouldUseStructuredLesson()) {
-                await startStructuredLesson();
-                return;
-            }
+            // Derive studentLevel from the difficulty selector
+            const diffToLevel = { beginner: 'A1', intermediate: 'A2', advanced: 'B1' };
+            const selDiff = window.getSelectedDifficulty ? window.getSelectedDifficulty() : 'intermediate';
+            studentLevel = diffToLevel[selDiff] || 'A2';
+            sessionGoalTurns = resolveSessionGoalByLevel();
 
-            // Initial AI Greeting - context-specific, no generic "how can I help you"
-            let greeting = "";
-            let translation = "";
-
-            // Natural greetings for Learning/Grammar topics
-            const grammarGreetings = {
-                'verb_to_be': {
-                    en: "Hey! I'm happy to chat. How are you right now?",
-                    pt: "Oi! Estou feliz em conversar. E voce, como esta agora?"
-                },
-                'greetings': {
-                    en: "Hey! I'm Alex. Nice to meet you. What's your name?",
-                    pt: "Oi! Eu sou a Alex. Prazer em conhecer. Qual e o seu nome?"
-                },
-                'articles': {
-                    en: "I grabbed an apple and a sandwich earlier. What's a snack you like?",
-                    pt: "Hoje eu comi uma maca e um sanduiche. Qual lanche voce gosta?"
-                },
-                'plurals': {
-                    en: "I have two cats and three plants at home. Do you have any pets or plants?",
-                    pt: "Eu tenho dois gatos e tres plantas em casa. Voce tem pets ou plantas?"
-                },
-                'demonstratives': {
-                    en: "This chair is comfy, but that one looks better. Which do you prefer?",
-                    pt: "Esta cadeira e confortavel, mas aquela parece melhor. Qual voce prefere?"
-                },
-                'subject_pronouns': {
-                    en: "I met my friend Maria today. She was in a great mood. Who do you usually talk to?",
-                    pt: "Hoje encontrei minha amiga Maria. Ela estava animada. Com quem voce costuma falar?"
-                },
-                'possessives': {
-                    en: "My phone is almost dead. Do you have your charger with you?",
-                    pt: "Meu celular esta quase sem bateria. Voce tem seu carregador?"
-                },
-                'present_simple': {
-                    en: "I wake up early and drink coffee every day. What do you usually do in the morning?",
-                    pt: "Eu acordo cedo e tomo cafe todos os dias. O que voce costuma fazer de manha?"
-                },
-                'present_continuous': {
-                    en: "I'm chatting with you right now. What are you doing at the moment?",
-                    pt: "Estou conversando com voce agora. O que voce esta fazendo neste momento?"
-                },
-                'basic_questions': {
-                    en: "By the way, where are you from? And what do you do?",
-                    pt: "Alias, de onde voce e? E o que voce faz?"
-                },
-                // Special training scenario
-                'basic_structures': {
-                    en: "Excuse me, could you help me for a second? How would you ask for help in English?",
-                    pt: "Com licenca, voce poderia me ajudar por um segundo? Como voce pediria ajuda em ingles?"
-                }
-            };
-
-            const bilingualGreetings = {
-                'verb_to_be': "Oi! Vamos conversar um pouco. Por exemplo: [EN]I am happy[/EN]. E voce, como esta hoje?",
-                'greetings': "Oi! [EN]Nice to meet you[/EN]. Qual e o seu nome?",
-                'articles': "Hoje eu comi [EN]an apple[/EN] e [EN]a sandwich[/EN]. Qual lanche voce gosta?",
-                'plurals': "Eu tenho [EN]two cats[/EN] e [EN]three plants[/EN] em casa. Voce tem pets ou plantas?",
-                'demonstratives': "Olha: [EN]this chair[/EN] e confortavel, mas [EN]that one[/EN] parece melhor. Qual voce prefere?",
-                'subject_pronouns': "Hoje encontrei a Maria. [EN]She[/EN] estava animada. Com quem voce costuma falar?",
-                'possessives': "Meu celular esta quase sem bateria. [EN]Is this your charger?[/EN]",
-                'present_simple': "Eu [EN]wake up[/EN] cedo e [EN]drink coffee[/EN] todo dia. O que voce costuma fazer de manha?",
-                'present_continuous': "Agora eu [EN]am chatting[/EN] com voce. [EN]What are you doing right now?[/EN]",
-                'basic_questions': "Pergunta rapida: [EN]Where are you from?[/EN] E [EN]what do you do?[/EN]",
-                'basic_structures': "Quando peco ajuda, digo: [EN]Excuse me, can you help me?[/EN] Como voce pediria ajuda?"
-            };
-
-            // Aliases for legacy or UI ids
-            grammarGreetings['greetings_intros'] = grammarGreetings['greetings'];
-            grammarGreetings['plural_nouns'] = grammarGreetings['plurals'];
-            grammarGreetings['this_that_these_those'] = grammarGreetings['demonstratives'];
-            grammarGreetings['possessive_adjectives'] = grammarGreetings['possessives'];
-            bilingualGreetings['greetings_intros'] = bilingualGreetings['greetings'];
-            bilingualGreetings['plural_nouns'] = bilingualGreetings['plurals'];
-            bilingualGreetings['this_that_these_those'] = bilingualGreetings['demonstratives'];
-            bilingualGreetings['possessive_adjectives'] = bilingualGreetings['possessives'];
-
-            const defaultGrammarGreeting = {
-                en: "Hey! Let's chat for a minute. Tell me something about your day.",
-                pt: "Oi! Vamos conversar um pouco. Me conte algo do seu dia."
-            };
-            const defaultBilingualGreeting = "Oi! Vamos conversar um pouco. Por exemplo: [EN]My day is busy[/EN]. E o seu?";
-
-            if (isGrammarMode) {
-                if (lessonLang === 'pt') {
-                    // PT MODE: Bilingual greeting with [EN] tags for English phrases
-                    greeting = bilingualGreetings[context] || defaultBilingualGreeting;
-                    translation = '';  // No separate translation in PT mode
-                } else {
-                    // EN MODE: English greeting with PT translation
-                    const greetingBlock = grammarGreetings[context] || defaultGrammarGreeting;
-                    greeting = greetingBlock.en;
-                    translation = greetingBlock.pt;
-                }
-            } else {
-                // For conversation scenarios, start with context-appropriate greeting
-                const contextGreetings = {
-                    'coffee_shop': {
-                        en: "Good morning! Welcome to The Daily Grind. What can I get started for you today?",
-                        pt: "Bom dia! Bem-vindo ao The Daily Grind. O que posso preparar para você hoje?"
-                    },
-                    'restaurant': {
-                        en: "Good evening! Welcome to our restaurant. Do you have a reservation?",
-                        pt: "Boa noite! Bem-vindo ao nosso restaurante. Você tem reserva?"
-                    },
-                    'airport': {
-                        en: "Good afternoon! May I see your passport and ticket, please?",
-                        pt: "Boa tarde! Posso ver seu passaporte e passagem, por favor?"
-                    },
-                    'supermarket': {
-                        en: "Hello! Did you find everything you were looking for today?",
-                        pt: "Olá! Você encontrou tudo o que procurava hoje?"
-                    },
-                    'doctor': {
-                        en: "Good morning! Please have a seat. What brings you in today?",
-                        pt: "Bom dia! Por favor, sente-se. O que te traz aqui hoje?"
-                    },
-                    'hotel': {
-                        en: "Welcome! Checking in? May I have your name, please?",
-                        pt: "Bem-vindo! Fazendo check-in? Qual é o seu nome, por favor?"
-                    },
-                    'free_conversation': {
-                        en: "Hi there! What would you like to talk about today? It can be anything - your day, hobbies, travel, work, or any topic you're interested in!",
-                        pt: "Olá! Sobre o que você gostaria de conversar hoje? Pode ser qualquer coisa - seu dia, hobbies, viagens, trabalho, ou qualquer assunto!"
-                    }
-                };
-
-                const contextGreeting = contextGreetings[context];
-                if (contextGreeting) {
-                    greeting = contextGreeting.en;
-                    translation = contextGreeting.pt;
-                } else {
-                    // Generic fallback for other scenarios
-                    greeting = "Hello! How are you doing today?";
-                    translation = "Olá! Como você está hoje?";
-                }
-            }
-
-            playResponse(greeting, translation);
+            updateHeaderInfo();
+            await startConversationFlow();
         });
+    }
+
+    async function startConversationFlow() {
+        // Check if we should use structured lesson mode (Learning mode with predefined layers)
+        const practiceMode = window.getSelectedMode ? window.getSelectedMode() : 'learning';
+        if (practiceMode === 'learning' && !isGrammarMode && shouldUseStructuredLesson()) {
+            await startStructuredLesson();
+            return;
+        }
+
+        // Initial AI Greeting - context-specific, no generic "how can I help you"
+        let greeting = "";
+        let translation = "";
+
+        // Natural greetings for Learning/Grammar topics
+        const grammarGreetings = {
+            'verb_to_be': {
+                en: "Hey! I'm happy to chat. How are you right now?",
+                pt: "Oi! Estou feliz em conversar. E voce, como esta agora?"
+            },
+            'greetings': {
+                en: "Hey! I'm Alex. Nice to meet you. What's your name?",
+                pt: "Oi! Eu sou a Alex. Prazer em conhecer. Qual e o seu nome?"
+            },
+            'articles': {
+                en: "I grabbed an apple and a sandwich earlier. What's a snack you like?",
+                pt: "Hoje eu comi uma maca e um sanduiche. Qual lanche voce gosta?"
+            },
+            'plurals': {
+                en: "I have two cats and three plants at home. Do you have any pets or plants?",
+                pt: "Eu tenho dois gatos e tres plantas em casa. Voce tem pets ou plantas?"
+            },
+            'demonstratives': {
+                en: "This chair is comfy, but that one looks better. Which do you prefer?",
+                pt: "Esta cadeira e confortavel, mas aquela parece melhor. Qual voce prefere?"
+            },
+            'subject_pronouns': {
+                en: "I met my friend Maria today. She was in a great mood. Who do you usually talk to?",
+                pt: "Hoje encontrei minha amiga Maria. Ela estava animada. Com quem voce costuma falar?"
+            },
+            'possessives': {
+                en: "My phone is almost dead. Do you have your charger with you?",
+                pt: "Meu celular esta quase sem bateria. Voce tem seu carregador?"
+            },
+            'present_simple': {
+                en: "I wake up early and drink coffee every day. What do you usually do in the morning?",
+                pt: "Eu acordo cedo e tomo cafe todos os dias. O que voce costuma fazer de manha?"
+            },
+            'present_continuous': {
+                en: "I'm chatting with you right now. What are you doing at the moment?",
+                pt: "Estou conversando com voce agora. O que voce esta fazendo neste momento?"
+            },
+            'basic_questions': {
+                en: "By the way, where are you from? And what do you do?",
+                pt: "Alias, de onde voce e? E o que voce faz?"
+            },
+            // Special training scenario
+            'basic_structures': {
+                en: "Excuse me, could you help me for a second? How would you ask for help in English?",
+                pt: "Com licenca, voce poderia me ajudar por um segundo? Como voce pediria ajuda em ingles?"
+            }
+        };
+
+        const bilingualGreetings = {
+            'verb_to_be': "Oi! Vamos conversar um pouco. Por exemplo: [EN]I am happy[/EN]. E voce, como esta hoje?",
+            'greetings': "Oi! [EN]Nice to meet you[/EN]. Qual e o seu nome?",
+            'articles': "Hoje eu comi [EN]an apple[/EN] e [EN]a sandwich[/EN]. Qual lanche voce gosta?",
+            'plurals': "Eu tenho [EN]two cats[/EN] e [EN]three plants[/EN] em casa. Voce tem pets ou plantas?",
+            'demonstratives': "Olha: [EN]this chair[/EN] e confortavel, mas [EN]that one[/EN] parece melhor. Qual voce prefere?",
+            'subject_pronouns': "Hoje encontrei a Maria. [EN]She[/EN] estava animada. Com quem voce costuma falar?",
+            'possessives': "Meu celular esta quase sem bateria. [EN]Is this your charger?[/EN]",
+            'present_simple': "Eu [EN]wake up[/EN] cedo e [EN]drink coffee[/EN] todo dia. O que voce costuma fazer de manha?",
+            'present_continuous': "Agora eu [EN]am chatting[/EN] com voce. [EN]What are you doing right now?[/EN]",
+            'basic_questions': "Pergunta rapida: [EN]Where are you from?[/EN] E [EN]what do you do?[/EN]",
+            'basic_structures': "Quando peco ajuda, digo: [EN]Excuse me, can you help me?[/EN] Como voce pediria ajuda?"
+        };
+
+        // Aliases for legacy or UI ids
+        grammarGreetings['greetings_intros'] = grammarGreetings['greetings'];
+        grammarGreetings['plural_nouns'] = grammarGreetings['plurals'];
+        grammarGreetings['this_that_these_those'] = grammarGreetings['demonstratives'];
+        grammarGreetings['possessive_adjectives'] = grammarGreetings['possessives'];
+        bilingualGreetings['greetings_intros'] = bilingualGreetings['greetings'];
+        bilingualGreetings['plural_nouns'] = bilingualGreetings['plurals'];
+        bilingualGreetings['this_that_these_those'] = bilingualGreetings['demonstratives'];
+        bilingualGreetings['possessive_adjectives'] = bilingualGreetings['possessives'];
+
+        const defaultGrammarGreeting = {
+            en: "Hey! Let's chat for a minute. Tell me something about your day.",
+            pt: "Oi! Vamos conversar um pouco. Me conte algo do seu dia."
+        };
+        const defaultBilingualGreeting = "Oi! Vamos conversar um pouco. Por exemplo: [EN]My day is busy[/EN]. E o seu?";
+
+        if (isGrammarMode) {
+            if (lessonLang === 'pt') {
+                // PT MODE: Bilingual greeting with [EN] tags for English phrases
+                greeting = bilingualGreetings[context] || defaultBilingualGreeting;
+                translation = '';  // No separate translation in PT mode
+            } else {
+                // EN MODE: English greeting with PT translation
+                const greetingBlock = grammarGreetings[context] || defaultGrammarGreeting;
+                greeting = greetingBlock.en;
+                translation = greetingBlock.pt;
+            }
+        } else {
+            // For conversation scenarios, start with context-appropriate greeting
+            const contextGreetings = {
+                'coffee_shop': {
+                    en: "Good morning! Welcome to The Daily Grind. What can I get started for you today?",
+                    pt: "Bom dia! Bem-vindo ao The Daily Grind. O que posso preparar para você hoje?"
+                },
+                'restaurant': {
+                    en: "Good evening! Welcome to our restaurant. Do you have a reservation?",
+                    pt: "Boa noite! Bem-vindo ao nosso restaurante. Você tem reserva?"
+                },
+                'airport': {
+                    en: "Good afternoon! May I see your passport and ticket, please?",
+                    pt: "Boa tarde! Posso ver seu passaporte e passagem, por favor?"
+                },
+                'supermarket': {
+                    en: "Hello! Did you find everything you were looking for today?",
+                    pt: "Olá! Você encontrou tudo o que procurava hoje?"
+                },
+                'doctor': {
+                    en: "Good morning! Please have a seat. What brings you in today?",
+                    pt: "Bom dia! Por favor, sente-se. O que te traz aqui hoje?"
+                },
+                'hotel': {
+                    en: "Welcome! Checking in? May I have your name, please?",
+                    pt: "Bem-vindo! Fazendo check-in? Qual é o seu nome, por favor?"
+                },
+                'free_conversation': {
+                    en: "Hi there! What would you like to talk about today? It can be anything - your day, hobbies, travel, work, or any topic you're interested in!",
+                    pt: "Olá! Sobre o que você gostaria de conversar hoje? Pode ser qualquer coisa - seu dia, hobbies, viagens, trabalho, ou qualquer assunto!"
+                }
+            };
+
+            const contextGreeting = contextGreetings[context];
+            if (contextGreeting) {
+                greeting = contextGreeting.en;
+                translation = contextGreeting.pt;
+            } else {
+                // Generic fallback for other scenarios
+                greeting = "Hello! How are you doing today?";
+                translation = "Olá! Como você está hoje?";
+            }
+
+        }
+
+        playResponse(greeting, translation);
     }
 
 
@@ -1374,7 +2672,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof DeepgramRecorder !== 'undefined') {
         groqRecorder = new DeepgramRecorder();
         if (recordBtn) {
-            recordBtn.disabled = false;
+            setMicReadyState();
         }
         console.log('[Groq] Recorder initialized');
     } else {
@@ -1384,19 +2682,108 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function showTranscriptionConfirm(transcript) {
+        const existing = document.getElementById('stt-confirm-overlay');
+        if (existing) existing.remove();
+
+        const overlay = document.createElement('div');
+        overlay.id = 'stt-confirm-overlay';
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;z-index:9999;';
+
+        const modal = document.createElement('div');
+        modal.style.cssText = 'background:#0f1115;border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:20px;max-width:520px;width:90%;color:#f8fafc;';
+
+        const title = document.createElement('div');
+        title.style.cssText = 'font-size:1.05rem;font-weight:700;margin-bottom:10px;';
+        title.textContent = 'Confirmar transcrição';
+
+        const helper = document.createElement('div');
+        helper.style.cssText = 'font-size:0.85rem;color:#9aa4b2;margin-bottom:10px;';
+        helper.textContent = 'Ajuste o texto se necessário antes de enviar.';
+
+        const textarea = document.createElement('textarea');
+        textarea.value = transcript || '';
+        textarea.style.cssText = 'width:100%;min-height:90px;background:#111827;color:#f8fafc;border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:10px;font-size:0.95rem;resize:vertical;';
+
+        const actions = document.createElement('div');
+        actions.style.cssText = 'display:flex;gap:10px;justify-content:flex-end;margin-top:12px;';
+
+        const cancelBtn = document.createElement('button');
+        cancelBtn.type = 'button';
+        cancelBtn.className = 'action-btn';
+        cancelBtn.textContent = 'Cancelar';
+        cancelBtn.onclick = () => overlay.remove();
+
+        const sendBtn = document.createElement('button');
+        sendBtn.type = 'button';
+        sendBtn.className = 'primary-btn';
+        sendBtn.textContent = 'Enviar';
+        sendBtn.onclick = () => {
+            const text = (textarea.value || '').trim();
+            if (!isMeaningfulSpeechText(text)) {
+                helper.style.color = '#fca5a5';
+                helper.textContent = 'Não entendi bem esse trecho. Fale uma frase curta e completa.';
+                return;
+            }
+            overlay.remove();
+            processUserResponse(text);
+        };
+
+        actions.appendChild(cancelBtn);
+        actions.appendChild(sendBtn);
+        modal.appendChild(title);
+        modal.appendChild(helper);
+        modal.appendChild(textarea);
+        modal.appendChild(actions);
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+        textarea.focus();
+        textarea.select();
+    }
+
+    function isMeaningfulSpeechText(text) {
+        const normalized = String(text || '')
+            .toLowerCase()
+            .replace(/[^\p{L}\p{N}\s']/gu, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+        if (!normalized) return false;
+
+        const allowShort = new Set([
+            'ok', 'okay', 'yes', 'no', 'hi', 'hello',
+            'oi', 'ola', 'olá', 'sim', 'nao', 'não'
+        ]);
+        if (allowShort.has(normalized)) return true;
+
+        const tokens = normalized.split(' ').filter(Boolean);
+        if (!tokens.length) return false;
+        if (tokens.length === 1) {
+            const token = tokens[0];
+            if (/^[a-z]$/i.test(token)) return false;
+            if (['uh', 'um', 'hmm', 'mm'].includes(token)) return false;
+        }
+        return true;
+    }
+
     const toggleRecording = async () => {
-        if (!recordBtn || recordBtn.disabled || !groqRecorder) return;
+        if (!recordBtn || recordBtn.disabled || !groqRecorder || learningFeedbackPending) return;
 
         const micIcon = document.getElementById('mic-icon-inner');
 
         if (!isRecording) {
+            if (!checkUsageLimit()) return;
+
             // Start recording
             try {
                 const result = await groqRecorder.start();
                 if (result.success) {
                     isRecording = true;
                     recordBtn.classList.add('recording');
+                    recordBtn.classList.remove('mic-turn-highlight');
+                    recordBtn.classList.add('listening');
                     if (micIcon) micIcon.innerText = "⏹️";
+                    setRecordText("🔴 Escutando...");
+                    setStatusText('Listening...');
                 } else {
                     addMessage("System", result.error || "Microphone Error", true);
                 }
@@ -1406,20 +2793,40 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 if (micIcon) micIcon.innerText = "⏳";
                 recordBtn.disabled = true;
+                setRecordText("⏳ Transcrevendo...");
+                setStatusText('Thinking...');
 
                 const audioBlob = await groqRecorder.stop();
                 isRecording = false;
                 recordBtn.classList.remove('recording');
+                recordBtn.classList.remove('listening');
 
                 // Transcribe — force English STT when practicing English phrases
                 const sttLang = (lessonState.active && lessonState.nextAction === 'evaluate_practice') ? 'en' : lessonLang;
-                const transcribeResult = await transcribeWithDeepgram(audioBlob, apiClient.token, sttLang);
+                const recorderMime = groqRecorder.getMimeType ? groqRecorder.getMimeType() : 'audio/webm';
+                const transcribeResult = await transcribeWithDeepgram(audioBlob, apiClient.token, sttLang, recorderMime);
 
                 if (transcribeResult.success) {
-                    processUserResponse(transcribeResult.transcript);
+                    const transcript = (transcribeResult.transcript || '').trim();
+                    if (!isMeaningfulSpeechText(transcript)) {
+                        addMessage('System', 'Não entendi bem. Pode repetir em uma frase curta?', true);
+                        setStatusText('Listening...');
+                        return;
+                    }
+                    const shouldConfirm = window.getConfirmTranscription ? window.getConfirmTranscription() : true;
+                    if (shouldConfirm) {
+                        showTranscriptionConfirm(transcript);
+                    } else {
+                        processUserResponse(transcript);
+                    }
                 } else if (transcribeResult.retry) {
                     if (micIcon) micIcon.innerText = "🤔";
-                    setTimeout(() => { if (micIcon) micIcon.innerText = "🎤"; recordBtn.disabled = false; }, 2000);
+                    setTimeout(() => { if (micIcon) micIcon.innerText = "🎤"; setMicReadyState(); }, 2000);
+                } else if (transcribeResult.usageBlocked) {
+                    const usageMessage = applyUsageLimitFromServer(transcribeResult);
+                    addMessage('System', usageMessage, true);
+                    showUsageExceededModal(transcribeResult);
+                    if (micIcon) micIcon.innerText = "⛔";
                 } else {
                     throw new Error(transcribeResult.error);
                 }
@@ -1429,10 +2836,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (micIcon) micIcon.innerText = "❌";
                 setTimeout(() => { if (micIcon) micIcon.innerText = "🎤"; }, 2000);
             } finally {
-                recordBtn.disabled = false;
-                if (!isRecording && micIcon && micIcon.innerText !== "❌" && micIcon.innerText !== "🤔") {
+                setMicReadyState();
+                if (!isRecording && micIcon && micIcon.innerText !== "❌" && micIcon.innerText !== "🤔" && micIcon.innerText !== "⛔") {
                     micIcon.innerText = "🎤";
                 }
+                if (!isRecording) {
+                    setRecordText("🎤 Clique para Falar");
+                }
+                syncMicTurnCue(statusIndicator ? statusIndicator.textContent : '');
             }
         }
     };
@@ -1453,6 +2864,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Dynamic AI Logic ---
     async function processUserResponse(text) {
+        if (!isMeaningfulSpeechText(text)) {
+            addMessage('System', 'Não entendi bem. Pode repetir em uma frase curta?', true);
+            setStatusText('Listening...');
+            return;
+        }
+
         // Check if usage limit has been reached
         if (!checkUsageLimit()) {
             return; // Exit early if limit reached
@@ -1462,6 +2879,8 @@ document.addEventListener('DOMContentLoaded', () => {
             await handleFreeConversationInput(text);
             return;
         }
+
+        const previousAIPrompt = getLatestAIQuestionPrompt();
 
         // Check if we're in structured lesson mode
         if (lessonState.active) {
@@ -1477,10 +2896,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // If waiting for option selection, ignore voice input
+            // If waiting for option selection, match voice input to an option
             if (lessonState.nextAction === 'show_options' || lessonState.nextAction === 'select_option') {
-                // Don't process voice input - user should click an option
-                addMessage('System', 'Please click one of the options above to continue the lesson.', true);
+                if (lessonState.currentOptions && lessonState.currentOptions.length > 0) {
+                    const matchResult = matchSpokenToOption(text, lessonState.currentOptions);
+                    if (matchResult) {
+                        addMessage(user ? user.name : "User", text);
+                        userMessageCount++;
+                        updateMessageCounter();
+                        await selectLessonOption(matchResult.index, matchResult.option, text);
+                    } else {
+                        addMessage('System', 'Could not match your speech to any option. Please try again reading one of the phrases above.', true);
+                    }
+                }
                 return;
             }
         }
@@ -1489,6 +2917,7 @@ document.addEventListener('DOMContentLoaded', () => {
         addMessage(user ? user.name : "User", text);
         userMessageCount++;
         updateMessageCounter();
+        updateSessionProgress();
         updateReportButton();
 
         // UI State
@@ -1505,15 +2934,106 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             // 2. Call AI Backend with new API client (pass lessonLang and practiceMode)
             const practiceMode = window.getSelectedMode ? window.getSelectedMode() : 'learning';
-            const data = await apiClient.chat(text, context, lessonLang, practiceMode);
+            const difficulty = window.getSelectedDifficulty ? window.getSelectedDifficulty() : 'intermediate';
+            const data = await apiClient.chat(text, context, lessonLang, practiceMode, {
+                studentLevel,
+                turnCount: userMessageCount,
+                recentCorrections,
+                difficulty
+            });
 
             // Hide loading indicator
             hideLoadingIndicator();
 
-            // 3. Play AI Response
-            playResponse(data.text, data.translation);
-            // Yellow suggestion bar disabled — not helpful for students
-            // renderSuggestedWords(data.suggested_words || [], data.retry_prompt || '');
+            // 3. Prepare Learning flow (popup guidance first, then AI response)
+            updateRecentCorrections(data.text);
+            const forceTranslation = Boolean(data.must_retry || (data.suggested_words && data.suggested_words.length));
+            const backendSupportsKinds = data && data.learning_correction_kind_enabled !== false;
+            const hasTurnFeedback = data && data.turn_feedback && typeof data.turn_feedback === 'object';
+            let turnFeedbackPayload = hasTurnFeedback
+                ? data.turn_feedback
+                : {
+                    kind: 'none',
+                    user_text: text,
+                    suggested_text: text,
+                    reason: 'Sua frase esta correta para este contexto.'
+                };
+            const localFeedback = practiceMode === 'learning'
+                ? inferLearningFeedbackFromText(text, previousAIPrompt)
+                : null;
+            if (localFeedback) {
+                const currentKind = String(turnFeedbackPayload && turnFeedbackPayload.kind || 'none').trim();
+                if (currentKind !== 'error_correction') {
+                    turnFeedbackPayload = localFeedback;
+                }
+            }
+
+            let responseText = data.text || '';
+            let responseTranslation = data.translation || '';
+            if (practiceMode === 'learning') {
+                const simplified = simplifyLearningScenarioResponse(responseText, responseTranslation);
+                responseText = simplified.text || responseText;
+                responseTranslation = simplified.translation || responseTranslation;
+            }
+
+            // Show micro-feedback for simulator mode
+            if (practiceMode === 'simulator' && data.feedback) {
+                setTimeout(() => showSimulatorFeedback(data.feedback), 300);
+            }
+
+            let popupHints = [];
+            let responseHints = [];
+            if (!lessonState.active) {
+                const suggestionBaseText = sanitizeCoachDisplayText(responseText) || responseText;
+                // Step 1: Fetch inline suggestions (shown below chat)
+                responseHints = await fetchDynamicSuggestions(suggestionBaseText, false);
+
+                if (practiceMode === 'learning' && previousAIPrompt) {
+                    // Step 2: Fetch popup suggestions EXCLUDING inline ones (must be DIFFERENT)
+                    const popupQuestionText = sanitizeCoachDisplayText(previousAIPrompt) || previousAIPrompt;
+                    const popupResult = await fetchPopupSuggestions(popupQuestionText, responseHints);
+                    popupHints = popupResult.length
+                        ? popupResult.slice(0, 3)
+                        : getLearningPopupReplyOptions(context, previousAIPrompt, 3);
+                } else if (practiceMode === 'learning') {
+                    popupHints = responseHints.length
+                        ? responseHints.slice(0, 3)
+                        : getLearningPopupReplyOptions(context, previousAIPrompt, 3);
+                }
+            }
+
+            if (practiceMode === 'learning') {
+                const popupFeedback = buildLearningFeedbackPayload(turnFeedbackPayload, text, data);
+                const aiQuestionForPopup = extractLatestQuestionFromText(previousAIPrompt) || previousAIPrompt;
+                await showLearningFeedbackPopup(popupFeedback, popupHints, aiQuestionForPopup);
+            }
+
+            const inlineLearningFeedback = (() => {
+                if (practiceMode !== 'learning') return null;
+                const candidate = buildLearningFeedbackPayload(turnFeedbackPayload, text, data);
+                if (!candidate) return null;
+                const kind = String(candidate.kind || '').trim();
+                if (kind === 'error_correction' || kind === 'style_upgrade') {
+                    return candidate;
+                }
+                return null;
+            })();
+
+            playResponse(responseText, responseTranslation, {
+                forceTranslation,
+                turnFeedback: inlineLearningFeedback || (hasTurnFeedback ? data.turn_feedback : null),
+                turnCorrection: !hasTurnFeedback && backendSupportsKinds ? (data.turn_correction || null) : null,
+                enableLegacyCorrectionFallback: !hasTurnFeedback,
+                showInlineFeedback: Boolean(inlineLearningFeedback) || practiceMode !== 'learning'
+            });
+
+            const showSuggestedWords = practiceMode !== 'simulator';
+            renderSuggestedWords(
+                showSuggestedWords ? (data.suggested_words || []) : [],
+                data.retry_prompt || '',
+                responseHints,
+                responseText
+            );
 
             // Save conversation
             saveConversation();
@@ -1531,18 +3051,26 @@ document.addEventListener('DOMContentLoaded', () => {
             hideLoadingIndicator();
 
             let errorMessage = "Connection error. Please check your internet and try again.";
-            if (err.name === 'AbortError') {
+            const errMessage = String(err?.message || '');
+            const backendError = extractBackendErrorPayload(err);
+            if (err?.status === 429 && isWeekendLimitError(backendError || {})) {
+                errorMessage = applyUsageLimitFromServer(backendError || {});
+                showUsageExceededModal(backendError || {});
+            }
+            if (err?.status === 503 || errMessage.includes('UNAVAILABLE') || errMessage.includes('high demand')) {
+                errorMessage = "The AI model is temporarily overloaded. Please try again in a few seconds.";
+            } else if (err.name === 'AbortError') {
                 errorMessage = "The server took too long to respond. Please try again.";
-            } else if (err.message.includes('Session expired')) {
+            } else if (errMessage.includes('Session expired')) {
                 errorMessage = "Your session has expired. Redirecting to login...";
-            } else if (err.message.includes('Text too long')) {
+            } else if (errMessage.includes('Text too long')) {
                 errorMessage = "Your message is too long. Please keep it under 500 characters.";
             }
 
             addMessage("System", errorMessage, true);
             isProcessing = false;
             if (recordBtn) {
-                recordBtn.disabled = false;
+                setMicReadyState();
                 setRecordText("🎤 Clique para Falar");
             }
         }
@@ -1599,6 +3127,25 @@ document.addEventListener('DOMContentLoaded', () => {
             tokens.push({ text: text.slice(last), tag: false });
         }
         return tokens;
+    }
+
+    /**
+     * Clean text for TTS (remove content in parentheses, brackets, or asterisks)
+     * Example: "Hello (Ola)" -> "Hello"
+     */
+    function cleanTextForTts(text) {
+        if (!text) return "";
+        // Remove content in parentheses (...)
+        let cleaned = text.replace(/\([^)]*\)/g, "");
+        // Remove content in brackets [...]
+        cleaned = cleaned.replace(/\[[^\]]*\]/g, "");
+        // Remove content in braces {...}
+        cleaned = cleaned.replace(/\{[^}]*\}/g, "");
+        // Remove content between asterisks *...*
+        cleaned = cleaned.replace(/\*[^*]*\*/g, "");
+        // Remove standalone asterisks and excessive whitespace
+        cleaned = cleaned.replace(/\*/g, "").replace(/\s+/g, " ").trim();
+        return cleaned;
     }
 
     function splitTtsText(text, maxLen = 480) {
@@ -1680,7 +3227,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (window.stopAvatarTalking) window.stopAvatarTalking();
                 // Re-enable microphone after playback ends
                 if (recordBtn && !isProcessing) {
-                    recordBtn.disabled = false;
+                    setMicReadyState();
                     setRecordText("🎤 Clique para Falar");
                 }
                 resolve();
@@ -1695,16 +3242,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
             audio.play()
                 .then(() => {
+                    mobileAudioUnlocked = true;
                     if (window.startAvatarTalking) window.startAvatarTalking();
                 })
-                .catch(() => cleanup());
+                .catch((err) => {
+                    console.warn('[Audio] Playback blocked:', err.name);
+                    if (err.name === 'NotAllowedError' && !mobileAudioUnlocked) {
+                        // Show a visible message so user knows to tap
+                        if (statusIndicator) {
+                            statusIndicator.textContent = '🔇 Toque na tela para ativar o audio';
+                            statusIndicator.style.color = '#ff6b6b';
+                        }
+                        // Retry playback on next user gesture
+                        const retryPlay = () => {
+                            audio.play().then(() => {
+                                mobileAudioUnlocked = true;
+                                if (statusIndicator) statusIndicator.style.color = '';
+                                if (window.startAvatarTalking) window.startAvatarTalking();
+                            }).catch(() => cleanup());
+                            document.removeEventListener('touchstart', retryPlay);
+                            document.removeEventListener('click', retryPlay);
+                        };
+                        document.addEventListener('touchstart', retryPlay, { once: true });
+                        document.addEventListener('click', retryPlay, { once: true });
+                    } else {
+                        cleanup();
+                    }
+                });
         });
     }
 
     function finalizePlayback(skipBtn) {
         isProcessing = false;
         if (recordBtn) {
-            recordBtn.disabled = false;
+            setMicReadyState();
             setRecordText("🎤 Clique para Falar");
         }
         if (window.stopAvatarTalking) window.stopAvatarTalking();
@@ -1721,13 +3292,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function playResponse(text, translation = "") {
+    async function playResponse(text, translation = "", options = {}) {
+        // Clean text for TTS (remove translations/metadata)
+        const ttsText = cleanTextForTts(text);
+
         // Split text and start fetching first chunk BEFORE DOM work
-        const chunks = splitTtsText(text, 480);
+        const chunks = splitTtsText(ttsText, 480);
         let firstBlobPromise = chunks.length > 0 ? fetchTTSSafe(chunks[0]) : null;
 
+        // Keep the last asked question cached for learning hints/popups.
+        rememberAIQuestionPrompt(text);
+
         // Show text and save (runs while first TTS chunk is being fetched)
-        addMessage("AI", text, true, true, translation);
+        addMessage("AI", text, true, true, translation, options);
         saveConversation();
 
         // Play audio with prefetch pipeline
@@ -1834,6 +3411,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Save report data for export
             window.lastReport = data.report || data;
 
+            // Save progress to localStorage
+            saveSessionProgress(data);
+
             const opened = openReportWindow(data, reportWin);
             if (!opened) {
                 renderReportCard(data);
@@ -1841,7 +3421,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) {
             console.error(err);
             hideLoadingIndicator();
-            addMessage("System", `Erro ao gerar relat?rio: ${err.message}`, true);
+            addMessage("System", `Erro ao gerar relatorio: ${err.message}`, true);
             if (reportWin && !reportWin.closed) {
                 reportWin.document.open();
                 reportWin.document.write(`<html><body style="font-family: Arial; background:#0f1115; color:#fff; padding:24px;">
@@ -1853,6 +3433,43 @@ document.addEventListener('DOMContentLoaded', () => {
         } finally {
             activeBtn.disabled = false;
             activeBtn.innerText = originalLabel || "Gerar relatorio da conversa";
+        }
+    }
+
+    function saveSessionProgress(apiPayload) {
+        try {
+            const info = normalizeReportData(apiPayload);
+            const stats = getConversationStats();
+            const notaGeral = info.nota_geral !== null ? info.nota_geral : computeAvgNaturalidade(info.analise_frases);
+            const practiceMode = window.getSelectedMode ? window.getSelectedMode() : 'learning';
+            const difficulty = window.getSelectedDifficulty ? window.getSelectedDifficulty() : 'intermediate';
+
+            const entry = {
+                scenario_id: context,
+                scenario_title: contextName,
+                mode: practiceMode,
+                difficulty: difficulty,
+                score: notaGeral,
+                date: new Date().toISOString().split('T')[0],
+                interactions: stats.total,
+                timestamp: Date.now()
+            };
+
+            let progress = [];
+            try {
+                const stored = localStorage.getItem('practice_progress');
+                if (stored) progress = JSON.parse(stored);
+                if (!Array.isArray(progress)) progress = [];
+            } catch (e) { progress = []; }
+
+            progress.push(entry);
+            // Keep max 100 sessions
+            if (progress.length > 100) progress = progress.slice(-100);
+
+            localStorage.setItem('practice_progress', JSON.stringify(progress));
+            console.log('[Progress] Saved session:', entry);
+        } catch (e) {
+            console.error('[Progress] Failed to save:', e);
         }
     }
 
@@ -1904,7 +3521,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const elogiosBlock = document.createElement('div');
             elogiosBlock.style.cssText = 'margin-top:16px;padding:14px;background:rgba(34,197,94,0.08);border-left:3px solid #22c55e;border-radius:8px;';
             elogiosBlock.innerHTML = `<div style="font-weight:700;margin-bottom:8px;font-size:0.95rem;">🌟 O que você fez bem</div>` +
-                info.elogios.map(e => `<div style="margin-bottom:4px;font-size:0.9rem;color:#d1d5db;">• ${e}</div>`).join('');
+                info.elogios.map(e => `<div style="margin-bottom:4px;font-size:0.9rem;color:#d1d5db;">• ${escapeHtml(e)}</div>`).join('');
             wrapper.appendChild(elogiosBlock);
         }
 
@@ -1913,7 +3530,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const dicasBlock = document.createElement('div');
             dicasBlock.style.cssText = 'margin-top:12px;padding:14px;background:rgba(245,158,11,0.08);border-left:3px solid #f59e0b;border-radius:8px;';
             dicasBlock.innerHTML = `<div style="font-weight:700;margin-bottom:8px;font-size:0.95rem;">📈 O que melhorar</div>` +
-                info.dicas.map(d => `<div style="margin-bottom:4px;font-size:0.9rem;color:#d1d5db;">• ${d}</div>`).join('');
+                info.dicas.map(d => `<div style="margin-bottom:4px;font-size:0.9rem;color:#d1d5db;">• ${escapeHtml(d)}</div>`).join('');
             wrapper.appendChild(dicasBlock);
         }
 
@@ -1922,7 +3539,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const practiceBlock = document.createElement('div');
             practiceBlock.style.cssText = 'text-align:center;padding:18px;margin:16px 0;background:rgba(99,102,241,0.1);border:2px solid rgba(99,102,241,0.3);border-radius:12px;';
             practiceBlock.innerHTML = `<div style="font-size:0.8rem;color:#94a3b8;">🎯 Sua próxima missão</div>
-                <div style="font-size:1.05rem;font-weight:700;margin-top:8px;color:#fff;">"${info.frase_pratica}"</div>`;
+                <div style="font-size:1.05rem;font-weight:700;margin-top:8px;color:#fff;">"${escapeHtml(info.frase_pratica)}"</div>`;
             wrapper.appendChild(practiceBlock);
         }
 
@@ -1931,7 +3548,13 @@ document.addEventListener('DOMContentLoaded', () => {
             wrapper.appendChild(buildAnaliseBlock(info.analise_frases));
         }
 
-        // Corrections section removed
+        if (info.erros_recorrentes && info.erros_recorrentes.length) {
+            wrapper.appendChild(buildSimpleBlock('Erros recorrentes', '⚠️', info.erros_recorrentes, 'Sem padrões recorrentes.'));
+        }
+
+        if (info.plano_estudo && info.plano_estudo.length) {
+            wrapper.appendChild(buildSimpleBlock('Plano de estudo', '🧭', info.plano_estudo, 'Sem plano disponível.'));
+        }
 
         // Export buttons removed — report shown in modal only
 
@@ -1972,31 +3595,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const dashLength = (notaGeral / 100) * 326.7;
         const notaLabel = notaGeral >= 90 ? 'Excelente!' : notaGeral >= 75 ? 'Muito Bom!' : notaGeral >= 60 ? 'Bom progresso!' : notaGeral >= 40 ? 'Continue praticando!' : 'Vamos melhorar juntos!';
 
-        const correctionsHtml = (info.correcoes && info.correcoes.length)
-            ? info.correcoes.map((correction) => {
-                const badge = escapeHtml(correction.avaliacaoGeral || 'Analisando');
-                const badgeColor = badge === 'Incorreta' ? '#ef4444' : badge === 'Aceitável' ? '#f59e0b' : '#22c55e';
-                const tag = correction.tag ? `<span class="tag">${escapeHtml(correction.tag)}</span>` : '';
-                const comentario = correction.comentarioBreve ? `<div class="note">${escapeHtml(correction.comentarioBreve)}</div>` : '';
-                const original = escapeHtml(correction.fraseOriginal || correction.ruim || '');
-                const corrigida = escapeHtml(correction.fraseCorrigida || correction.boa || '');
-                const explicacao = escapeHtml(correction.explicacaoDetalhada || correction.explicacao || '');
-                const expHtml = explicacao ? `<div class="explain">💡 ${explicacao}</div>` : '';
-                return `
-                    <div class="correction-card">
-                        <div class="badge-row">
-                            <span class="badge" style="background:${badgeColor}22;color:${badgeColor};">${badge}</span>
-                            ${tag}
-                        </div>
-                        ${comentario}
-                        <div class="line bad">❌ Você disse: <span>"${original}"</span></div>
-                        <div class="line good">✅ Melhor forma: <span>"${corrigida}"</span></div>
-                        ${expHtml}
-                    </div>
-                `;
-            }).join('')
-            : `<div class="empty">Sem correções relevantes nesta sessão.</div>`;
-
         const elogiosHtml = (info.elogios && info.elogios.length)
             ? info.elogios.map(item => `<li style="margin-bottom:8px;">${escapeHtml(item)}</li>`).join('')
             : `<li>Sem elogios registrados.</li>`;
@@ -2004,6 +3602,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const dicasHtml = (info.dicas && info.dicas.length)
             ? info.dicas.map(item => `<li style="margin-bottom:8px;">${escapeHtml(item)}</li>`).join('')
             : `<li>Sem dicas registradas.</li>`;
+
+        const recorrentesHtml = (info.erros_recorrentes && info.erros_recorrentes.length)
+            ? info.erros_recorrentes.map(item => `<li style="margin-bottom:8px;">${escapeHtml(item)}</li>`).join('')
+            : `<li>Sem padrões recorrentes identificados.</li>`;
+
+        const planoHtml = (info.plano_estudo && info.plano_estudo.length)
+            ? info.plano_estudo.map(item => `<li style="margin-bottom:8px;">${escapeHtml(item)}</li>`).join('')
+            : `<li>Sem plano específico nesta sessão.</li>`;
 
         const transcriptHtml = conversationLog.length
             ? conversationLog.map(entry => {
@@ -2059,7 +3665,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const gradeEmoji = notaGeral >= 80 ? '🏆' : notaGeral >= 60 ? '💪' : '📖';
         const gradeMsg = notaGeral >= 80 ? 'Você está dominando o idioma! Continue com essa dedicação.' :
             notaGeral >= 60 ? 'Ótimo progresso! Cada conversa te deixa mais fluente.' :
-            'Cada erro é uma oportunidade de aprender. Você já está no caminho certo!';
+                'Cada erro é uma oportunidade de aprender. Você já está no caminho certo!';
         const gradeBg = notaGeral >= 70 ? 'rgba(34,197,94,0.1),rgba(16,185,129,0.05)' : 'rgba(245,158,11,0.1),rgba(234,88,12,0.05)';
         const gradeBorder = notaGeral >= 70 ? 'rgba(34,197,94,0.2)' : 'rgba(245,158,11,0.2)';
 
@@ -2283,6 +3889,16 @@ main {
     <ul>${dicasHtml}</ul>
   </section>
 
+  <section class="highlight" style="border-left:4px solid #ef4444;">
+    <h2>⚠️ Erros recorrentes</h2>
+    <ul>${recorrentesHtml}</ul>
+  </section>
+
+  <section class="highlight" style="border-left:4px solid #38bdf8;">
+    <h2>🧭 Plano de estudo</h2>
+    <ul>${planoHtml}</ul>
+  </section>
+
   ${practicePhraseHtml}
 
   ${grammarTagsHtml ? `
@@ -2296,19 +3912,6 @@ main {
   <section class="highlight">
     <h2>🎯 Análise Frase a Frase</h2>
     <div class="corrections">${analiseHtml}</div>
-  </section>
-
-  <section class="highlight" style="text-align:center;">
-    <button id="toggle-corrections" class="no-print" style="
-      padding:14px 28px;font-size:1rem;font-weight:700;color:#fff;
-      background:linear-gradient(135deg,#6366f1 0%,#4f46e5 100%);
-      border:none;border-radius:10px;cursor:pointer;
-      box-shadow:0 4px 15px rgba(99,102,241,0.3);transition:all 0.3s ease;
-    ">Ver correções detalhadas</button>
-    <div id="corrections-panel" style="display:none;margin-top:20px;text-align:left;">
-      <h2>✏️ Correções detalhadas</h2>
-      <div class="corrections">${correctionsHtml}</div>
-    </div>
   </section>
 
   <section style="text-align:center;padding:32px 20px;background:linear-gradient(135deg,${gradeBg});border-radius:16px;border:1px solid ${gradeBorder};page-break-inside:avoid;">
@@ -2332,29 +3935,10 @@ main {
   </section>
 </main>
 <script>
-document.getElementById('toggle-corrections').addEventListener('click', () => {
-  const panel = document.getElementById('corrections-panel');
-  const btn = document.getElementById('toggle-corrections');
-  if (panel.style.display === 'none') {
-    panel.style.display = 'block';
-    btn.textContent = 'Fechar correções detalhadas';
-    btn.style.background = 'linear-gradient(135deg,#64748b 0%,#475569 100%)';
-  } else {
-    panel.style.display = 'none';
-    btn.textContent = 'Ver correções detalhadas';
-    btn.style.background = 'linear-gradient(135deg,#6366f1 0%,#4f46e5 100%)';
-  }
-});
-
 document.getElementById('download-pdf').addEventListener('click', async () => {
   const btn = document.getElementById('download-pdf');
   btn.disabled = true;
   btn.textContent = 'Gerando PDF...';
-
-  // Expand corrections before generating PDF
-  const panel = document.getElementById('corrections-panel');
-  const wasHidden = panel.style.display === 'none';
-  if (wasHidden) panel.style.display = 'block';
 
   try {
     const element = document.querySelector('main');
@@ -2371,7 +3955,6 @@ document.getElementById('download-pdf').addEventListener('click', async () => {
     console.error('PDF error:', err);
     alert('Erro ao gerar PDF. Tente novamente.');
   } finally {
-    if (wasHidden) panel.style.display = 'none';
     btn.disabled = false;
     btn.textContent = '📄 Baixar PDF';
   }
@@ -2425,6 +4008,8 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
             elogios: [],
             dicas: [],
             frase_pratica: "",
+            erros_recorrentes: [],
+            plano_estudo: [],
             nota_geral: null,
             resumo_gramatical: [],
             raw: "",
@@ -2452,6 +4037,8 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         base.analise_frases = Array.isArray(source.analise_frases) ? source.analise_frases.filter(Boolean) : [];
         base.elogios = Array.isArray(source.elogios) ? source.elogios.filter(Boolean) : [];
         base.dicas = Array.isArray(source.dicas) ? source.dicas.filter(Boolean) : [];
+        base.erros_recorrentes = Array.isArray(source.erros_recorrentes) ? source.erros_recorrentes.filter(Boolean) : [];
+        base.plano_estudo = Array.isArray(source.plano_estudo) ? source.plano_estudo.filter(Boolean) : [];
         base.nota_geral = typeof source.nota_geral === 'number' ? source.nota_geral : null;
         base.resumo_gramatical = Array.isArray(source.resumo_gramatical) ? source.resumo_gramatical.filter(Boolean) : [];
 
@@ -2513,7 +4100,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 // Student phrase
                 const studentLine = document.createElement('div');
                 studentLine.style.cssText = 'margin-bottom: 8px; font-size: 0.95rem;';
-                studentLine.innerHTML = `<span style="color:#94a3b8;">🗣️ Você disse:</span> <strong>"${(item.frase_aluno || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}"</strong>`;
+                studentLine.innerHTML = `<span style="color:#94a3b8;">🗣️ Você disse:</span> <strong>"${escapeHtml(item.frase_aluno || '')}"</strong>`;
                 card.appendChild(studentLine);
 
                 // Progress bar
@@ -2547,7 +4134,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 if (item.frase_natural) {
                     const naturalLine = document.createElement('div');
                     naturalLine.style.cssText = 'margin-bottom: 6px; font-size: 0.95rem;';
-                    naturalLine.innerHTML = `<span style="color:#22c55e;">✅ Mais natural:</span> <strong>"${(item.frase_natural || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}"</strong>`;
+                    naturalLine.innerHTML = `<span style="color:#22c55e;">✅ Mais natural:</span> <strong>"${escapeHtml(item.frase_natural || '')}"</strong>`;
                     card.appendChild(naturalLine);
                 }
 
@@ -2665,13 +4252,13 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 // 4. Frase Original (com erro destacado)
                 const badLine = document.createElement('div');
                 badLine.className = 'correction-line bad';
-                badLine.innerHTML = `<span style="color:#ef4444;">❌ Você disse:</span> "${correction.fraseOriginal || correction.ruim || ''}"`;
+                badLine.innerHTML = `<span style="color:#ef4444;">❌ Você disse:</span> "${escapeHtml(correction.fraseOriginal || correction.ruim || '')}"`;
                 li.appendChild(badLine);
 
                 // 5. Frase Corrigida
                 const goodLine = document.createElement('div');
                 goodLine.className = 'correction-line good';
-                goodLine.innerHTML = `<span style="color:#10b981;">✓ Melhor forma:</span> "${correction.fraseCorrigida || correction.boa || ''}"`;
+                goodLine.innerHTML = `<span style="color:#10b981;">✓ Melhor forma:</span> "${escapeHtml(correction.fraseCorrigida || correction.boa || '')}"`;
                 li.appendChild(goodLine);
 
                 // 6. Explicação Detalhada
@@ -2687,7 +4274,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                         border-radius: 6px;
                         border-left: 3px solid #8b5cf6;
                     `;
-                    explanationLine.innerHTML = `💡 <strong>Por que mudar:</strong> ${correction.explicacaoDetalhada || correction.explicacao}`;
+                    explanationLine.innerHTML = `💡 <strong>Por que mudar:</strong> ${escapeHtml(correction.explicacaoDetalhada || correction.explicacao)}`;
                     li.appendChild(explanationLine);
                 }
 
@@ -2759,14 +4346,684 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         };
     }
 
-    function addMessage(sender, text, isAI = false, logMessage = true, translation = "") {
-        if (!chatWindow) return null;
+    function showSimulatorFeedback(feedbackText) {
+        if (!chatWindow || !feedbackText) return;
+        const feedbackDiv = document.createElement('div');
+        feedbackDiv.className = 'simulator-feedback';
+        feedbackDiv.textContent = feedbackText;
+        chatWindow.appendChild(feedbackDiv);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
 
-        // Cinematic Mode: show only the latest message group
-        chatWindow.innerHTML = '';
+    function buildLearningFeedbackPayload(turnFeedback, userText, backendData = null) {
+        const baseUserText = String(userText || '').trim();
+        if (!baseUserText) return null;
+
+        const source = turnFeedback && typeof turnFeedback === 'object' ? turnFeedback : {};
+        const kind = String(source.kind || 'none').trim();
+        const suggested = String(source.suggested_text || '').trim();
+        const reason = String(source.reason || '').trim();
+        if (kind && kind !== 'none' && suggested) {
+            return {
+                kind,
+                user_text: String(source.user_text || baseUserText).trim() || baseUserText,
+                suggested_text: suggested,
+                reason: reason || 'Aqui esta uma forma melhor para esta resposta.'
+            };
+        }
+
+        const normalizedUser = normalizeComparableText(baseUserText);
+        if (/\bi want\b/.test(normalizedUser) && !/\bplease\b/.test(normalizedUser)) {
+            let suggestion = baseUserText.replace(/\bi want\b/i, "I'd like").trim();
+            suggestion = suggestion.replace(/[.?!]+$/g, '').trim();
+            if (!/\bplease\b/i.test(suggestion)) {
+                suggestion = `${suggestion}, please`;
+            }
+            suggestion = `${suggestion}.`;
+            return {
+                kind: 'style_upgrade',
+                user_text: baseUserText,
+                suggested_text: suggestion,
+                reason: 'Para soar mais natural e educado, prefira "I\'d like ... , please."'
+            };
+        }
+
+        const mustRetry = Boolean(backendData && backendData.must_retry);
+        const suggestedWords = Array.isArray(backendData && backendData.suggested_words)
+            ? backendData.suggested_words.map(item => String(item || '').trim()).filter(Boolean)
+            : [];
+        if (mustRetry && suggestedWords.length) {
+            return {
+                kind: 'error_correction',
+                user_text: baseUserText,
+                suggested_text: suggestedWords.join(' '),
+                reason: 'Ajuste a estrutura para ficar mais natural neste contexto.'
+            };
+        }
+
+        return {
+            kind: 'ok',
+            user_text: baseUserText,
+            suggested_text: baseUserText,
+            reason: 'Sua resposta esta correta para o contexto.'
+        };
+    }
+
+    function getIntentFallbackReply(intent = 'general') {
+        const pool = questionReplyPools[intent] || questionReplyPools.general;
+        if (Array.isArray(pool) && pool.length && pool[0] && pool[0].en) {
+            return String(pool[0].en).trim();
+        }
+        return 'Could you repeat, please?';
+    }
+
+    function getIntentMismatchReason(intent = 'general') {
+        if (intent === 'size') return 'A resposta precisa indicar um tamanho: small, medium ou large.';
+        if (intent === 'coffee_kind') return 'Responda com o tipo da bebida, por exemplo: latte, cappuccino ou coffee.';
+        if (intent === 'to_go_here') return 'Responda se e para levar ou para consumir aqui.';
+        if (intent === 'hot_iced') return 'Responda se prefere hot ou iced.';
+        if (intent === 'milk_sugar') return 'Responda se quer milk/sugar ou sem.';
+        if (intent === 'order_request') return 'Responda com a bebida que voce quer pedir.';
+        if (intent === 'anything_else') return 'Responda com yes/no ou diga o item extra.';
+        return 'Essa resposta nao corresponde a pergunta anterior.';
+    }
+
+    function hasIntentCompatibleAnswer(text = '', intent = 'general') {
+        const normalized = normalizeComparableText(text);
+        if (!normalized) return false;
+        if (intent === 'general') return true;
+        return replyMatchesIntent({ en: text }, intent);
+    }
+
+    function inferLearningFeedbackFromText(userText, questionPrompt = '') {
+        const text = String(userText || '').trim();
+        if (!text) return null;
+        const normalized = normalizeComparableText(text);
+        const promptIntent = detectQuestionIntent(questionPrompt);
+
+        if (/\bwater hot coffee\b/i.test(normalized)) {
+            return {
+                kind: 'error_correction',
+                user_text: text,
+                suggested_text: "I'd like a hot coffee, please.",
+                reason: 'A ordem das palavras ficou incorreta. Use: adjective + drink.'
+            };
+        }
+
+        const orderPattern = /\b(a|an)\s+([a-z]+)\s+(hot|cold|small|medium|large)\s+(coffee|tea|latte|cappuccino|espresso)\b/i;
+        const orderMatch = normalized.match(orderPattern);
+        if (orderMatch) {
+            const adjective = orderMatch[3];
+            const drink = orderMatch[4];
+            return {
+                kind: 'error_correction',
+                user_text: text,
+                suggested_text: `I'd like a ${adjective} ${drink}, please.`,
+                reason: 'Use primeiro o adjetivo e depois a bebida.'
+            };
+        }
+
+        if (promptIntent === 'order_request') {
+            const hasDrink = /\b(coffee|latte|cappuccino|espresso|tea|drink)\b/i.test(normalized);
+            const hasVerb = /\b(i('| )?d like|can i have|i want|just|a|an)\b/i.test(normalized);
+            if (!hasDrink && hasVerb) {
+                return {
+                    kind: 'style_upgrade',
+                    user_text: text,
+                    suggested_text: "I'd like a hot coffee, please.",
+                    reason: 'Responda com bebida + forma educada.'
+                };
+            }
+        }
+
+        if (!hasIntentCompatibleAnswer(text, promptIntent)) {
+            return {
+                kind: 'error_correction',
+                user_text: text,
+                suggested_text: getIntentFallbackReply(promptIntent),
+                reason: getIntentMismatchReason(promptIntent)
+            };
+        }
+
+        return null;
+    }
+
+    function isLikelyQuestionSentence(text) {
+        const value = String(text || '').trim();
+        if (!value) return false;
+        if (value.endsWith('?')) return true;
+        return /\b(what|how|when|where|why|who|which|do you|are you|can you|could you|would you|may i|qual|como|quando|onde|por que|voce gostaria|quer|pode)\b/i.test(value);
+    }
+
+    function isTeacherSentence(text, isTranslation = false) {
+        const value = String(text || '').trim();
+        if (!value) return false;
+        if (!isTranslation) {
+            return /\b(you can (also )?say|you could say|instead of|optional upgrade|a useful phrase|useful model|model sentence|to sound (more )?(polite|natural)|it's very common|this is (more )?(polite|natural)|great job|nice job|polite way|more natural way|try saying)\b/i.test(value);
+        }
+        return /\b(voce (tamb[eé]m )?pode dizer|voce poderia dizer|em vez de|upgrade opcional|forma mais natural|para soar|e muito comum|otimo trabalho|bom trabalho|modelo|forma educada|maneira mais natural)\b/i.test(value);
+    }
+
+    function cleanScenarioSentence(sentence) {
+        let clean = String(sentence || '').trim();
+        clean = clean.replace(/^[)\]\-\s]+/, '').trim();
+        clean = clean.replace(/^\(+\s*/, '').trim();
+        clean = clean.replace(/\s*\)+$/, '').trim();
+        clean = clean.replace(/\s+/g, ' ');
+        return clean;
+    }
+
+    function ensureStatementPunctuation(sentence) {
+        const value = cleanScenarioSentence(sentence);
+        if (!value) return '';
+        if (/[.!?]$/.test(value)) return value;
+        return `${value}.`;
+    }
+
+    function ensureQuestionPunctuation(sentence) {
+        const value = cleanScenarioSentence(sentence).replace(/[.!]+$/, '').trim();
+        if (!value) return '';
+        return value.endsWith('?') ? value : `${value}?`;
+    }
+
+    function extractScenarioParts(sentences = []) {
+        if (!Array.isArray(sentences) || !sentences.length) {
+            return { statement: '', question: '' };
+        }
+        const clean = sentences.map(cleanScenarioSentence).filter(Boolean);
+        if (!clean.length) return { statement: '', question: '' };
+        const question = [...clean].reverse().find(sentence => isLikelyQuestionSentence(sentence)) || '';
+        const statement = clean.find(sentence => !isLikelyQuestionSentence(sentence)) || '';
+        return { statement, question };
+    }
+
+    function buildAckTranslation(statementEn = '') {
+        const normalized = normalizeComparableText(statementEn);
+        if (!normalized) return '';
+        if (/^(ok|okay|alright|all right|great|nice|sure)$/.test(normalized)) return 'Certo.';
+        if (/^(no problem|sounds good|perfect)$/.test(normalized)) return 'Perfeito.';
+        return '';
+    }
+
+    function buildQuestionTranslationFallback(questionEn = '') {
+        const q = normalizeComparableText(questionEn);
+        if (!q) return '';
+        if (/(what would you like|what can i get|what can i get started|what do you want)/i.test(q)) return 'O que voce gostaria hoje?';
+        if (/(what kind of coffee|which coffee|kind of coffee)/i.test(q)) return 'Que tipo de cafe voce gostaria?';
+        if (/(what size|which size|size would you like)/i.test(q)) return 'Qual tamanho voce gostaria?';
+        if (/(to go|for here|take away|takeaway)/i.test(q)) return 'Voce gostaria para levar ou para consumir aqui?';
+        if (/(hot or iced|iced or hot)/i.test(q)) return 'Voce prefere quente ou gelado?';
+        if (/(with sugar|with milk|sugar or milk)/i.test(q)) return 'Voce quer com acucar ou leite?';
+        if (/(anything else|something else)/i.test(q)) return 'Mais alguma coisa?';
+        return '';
+    }
+
+    function simplifyLearningScenarioResponse(text, translation = '') {
+        const cleanedText = sanitizeCoachDisplayText(text);
+        const rawSentences = splitMessageIntoSentences(cleanedText);
+        const filteredSentences = rawSentences.filter(sentence => !isTeacherSentence(sentence, false));
+        const selectedEnglish = filteredSentences.length ? filteredSentences : rawSentences;
+        const enParts = extractScenarioParts(selectedEnglish);
+
+        let finalText = '';
+        const finalTextParts = [];
+        if (enParts.statement) finalTextParts.push(ensureStatementPunctuation(enParts.statement));
+        if (enParts.question) finalTextParts.push(ensureQuestionPunctuation(enParts.question));
+        if (!finalTextParts.length && selectedEnglish.length) {
+            finalTextParts.push(cleanScenarioSentence(selectedEnglish[0]));
+        }
+        finalText = finalTextParts.join(' ').replace(/\([^)]*\)/g, '').replace(/\s+/g, ' ').trim();
+        if (!finalText) finalText = cleanedText;
+
+        const cleanedTranslation = sanitizeTranslationDisplayText(translation, cleanedText) || sanitizeCoachDisplayText(translation);
+        const ptSentences = splitMessageIntoSentences(cleanedTranslation);
+        const filteredPt = ptSentences.filter(sentence => !isTeacherSentence(sentence, true));
+        const selectedPt = filteredPt.length ? filteredPt : ptSentences;
+        const ptParts = extractScenarioParts(selectedPt);
+
+        const finalTranslationParts = [];
+        if (enParts.statement) {
+            const ack = buildAckTranslation(enParts.statement);
+            if (ack) {
+                finalTranslationParts.push(ensureStatementPunctuation(ack));
+            } else if (ptParts.statement) {
+                finalTranslationParts.push(ensureStatementPunctuation(ptParts.statement));
+            }
+        } else if (ptParts.statement) {
+            finalTranslationParts.push(ensureStatementPunctuation(ptParts.statement));
+        }
+
+        if (enParts.question) {
+            const questionPt = ptParts.question || buildQuestionTranslationFallback(enParts.question);
+            if (questionPt) {
+                finalTranslationParts.push(ensureQuestionPunctuation(questionPt));
+            }
+        } else if (ptParts.question) {
+            finalTranslationParts.push(ensureQuestionPunctuation(ptParts.question));
+        }
+
+        let finalTranslation = finalTranslationParts.join(' ').replace(/\s+/g, ' ').trim();
+        if (!finalTranslation) finalTranslation = cleanedTranslation;
+
+        return {
+            text: finalText || cleanedText,
+            translation: finalTranslation || cleanedTranslation
+        };
+    }
+
+    function showLearningFeedbackPopup(feedback, replyOptions = [], aiQuestion = '') {
+        if (isFreeConversation || !feedback) return Promise.resolve();
+        const kind = String(feedback.kind || 'none').trim();
+        const userText = String(feedback.user_text || '').trim();
+        const suggested = String(feedback.suggested_text || userText || '').trim();
+        const reason = String(feedback.reason || '').trim();
+        const replies = normalizeSuggestionItems(replyOptions).slice(0, 3);
+        if (!userText || !suggested) return Promise.resolve();
+        if (kind === 'none' && !replies.length) return Promise.resolve();
+
+        learningFeedbackPending = true;
+        setMicReadyState();
+        const aiQuestionDisplay = String(aiQuestion || '').trim();
+
+        return new Promise((resolve) => {
+            const overlay = document.createElement('div');
+            overlay.className = 'learning-feedback-overlay';
+
+            const modal = document.createElement('div');
+            modal.className = `learning-feedback-modal ${kind === 'error_correction' ? 'error' : (kind === 'style_upgrade' ? 'style' : 'ok')}`;
+            modal.classList.add('learning-guidance-modal');
+
+            const title = document.createElement('div');
+            title.className = 'learning-feedback-title';
+            title.textContent = aiQuestionDisplay
+                ? `\u{1F5E3}\uFE0F "${aiQuestionDisplay}"`
+                : 'Sobre a sua resposta';
+            modal.appendChild(title);
+
+            const stepBadge = document.createElement('div');
+            stepBadge.className = 'learning-guidance-step';
+            modal.appendChild(stepBadge);
+
+            const contentWrap = document.createElement('div');
+            contentWrap.className = 'learning-guidance-content';
+            modal.appendChild(contentWrap);
+
+            const steps = ['feedback'];
+            if (replies.length) steps.push('answers');
+            let currentStepIndex = 0;
+
+            function renderFeedbackStep() {
+                contentWrap.innerHTML = '';
+                const status = document.createElement('div');
+                status.className = 'learning-guidance-status';
+                status.textContent = kind === 'error_correction'
+                    ? '⚠️ Precisa ajustar'
+                    : (kind === 'style_upgrade' ? '💡 Pode melhorar' : '✅ Resposta correta');
+                contentWrap.appendChild(status);
+
+                const saidLine = document.createElement('div');
+                saidLine.className = 'learning-feedback-line';
+                saidLine.innerHTML = `<span>🎤 Você disse:</span> "${escapeHtml(userText)}"`;
+                contentWrap.appendChild(saidLine);
+
+                const suggestionLine = document.createElement('div');
+                suggestionLine.className = 'learning-feedback-line suggestion';
+                suggestionLine.innerHTML = kind === 'error_correction'
+                    ? `<span>✨ Forma sugerida:</span> "${escapeHtml(suggested)}"`
+                    : (kind === 'style_upgrade'
+                        ? `<span>✨ Forma mais natural:</span> "${escapeHtml(suggested)}"`
+                        : `<span>✅ Está correto:</span> "${escapeHtml(suggested)}"`);
+                contentWrap.appendChild(suggestionLine);
+
+                if (reason) {
+                    const reasonEl = document.createElement('div');
+                    reasonEl.className = 'learning-feedback-reason';
+                    reasonEl.textContent = `💡 ${reason}`;
+                    contentWrap.appendChild(reasonEl);
+                }
+
+                const useBtn = document.createElement('button');
+                useBtn.type = 'button';
+                useBtn.className = 'learning-feedback-btn secondary';
+                useBtn.textContent = 'Usar frase sugerida';
+                useBtn.addEventListener('click', () => {
+                    if (textInput) {
+                        textInput.value = suggested;
+                        textInput.focus();
+                    }
+                });
+                contentWrap.appendChild(useBtn);
+            }
+
+            function renderAnswersStep() {
+                contentWrap.innerHTML = '';
+                const stepTitle = document.createElement('div');
+                stepTitle.className = 'learning-guidance-options-title';
+                stepTitle.innerHTML = 'Outras formas de responder: <span style="color:#FFD700;font-weight:bold;font-size:0.85em;">(Opcional)</span>';
+                contentWrap.appendChild(stepTitle);
+
+                const list = document.createElement('div');
+                list.className = 'learning-guidance-options';
+
+                replies.forEach((reply, index) => {
+                    const optionBtn = document.createElement('button');
+                    optionBtn.type = 'button';
+                    optionBtn.className = 'learning-guidance-option';
+                    optionBtn.setAttribute('aria-label', `Opcao ${index + 1}`);
+
+                    const en = document.createElement('span');
+                    en.className = 'suggested-answer-en';
+                    en.textContent = reply.en;
+                    optionBtn.appendChild(en);
+
+                    if (reply.pt) {
+                        const pt = document.createElement('span');
+                        pt.className = 'suggested-answer-pt';
+                        pt.textContent = reply.pt;
+                        optionBtn.appendChild(pt);
+                    }
+
+                    optionBtn.addEventListener('click', () => {
+                        if (textInput) {
+                            textInput.value = reply.en;
+                            textInput.focus();
+                        }
+                    });
+
+                    list.appendChild(optionBtn);
+                });
+
+                contentWrap.appendChild(list);
+            }
+
+            const actions = document.createElement('div');
+            actions.className = 'learning-feedback-actions';
+
+            const backBtn = document.createElement('button');
+            backBtn.type = 'button';
+            backBtn.className = 'learning-feedback-btn secondary';
+            backBtn.textContent = 'Voltar';
+            backBtn.style.display = 'none';
+            actions.appendChild(backBtn);
+
+            const nextBtn = document.createElement('button');
+            nextBtn.type = 'button';
+            nextBtn.className = 'learning-feedback-btn primary';
+            nextBtn.textContent = steps.length > 1 ? 'Proximo' : 'Continuar';
+            actions.appendChild(nextBtn);
+
+            function closeFlow() {
+                overlay.remove();
+                learningFeedbackPending = false;
+                setMicReadyState();
+                resolve();
+            }
+
+            function renderStep() {
+                const step = steps[currentStepIndex];
+                const total = steps.length;
+                stepBadge.textContent = `Etapa ${currentStepIndex + 1} de ${total}`;
+
+                if (step === 'feedback') {
+                    title.textContent = aiQuestionDisplay
+                        ? `\u{1F5E3}\uFE0F "${aiQuestionDisplay}"`
+                        : 'Sobre a sua resposta';
+                    renderFeedbackStep();
+                } else {
+                    title.textContent = aiQuestionDisplay
+                        ? `\u{1F5E3}\uFE0F "${aiQuestionDisplay}"`
+                        : 'Outras formas de responder';
+                    renderAnswersStep();
+                }
+
+                backBtn.style.display = currentStepIndex > 0 ? 'inline-flex' : 'none';
+                nextBtn.textContent = currentStepIndex >= total - 1 ? 'Continuar' : 'Proximo';
+            }
+
+            backBtn.addEventListener('click', () => {
+                if (currentStepIndex <= 0) return;
+                currentStepIndex -= 1;
+                renderStep();
+            });
+
+            nextBtn.addEventListener('click', () => {
+                if (currentStepIndex >= steps.length - 1) {
+                    closeFlow();
+                    return;
+                }
+                currentStepIndex += 1;
+                renderStep();
+            });
+
+            const helper = document.createElement('div');
+            helper.className = 'learning-feedback-helper';
+            helper.textContent = 'Depois de continuar, a conversa segue normalmente com a proxima pergunta.';
+            modal.appendChild(helper);
+
+            modal.appendChild(actions);
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+            renderStep();
+        });
+    }
+
+    function appendTurnFeedbackCard(messageGroup, feedback) {
+        if (!messageGroup || !feedback) return;
+        const kind = String(feedback.kind || 'none').trim();
+        if (kind === 'none') return;
+
+        const student = String(feedback.user_text || '').trim();
+        const suggested = String(feedback.suggested_text || '').trim();
+        if (!student || !suggested) return;
+
+        const card = document.createElement('div');
+        card.className = kind === 'error_correction' ? 'turn-correction-card' : 'turn-style-card';
+
+        const title = document.createElement('div');
+        title.className = kind === 'error_correction' ? 'turn-correction-title' : 'turn-style-title';
+        title.textContent = kind === 'error_correction' ? 'Correção da interação' : 'Sugestão de naturalidade';
+        card.appendChild(title);
+
+        const studentLine = document.createElement('div');
+        studentLine.className = kind === 'error_correction' ? 'turn-correction-line bad' : 'turn-style-line';
+        studentLine.innerHTML = kind === 'error_correction'
+            ? `<span>❌ Você disse:</span> "${escapeHtml(student)}"`
+            : `<span>Você disse:</span> "${escapeHtml(student)}"`;
+        card.appendChild(studentLine);
+
+        const suggestedLine = document.createElement('div');
+        suggestedLine.className = kind === 'error_correction' ? 'turn-correction-line good' : 'turn-style-line good';
+        suggestedLine.innerHTML = `<span>${kind === 'error_correction' ? '✅ Mais natural:' : '✅ Sugestão:'}</span> "${escapeHtml(suggested)}"`;
+        card.appendChild(suggestedLine);
+
+        const reason = String(feedback.reason || '').trim();
+        if (reason) {
+            const note = document.createElement('div');
+            note.className = kind === 'error_correction' ? 'turn-correction-note' : 'turn-style-note';
+            note.textContent = `💡 ${reason}`;
+            card.appendChild(note);
+        }
+
+        const useBtn = document.createElement('button');
+        useBtn.type = 'button';
+        useBtn.className = 'correction-use-btn';
+        useBtn.textContent = kind === 'error_correction' ? 'Usar frase corrigida' : 'Usar sugestão';
+        useBtn.addEventListener('click', () => {
+            if (textInput) {
+                textInput.value = suggested;
+                textInput.focus();
+            }
+        });
+        card.appendChild(useBtn);
+
+        messageGroup.appendChild(card);
+    }
+
+    function splitMessageIntoSentences(text) {
+        const compact = String(text || '').replace(/\s+/g, ' ').trim();
+        if (!compact) return [];
+        const matches = compact.match(/[^.!?]+[.!?]?/g);
+        if (!matches || !matches.length) return [compact];
+        return matches.map(item => item.trim()).filter(Boolean);
+    }
+
+    function sanitizeCoachDisplayText(text) {
+        let value = String(text || '');
+        if (!value) return '';
+
+        // Remove meta-instructions that confuse beginners in the UI.
+        value = value.replace(/\bLearning mode:\s*[^.!?]*[.!?]\s*/gi, '');
+        value = value.replace(/\bModo Learning:\s*[^.!?]*[.!?]\s*/gi, '');
+        value = value.replace(/\b(let'?s|vamos)\s+(jump|start|get|entrar|comecar)[^.!?]*(real[- ]life|cena real|intera[cç][aã]o real)[^.!?]*[.!?]\s*/gi, '');
+        value = value.replace(/\b(i will|i'll|eu vou|vou)\s+(coach|show|give|share|guiar|mostrar|dar)\s+(easy\s+|simple\s+)?(lines?|sentences?|phrases?|frases?)\s+(you|voce)\s+(can\s+)?(say|use|dizer|usar)[^.!?]*[.!?]\s*/gi, '');
+        value = value.replace(/\b(real interaction|intera[cç][aã]o real)\b[^.!?]*[.!?]\s*/gi, '');
+        value = value.replace(/(^|[.!?]\s+)[)\]]\s+/g, '$1');
+        value = value.replace(/^\)\s*/g, '');
+
+        value = value.replace(/\s+/g, ' ').trim();
+        return value;
+    }
+
+    function normalizeComparableText(value) {
+        return String(value || '')
+            .toLowerCase()
+            .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    function looksPortugueseSnippet(value) {
+        const text = String(value || '').toLowerCase().trim();
+        if (!text) return false;
+        if (/[ãõçáàâéêíóôú]/i.test(text)) return true;
+
+        const wrapped = ` ${text.replace(/\s+/g, ' ')} `;
+        const markers = [
+            ' eu ', ' voce ', ' você ', ' por favor ', ' qual ', ' tamanho ', ' agora ', ' nao ', ' não ',
+            ' obrigado ', ' obrigada ', ' queria ', ' gostaria ', ' posso ', ' pode ', ' meu ', ' minha ',
+            ' com ', ' para ', ' isso ', ' aqui ', ' hoje ', ' bom ', ' boa '
+        ];
+        let hits = 0;
+        markers.forEach(marker => {
+            if (wrapped.includes(marker)) hits += 1;
+        });
+        return hits >= 2;
+    }
+
+    function extractPortugueseSentences(value) {
+        const sentences = splitMessageIntoSentences(value);
+        const picked = [];
+
+        sentences.forEach(sentence => {
+            const clean = String(sentence || '').replace(/^[)\]\-\s]+/, '').trim();
+            if (!clean) return;
+
+            let selected = '';
+            const parenthesisMatches = clean.matchAll(/\(([^)]+)\)/g);
+            for (const match of parenthesisMatches) {
+                const inner = String(match[1] || '').trim();
+                if (looksPortugueseSnippet(inner)) {
+                    selected = inner;
+                    break;
+                }
+            }
+
+            if (!selected && looksPortugueseSnippet(clean)) {
+                selected = clean;
+            }
+
+            if (selected) {
+                selected = selected.replace(/^["'“”]+|["'“”]+$/g, '').trim();
+                if (selected) picked.push(selected);
+            }
+        });
+
+        return picked.join(' ');
+    }
+
+    function sanitizeTranslationDisplayText(text, assistantText = '') {
+        let value = sanitizeCoachDisplayText(text);
+        if (!value) return '';
+
+        const ptOnly = extractPortugueseSentences(value);
+        const normalizedOriginal = normalizeComparableText(value);
+        const normalizedAssistant = normalizeComparableText(assistantText);
+        const seemsMixed = /\([^)]+\)/.test(value) || (/[A-Za-z]/.test(value) && looksPortugueseSnippet(value));
+
+        if (ptOnly && (seemsMixed || (normalizedAssistant && normalizedOriginal === normalizedAssistant))) {
+            value = ptOnly;
+        }
+
+        return value;
+    }
+
+    function classifyCoachSegment(text) {
+        const value = String(text || '').trim();
+        if (!value) return 'tip';
+
+        const lower = value.toLowerCase();
+        if (
+            value.endsWith('?') ||
+            /\b(what|how|when|where|why|who|which)\b/i.test(value) ||
+            /\b(do you|are you|can you|could you|would you|may i)\b/i.test(value)
+        ) return 'question';
+
+        if (/^(instead of|em vez de|corre[cç][aã]o|correcao|ajuste)/i.test(lower) ||
+            /\b(instead of|em vez de|say:|diga:)\b/i.test(lower)) {
+            return 'correction';
+        }
+
+        if (/^(tip|dica|optional upgrade|upgrade opcional)/i.test(lower) ||
+            /\b(more natural|mais natural|more polite|mais educad|sounds better|soa melhor)\b/i.test(lower)) {
+            return 'tip';
+        }
+
+        return 'tip';
+    }
+
+    function mergeCoachSegments(sentences) {
+        const merged = [];
+        sentences.forEach(sentence => {
+            const kind = classifyCoachSegment(sentence);
+            const cleanSentence = String(sentence || '').replace(/^[)\]\-\s]+/, '').trim();
+            if (!cleanSentence) return;
+            const last = merged.length ? merged[merged.length - 1] : null;
+            if (last && last.kind === kind) {
+                last.text = `${last.text} ${cleanSentence}`.trim();
+            } else {
+                merged.push({ kind, text: cleanSentence });
+            }
+        });
+        return merged;
+    }
+
+    function renderCoachSegments(container, text, options = {}) {
+        if (!container) return;
+        const isTranslation = options && options.isTranslation === true;
+        const baseClass = isTranslation ? 'translation-segment' : 'subtitle-segment';
+        const layoutClass = isTranslation ? 'translation-structured' : 'subtitle-structured';
+        const cleanedText = sanitizeCoachDisplayText(text);
+        const sentences = splitMessageIntoSentences(cleanedText);
+        const mergedSegments = mergeCoachSegments(sentences);
+
+        container.textContent = '';
+        if (!mergedSegments.length) return;
+        container.classList.add(layoutClass);
+
+        mergedSegments.forEach(segmentData => {
+            const segment = document.createElement('p');
+            segment.className = `${baseClass} ${segmentData.kind}`;
+            segment.textContent = segmentData.text;
+            container.appendChild(segment);
+        });
+    }
+
+    function addMessage(sender, text, isAI = false, logMessage = true, translation = "", options = {}) {
+        if (!chatWindow) return null;
 
         const messageGroup = document.createElement('div');
         messageGroup.className = 'subtitle-group';
+        messageGroup.setAttribute('data-sender', isAI ? 'ai' : 'user');
 
         const msgDiv = document.createElement('div');
         msgDiv.className = `subtitle-line ${isAI ? 'ai' : 'user'}`;
@@ -2777,10 +5034,31 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         msgDiv.style.transition = 'all 0.5s ease';
 
         // Store real text and show placeholder when subtitles are off
-        msgDiv.setAttribute('data-text', text);
+        const isAssistantMessage = isAI && String(sender || '').toLowerCase() === 'ai';
+        const displayText = isAssistantMessage ? sanitizeCoachDisplayText(text) : text;
+        msgDiv.setAttribute('data-text', displayText);
         const shouldShowText = (typeof window.subtitlesEnabled !== 'undefined' && window.subtitlesEnabled) ||
             (autoTranslateToggle && autoTranslateToggle.checked);
-        msgDiv.innerText = shouldShowText ? text : (window.obfuscateText ? window.obfuscateText(text) : '(... ...)');
+        if (shouldShowText) {
+            if (isAssistantMessage) {
+                renderCoachSegments(msgDiv, displayText);
+            } else if (!isAI) {
+                msgDiv.classList.add('user-structured');
+                const label = document.createElement('span');
+                label.className = 'user-speech-label';
+                label.textContent = '🎤 Você disse:';
+                const content = document.createElement('span');
+                content.className = 'user-speech-text';
+                content.innerText = displayText;
+                msgDiv.textContent = '';
+                msgDiv.appendChild(label);
+                msgDiv.appendChild(content);
+            } else {
+                msgDiv.innerText = displayText;
+            }
+        } else {
+            msgDiv.innerText = window.obfuscateText ? window.obfuscateText(displayText) : '(... ...)';
+        }
 
         messageGroup.appendChild(msgDiv);
 
@@ -2794,18 +5072,89 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         if (isAI && translation) {
             const transDiv = document.createElement('div');
             transDiv.className = 'translation-line';
-            transDiv.style.cssText = "font-size: 0.9em; color: #aaa; margin-top: 5px; font-style: italic;";
-            transDiv.innerText = translation;
+            const rawTranslation = isAssistantMessage ? sanitizeCoachDisplayText(translation) : translation;
+            const displayTranslation = isAssistantMessage
+                ? (sanitizeTranslationDisplayText(rawTranslation, displayText) || rawTranslation)
+                : rawTranslation;
+            if (isAssistantMessage) {
+                renderCoachSegments(transDiv, displayTranslation, { isTranslation: true });
+            } else {
+                transDiv.innerText = displayTranslation;
+            }
 
-            // Check if subtitles are enabled (via checkbox or global var)
-            const subtitlesOn = (autoTranslateToggle && autoTranslateToggle.checked) ||
-                (typeof window.subtitlesEnabled !== 'undefined' && window.subtitlesEnabled);
-            transDiv.style.display = subtitlesOn ? 'block' : 'none';
+            const forceTranslation = options && options.forceTranslation === true;
+            const showTranslation = forceTranslation || (autoTranslateToggle && autoTranslateToggle.checked);
+            transDiv.style.display = showTranslation ? 'block' : 'none';
 
             messageGroup.appendChild(transDiv);
+
+            if (!showTranslation) {
+                const toggle = document.createElement('button');
+                toggle.type = 'button';
+                toggle.className = 'translation-toggle-btn';
+                toggle.textContent = 'Mostrar tradução';
+                toggle.style.cssText = 'margin-top:6px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);color:#d1d5db;padding:4px 10px;border-radius:999px;font-size:0.72rem;cursor:pointer;';
+                toggle.addEventListener('click', () => {
+                    const isHidden = transDiv.style.display === 'none';
+                    transDiv.style.display = isHidden ? 'block' : 'none';
+                    toggle.textContent = isHidden ? 'Ocultar tradução' : 'Mostrar tradução';
+                });
+                messageGroup.appendChild(toggle);
+            }
+        }
+
+        const allowInlineFeedback = !(options && options.showInlineFeedback === false);
+        if (isAI && allowInlineFeedback && options && options.turnFeedback) {
+            appendTurnFeedbackCard(messageGroup, options.turnFeedback);
+        } else if (isAI && allowInlineFeedback && options && options.enableLegacyCorrectionFallback && options.turnCorrection) {
+            const legacyCorrection = {
+                kind: 'error_correction',
+                user_text: String(options.turnCorrection.frase_aluno || '').trim(),
+                suggested_text: String(options.turnCorrection.frase_natural || '').trim(),
+                reason: String(options.turnCorrection.explicacao || '').trim(),
+            };
+            appendTurnFeedbackCard(messageGroup, legacyCorrection);
+        } else if (isAI && allowInlineFeedback && options && options.enableLegacyCorrectionFallback) {
+            const correctionPhrase = extractCorrection(text);
+            if (correctionPhrase) {
+                const correctionWrap = document.createElement('div');
+                correctionWrap.className = 'correction-hint';
+
+                const label = document.createElement('div');
+                label.className = 'correction-label';
+                label.textContent = 'Correção rápida';
+                correctionWrap.appendChild(label);
+
+                const phrase = document.createElement('div');
+                phrase.className = 'correction-phrase';
+                phrase.textContent = correctionPhrase;
+                correctionWrap.appendChild(phrase);
+
+                const useBtn = document.createElement('button');
+                useBtn.type = 'button';
+                useBtn.className = 'correction-use-btn';
+                useBtn.textContent = 'Usar essa frase';
+                useBtn.addEventListener('click', () => {
+                    if (textInput) {
+                        textInput.value = correctionPhrase;
+                        textInput.focus();
+                    }
+                });
+                correctionWrap.appendChild(useBtn);
+
+                messageGroup.appendChild(correctionWrap);
+            }
         }
 
         chatWindow.appendChild(messageGroup);
+        const groups = chatWindow.querySelectorAll('.subtitle-group');
+        if (groups.length > MAX_VISIBLE_GROUPS) {
+            const removeCount = groups.length - MAX_VISIBLE_GROUPS;
+            for (let i = 0; i < removeCount; i++) {
+                groups[i].remove();
+            }
+        }
+        refreshConversationFocusView();
 
         if (logMessage) {
             conversationLog.push({ sender, text });
@@ -2814,44 +5163,96 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         return messageGroup;
     }
 
-    function renderSuggestedWords(words = [], promptText = "") {
+    function renderSuggestedWords(words = [], promptText = "", replyOptions = [], aiPromptText = "") {
         if (!chatWindow) return;
 
-        const existing = chatWindow.querySelector('.suggested-words-card');
-        if (existing) existing.remove();
+        const existing = chatWindow.querySelectorAll('.suggested-words-card');
+        existing.forEach(el => el.remove());
 
-        if (!Array.isArray(words) || words.length === 0) return;
+        const intentSource = sanitizeCoachDisplayText(aiPromptText || promptText || lastAIMessage) || aiPromptText || promptText || lastAIMessage;
+        const normalizedReplies = normalizeSuggestionItems(replyOptions);
+        const matchedReplies = getIntentMatchedReplies(normalizedReplies, intentSource);
+        const questionFallback = getQuestionSpecificFallbackReplies(intentSource);
+        const fallbackReplies = getSuggestionsForContext(context, intentSource);
+        const baseReplies = matchedReplies.length ? matchedReplies : questionFallback;
+        const replies = dedupeSuggestionItems([
+            ...baseReplies,
+            ...questionFallback,
+            ...fallbackReplies
+            , ...normalizedReplies
+        ]).slice(0, 3);
+        if (!replies.length) return;
 
-        const messageGroup = chatWindow.querySelector('.subtitle-group') || chatWindow;
+        const titleText = '3 formas de responder a pergunta anterior:';
+
+        const groups = chatWindow.querySelectorAll('.subtitle-group');
+        const messageGroup = groups.length ? groups[groups.length - 1] : chatWindow;
         const card = document.createElement('div');
         card.className = 'suggested-words-card';
 
+        const toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.className = 'suggested-words-toggle';
+        toggle.setAttribute('aria-expanded', 'true');
+        toggle.innerHTML = `💡 Dica de resposta (${replies.length}) <span style="color:#FFD700;font-weight:bold;font-size:0.85em;margin-left:6px;">(Opcional)</span>`;
+        card.appendChild(toggle);
+
+        const details = document.createElement('div');
+        details.className = 'suggested-words-details';
+        details.style.display = 'block';
+        card.classList.add('expanded');
+
         const title = document.createElement('div');
         title.className = 'suggested-words-title';
-        title.textContent = promptText || 'Tente reformular sua resposta usando pelo menos uma dessas 4 palavras abaixo:';
-        card.appendChild(title);
+        title.textContent = titleText;
+        details.appendChild(title);
 
-        const list = document.createElement('ol');
-        list.className = 'suggested-words-list';
+        const answerList = document.createElement('div');
+        answerList.className = 'suggested-answers-list';
 
-        words.slice(0, 4).forEach(word => {
-            const li = document.createElement('li');
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'suggested-word-btn';
-            btn.textContent = word;
-            btn.addEventListener('click', () => {
-                if (textInput) {
-                    const spacer = textInput.value && !textInput.value.endsWith(' ') ? ' ' : '';
-                    textInput.value = `${textInput.value}${spacer}${word}`.trim();
+        replies.forEach((reply, index) => {
+            const answerBtn = document.createElement('button');
+            answerBtn.type = 'button';
+            answerBtn.className = 'suggested-answer-btn';
+            answerBtn.setAttribute('aria-label', `Opcao ${index + 1} de resposta`);
+
+            const enLine = document.createElement('span');
+            enLine.className = 'suggested-answer-en';
+            enLine.textContent = reply.en;
+            answerBtn.appendChild(enLine);
+
+            if (reply.pt) {
+                const ptLine = document.createElement('span');
+                ptLine.className = 'suggested-answer-pt';
+                ptLine.textContent = reply.pt;
+                answerBtn.appendChild(ptLine);
+            }
+
+            answerBtn.addEventListener('click', () => {
+                if (textInput && textInput.offsetParent !== null) {
+                    textInput.value = reply.en;
                     textInput.focus();
                 }
             });
-            li.appendChild(btn);
-            list.appendChild(li);
+
+            answerList.appendChild(answerBtn);
         });
 
-        card.appendChild(list);
+        details.appendChild(answerList);
+
+        const hint = document.createElement('div');
+        hint.className = 'suggested-words-hint';
+        hint.textContent = 'Toque em uma opcao para preencher sua resposta e continuar.';
+        details.appendChild(hint);
+
+        toggle.addEventListener('click', () => {
+            const expanded = toggle.getAttribute('aria-expanded') === 'true';
+            toggle.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+            details.style.display = expanded ? 'none' : 'block';
+            card.classList.toggle('expanded', !expanded);
+        });
+
+        card.appendChild(details);
         messageGroup.appendChild(card);
     }
 
@@ -2860,7 +5261,51 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
     // =============================================
 
     /**
-     * Render lesson options as clickable cards
+     * Match spoken text to one of the lesson options using word similarity.
+     * Returns { index, option } or null if no good match found.
+     */
+    function matchSpokenToOption(spokenText, options) {
+        const normalize = (str) => (str || '').toLowerCase().replace(/[^a-z0-9\s]/gi, '').trim();
+        const spokenNorm = normalize(spokenText);
+        const spokenWords = spokenNorm.split(/\s+/).filter(w => w.length > 0);
+
+        if (spokenWords.length === 0) return null;
+
+        let bestIndex = -1;
+        let bestScore = 0;
+
+        options.forEach((opt, index) => {
+            const optText = normalize(opt.en || opt);
+            const optWords = optText.split(/\s+/).filter(w => w.length > 0);
+            if (optWords.length === 0) return;
+
+            // Count matching words
+            let matches = 0;
+            for (const sw of spokenWords) {
+                if (optWords.some(ow => ow === sw || ow.includes(sw) || sw.includes(ow))) {
+                    matches++;
+                }
+            }
+
+            // Score = proportion of option words matched + proportion of spoken words matched
+            const score = (matches / optWords.length) + (matches / spokenWords.length);
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestIndex = index;
+            }
+        });
+
+        // Require at least 40% combined match to accept
+        if (bestIndex >= 0 && bestScore >= 0.4) {
+            return { index: bestIndex, option: options[bestIndex] };
+        }
+
+        return null;
+    }
+
+    /**
+     * Render lesson options as read-aloud cards (student speaks one)
      */
     function renderLessonOptions(options, layerTitle = '') {
         if (!chatWindow) return;
@@ -2875,6 +5320,18 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         if (oldRef) oldRef.style.display = 'none';
 
         if (!Array.isArray(options) || options.length === 0) return;
+
+        // Shuffle option order for this round while keeping original indexes.
+        const decoratedOptions = options.map((opt, originalIndex) => {
+            if (opt && typeof opt === 'object') {
+                return { ...opt, _originalIndex: originalIndex };
+            }
+            return { en: String(opt || ''), _originalIndex: originalIndex };
+        });
+        const displayOptions = shuffleArray(decoratedOptions);
+
+        // Store options for voice matching
+        lessonState.currentOptions = displayOptions;
 
         const container = document.createElement('div');
         container.className = 'lesson-options-container';
@@ -2895,13 +5352,13 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         // Title
         const title = document.createElement('div');
         title.className = 'lesson-options-title';
-        title.textContent = layerTitle || 'Choose a phrase to practice:';
+        title.textContent = layerTitle || 'Read one of the phrases below:';
         container.appendChild(title);
 
-        // Options list
-        options.forEach((opt, index) => {
+        // Options list (non-clickable, for reading aloud)
+        displayOptions.forEach((opt, index) => {
             const card = document.createElement('div');
-            card.className = 'lesson-option-card';
+            card.className = 'lesson-option-card lesson-option-readonly';
 
             const optionNumber = document.createElement('div');
             optionNumber.className = 'option-number';
@@ -2914,13 +5371,13 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 ${opt.pt ? `<div class="option-pt">(${opt.pt})</div>` : ''}
             `;
 
-            // Audio button - plays pronunciation without selecting the option
+            // Audio button - plays pronunciation
             const audioBtn = document.createElement('button');
             audioBtn.className = 'option-audio-btn';
             audioBtn.innerHTML = '<span class="audio-icon">🔊</span>';
             audioBtn.title = 'Listen to pronunciation';
             audioBtn.addEventListener('click', async (e) => {
-                e.stopPropagation(); // Prevent card selection
+                e.stopPropagation();
                 audioBtn.classList.add('playing');
                 try {
                     await playOptionAudio(opt.en || opt);
@@ -2933,9 +5390,14 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
             card.appendChild(optionNumber);
             card.appendChild(optionContent);
             card.appendChild(audioBtn);
-            card.addEventListener('click', () => selectLessonOption(index, opt));
             container.appendChild(card);
         });
+
+        // Mic hint at the bottom
+        const hint = document.createElement('div');
+        hint.className = 'lesson-mic-hint';
+        hint.innerHTML = '🎤 Use the microphone and read one of the phrases above';
+        container.appendChild(hint);
 
         chatWindow.appendChild(container);
         chatWindow.scrollTop = chatWindow.scrollHeight;
@@ -2969,7 +5431,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
     /**
      * Handle lesson option selection (click)
      */
-    async function selectLessonOption(index, phrase) {
+    async function selectLessonOption(index, phrase, spokenText) {
         lessonState.selectedOption = index;
         lessonState.selectedPhrase = phrase;
 
@@ -3032,15 +5494,16 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         // Call backend to get practice prompt
         showLoadingIndicator();
         try {
+            const originalIndex = (phrase && typeof phrase._originalIndex === 'number')
+                ? phrase._originalIndex
+                : index;
             const data = await apiClient.lesson('select_option', context, {
                 layer: lessonState.layer,
-                option: index
+                option: originalIndex,
+                selected_phrase: phrase
             });
 
             hideLoadingIndicator();
-
-            // Play practice prompt
-            playResponse(data.text, data.translation);
 
             // Update state
             lessonState.nextAction = data.next_action;
@@ -3052,8 +5515,15 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 lessonState.skipToLayer = null;
             }
 
-            // Now enable microphone for practice
-            // The user will speak, and processUserResponse will handle it
+            // If user already spoke the phrase (voice selection), skip practice prompt
+            // and evaluate immediately - no need to repeat
+            if (spokenText) {
+                // Don't play the "now try saying..." prompt - go straight to evaluation
+                await evaluateLessonPractice(spokenText);
+            } else {
+                // Click-based selection: play practice prompt and wait for speech
+                playResponse(data.text, data.translation);
+            }
 
         } catch (error) {
             hideLoadingIndicator();
@@ -3067,6 +5537,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
      */
     async function startStructuredLesson() {
         lessonState.active = true;
+        updateSuggestionsVisibility();
         lessonState.layer = 0;
         lessonState.nextAction = 'start';
         lessonState.compositeTemplate = null;
@@ -3096,6 +5567,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
             hideLoadingIndicator();
             console.error('Lesson start error:', error);
             lessonState.active = false;
+            updateSuggestionsVisibility();
             // Fallback to old conversational mode
             addMessage('System', 'Structured lesson not available. Starting conversation mode.', true);
         }
@@ -3105,11 +5577,15 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
      * Render a "Start Lesson" button after welcome
      */
     function renderLessonStartButton() {
+        const labels = lessonLang === 'pt'
+            ? ['Comecar aula', 'Iniciar pratica', 'Vamos comecar']
+            : ['Start Lesson', 'Begin Practice', 'Let\'s Start'];
+        const buttonLabel = pickNonRepeatingVariant(`lesson_start_btn_${context}`, labels) || labels[0];
         const container = document.createElement('div');
         container.className = 'lesson-start-container';
         container.innerHTML = `
             <button class="lesson-start-btn">
-                Start Lesson
+                ${buttonLabel}
             </button>
         `;
         container.querySelector('.lesson-start-btn').addEventListener('click', async () => {
@@ -3138,6 +5614,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 // Lesson complete!
                 playResponse(data.text, data.translation);
                 lessonState.active = false;
+                updateSuggestionsVisibility();
                 // Remove lesson-mode class
                 if (chatWindow) chatWindow.classList.remove('lesson-mode');
                 // Show report button
@@ -3205,9 +5682,19 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
 
     /**
      * Check if we should use structured lesson mode
-     * Enabled for all contexts with structured lessons in lessons_db.json
+     * Structured mode is opt-in (URL param) or auto-enabled for A1 learners.
      */
     function shouldUseStructuredLesson() {
+        if (['0', 'false', 'off'].includes(structuredModeParam)) {
+            return false;
+        }
+
+        const isForcedStructured = ['1', 'true', 'on'].includes(structuredModeParam);
+        const autoStructuredByLevel = studentLevel === 'A1';
+        if (!isForcedStructured && !autoStructuredByLevel) {
+            return false;
+        }
+
         // List of contexts that have structured lessons (All 33 contexts)
         const structuredLessonContexts = [
             // Fase 1 - Essenciais (10)
@@ -3300,51 +5787,27 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         URL.revokeObjectURL(url);
     }
 
-    // Fallback check replaced by Deepgram/Groq logic
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    // Fallback check: verify both getUserMedia and MediaRecorder are available
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === 'undefined') {
         if (recordBtn) recordBtn.style.display = 'none';
         const fallbackInfo = document.createElement('div');
         fallbackInfo.className = 'message system-message';
+        const isHTTP = window.location.protocol === 'http:' && window.location.hostname !== 'localhost';
+        let warningMsg = '⚠️ Gravacao de voz nao suportada neste navegador. Use Chrome, Safari 14.3+ ou Edge.';
+        if (isHTTP) {
+            warningMsg = '⚠️ O microfone requer conexao HTTPS. Acesse via https:// para usar a voz.';
+        } else if (typeof MediaRecorder === 'undefined') {
+            warningMsg = '⚠️ Seu navegador nao suporta gravacao de audio. Atualize para Safari 14.3+ ou use Chrome.';
+        }
         fallbackInfo.innerHTML = `
             <div class="bubble">
-                <p>⚠️ Voice input not supported in this browser. Please use Chrome or Edge for voice features.</p>
+                <p>${warningMsg}</p>
             </div>
         `;
-        chatWindow.appendChild(fallbackInfo);
+        if (chatWindow) chatWindow.appendChild(fallbackInfo);
     }
 
-    // Add text input fallback
-    if (!document.getElementById('text-input')) {
-        const inputContainer = document.createElement('div');
-        inputContainer.className = 'text-input-container';
-        inputContainer.innerHTML = `
-            <input type="text" id="text-input" class="text-input" placeholder="Type your message...">
-            <button id="send-btn" class="action-btn send-btn">Send</button>
-        `;
-
-        const inputRow = document.getElementById('input-row');
-        const controlsContainer = inputRow
-            || document.querySelector('.controls')
-            || document.querySelector('.player-controls')
-            || document.querySelector('.player-overlay')
-            || document.body;
-
-        if (controlsContainer) {
-            if (inputRow) {
-                const micBtn = document.getElementById('record-btn');
-                if (micBtn && micBtn.parentElement !== inputRow) {
-                    inputRow.appendChild(micBtn);
-                }
-                if (micBtn && inputRow.contains(micBtn)) {
-                    inputRow.insertBefore(inputContainer, micBtn);
-                } else {
-                    inputRow.appendChild(inputContainer);
-                }
-            } else {
-                controlsContainer.appendChild(inputContainer);
-            }
-        }
-    }
+    // Text input intentionally disabled in voice-only practice UI.
 
     const textInput = document.getElementById('text-input');
     const sendBtn = document.getElementById('send-btn');
@@ -3396,6 +5859,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
             const exchanges = Math.floor(conversationLog.filter(m => m.sender !== 'System').length / 2);
             messageCounter.textContent = exchanges === 1 ? '1 exchange' : `${exchanges} exchanges`;
         }
+        updateSessionProgress({ quiet: true });
     }
 
     function updateReportButton() {
@@ -3412,7 +5876,8 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
 
         const skipBtn = document.createElement('button');
         skipBtn.className = 'skip-audio-btn';
-        skipBtn.textContent = '⏭️ Skip audio';
+        skipBtn.textContent = '⏭️ Pular áudio';
+        skipBtn.title = 'Pular o áudio e continuar';
         skipBtn.onclick = () => {
             ttsCancelled = true;
             if (currentAudio) {
@@ -3467,6 +5932,19 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
     //     chatWindow.appendChild(container);
     //     chatWindow.scrollTop = chatWindow.scrollHeight;
     // }
+
+    const enableUiTestHooks = (urlParams.get('testHooks') === '1') || window.__ENABLE_UI_TEST_HOOKS__ === true;
+    if (enableUiTestHooks) {
+        window.__practiceTestHooks = {
+            processUserResponse: async (text) => processUserResponse(text),
+            getLatestAIQuestionPrompt: () => getLatestAIQuestionPrompt(),
+            detectQuestionIntent: (text) => detectQuestionIntent(text),
+            buildLearningFeedbackPayload: (turnFeedback, userText, backendData) => buildLearningFeedbackPayload(turnFeedback, userText, backendData),
+            inferLearningFeedbackFromText: (userText, questionPrompt) => inferLearningFeedbackFromText(userText, questionPrompt),
+            simplifyLearningScenarioResponse: (text, translation) => simplifyLearningScenarioResponse(text, translation)
+        };
+        console.info('[UI TEST] practice hooks enabled');
+    }
 });
 
 function handleLogin() {
@@ -3477,42 +5955,20 @@ function handleLogin() {
     const passwordGroup = document.getElementById('password-group');
     const passwordInput = document.getElementById('password');
 
-    // Show password field when admin email is detected
-    // Show password field when admin email is detected
-    if (emailInput) {
-        const checkAdminEmail = () => {
-            const email = emailInput.value.trim().toLowerCase();
-            if (email === 'everydayconversation1991@gmail.com' && passwordGroup) {
+    // Manual toggle for admin password field (no hardcoded admin email in frontend).
+    const adminToggle = document.getElementById('admin-toggle');
+    if (adminToggle && passwordGroup) {
+        adminToggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            const isHidden = passwordGroup.style.display === 'none' || passwordGroup.style.display === '';
+            if (isHidden) {
                 passwordGroup.style.display = 'block';
-            } else if (passwordGroup) {
-                // Only hide if it's NOT the admin email (and maybe empty)
-                // But for safety, let's keep hiding it if mismatch
+                if (passwordInput) passwordInput.focus();
+            } else {
                 passwordGroup.style.display = 'none';
+                if (passwordInput) passwordInput.value = '';
             }
-        };
-
-        // Listen to multiple events to catch autofill, paste, etc.
-        ['input', 'change', 'blur', 'keyup', 'paste'].forEach(evt => {
-            emailInput.addEventListener(evt, checkAdminEmail);
         });
-
-        // Check immediately and after a short delay for autofill
-        checkAdminEmail();
-        setTimeout(checkAdminEmail, 500);
-
-        // Manual toggle for safety
-        const adminToggle = document.getElementById('admin-toggle');
-        if (adminToggle) {
-            adminToggle.addEventListener('click', (e) => {
-                e.preventDefault();
-                if (passwordGroup.style.display === 'none') {
-                    passwordGroup.style.display = 'block';
-                    passwordInput.focus();
-                } else {
-                    passwordGroup.style.display = 'none';
-                }
-            });
-        }
     }
 
     form.addEventListener('submit', async (e) => {
@@ -3532,6 +5988,15 @@ function handleLogin() {
         try {
             const data = await apiClient.login(email, password);
 
+            // Check if system is in maintenance mode for this user
+            if (data.maintenance && data.maintenance.active) {
+                alert(data.maintenance.message || 'Sistema em manuten\u00e7\u00e3o. Tente novamente mais tarde.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Access Platform';
+                apiClient.logout();
+                return;
+            }
+
             // Redirect based on admin status
             if (data.user && data.user.is_admin) {
                 window.location.href = 'admin.html';
@@ -3541,10 +6006,23 @@ function handleLogin() {
         } catch (err) {
             console.error('Login error:', err);
             let errorMsg = 'Login failed. Please try again.';
+            const rawMsg = String((err && err.message) ? err.message : err || '');
+            const isNetworkError = (
+                rawMsg.includes('Failed to fetch') ||
+                rawMsg.includes('NetworkError') ||
+                rawMsg.includes('Load failed') ||
+                rawMsg.includes('ERR_CONNECTION') ||
+                rawMsg.includes('TypeError')
+            );
 
-            if (err.message.includes('not authorized') || err.message.includes('not registered')) {
+            if (isNetworkError) {
+                const apiBase = (apiClient && typeof apiClient.baseURL === 'string' && apiClient.baseURL)
+                    ? apiClient.baseURL
+                    : window.location.origin;
+                errorMsg = `Servidor offline ou URL incorreta. Inicie o backend e tente: ${apiBase || 'http://localhost:8912'}`;
+            } else if (rawMsg.includes('not authorized') || rawMsg.includes('not registered')) {
                 errorMsg = 'This email is not authorized to access the platform. Please contact support.';
-            } else if (err.message.includes('Invalid admin password')) {
+            } else if (rawMsg.includes('Invalid admin password')) {
                 errorMsg = 'Invalid admin password. Try again or login without password for regular access.';
             }
 
@@ -3554,4 +6032,3 @@ function handleLogin() {
         }
     });
 }
-

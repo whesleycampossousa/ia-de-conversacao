@@ -11,7 +11,21 @@ venv/
 node_modules/
 .vscode/
 .idea/
-authorized_emails.json
 gen-lang-client-*.json
 voice_references/*.wav
 audio_cache/dynamic/
+audio_cache/common_phrases/*.mp3
+nul
+**/nul
+
+# Local runtime artifacts
+weekly_activity_store.json
+voice_samples/
+Ativos 6 fevereiro.xlsx
+monitor_success.log
+monitor_warnings.log
+monitor_errors.log
+.aider*
+
+# Local Netlify folder
+.netlify

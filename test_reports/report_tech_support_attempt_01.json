@@ -1,0 +1,110 @@
+{
+    "context": "tech_support",
+    "attempt": 1,
+    "profile": "silent_shy",
+    "pass": false,
+    "avg_score": 7.125,
+    "stats": {
+        "score_sum": 57,
+        "violations": 2
+    },
+    "turns": [
+        {
+            "turn": 1,
+            "student": "(System Trigger)",
+            "ai": "Hello, welcome to the Tech Support. How can I help you today?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain natural flow by keeping responses concise and focused on the scenario.",
+                "first_message_matches_required_opening": true
+            }
+        },
+        {
+            "turn": 2,
+            "student": "Um... Can you... help me with something?",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 9,
+                "improvement_suggestion": "Respond to errors with actionable guidance instead of technical codes, while maintaining strict rule compliance."
+            }
+        },
+        {
+            "turn": 3,
+            "student": "\"Uhh... that's not great. Need help with it?\"",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 3,
+                "improvement_suggestion": "Respond with a question to guide the user instead of an error message, while maintaining strict adherence to the rules."
+            }
+        },
+        {
+            "turn": 4,
+            "student": "Hmm, error 500. What's the log say?",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain concise error reporting without additional prompts to align with strict QA guidelines."
+            }
+        },
+        {
+            "turn": 5,
+            "student": "\"Server error? Did you check logs?\"",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 9,
+                "improvement_suggestion": "Add brief contextual explanation for the error code to enhance user understanding without violating natural flow rules."
+            }
+        },
+        {
+            "turn": 6,
+            "student": "Hmm... error?",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "Natural Flow: AI did not ask a question but provided an error message",
+                "score": 3,
+                "improvement_suggestion": "Ask a question to guide the student instead of providing an error message"
+            }
+        },
+        {
+            "turn": 7,
+            "student": "\"Uh... that's not good. Did you check the connection?\"",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "AI responded with technical error instead of natural conversational flow",
+                "score": 4,
+                "improvement_suggestion": "Respond with a question about troubleshooting steps rather than technical errors"
+            }
+        },
+        {
+            "turn": 8,
+            "student": "Hmm... Need help with that?",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 9,
+                "improvement_suggestion": "Provide more context in error messages while maintaining strict rule compliance."
+            }
+        }
+    ]
+}

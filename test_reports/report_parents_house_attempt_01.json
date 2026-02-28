@@ -1,0 +1,110 @@
+{
+    "context": "parents_house",
+    "attempt": 1,
+    "profile": "silent_shy",
+    "pass": false,
+    "avg_score": 6.75,
+    "stats": {
+        "score_sum": 54,
+        "violations": 4
+    },
+    "turns": [
+        {
+            "turn": 1,
+            "student": "(System Trigger)",
+            "ai": "Hello, welcome to the Parents House. How can I help you today?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain consistent adherence to all rules - your response perfectly aligns with the mandatory opening rule and natural flow requirements.",
+                "first_message_matches_required_opening": true
+            }
+        },
+        {
+            "turn": 2,
+            "student": "Um... okay. Is this the right place?",
+            "ai": "Yep, this is the place! Were you expecting someone?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain concise, conversational tone while advancing the scenario naturally."
+            }
+        },
+        {
+            "turn": 3,
+            "student": "No.  \nThanks...",
+            "ai": "Alright, well, I hope you find what you're looking for. Are you here visiting family, or just passing through?",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "Robotic Fillers",
+                "score": 3,
+                "improvement_suggestion": "Remove filler phrases like 'Alright, well...' and make the question more direct."
+            }
+        },
+        {
+            "turn": 4,
+            "student": "\"Visiting...\"",
+            "ai": "Oh, who are you visiting?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain natural dialogue flow while strictly adhering to the rules."
+            }
+        },
+        {
+            "turn": 5,
+            "student": "Um... my... my parents.",
+            "ai": "Oh, that's nice! Are they expecting you?",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "Robotic filler: 'Oh, that's nice!'",
+                "score": 3,
+                "improvement_suggestion": "Remove the filler response and ask a direct question about the parents' expectations."
+            }
+        },
+        {
+            "turn": 6,
+            "student": "Um... not sure.",
+            "ai": "Well, come on in! I'm sure they'll be happy to see you. What are their names?",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "Combined statement/question structure violates 'natural flow' rule (1 question per turn). The 'Well, come on in!' phrase constitutes robotic filler.",
+                "score": 4,
+                "improvement_suggestion": "Simplify to a direct question: 'What are their names?' without introductory statements."
+            }
+        },
+        {
+            "turn": 7,
+            "student": "Um... not sure.",
+            "ai": "Not sure of their names? How long has it been since you've seen them?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain natural flow by keeping questions scenario-specific and concise."
+            }
+        },
+        {
+            "turn": 8,
+            "student": "Um... a few months? Not sure about the names either.",
+            "ai": "A few months, huh? And you're not sure about their names?",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "response is not a question",
+                "score": 4,
+                "improvement_suggestion": "Ask a question instead of making a statement"
+            }
+        }
+    ]
+}

@@ -1,0 +1,291 @@
+{
+  "timestamp": "2026-02-20T20:48:50.859800",
+  "login_user": {
+    "email": "whesleycampos@hotmail.com",
+    "is_admin": true,
+    "name": "Whesleycampos",
+    "user_id": "whesleycampos@hotmail.com_1771631278"
+  },
+  "scenario": "hotel",
+  "mode": "learning",
+  "turns": [
+    {
+      "turn": 1,
+      "user": "Hi. My name is Wesley. I'm from Brazil.",
+      "ai": "Welcome to the lesson, Wesley! It is nice to meet a student from Brazil. How many nights will you stay?",
+      "translation": "Bem-vindo à lição, Wesley! É um prazer conhecer um aluno do Brasil. Quantas noites vai ficar?",
+      "turn_feedback": {
+        "kind": "none",
+        "reason": "Sua frase esta correta para este contexto.",
+        "retry_required": false,
+        "suggested_text": "Hi. My name is Wesley. I'm from Brazil.",
+        "user_text": "Hi. My name is Wesley. I'm from Brazil."
+      },
+      "must_retry": false,
+      "suggested_words": []
+    },
+    {
+      "turn": 2,
+      "user": "I have a reservation under the name Wesley.",
+      "ai": "Great! I found your reservation, Wesley. Would you like help with your bags?",
+      "translation": "Ótimo! Encontrei sua reserva, Wesley. Quer ajuda com as malas?",
+      "turn_feedback": {
+        "kind": "none",
+        "reason": "Sua frase esta correta para este contexto.",
+        "retry_required": false,
+        "suggested_text": "I have a reservation under the name Wesley.",
+        "user_text": "I have a reservation under the name Wesley."
+      },
+      "must_retry": false,
+      "suggested_words": []
+    },
+    {
+      "turn": 3,
+      "user": "I will stay three nights.",
+      "ai": "Perfect, three nights is a great stay! Before I give you the keys, I need to see your passport.",
+      "translation": "Perfeito, três noites é uma ótima estadia! Antes de eu te entregar as chaves, preciso ver seu passaporte.",
+      "turn_feedback": {
+        "kind": "none",
+        "reason": "Sua frase esta correta para este contexto.",
+        "retry_required": false,
+        "suggested_text": "I will stay three nights.",
+        "user_text": "I will stay three nights."
+      },
+      "must_retry": false,
+      "suggested_words": []
+    },
+    {
+      "turn": 4,
+      "user": "Here is my ID.",
+      "ai": "Thank you, Wesley! I have your passport right here. Do you need anything else before we finish check-in?",
+      "translation": "Obrigado, Wesley! Já estou com seu passaporte aqui. Quer ajuda com as malas?",
+      "turn_feedback": {
+        "kind": "none",
+        "reason": "Sua frase esta correta para este contexto.",
+        "retry_required": false,
+        "suggested_text": "Here is my ID.",
+        "user_text": "Here is my ID."
+      },
+      "must_retry": false,
+      "suggested_words": []
+    },
+    {
+      "turn": 5,
+      "user": "I'd like a quiet room, please.",
+      "ai": "I will make sure to give you a room away from the elevator so it is very quiet. Since you are from Brazil, are you planning to do some sightseeing or are you here for work?",
+      "translation": "Vou garantir um quarto longe do elevador para que seja bem silencioso. Já que você é do Brasil, planeja fazer passeios turísticos ou está aqui a trabalho?",
+      "turn_feedback": {
+        "kind": "none",
+        "reason": "Sua frase esta correta para este contexto.",
+        "retry_required": false,
+        "suggested_text": "I'd like a quiet room, please.",
+        "user_text": "I'd like a quiet room, please."
+      },
+      "must_retry": false,
+      "suggested_words": []
+    },
+    {
+      "turn": 6,
+      "user": "Is breakfast included?",
+      "ai": "Yes, breakfast is included and it is served in the lobby from 7:00 AM to 10:00 AM. \\n\\nUseful phrase: \\ Would you like help with your bags?",
+      "translation": "Sim, o caf\\u00e9 da manh\\u00e3 est\\u00e1 inclu\\u00eddo e \\u00e9 servido no sagu\\u00e3o das 7h \\u00e0s 10h.\\n\\nFrase \\u00fatil: \\ Quer ajuda com as malas?",
+      "turn_feedback": {
+        "kind": "none",
+        "reason": "Sua frase esta correta para este contexto.",
+        "retry_required": false,
+        "suggested_text": "Is breakfast included?",
+        "user_text": "Is breakfast included?"
+      },
+      "must_retry": false,
+      "suggested_words": []
+    },
+    {
+      "turn": 7,
+      "user": "What time does breakfast start?",
+      "ai": "Breakfast starts at 7:00 AM every morning in the main dining area. Useful phrase: 'What is the Wi-Fi password? You'll hear from staff: 'Here is your room key.' Is there anything specific you would like to do while you are here in the city?",
+      "translation": "O café da manhã começa às 7h todas as manhãs na área de jantar principal. Frase útil: 'What is the Wi-Fi password? Você ouvirá da equipe: 'Here is your room key. Existe algo específico que você gostaria de fazer enquanto estiver aqui na cidade?",
+      "turn_feedback": {
+        "kind": "none",
+        "reason": "Sua frase esta correta para este contexto.",
+        "retry_required": false,
+        "suggested_text": "What time does breakfast start?",
+        "user_text": "What time does breakfast start?"
+      },
+      "must_retry": false,
+      "suggested_words": []
+    },
+    {
+      "turn": 8,
+      "user": "Is Wi-Fi free in the room?",
+      "ai": "Yes, the Wi-Fi is free for all guests and works in every room. Since you are staying for three nights, you might want to know about the local area. Would you like me to confirm your check-in details?",
+      "translation": "Sim, o Wi-Fi é gratuito para todos os hóspedes e funciona em todos os quartos. Como você vai ficar por três noites, talvez queira saber sobre a região. Quer ajuda com as malas?",
+      "turn_feedback": {
+        "kind": "none",
+        "reason": "Sua frase esta correta para este contexto.",
+        "retry_required": false,
+        "suggested_text": "Is Wi-Fi free in the room?",
+        "user_text": "Is Wi-Fi free in the room?"
+      },
+      "must_retry": false,
+      "suggested_words": []
+    },
+    {
+      "turn": 9,
+      "user": "Could I have a late check-out tomorrow?",
+      "ai": "I can certainly check on that for you; usually, we can allow a late check-out until 1:00 PM. Since you are staying for three nights, would you like to know about the gym or the pool facilities?",
+      "translation": "Com certeza posso verificar isso para você; geralmente, permitimos o check-out tardio até as 13h. Como você vai ficar por três noites, gostaria de saber sobre a academia ou as instalações da piscina?",
+      "turn_feedback": {
+        "kind": "none",
+        "reason": "Sua frase esta correta para este contexto.",
+        "retry_required": false,
+        "suggested_text": "Could I have a late check-out tomorrow?",
+        "user_text": "Could I have a late check-out tomorrow?"
+      },
+      "must_retry": false,
+      "suggested_words": []
+    },
+    {
+      "turn": 10,
+      "user": "That's all, thank you.",
+      "ai": "You're very welcome, Wesley! Since you are all set with your room and breakfast, here is your key card. Would you like information about breakfast hours?",
+      "translation": "De nada, Wesley! Já que está tudo certo com seu quarto e café da manhã, aqui está o seu cartão-chave. Quer ajuda com as malas?",
+      "turn_feedback": {
+        "kind": "none",
+        "reason": "Sua frase esta correta para este contexto.",
+        "retry_required": false,
+        "suggested_text": "That's all, thank you.",
+        "user_text": "That's all, thank you."
+      },
+      "must_retry": false,
+      "suggested_words": []
+    }
+  ],
+  "report": {
+    "analise_frases": [
+      {
+        "explicacao": "Uma introdução clara e direta ao ponto. Muito bem!",
+        "frase_aluno": "Hi. My name is Wesley. I'm from Brazil.",
+        "frase_natural": "Hi, my name is Wesley. I'm from Brazil.",
+        "naturalidade": 100,
+        "nivel": "Perfeita!"
+      },
+      {
+        "explicacao": "Você usou a expressão 'under the name' corretamente, que é o padrão em hotéis.",
+        "frase_aluno": "I have a reservation under the name Wesley.",
+        "frase_natural": "I have a reservation under the name Wesley.",
+        "naturalidade": 100,
+        "nivel": "Perfeita!"
+      },
+      {
+        "explicacao": "Adicionar o 'for' antes do período de tempo torna a frase mais completa.",
+        "frase_aluno": "I will stay three nights.",
+        "frase_natural": "I'm staying for three nights.",
+        "naturalidade": 70,
+        "nivel": "Boa, mas pode melhorar"
+      },
+      {
+        "explicacao": "Curto, educado e eficiente para o momento da entrega do documento.",
+        "frase_aluno": "Here is my ID.",
+        "frase_natural": "Here is my ID.",
+        "naturalidade": 100,
+        "nivel": "Perfeita!"
+      },
+      {
+        "explicacao": "O uso de 'I'd like' é a forma mais gentil de pedir algo em inglês.",
+        "frase_aluno": "I'd like a quiet room, please.",
+        "frase_natural": "I'd like a quiet room, please.",
+        "naturalidade": 100,
+        "nivel": "Perfeita!"
+      },
+      {
+        "explicacao": "Pergunta clássica e executada perfeitamente.",
+        "frase_aluno": "Is breakfast included?",
+        "frase_natural": "Is breakfast included?",
+        "naturalidade": 100,
+        "nivel": "Perfeita!"
+      },
+      {
+        "explicacao": "Nativos tendem a simplificar para 'What time is...?' no dia a dia.",
+        "frase_aluno": "What time does breakfast start?",
+        "frase_natural": "What time is breakfast?",
+        "naturalidade": 85,
+        "nivel": "Boa, mas pode melhorar"
+      },
+      {
+        "explicacao": "Ótima pergunta! Apenas adicionar o 'the' antes de Wi-Fi soaria 100% natural.",
+        "frase_aluno": "Is Wi-Fi free in the room?",
+        "frase_natural": "Is the Wi-Fi free in the room?",
+        "naturalidade": 95,
+        "nivel": "Perfeita!"
+      },
+      {
+        "explicacao": "Excelente uso de vocabulário específico de hotelaria.",
+        "frase_aluno": "Could I have a late check-out tomorrow?",
+        "frase_natural": "Could I have a late check-out tomorrow?",
+        "naturalidade": 100,
+        "nivel": "Perfeita!"
+      },
+      {
+        "explicacao": "Forma ideal de encerrar uma conversa de check-in.",
+        "frase_aluno": "That's all, thank you.",
+        "frase_natural": "That's all, thank you.",
+        "naturalidade": 100,
+        "nivel": "Perfeita!"
+      }
+    ],
+    "correcoes": [
+      {
+        "avaliacaoGeral": "Aceitável",
+        "comentarioBreve": "Frase compreensível, mas podemos deixá-la mais fluida!",
+        "explicacaoDetalhada": "Quando já temos um plano definido, como uma reserva de hotel, soa mais natural usar o 'I'm staying' em vez de 'I will stay'. É como a diferença entre dizer 'Eu ficarei' e 'Eu vou ficar' – a segunda opção soa mais cotidiana!",
+        "fraseCorrigida": "I'm staying for three nights.",
+        "fraseOriginal": "I will stay three nights.",
+        "tag": "Correta, mas Pouco Natural"
+      },
+      {
+        "avaliacaoGeral": "Correta",
+        "comentarioBreve": "Excelente uso da estrutura de pergunta!",
+        "explicacaoDetalhada": "Sua frase está gramaticalmente perfeita! Em hotéis, é muito comum usarem o termo 'served' (servido), mas você foi 100% entendido. Continue assim!",
+        "fraseCorrigida": "What time is breakfast served?",
+        "fraseOriginal": "What time does breakfast start?",
+        "tag": "Correta, mas Pouco Natural"
+      },
+      {
+        "avaliacaoGeral": "Correta",
+        "comentarioBreve": "Uso perfeito do 'Could' para ser educado!",
+        "explicacaoDetalhada": "Você usou o 'Could' de forma brilhante para fazer um pedido polido. Essa é exatamente a forma como um nativo pediria um favor no balcão do hotel!",
+        "fraseCorrigida": "Could I have a late check-out tomorrow?",
+        "fraseOriginal": "Could I have a late check-out tomorrow?"
+      }
+    ],
+    "dicas": [
+      "Tente usar 'I'm staying' em vez de 'I will stay' para planos já confirmados.",
+      "Pratique o uso do artigo 'the' antes de substantivos específicos como 'the Wi-Fi' ou 'the breakfast'."
+    ],
+    "elogios": [
+      "Você demonstrou um excelente domínio do vocabulário específico de hotel (check-out, reservation, included).",
+      "Suas perguntas foram muito diretas e funcionais, garantindo que todas as suas necessidades fossem atendidas.",
+      "O uso de expressões de cortesia como 'I'd like' e 'Please' tornou sua fala muito educada.",
+      "Você conseguiu manter o fluxo da conversa sem pausas longas, respondendo prontamente ao recepcionista."
+    ],
+    "emoji": "🌟",
+    "erros_recorrentes": [
+      "Uso do Future Simple (Will) para planos confirmados",
+      "Omissão ocasional de artigos definidos (the)"
+    ],
+    "frase_pratica": "Could you tell me where the elevator is?",
+    "nota_geral": 92,
+    "plano_estudo": [
+      "Pratique a diferença entre 'I will' e 'I am going to/Present Continuous' por 10 min",
+      "Assista a um vídeo de 'Hotel Check-in' no YouTube e repita as frases em voz alta",
+      "Grave 3 frases pedindo serviços de hotel usando 'Could I have...?'"
+    ],
+    "resumo_gramatical": [
+      "Modal Verbs para polidez (Could/Would)",
+      "Vocabulário de Hotelaria e Serviços",
+      "Estrutura de perguntas com 'Does/Is'"
+    ],
+    "titulo": "Incrível, Wesley! Você se comunicou com muita clareza e confiança!",
+    "tom": "positivo e encorajador"
+  }
+}

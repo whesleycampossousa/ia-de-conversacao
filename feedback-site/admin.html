@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Feedbacks</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        /* Password gate */
+        .gate {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+        }
+        .gate-box {
+            background: rgba(30, 41, 59, 0.95);
+            border-radius: 16px;
+            padding: 40px 32px;
+            max-width: 380px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(100, 116, 139, 0.2);
+        }
+        .gate-box h2 { margin-bottom: 20px; font-size: 1.3rem; }
+        .gate-box input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(100, 116, 139, 0.3);
+            border-radius: 10px;
+            color: #e2e8f0;
+            font-size: 1rem;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        .gate-box input:focus { outline: none; border-color: #38bdf8; }
+        .gate-box button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #0ea5e9, #6366f1);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .gate-box button:hover { opacity: 0.9; }
+        .gate-error { color: #fca5a5; font-size: 0.85rem; margin-top: 8px; }
+
+        /* Dashboard */
+        .dashboard { display: none; max-width: 900px; margin: 0 auto; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .header h1 {
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .stats {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .stat-card {
+            background: rgba(30, 41, 59, 0.95);
+            border-radius: 14px;
+            padding: 20px 24px;
+            flex: 1;
+            min-width: 140px;
+            border: 1px solid rgba(100, 116, 139, 0.2);
+        }
+        .stat-card .label { font-size: 0.8rem; color: #94a3b8; margin-bottom: 6px; }
+        .stat-card .value { font-size: 1.8rem; font-weight: 700; }
+        .stat-card .value.stars-color { color: #fbbf24; }
+        .stat-card .value.total-color { color: #38bdf8; }
+
+        /* Feedback cards */
+        .feedback-list { display: flex; flex-direction: column; gap: 12px; }
+        .fb-card {
+            background: rgba(30, 41, 59, 0.95);
+            border-radius: 14px;
+            padding: 20px;
+            border: 1px solid rgba(100, 116, 139, 0.15);
+        }
+        .fb-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .fb-name { font-weight: 700; font-size: 1.05rem; }
+        .fb-date { font-size: 0.75rem; color: #64748b; }
+        .fb-stars { color: #fbbf24; font-size: 1.2rem; letter-spacing: 2px; margin-bottom: 8px; }
+        .fb-comment {
+            color: #cbd5e1;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+        .empty-msg {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+            font-size: 1.1rem;
+        }
+        .refresh-btn {
+            padding: 8px 18px;
+            background: rgba(100, 116, 139, 0.2);
+            color: #cbd5e1;
+            border: 1px solid rgba(100, 116, 139, 0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .refresh-btn:hover { background: rgba(100, 116, 139, 0.35); }
+        .loading { text-align: center; padding: 40px; color: #64748b; }
+    </style>
+</head>
+<body>
+    <!-- Password Gate -->
+    <div class="gate" id="gate">
+        <div class="gate-box">
+            <h2>Painel de Feedbacks</h2>
+            <input type="password" id="pwd" placeholder="Senha de admin" autofocus>
+            <button onclick="tryLogin()">Entrar</button>
+            <div class="gate-error" id="gate-error"></div>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="dashboard" id="dashboard">
+        <div class="header">
+            <h1>Feedbacks dos Alunos</h1>
+            <button class="refresh-btn" onclick="loadFeedbacks()">Atualizar</button>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="label">Total de feedbacks</div>
+                <div class="value total-color" id="stat-total">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Nota media</div>
+                <div class="value stars-color" id="stat-avg">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Ultimo recebido</div>
+                <div class="value" id="stat-last" style="font-size:1rem;color:#94a3b8;">-</div>
+            </div>
+        </div>
+
+        <div id="feedback-list" class="feedback-list">
+            <div class="loading">Carregando feedbacks...</div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = '/.netlify/functions/feedback';
+        const ADMIN_PWD = 'admin2025';
+
+        // Login
+        document.getElementById('pwd').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') tryLogin();
+        });
+
+        function tryLogin() {
+            const pwd = document.getElementById('pwd').value;
+            if (pwd === ADMIN_PWD) {
+                document.getElementById('gate').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                loadFeedbacks();
+            } else {
+                document.getElementById('gate-error').textContent = 'Senha incorreta.';
+            }
+        }
+
+        // Load feedbacks
+        async function loadFeedbacks() {
+            const listEl = document.getElementById('feedback-list');
+            listEl.innerHTML = '<div class="loading">Carregando feedbacks...</div>';
+
+            try {
+                const res = await fetch(API_URL, { headers: { 'Accept': 'application/json' } });
+                if (!res.ok) throw new Error('Erro');
+                const data = await res.json();
+                const feedbacks = Array.isArray(data.feedbacks) ? data.feedbacks : [];
+
+                // Sort newest first
+                feedbacks.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                // Stats
+                document.getElementById('stat-total').textContent = feedbacks.length;
+                if (feedbacks.length > 0) {
+                    const avg = feedbacks.reduce((s, f) => s + (f.rating || 0), 0) / feedbacks.length;
+                    document.getElementById('stat-avg').textContent = avg.toFixed(1) + ' ★';
+                    const lastDate = new Date(feedbacks[0].date);
+                    document.getElementById('stat-last').textContent = lastDate.toLocaleDateString('pt-BR') + ' ' + lastDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                } else {
+                    document.getElementById('stat-avg').textContent = '-';
+                    document.getElementById('stat-last').textContent = '-';
+                }
+
+                // Render
+                if (feedbacks.length === 0) {
+                    listEl.innerHTML = '<div class="empty-msg">Nenhum feedback recebido ainda.</div>';
+                    return;
+                }
+
+                listEl.innerHTML = feedbacks.map(fb => {
+                    const stars = '★'.repeat(fb.rating || 0) + '☆'.repeat(5 - (fb.rating || 0));
+                    const date = new Date(fb.date);
+                    const dateStr = date.toLocaleDateString('pt-BR') + ' ' + date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                    const name = escapeHtml(fb.name || 'Anonimo');
+                    const comment = escapeHtml(fb.comment || '');
+                    return `<div class="fb-card">
+                        <div class="fb-card-header">
+                            <span class="fb-name">${name}</span>
+                            <span class="fb-date">${dateStr}</span>
+                        </div>
+                        <div class="fb-stars">${stars}</div>
+                        <div class="fb-comment">${comment}</div>
+                    </div>`;
+                }).join('');
+
+            } catch (err) {
+                listEl.innerHTML = '<div class="empty-msg">Erro ao carregar feedbacks. Tente novamente.</div>';
+            }
+        }
+
+        function escapeHtml(text) {
+            const d = document.createElement('div');
+            d.textContent = text;
+            return d.innerHTML;
+        }
+    </script>
+</body>
+</html>

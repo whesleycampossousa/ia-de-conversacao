@@ -9,6 +9,16 @@ venv/
 *.bat
 *.log
 *.txt
+package.json
+package-lock.json
+.webui_secret_key
+*.webm
+test_*.mp3
+test_*.wav
+test_*.webm
+*.xlsx
+*.zip
+qwen_*.wav
 !requirements.txt
 test_*.py
 list_*.py
@@ -29,9 +39,12 @@ nul
 .vercel/cache/
 audio_cache/dynamic/
 test_reports/
+test-results/
+tests/
 free_conversation/
 scripts/
 voice_references/
+voice_samples/
 node_modules/
 backup_today/
 files/
@@ -40,3 +53,6 @@ files2/
 # Misc
 *.md
 !README.md
+
+# Explicitly include authorized emails (listed in .gitignore but needed at runtime)
+!authorized_emails.json

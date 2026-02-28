@@ -13,7 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 
-<body style="background: black; overflow: hidden;" class="audio-only-mode">
+<body style="background: black;" class="audio-only-mode">
 
     <div class="cinematic-player">
 
@@ -30,46 +30,90 @@
                 <div class="player-context">
                     <span id="player-scenario-title">BASIC STRUCTURES TRAINING</span>
                     <span class="divider">|</span>
-                    <span id="timer-display">00:00</span>
+                    <span id="player-mode-badge">Mode: Learning</span>
                 </div>
 
                 <!-- Subtitle Toggle Button -->
-                <button id="subtitle-toggle-btn" class="subtitle-toggle-btn" onclick="toggleSubtitles()">?? Ativar
-                    legendas</button>
+                <button id="subtitle-toggle-btn" class="subtitle-toggle-btn" onclick="toggleSubtitles()">Ativar legendas</button>
             </div>
 
+            <!-- Objective removed -->
+
             <!-- Start Overlay -->
-            <div id="start-overlay" class="start-overlay-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; background: rgba(0,0,0,0.95); position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 100;">
+            <div id="start-overlay" class="start-overlay-container"
+                style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; background: rgba(0,0,0,0.95); position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 100;">
 
-                <!-- Mode Selection (Step 1) -->
-                <div id="mode-selection" class="mode-selection-container" style="text-align: center; margin-bottom: 0.8rem;">
-                    <div class="mode-title" style="font-size: 1.1rem; margin-bottom: 0.3rem;">Choose your mode</div>
-                    <div class="mode-subtitle" style="font-size: 0.8rem; margin-bottom: 0.8rem;">Escolha o modo</div>
-
-                    <div class="pmode-options" style="display: flex; flex-direction: row; gap: 0.5rem; justify-content: center;">
-                        <div class="pmode-card" data-mode="learning" id="mode-learning" style="width: 110px; padding: 0.5rem; background: rgba(30,30,30,0.95); border: 2px solid rgba(255,255,255,0.1); border-radius: 12px; cursor: pointer; text-align: center;">
-                            <div style="font-size: 1.5rem; margin-bottom: 0.2rem;">📚</div>
-                            <div style="font-size: 0.8rem; font-weight: 700; color: white;">Learning</div>
-                            <div style="font-size: 0.6rem; color: rgba(255,255,255,0.5);">Aprendizado</div>
+                <!-- Onboarding (shown only first time) -->
+                <div id="onboarding-overlay" style="display: none; text-align: center; margin-bottom: 1rem; max-width: 360px;">
+                    <div style="font-size: 1rem; font-weight: 700; color: white; margin-bottom: 0.6rem;">Como funciona?</div>
+                    <div style="display: flex; gap: 0.5rem; justify-content: center;">
+                        <div style="flex: 1; background: rgba(30,30,30,0.95); border-radius: 12px; padding: 0.7rem; border: 1px solid rgba(255,255,255,0.1);">
+                            <div style="font-size: 1.3rem; margin-bottom: 0.2rem;">📚</div>
+                            <div style="font-size: 0.75rem; font-weight: 700; color: white; margin-bottom: 0.15rem;">Learning</div>
+                            <div style="font-size: 0.62rem; color: rgba(255,255,255,0.55); line-height: 1.3;">
+                                Siga licoes estruturadas passo a passo. Perfeito para construir vocabulario.
+                            </div>
                         </div>
+                        <div style="flex: 1; background: rgba(30,30,30,0.95); border-radius: 12px; padding: 0.7rem; border: 1px solid rgba(255,255,255,0.1);">
+                            <div style="font-size: 1.3rem; margin-bottom: 0.2rem;">🎭</div>
+                            <div style="font-size: 0.75rem; font-weight: 700; color: white; margin-bottom: 0.15rem;">Simulator</div>
+                            <div style="font-size: 0.62rem; color: rgba(255,255,255,0.55); line-height: 1.3;">
+                                Pratique conversas reais. A IA interpreta um personagem em cenarios do dia a dia.
+                            </div>
+                        </div>
+                    </div>
+                    <button id="onboarding-dismiss" style="margin-top: 0.5rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 0.3rem 1.2rem; border-radius: 999px; font-size: 0.72rem; cursor: pointer;">
+                        Entendi!
+                    </button>
+                </div>
 
-                        <div class="pmode-card" data-mode="simulator" id="mode-simulator" style="width: 110px; padding: 0.5rem; background: rgba(30,30,30,0.95); border: 2px solid rgba(255,255,255,0.1); border-radius: 12px; cursor: pointer; text-align: center;">
-                            <div style="font-size: 1.5rem; margin-bottom: 0.2rem;">🎭</div>
+                <!-- Mode Selection -->
+                <div id="mode-selection" class="mode-selection-container" style="text-align: center; margin-bottom: 0.5rem;">
+                    <div class="mode-title" style="font-size: 0.95rem; margin-bottom: 0.5rem; color: rgba(255,255,255,0.7);">Escolha o modo</div>
+                    <div class="pmode-options" style="display: flex; flex-direction: row; gap: 0.5rem; justify-content: center;">
+                        <div class="pmode-card" data-mode="learning" id="mode-learning"
+                            style="width: 140px; padding: 0.5rem 0.4rem; background: rgba(30,30,30,0.95); border: 2px solid rgba(255,255,255,0.1); border-radius: 12px; cursor: pointer; text-align: center;">
+                            <div style="font-size: 1.3rem; margin-bottom: 0.1rem;">📚</div>
+                            <div style="font-size: 0.8rem; font-weight: 700; color: white;">Learning</div>
+                            <div style="font-size: 0.58rem; color: rgba(255,255,255,0.45); line-height: 1.3; margin-top: 0.15rem;">Licoes passo a passo</div>
+                        </div>
+                        <div class="pmode-card" data-mode="simulator" id="mode-simulator"
+                            style="width: 140px; padding: 0.5rem 0.4rem; background: rgba(30,30,30,0.95); border: 2px solid rgba(255,255,255,0.1); border-radius: 12px; cursor: pointer; text-align: center;">
+                            <div style="font-size: 1.3rem; margin-bottom: 0.1rem;">🎭</div>
                             <div style="font-size: 0.8rem; font-weight: 700; color: white;">Simulator</div>
-                            <div style="font-size: 0.6rem; color: rgba(255,255,255,0.5);">Simulador</div>
+                            <div style="font-size: 0.58rem; color: rgba(255,255,255,0.45); line-height: 1.3; margin-top: 0.15rem;">Conversas reais com IA</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Voice selector is handled by app.js after mode selection -->
+                <!-- Difficulty Selection -->
+                <div id="difficulty-selection" style="text-align: center; margin: 0.5rem 0;">
+                    <div style="font-size: 0.72rem; color: rgba(255,255,255,0.45); margin-bottom: 0.35rem;">Dificuldade</div>
+                    <div class="difficulty-pills" style="display: flex; gap: 0.35rem; justify-content: center;">
+                        <button class="difficulty-pill" data-difficulty="beginner">Iniciante</button>
+                        <button class="difficulty-pill" data-difficulty="intermediate">Intermediario</button>
+                        <button class="difficulty-pill" data-difficulty="advanced">Avancado</button>
+                    </div>
+                </div>
+
+                <!-- Transcription Confirm Toggle (simple inline) -->
+                <div id="transcription-confirm-step" style="text-align: center; margin: 0.4rem 0;">
+                    <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <span style="font-size: 0.7rem; color: rgba(255,255,255,0.5);">Confirmar transcricao</span>
+                        <input type="checkbox" id="confirm-toggle-checkbox" style="display: none;" />
+                        <span class="toggle-switch"></span>
+                    </label>
+                </div>
+
+                <!-- Voice selector (handled by app.js) -->
                 <div id="voice-selection-step" style="display: none;"></div>
 
-                <!-- Play button (Step 2) -->
+                <!-- Play button (always visible) -->
                 <button id="start-btn" class="primary-btn pulse-animation"
-                    style="display: none; padding: 1rem 2rem; font-size: 1.1rem; margin-top: 1.5rem;">
+                    style="padding: 0.9rem 2rem; font-size: 1.1rem; margin-top: 1rem;">
                     ▶ Play
                 </button>
-                <div id="start-message" class="start-message" style="display: none; font-size: 0.8rem;">Tap to start</div>
+                <div id="start-message" class="start-message" style="font-size: 0.75rem; color: rgba(255,255,255,0.35); margin-top: 0.3rem;">Selecione o modo e toque para iniciar</div>
             </div>
 
             <!-- Lesson Phrase Reference (shown during practice) -->
@@ -78,55 +122,41 @@
             <!-- Subtitle Chat Area -->
             <div id="chat-window" class="subtitle-container"></div>
 
-            <!-- Suggestions Panel (Learning Mode) -->
-            <div id="suggestions-panel" class="suggestions-panel" style="display: none;">
-                <div class="suggestions-title">Escolha uma das frases e leia em voz alta</div>
-                <div id="suggestions-list" class="suggestions-list"></div>
-            </div>
+            <!-- Suggestions Panel Removed -->
 
-            <!-- Free Conversation Question Picker -->
+            <!-- Free Conversation Topic Picker -->
             <div id="free-question-panel" class="free-question-panel hidden">
-                <div class="free-question-card">
-                    <div id="free-question-text" class="free-question-text">Question loading...</div>
-                    <div class="free-question-actions">
-                        <button id="free-question-refresh" class="free-question-refresh"
-                            title="Trocar pergunta">⟳</button>
-                        <button id="free-question-ok" class="free-question-ok">OK</button>
+                <div class="free-question-card" style="max-width: 340px;">
+                    <div style="font-size: 0.85rem; color: rgba(255,255,255,0.8); font-weight: 600; margin-bottom: 0.4rem;">
+                        Sobre o que voce quer conversar?
                     </div>
+                    <div id="free-question-text" style="font-size: 0.75rem; color: rgba(255,255,255,0.65); margin-bottom: 0.45rem; line-height: 1.35;"></div>
+                    <div id="free-session-mode" class="free-session-mode">
+                        <button class="free-session-chip selected" data-free-mode="mission">Missao Easy</button>
+                        <button class="free-session-chip" data-free-mode="chat">Conversa livre</button>
+                    </div>
+                    <div id="free-mission-preview" class="free-mission-preview"></div>
+                    <input type="text" id="free-topic-input" placeholder="Ex: Minha viagem para a Italia..."
+                        style="width: 100%; padding: 0.45rem 0.7rem; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: white; font-size: 0.8rem; margin-bottom: 0.4rem; outline: none; box-sizing: border-box;" />
+                    <div id="topic-chips" style="display: flex; flex-wrap: wrap; gap: 0.3rem; margin-bottom: 0.5rem;">
+                        <button class="topic-chip" data-topic="Travel">Viagens</button>
+                        <button class="topic-chip" data-topic="Movies and Series">Filmes</button>
+                        <button class="topic-chip" data-topic="Technology">Tecnologia</button>
+                        <button class="topic-chip" data-topic="Food and Cooking">Comida</button>
+                        <button class="topic-chip" data-topic="Sports">Esportes</button>
+                        <button class="topic-chip" data-topic="Career and Work">Carreira</button>
+                        <button class="topic-chip" data-topic="Music">Musica</button>
+                        <button class="topic-chip" data-topic="Daily Life">Dia a dia</button>
+                    </div>
+                    <button id="free-question-ok" class="free-question-ok" style="width: 100%;">Comecar</button>
                 </div>
             </div>
 
             <!-- Footer Controls -->
             <div class="player-controls footer-bar" id="footer-bar">
-                <div class="utility-row" id="utility-row">
-                    <button class="control-btn" id="exit-btn" onclick="window.location.href='scenarios.html'"
-                        title="Back to Browse">
-                        ✕
-                    </button>
+                <input type="checkbox" id="auto-translate-toggle" style="display:none;">
 
-                    <button id="suggestions-toggle-btn" class="suggestions-toggle-btn" title="Ver sugestoes"
-                        style="display: none;">
-                        Ver sugestoes
-                    </button>
-
-                    <!-- Hidden checkbox for app.js compatibility -->
-                    <input type="checkbox" id="auto-translate-toggle" style="display:none;">
-
-                    <button class="control-btn" id="report-icon-btn"
-                        onclick="document.getElementById('report-btn').click()" title="Report">
-                        📊
-                    </button>
-
-                    <!-- Hidden original report button triggered by icon -->
-                    <button id="report-btn" style="display:none;">Report</button>
-                </div>
-
-                <div class="input-row" id="input-row">
-                    <!-- Mic button stays visible next to input -->
-                    <div class="text-input-container">
-                        <input type="text" id="text-input" class="text-input" placeholder="Type your message...">
-                        <button id="send-btn" class="action-btn send-btn">Send</button>
-                    </div>
+                <div class="input-row voice-only-row" id="input-row">
                     <button id="record-btn" class="control-btn mic-btn" title="Start/Speak" disabled>
                         <span id="mic-icon-inner">🎤</span>
                     </button>
@@ -157,6 +187,20 @@
             </div>
 
 
+        </div>
+    </div>
+
+    <!-- Tips Modal (shown before practice starts) -->
+    <div id="tips-modal" class="tips-modal" style="display: none;">
+        <div class="tips-modal-content">
+            <div class="tips-modal-icon">💡</div>
+            <div class="tips-modal-title">Dicas antes de começar</div>
+            <div class="tips-modal-text">
+                <p>Ao clicar em <strong>gravar</strong>, fale na velocidade que quiser e pelo tempo que quiser — o botão <strong>não vai te cortar</strong>.</p>
+                <p>Pode falar lentamente se precisar. Recomendo tentar dar respostas maiores e mais elaboradas.</p>
+                <p>No fim, gere o <strong>relatório da conversação</strong> para estudo e aprendizado. Depois, <strong>corrija os erros gramaticais</strong>.</p>
+            </div>
+            <button id="tips-modal-ok" class="tips-modal-btn">Entendi, vamos lá!</button>
         </div>
     </div>
 
@@ -264,7 +308,10 @@
 
         const getBgUrl = (url) => {
             if (!url) return url;
-            return url.replace(/w=\d+/g, 'w=1920');
+            // Use smaller images on mobile to save bandwidth and speed up loading
+            const isMobile = window.innerWidth <= 768;
+            const targetWidth = isMobile ? 800 : 1920;
+            return url.replace(/w=\d+/g, `w=${targetWidth}`);
         };
 
         const currentBg = getBgUrl(categoryImages[contextId] || categoryImages['default']);
@@ -321,8 +368,9 @@
             return localStorage.getItem('preferred_voice') || 'female2';
         };
 
-        // Subtitle visibility state
-        let subtitlesEnabled = false;
+        // Subtitle visibility state (default ON for better comprehension)
+        const savedSubtitlePref = localStorage.getItem('auto_translate');
+        let subtitlesEnabled = savedSubtitlePref === null ? true : savedSubtitlePref === 'true';
         window.subtitlesEnabled = subtitlesEnabled;
         const subtitleToggleBtn = document.getElementById('subtitle-toggle-btn');
         const autoTranslateCheckbox = document.getElementById('auto-translate-toggle');
@@ -334,8 +382,8 @@
         function updateToggleUI() {
             if (subtitleToggleBtn) {
                 subtitleToggleBtn.textContent = window.subtitlesEnabled
-                    ? '?? Desativar legendas'
-                    : '?? Ativar legendas';
+                    ? 'Desativar legendas'
+                    : 'Ativar legendas';
                 subtitleToggleBtn.classList.toggle('active', window.subtitlesEnabled);
             }
             if (autoTranslateCheckbox) {
@@ -355,9 +403,17 @@
                 if (!realText) return;
                 const decodedText = realText.replace(/&quot;/g, '"').replace(/&amp;/g, '&');
                 el.setAttribute('data-text', decodedText);
-                el.innerText = window.subtitlesEnabled
-                    ? decodedText
-                    : (window.obfuscateText ? window.obfuscateText(decodedText) : '(... ...)');
+                const isStructured = el.classList.contains('subtitle-structured') || el.classList.contains('user-structured');
+                if (window.subtitlesEnabled) {
+                    el.classList.remove('subtitle-obfuscated');
+                    if (!isStructured) {
+                        el.innerText = decodedText;
+                    }
+                } else if (isStructured) {
+                    el.classList.add('subtitle-obfuscated');
+                } else {
+                    el.innerText = window.obfuscateText ? window.obfuscateText(decodedText) : '(... ...)';
+                }
             });
 
             const translations = document.querySelectorAll('.translation-line');
@@ -382,80 +438,123 @@
         window.toggleSubtitles = toggleSubtitles;
 
         // ===== MODE SELECTION LOGIC =====
-        let selectedMode = localStorage.getItem('practice_mode') || null;
+        let selectedMode = localStorage.getItem('practice_mode') || 'learning';
 
-        // Grammar topics only support learning mode — hide simulator card
-        // urlParams already declared above (line 181)
+        // Grammar topics only support learning mode
         const isGrammarMode = urlParams.get('type') === 'grammar';
         if (isGrammarMode) {
             const simCard = document.getElementById('mode-simulator');
             if (simCard) simCard.style.display = 'none';
-            // Force learning mode for grammar
             selectedMode = 'learning';
             localStorage.setItem('practice_mode', 'learning');
         }
 
-        // Initialize mode selection
+        // ===== TRANSCRIPTION CONFIRM PREFERENCE =====
+        let confirmTranscription = localStorage.getItem('confirm_transcription') || 'false';
+
+        // ===== DIFFICULTY PREFERENCE =====
+        let selectedDifficulty = localStorage.getItem('practice_difficulty') || 'intermediate';
+
         function initModeSelection() {
             const modeCards = document.querySelectorAll('.pmode-card');
-            const voiceSelectionStep = document.getElementById('voice-selection-step');
-            const startBtn = document.getElementById('start-btn');
-            const startMessage = document.getElementById('start-message');
+            const confirmCheckbox = document.getElementById('confirm-toggle-checkbox');
+            const confirmStep = document.getElementById('transcription-confirm-step');
+            const difficultyPills = document.querySelectorAll('.difficulty-pill');
 
+            // --- Mode selection ---
             modeCards.forEach(card => {
-                card.addEventListener('click', () => {
-                    // Remove selected from all cards
+                card.addEventListener('click', async () => {
                     modeCards.forEach(c => c.classList.remove('selected'));
-                    // Add selected to clicked card
                     card.classList.add('selected');
-                    // Store selected mode
                     selectedMode = card.dataset.mode;
                     localStorage.setItem('practice_mode', selectedMode);
                     window.practiceMode = selectedMode;
+                    if (window.updateHeaderInfo) window.updateHeaderInfo();
+                    if (window.updateSuggestionsVisibility) window.updateSuggestionsVisibility();
 
-                    // Show voice selection step (app.js will inject voice selector here)
-                    if (voiceSelectionStep) {
-                        voiceSelectionStep.style.display = 'block';
+                    // Simulator: hide confirm toggle, show difficulty
+                    // Learning: show confirm toggle, hide difficulty
+                    const difficultyEl = document.getElementById('difficulty-selection');
+                    if (selectedMode === 'simulator') {
+                        confirmTranscription = 'false';
+                        localStorage.setItem('confirm_transcription', 'false');
+                        if (confirmCheckbox) confirmCheckbox.checked = false;
+                        if (confirmStep) confirmStep.style.display = 'none';
+                        if (difficultyEl) difficultyEl.style.display = 'block';
+                    } else {
+                        if (confirmStep) confirmStep.style.display = 'block';
+                        if (difficultyEl) difficultyEl.style.display = 'none';
                     }
 
-                    // Show start button after mode selection
-                    if (startBtn) {
-                        startBtn.style.display = 'block';
+                    if (window.showPracticeTipsModalIfNeeded && (selectedMode === 'learning' || selectedMode === 'simulator')) {
+                        await window.showPracticeTipsModalIfNeeded();
                     }
-                    if (startMessage) {
-                        startMessage.style.display = 'block';
-                    }
-
-                    console.log('[MODE] Selected mode:', selectedMode);
                 });
             });
 
-            // If mode was already selected (from localStorage), apply it
-            if (selectedMode) {
-                const savedCard = document.querySelector(`.pmode-card[data-mode="${selectedMode}"]`);
-                if (savedCard) {
-                    savedCard.classList.add('selected');
-                    window.practiceMode = selectedMode;
-                    // Show start button
-                    if (startBtn) startBtn.style.display = 'block';
-                    if (startMessage) startMessage.style.display = 'block';
+            // Pre-select saved mode
+            const savedModeCard = document.querySelector(`.pmode-card[data-mode="${selectedMode}"]`);
+            if (savedModeCard) {
+                savedModeCard.classList.add('selected');
+                window.practiceMode = selectedMode;
+                if (window.updateHeaderInfo) window.updateHeaderInfo();
+                if (window.updateSuggestionsVisibility) window.updateSuggestionsVisibility();
+                // Hide confirm for simulator, hide difficulty for learning
+                if (selectedMode === 'simulator' && confirmStep) confirmStep.style.display = 'none';
+                if (selectedMode === 'learning') {
+                    const difficultyEl = document.getElementById('difficulty-selection');
+                    if (difficultyEl) difficultyEl.style.display = 'none';
+                }
+            }
+
+            // --- Confirm toggle ---
+            if (confirmCheckbox) {
+                confirmCheckbox.checked = confirmTranscription === 'true';
+                confirmCheckbox.addEventListener('change', () => {
+                    confirmTranscription = confirmCheckbox.checked ? 'true' : 'false';
+                    localStorage.setItem('confirm_transcription', confirmTranscription);
+                });
+            }
+
+            // --- Difficulty pills ---
+            difficultyPills.forEach(pill => {
+                if (pill.dataset.difficulty === selectedDifficulty) pill.classList.add('selected');
+                pill.addEventListener('click', () => {
+                    difficultyPills.forEach(p => p.classList.remove('selected'));
+                    pill.classList.add('selected');
+                    selectedDifficulty = pill.dataset.difficulty;
+                    localStorage.setItem('practice_difficulty', selectedDifficulty);
+                });
+            });
+
+            // --- Onboarding (first time only) ---
+            if (!localStorage.getItem('onboarding_done')) {
+                const onboardingEl = document.getElementById('onboarding-overlay');
+                if (onboardingEl) onboardingEl.style.display = 'block';
+                const dismissBtn = document.getElementById('onboarding-dismiss');
+                if (dismissBtn) {
+                    dismissBtn.addEventListener('click', () => {
+                        onboardingEl.style.display = 'none';
+                        localStorage.setItem('onboarding_done', 'true');
+                    });
                 }
             }
         }
 
-        // Global function to get selected mode
+        // Global functions
         window.getSelectedMode = () => selectedMode || 'learning';
+        window.getConfirmTranscription = () => confirmTranscription === 'true';
+        window.getSelectedDifficulty = () => selectedDifficulty || 'intermediate';
 
-        // Hide footer while overlay is showing (so Play button is not covered)
+        // Hide footer while overlay is showing
         const footerBar = document.getElementById('footer-bar');
         if (footerBar) footerBar.style.display = 'none';
 
-        // Initialize on DOM ready
         initModeSelection();
     </script>
 
     <!-- Load App Logic -->
-    <script src="app.js"></script>
+    <script src="app.js?v=20260221-07"></script>
 
     <style>
         /* Top bar styles */
@@ -464,7 +563,7 @@
             top: 0;
             left: 0;
             right: 0;
-            padding: 20px 40px;
+            padding: 18px 34px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -474,6 +573,7 @@
         .player-context {
             color: rgba(255, 255, 255, 0.6);
             font-weight: 600;
+            font-size: 0.9em;
             letter-spacing: 1px;
             display: flex;
             align-items: center;
@@ -482,6 +582,17 @@
 
         .player-context .divider {
             opacity: 0.5;
+        }
+
+        .session-progress-badge {
+            background: rgba(16, 185, 129, 0.18);
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            color: rgba(236, 253, 245, 0.95);
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            letter-spacing: 0.2px;
         }
 
         #timer-display {
@@ -493,9 +604,9 @@
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.3);
             color: rgba(255, 255, 255, 0.7);
-            padding: 10px 20px;
+            padding: 9px 18px;
             border-radius: 6px;
-            font-size: 0.9rem;
+            font-size: 0.81rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -539,6 +650,7 @@
                 justify-content: flex-start;
                 padding-top: 8vh;
             }
+
             #start-btn {
                 transform: scale(1);
                 padding: 0.8rem 2rem;
@@ -550,6 +662,7 @@
             .start-overlay-container {
                 padding-top: 5vh;
             }
+
             #start-btn {
                 padding: 0.7rem 1.5rem;
                 font-size: 0.9rem;
@@ -567,12 +680,12 @@
             font-weight: 700;
             color: white;
             margin-bottom: 0.5rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
         }
 
         .mode-subtitle {
             font-size: 0.95rem;
-            color: rgba(255,255,255,0.7);
+            color: rgba(255, 255, 255, 0.7);
             margin-bottom: 1.5rem;
         }
 
@@ -580,9 +693,11 @@
             .mode-selection-container {
                 margin-bottom: 1rem;
             }
+
             .mode-title {
                 font-size: 1.3rem;
             }
+
             .mode-subtitle {
                 font-size: 0.85rem;
                 margin-bottom: 1rem;
@@ -598,7 +713,7 @@
         /* Use specific selector to override style.css */
         .start-overlay-container .pmode-card {
             background: rgba(30, 30, 30, 0.95) !important;
-            border: 2px solid rgba(255,255,255,0.1) !important;
+            border: 2px solid rgba(255, 255, 255, 0.1) !important;
             border-radius: 16px !important;
             padding: 1rem 0.8rem !important;
             width: 140px !important;
@@ -611,7 +726,7 @@
 
         .start-overlay-container .pmode-card:hover {
             transform: translateY(-3px);
-            border-color: rgba(255,255,255,0.3) !important;
+            border-color: rgba(255, 255, 255, 0.3) !important;
             background: rgba(40, 40, 40, 0.95) !important;
         }
 
@@ -619,6 +734,72 @@
             border-color: #e50914 !important;
             background: rgba(229, 9, 20, 0.15) !important;
             transform: scale(1.02);
+        }
+
+        /* Difficulty pills */
+        .difficulty-pill {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: rgba(255,255,255,0.55);
+            padding: 0.25rem 0.7rem;
+            border-radius: 999px;
+            font-size: 0.68rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .difficulty-pill:hover {
+            border-color: rgba(255,255,255,0.25);
+            color: rgba(255,255,255,0.8);
+        }
+        .difficulty-pill.selected {
+            background: rgba(229, 9, 20, 0.18);
+            border-color: #e50914;
+            color: #fff;
+        }
+
+        /* Toggle switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 36px;
+            height: 20px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 10px;
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            background: rgba(255,255,255,0.6);
+            border-radius: 50%;
+            transition: transform 0.2s;
+        }
+        #confirm-toggle-checkbox:checked ~ .toggle-switch {
+            background: #e50914;
+        }
+        #confirm-toggle-checkbox:checked ~ .toggle-switch::after {
+            transform: translateX(16px);
+            background: #fff;
+        }
+
+        .player-objective {
+            margin: 6px 0 12px;
+            text-align: center;
+            font-size: 0.78rem;
+            color: rgba(255, 255, 255, 0.75);
+            background: rgba(0, 0, 0, 0.45);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 6px 10px;
+            max-width: 92%;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .start-overlay-container .mode-icon {
@@ -635,51 +816,112 @@
 
         .mode-name-pt {
             font-size: 0.85rem;
-            color: rgba(255,255,255,0.5);
+            color: rgba(255, 255, 255, 0.5);
             margin-bottom: 0.8rem;
         }
 
         .mode-description {
             font-size: 0.8rem;
-            color: rgba(255,255,255,0.8);
+            color: rgba(255, 255, 255, 0.8);
             line-height: 1.4;
         }
 
         .mode-description-pt {
             font-size: 0.7rem;
-            color: rgba(255,255,255,0.5);
+            color: rgba(255, 255, 255, 0.5);
             margin-top: 0.4rem;
         }
 
-        /* Mobile: cards SMALLER and SIDE BY SIDE - v3 */
+        /* Mobile Optimization - Spacious & Premium */
         @media (max-width: 600px) {
+
+            /* Header: Clean & compact but breathable */
+            .player-top-bar {
+                padding: 12px 16px;
+            }
+
+            .player-context {
+                font-size: 0.85rem;
+                padding: 6px 12px;
+            }
+
+            /* Start Screen: More spacing, larger touch targets */
             #start-overlay {
                 justify-content: flex-start !important;
-                padding-top: 20vh !important;
+                padding-top: 15vh !important;
             }
-            #start-btn {
-                margin-top: 1.5rem !important;
-                padding: 0.8rem 1.5rem !important;
+
+            .start-overlay-container .mode-selection-container {
+                margin-bottom: 2rem;
             }
-            .start-overlay-container .pmode-options {
-                flex-direction: row !important;
-                gap: 0.5rem !important;
+
+            .pmode-options {
+                gap: 1rem !important;
+                width: 100%;
+                justify-content: center;
             }
+
+            /* Cards: Use available width, not tiny squares */
             .start-overlay-container .pmode-card {
-                width: 120px !important;
-                padding: 0.5rem 0.4rem !important;
+                width: 42% !important;
+                /* Side by side with good gap */
+                max-width: 160px !important;
+                padding: 1rem 0.5rem !important;
+                height: auto;
+                min-height: 110px;
+                display: flex !important;
+                flex-direction: column;
+                justify-content: center;
             }
-            .start-overlay-container .mode-icon {
+
+            /* Play Button: Big & Tappable */
+            #start-btn {
+                margin-top: 2rem !important;
+                padding: 1rem 3rem !important;
+                font-size: 1.15rem !important;
+                border-radius: 999px;
+                width: 80%;
+                max-width: 300px;
+            }
+
+            /* Chat: Large text for readability */
+            .subtitle-container {
+                padding: 0 20px;
+                margin-bottom: 14px;
+                /* Clear footer */
+            }
+
+            .subtitle-line {
                 font-size: 1.4rem !important;
-                margin-bottom: 0.2rem !important;
+                line-height: 1.4;
             }
-            .start-overlay-container .mode-name {
-                font-size: 0.8rem !important;
+
+            /* Footer: Spacious Controls */
+            .player-controls.footer-bar {
+                padding: 6px 16px calc(8px + env(safe-area-inset-bottom));
+                background: linear-gradient(to top, rgba(0, 0, 0, 0.98), rgba(0, 0, 0, 0.8));
             }
-            .start-overlay-container .mode-name-pt {
-                font-size: 0.6rem !important;
-                margin-bottom: 0.2rem !important;
+
+            .player-controls.footer-bar .input-row {
+                justify-content: center;
             }
+
+            .text-input-container {
+                display: none !important;
+            }
+
+            .control-btn {
+                width: 52px !important;
+                height: 52px !important;
+                font-size: 1.4rem !important;
+            }
+
+            .control-btn.mic-btn {
+                width: 56px !important;
+                height: 56px !important;
+            }
+
+            /* Hide less critical info on very small screens if needed */
             .start-overlay-container .mode-description,
             .start-overlay-container .mode-description-pt {
                 display: none !important;
@@ -692,12 +934,15 @@
                 width: 100px !important;
                 padding: 0.4rem 0.3rem !important;
             }
+
             .start-overlay-container .mode-icon {
                 font-size: 1.2rem !important;
             }
+
             .start-overlay-container .mode-name {
                 font-size: 0.7rem !important;
             }
+
             .start-overlay-container .mode-name-pt {
                 font-size: 0.55rem !important;
             }
@@ -713,16 +958,51 @@
             position: absolute;
             bottom: 30px;
             right: 40px;
-            color: rgba(255, 255, 255, 0.4);
-            font-size: 0.8rem;
+            color: rgba(226, 232, 240, 0.9);
+            background: rgba(2, 6, 23, 0.5);
+            border: 1px solid rgba(148, 163, 184, 0.28);
+            border-radius: 999px;
+            padding: 0.28rem 0.72rem;
+            font-size: 0.78rem;
+            letter-spacing: 0.01em;
+            backdrop-filter: blur(2px);
+        }
+
+        .status-indicator.listening {
+            color: #fef3c7;
+            border-color: rgba(248, 113, 113, 0.55);
+            background: rgba(127, 29, 29, 0.36);
+            box-shadow: 0 0 12px rgba(248, 113, 113, 0.25);
+            animation: statusPulseInline 1.1s ease-in-out infinite;
+        }
+
+        @keyframes statusPulseInline {
+            0% {
+                transform: translateY(0);
+                box-shadow: 0 0 0 rgba(248, 113, 113, 0.15);
+            }
+
+            50% {
+                transform: translateY(-1px);
+                box-shadow: 0 0 10px rgba(248, 113, 113, 0.28);
+            }
+
+            100% {
+                transform: translateY(0);
+                box-shadow: 0 0 0 rgba(248, 113, 113, 0.15);
+            }
         }
 
         /* Translation line styling */
         .translation-line {
             font-size: 0.9em;
-            color: #aaa;
-            margin-top: 5px;
-            font-style: italic;
+            color: #d1d5db;
+            margin-top: 6px;
+            font-style: normal;
+            padding: 0.35rem 0.5rem;
+            border-radius: 10px;
+            border: 1px solid rgba(74, 222, 128, 0.2);
+            background: rgba(34, 197, 94, 0.1);
             display: none;
             /* Hidden by default */
         }
@@ -802,6 +1082,107 @@
             color: #fff;
         }
 
+        /* Tips Modal */
+        .tips-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            animation: tipsModalFadeIn 0.3s ease;
+        }
+
+        @keyframes tipsModalFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .tips-modal-content {
+            background: linear-gradient(145deg, #1a1a2e, #16213e);
+            border: 1px solid rgba(229, 9, 20, 0.3);
+            border-radius: 20px;
+            padding: 2rem 1.8rem;
+            max-width: 380px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(229, 9, 20, 0.1);
+        }
+
+        .tips-modal-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .tips-modal-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 1rem;
+        }
+
+        .tips-modal-text {
+            text-align: left;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+
+        .tips-modal-text p {
+            margin: 0 0 0.7rem 0;
+        }
+
+        .tips-modal-text strong {
+            color: #e50914;
+        }
+
+        .tips-modal-dismiss-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            cursor: pointer;
+            margin-top: 0.8rem;
+            margin-bottom: 1rem;
+            font-size: 0.72rem;
+            color: rgba(255, 255, 255, 0.45);
+        }
+
+        .tips-modal-dismiss-label input[type="checkbox"] {
+            accent-color: #e50914;
+        }
+
+        .tips-modal-btn {
+            width: 100%;
+            padding: 0.85rem;
+            background: linear-gradient(135deg, #e50914, #b20710);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .tips-modal-btn:hover {
+            transform: scale(1.03);
+            box-shadow: 0 4px 20px rgba(229, 9, 20, 0.4);
+        }
+
+        @media (max-width: 400px) {
+            .tips-modal-content {
+                padding: 1.5rem 1.2rem;
+            }
+            .tips-modal-title {
+                font-size: 1.05rem;
+            }
+            .tips-modal-text {
+                font-size: 0.78rem;
+            }
+        }
+
         /* Pulse animation for Play button */
         .pulse-animation {
             animation: pulse 2s ease-in-out infinite;
@@ -822,3 +1203,4 @@
 </body>
 
 </html>
+

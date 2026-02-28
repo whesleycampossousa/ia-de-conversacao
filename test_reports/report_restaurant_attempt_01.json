@@ -1,0 +1,110 @@
+{
+    "context": "restaurant",
+    "attempt": 1,
+    "profile": "silent_shy",
+    "pass": false,
+    "avg_score": 8.75,
+    "stats": {
+        "score_sum": 70,
+        "violations": 2
+    },
+    "turns": [
+        {
+            "turn": 1,
+            "student": "(System Trigger)",
+            "ai": "Hello, welcome to the Restaurant. How can I help you today?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain consistency in following the mandatory opening rule and natural flow guidelines. No changes needed for this response.",
+                "first_message_matches_required_opening": true
+            }
+        },
+        {
+            "turn": 2,
+            "student": "Um... Looking for...",
+            "ai": "Um, looking for a table or perhaps something from the bar?",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "Robotic filler - AI completes student's sentence with 'Um' and adds unnecessary clarification",
+                "score": 5,
+                "improvement_suggestion": "Ask a direct question without completing the customer's sentence or adding filler phrases"
+            }
+        },
+        {
+            "turn": 3,
+            "student": "Uhh... Table. Quiet corner?",
+            "ai": "Certainly. Just for one, then? Would you prefer a smoking or non-smoking section?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Consider streamlining the response to maintain concise natural flow while adhering to single-question-per-turn structure."
+            }
+        },
+        {
+            "turn": 4,
+            "student": "\"Um... I'm not sure. Do you have a preference?\"",
+            "ai": "Well, our non-smoking section tends to be a bit quieter, if that helps. Would you like me to seat you there?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Consider simplifying the response to avoid filler phrases while maintaining natural flow."
+            }
+        },
+        {
+            "turn": 5,
+            "student": "Sure, thanks.",
+            "ai": "Great, right this way. Would you like to see a menu while I get the table ready?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "No significant improvements needed. The response maintains natural flow and adheres to all rules."
+            }
+        },
+        {
+            "turn": 6,
+            "student": "Yes...",
+            "ai": "Yes, here is the menu. I'll give you a few minutes to look it over; can I get you something to drink while you decide?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain natural flow by keeping dialogue concise and focused on the scenario."
+            }
+        },
+        {
+            "turn": 7,
+            "student": "\"Water.\"",
+            "ai": "Certainly, I'll bring you some water right away. Would you like still or sparkling?",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "Natural Flow: Only 1 question per turn. The response includes a statement and a question, which violates the rule.",
+                "score": 5,
+                "improvement_suggestion": "Ask only the question about water type without the confirmation statement."
+            }
+        },
+        {
+            "turn": 8,
+            "student": "Still, please.",
+            "ai": "Still water coming right up. Will you be wanting to order anything else for the moment?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain concise, scenario-specific responses without additional explanations."
+            }
+        }
+    ]
+}

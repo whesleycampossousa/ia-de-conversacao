@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback - Everyday Conversation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: #080c18;
+            color: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background:
+                radial-gradient(ellipse at 20% 50%, rgba(56, 189, 248, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(129, 140, 248, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 80%, rgba(168, 85, 247, 0.06) 0%, transparent 50%);
+            animation: bgShift 15s ease-in-out infinite alternate;
+            z-index: 0;
+        }
+
+        @keyframes bgShift {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            100% { transform: translate(-3%, -3%) rotate(3deg); }
+        }
+
+        /* Floating orbs */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            z-index: 0;
+            pointer-events: none;
+        }
+        .orb-1 {
+            width: 300px; height: 300px;
+            background: rgba(56, 189, 248, 0.15);
+            top: 10%; left: 5%;
+            animation: floatOrb 20s ease-in-out infinite;
+        }
+        .orb-2 {
+            width: 250px; height: 250px;
+            background: rgba(168, 85, 247, 0.12);
+            bottom: 10%; right: 5%;
+            animation: floatOrb 25s ease-in-out infinite reverse;
+        }
+        .orb-3 {
+            width: 200px; height: 200px;
+            background: rgba(251, 191, 36, 0.08);
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            animation: floatOrb 18s ease-in-out infinite 5s;
+        }
+
+        @keyframes floatOrb {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(30px, -40px) scale(1.1); }
+            50% { transform: translate(-20px, 20px) scale(0.95); }
+            75% { transform: translate(40px, 30px) scale(1.05); }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border-radius: 28px;
+            padding: 48px 36px 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow:
+                0 0 0 1px rgba(148, 163, 184, 0.08),
+                0 4px 6px rgba(0, 0, 0, 0.1),
+                0 24px 80px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.04);
+            animation: cardAppear 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        @keyframes cardAppear {
+            from { opacity: 0; transform: translateY(30px) scale(0.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* Header section */
+        .header-section {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .logo-wrapper {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 72px;
+            height: 72px;
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(129, 140, 248, 0.15));
+            border-radius: 22px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            font-size: 2rem;
+            animation: logoPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes logoPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.1); }
+            50% { box-shadow: 0 0 0 12px rgba(56, 189, 248, 0); }
+        }
+
+        h1 {
+            font-size: 1.65rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            font-size: 0.92rem;
+            line-height: 1.5;
+            font-weight: 400;
+        }
+
+        /* Divider */
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.15), transparent);
+            margin-bottom: 28px;
+        }
+
+        /* Fields */
+        .field {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #94a3b8;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        label .icon {
+            font-size: 0.95rem;
+        }
+
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 14px 18px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(100, 116, 139, 0.2);
+            border-radius: 14px;
+            color: #f1f5f9;
+            font-size: 1rem;
+            font-family: inherit;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        input[type="text"]::placeholder, textarea::placeholder {
+            color: #475569;
+            font-weight: 400;
+        }
+
+        input[type="text"]:focus, textarea:focus {
+            outline: none;
+            border-color: rgba(56, 189, 248, 0.5);
+            background: rgba(15, 23, 42, 0.8);
+            box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.08), 0 0 20px rgba(56, 189, 248, 0.05);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 110px;
+            line-height: 1.6;
+        }
+
+        /* Star Rating */
+        .stars-wrapper {
+            background: rgba(15, 23, 42, 0.4);
+            border-radius: 16px;
+            padding: 16px 20px 12px;
+            border: 1px solid rgba(100, 116, 139, 0.1);
+        }
+
+        .stars {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+        }
+
+        .star {
+            font-size: 2.6rem;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            color: rgba(71, 85, 105, 0.5);
+            user-select: none;
+            line-height: 1;
+            filter: grayscale(1);
+        }
+
+        .star:hover, .star.active {
+            color: #fbbf24;
+            transform: scale(1.25);
+            filter: grayscale(0) drop-shadow(0 0 8px rgba(251, 191, 36, 0.4));
+        }
+
+        .star:hover ~ .star {
+            color: rgba(71, 85, 105, 0.5);
+            transform: scale(1);
+            filter: grayscale(1);
+        }
+
+        .stars:hover .star {
+            color: #fbbf24;
+            filter: grayscale(0);
+        }
+
+        .stars:hover .star:hover ~ .star {
+            color: rgba(71, 85, 105, 0.5);
+            filter: grayscale(1);
+        }
+
+        .rating-text {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: #64748b;
+            font-weight: 500;
+            min-height: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .rating-text.chosen {
+            color: #fbbf24;
+        }
+
+        /* Submit button */
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #0ea5e9, #6366f1, #a855f7);
+            background-size: 200% 200%;
+            animation: gradientShift 4s ease infinite;
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-top: 8px;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 0.01em;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .submit-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .submit-btn:hover::before {
+            left: 100%;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(99, 102, 241, 0.3), 0 4px 12px rgba(14, 165, 233, 0.2);
+        }
+
+        .submit-btn:active { transform: translateY(0); box-shadow: none; }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Success state */
+        .success-msg {
+            display: none;
+            text-align: center;
+            padding: 40px 20px;
+            animation: successAppear 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        @keyframes successAppear {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(74, 222, 128, 0.15), rgba(52, 211, 153, 0.1));
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            border: 2px solid rgba(74, 222, 128, 0.3);
+            animation: successPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes successPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.2); }
+            50% { box-shadow: 0 0 0 16px rgba(74, 222, 128, 0); }
+        }
+
+        .success-icon svg {
+            width: 36px;
+            height: 36px;
+            stroke: #4ade80;
+            stroke-width: 3;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .success-icon svg path {
+            stroke-dasharray: 50;
+            stroke-dashoffset: 50;
+            animation: checkDraw 0.5s ease 0.3s forwards;
+        }
+
+        @keyframes checkDraw {
+            to { stroke-dashoffset: 0; }
+        }
+
+        .success-msg h2 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #4ade80, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .success-msg p {
+            color: #94a3b8;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .send-another {
+            margin-top: 24px;
+            padding: 12px 28px;
+            background: rgba(100, 116, 139, 0.12);
+            color: #cbd5e1;
+            border: 1px solid rgba(100, 116, 139, 0.2);
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+
+        .send-another:hover {
+            background: rgba(100, 116, 139, 0.25);
+            border-color: rgba(100, 116, 139, 0.35);
+            transform: translateY(-1px);
+        }
+
+        /* Error */
+        .error-msg {
+            display: none;
+            text-align: center;
+            padding: 12px 16px;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 12px;
+            color: #fca5a5;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 16px;
+            animation: shakeError 0.4s ease;
+        }
+
+        @keyframes shakeError {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+
+        /* Loading spinner */
+        .spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(100, 116, 139, 0.08);
+        }
+
+        .footer span {
+            font-size: 0.72rem;
+            color: #475569;
+            font-weight: 500;
+            letter-spacing: 0.03em;
+        }
+
+        /* Responsive */
+        @media (max-width: 520px) {
+            .container {
+                padding: 36px 24px 32px;
+                border-radius: 22px;
+            }
+            h1 { font-size: 1.4rem; }
+            .star { font-size: 2.2rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background orbs -->
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <div class="container">
+        <div id="form-view">
+            <div class="header-section">
+                <div class="logo-wrapper">💬</div>
+                <h1>Everyday Conversation</h1>
+                <p class="subtitle">Sua opiniao nos ajuda a melhorar!<br>Conte como esta sendo sua experiencia.</p>
+            </div>
+
+            <div class="divider"></div>
+
+            <div id="error" class="error-msg"></div>
+
+            <form id="feedback-form">
+                <div class="field">
+                    <label for="name"><span class="icon">👤</span> Seu nome</label>
+                    <input type="text" id="name" placeholder="Ex: Maria Silva" required autocomplete="name">
+                </div>
+
+                <div class="field">
+                    <label><span class="icon">⭐</span> Como voce avalia o app?</label>
+                    <div class="stars-wrapper">
+                        <div class="stars" id="stars">
+                            <span class="star" data-v="1">&#9733;</span>
+                            <span class="star" data-v="2">&#9733;</span>
+                            <span class="star" data-v="3">&#9733;</span>
+                            <span class="star" data-v="4">&#9733;</span>
+                            <span class="star" data-v="5">&#9733;</span>
+                        </div>
+                        <div class="rating-text" id="rating-text">Toque para avaliar</div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="comment"><span class="icon">💬</span> Seu comentario ou sugestao</label>
+                    <textarea id="comment" placeholder="O que voce gostou? O que podemos melhorar?" required></textarea>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submit-btn">Enviar Feedback</button>
+            </form>
+
+            <div class="footer">
+                <span>Everyday Conversation &mdash; Practice English Every Day</span>
+            </div>
+        </div>
+
+        <div id="success-view" class="success-msg">
+            <div class="success-icon">
+                <svg viewBox="0 0 24 24">
+                    <path d="M5 13l4 4L19 7"/>
+                </svg>
+            </div>
+            <h2>Obrigado pelo feedback!</h2>
+            <p>Sua opiniao e muito importante<br>para melhorarmos o app.</p>
+            <button class="send-another" onclick="resetForm()">Enviar outro feedback</button>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = '/.netlify/functions/feedback';
+
+        let selectedRating = 0;
+        const ratingLabels = ['', 'Muito ruim', 'Ruim', 'Regular', 'Bom', 'Excelente!'];
+
+        // Star rating
+        document.querySelectorAll('.star').forEach(star => {
+            star.addEventListener('click', () => {
+                selectedRating = parseInt(star.dataset.v);
+                document.querySelectorAll('.star').forEach((s, i) => {
+                    s.classList.toggle('active', i < selectedRating);
+                });
+                const rtEl = document.getElementById('rating-text');
+                rtEl.textContent = ratingLabels[selectedRating];
+                rtEl.classList.add('chosen');
+            });
+        });
+
+        // Submit
+        document.getElementById('feedback-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const errorEl = document.getElementById('error');
+            errorEl.style.display = 'none';
+
+            const name = document.getElementById('name').value.trim();
+            const comment = document.getElementById('comment').value.trim();
+
+            if (!name || !comment) {
+                errorEl.textContent = 'Por favor, preencha todos os campos.';
+                errorEl.style.display = 'block';
+                return;
+            }
+            if (selectedRating === 0) {
+                errorEl.textContent = 'Por favor, selecione uma nota (estrelas).';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Enviando...';
+
+            try {
+                const postRes = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, rating: selectedRating, comment })
+                });
+                if (!postRes.ok) throw new Error('Erro ao salvar');
+
+                document.getElementById('form-view').style.display = 'none';
+                document.getElementById('success-view').style.display = 'block';
+
+            } catch (err) {
+                errorEl.textContent = 'Erro ao enviar. Tente novamente em alguns segundos.';
+                errorEl.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Enviar Feedback';
+            }
+        });
+
+        function resetForm() {
+            document.getElementById('form-view').style.display = 'block';
+            document.getElementById('success-view').style.display = 'none';
+            document.getElementById('feedback-form').reset();
+            document.querySelectorAll('.star').forEach(s => s.classList.remove('active'));
+            selectedRating = 0;
+            const rtEl = document.getElementById('rating-text');
+            rtEl.textContent = 'Toque para avaliar';
+            rtEl.classList.remove('chosen');
+            document.getElementById('submit-btn').disabled = false;
+            document.getElementById('submit-btn').textContent = 'Enviar Feedback';
+        }
+    </script>
+</body>
+</html>

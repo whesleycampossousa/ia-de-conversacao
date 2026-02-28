@@ -1,0 +1,514 @@
+{
+  "pass": 21,
+  "fail": 0,
+  "warn": 0,
+  "details": [
+    {
+      "test": "L01 – Correct greeting",
+      "mode": "learning",
+      "user_text": "Hi, I would like to order a coffee, please.",
+      "verdict": "PASS",
+      "notes": [
+        "All checks passed"
+      ],
+      "ai_text": "Of course! We have several options today. Would you like a latte, a cappuccino, or just a black coffee?",
+      "translation": "Com certeza! Temos várias opções hoje. Você gostaria de um latte, um cappuccino ou apenas um café preto?",
+      "turn_feedback": {
+        "kind": "none",
+        "reason": "Sua frase esta correta para este contexto.",
+        "retry_required": false,
+        "suggested_text": "Hi, I would like to order a coffee, please.",
+        "user_text": "Hi, I would like to order a coffee, please."
+      },
+      "suggested_words": [],
+      "must_retry": false,
+      "feedback": "",
+      "latency_ms": 36396
+    },
+    {
+      "test": "L02 – Correct follow-up",
+      "mode": "learning",
+      "user_text": "Can I have a medium latte with oat milk?",
+      "verdict": "PASS",
+      "notes": [
+        "All checks passed"
+      ],
+      "ai_text": "Coming right up! A medium oat milk latte for you. Would you like that hot or iced?",
+      "translation": "Saindo agora mesmo! Um latte médio com leite de aveia para você. Você gostaria dele quente ou gelado?",
+      "turn_feedback": {
+        "kind": "none",
+        "reason": "Sua frase esta correta para este contexto.",
+        "retry_required": false,
+        "suggested_text": "Can I have a medium latte with oat milk?",
+        "user_text": "Can I have a medium latte with oat milk?"
+      },
+      "suggested_words": [],
+      "must_retry": false,
+      "feedback": "",
+      "latency_ms": 11582
+    },
+    {
+      "test": "L03 – Correct polite request",
+      "mode": "learning",
+      "user_text": "Could you also add a blueberry muffin to my order?",
+      "verdict": "PASS",
+      "notes": [
+        "All checks passed"
+      ],
+      "ai_text": "You got it! One blueberry muffin to go with your latte. Do you want me to warm that up for you?",
+      "translation": "Com certeza! Um muffin de mirtilo para acompanhar seu latte. Você quer que eu esquente para você?",
+      "turn_feedback": {
+        "kind": "none",
+        "reason": "Sua frase esta correta para este contexto.",
+        "retry_required": false,
+        "suggested_text": "Could you also add a blueberry muffin to my order?",
+        "user_text": "Could you also add a blueberry muffin to my order?"
+      },
+      "suggested_words": [],
+      "must_retry": false,
+      "feedback": "",
+      "latency_ms": 9430
+    },
+    {
+      "test": "L04 – Subject-verb agreement error",
+      "mode": "learning",
+      "user_text": "I wants a coffee please",
+      "verdict": "PASS",
+      "notes": [
+        "All checks passed"
+      ],
+      "ai_text": "Sure, I can get that coffee for you! Since we're already doing the latte and muffin, would you like this extra coffee to be a simple espresso?",
+      "translation": "Claro, eu posso preparar esse café para você! Como já estamos preparando o latte e o muffin, você gostaria que este café extra fosse um espresso simples?",
+      "turn_feedback": {
+        "kind": "error_correction",
+        "reason": "Para o pronome 'I', usamos o verbo 'want' sem o 's'. O 's' é usado apenas para He, She ou It no presente.",
+        "retry_required": true,
+        "suggested_text": "I want a coffee",
+        "user_text": "I wants a coffee please"
+      },
+      "suggested_words": [
+        "want",
+        "order",
+        "extra",
+        "simple"
+      ],
+      "must_retry": true,
+      "feedback": "",
+      "latency_ms": 57121
+    },
+    {
+      "test": "L05 – Article missing",
+      "mode": "learning",
+      "user_text": "Give me coffee",
+      "verdict": "PASS",
+      "notes": [
+        "All checks passed"
+      ],
+      "ai_text": "Sure, I can get you a coffee. Did you want that extra coffee to be a simple espresso or another latte?",
+      "translation": "Claro, eu posso te dar um café. Você gostaria que esse café extra fosse um espresso simples ou outro latte?",
+      "turn_feedback": {
+        "kind": "style_upgrade",
+        "reason": "Dizer 'Give me' pode soar um pouco ríspido em inglês. Usar 'Could I have' ou adicionar 'please' é mais educado em uma cafeteria.",
+        "retry_required": false,
+        "suggested_text": "Could I have a coffee, please?",
+        "user_text": "Give me coffee"
+      },
+      "suggested_words": [],
+      "must_retry": false,
+      "feedback": "",
+      "latency_ms": 34541
+    },
+    {
+      "test": "L06 – Wrong preposition",
+      "mode": "learning",
+      "user_text": "I want coffee on milk",
+      "verdict": "PASS",
+      "notes": [
+        "All checks passed"
+      ],
+      "ai_text": "Sure, I can make a coffee with milk for you. Would you like that to be a latte or a flat white?",
+      "translation": "Claro, eu posso fazer um café com leite para você. Você gostaria que fosse um latte ou um flat white?",
+      "turn_feedback": {
+        "kind": "error_correction",
+        "reason": "Usamos a preposição 'with' (com) para ingredientes adicionais, em vez de 'on' (em cima).",
+        "retry_required": true,
+        "suggested_text": "coffee with milk",
+        "user_text": "I want coffee on milk"
+      },
+      "suggested_words": [
+        "with milk",
+        "latte",
+        "flat white",
+        "dairy"
+      ],
+      "must_retry": true,
+      "feedback": "",
+      "latency_ms": 12278
+    },
+    {
+      "test": "L07 – Wrong tense",
+      "mode": "learning",
+      "user_text": "Yesterday I go to this coffee shop and I buyed a latte",
+      "verdict": "PASS",
+      "notes": [
+        "All checks passed"
+      ],
+      "ai_text": "Oh, so you went to this shop and bought a latte yesterday too? Was it as good as the one I'm making for you now?",
+      "translation": "Ah, então você veio a esta cafeteria e comprou um latte ontem também? Estava tão bom quanto o que estou preparando para você agora?",
+      "turn_feedback": {
+        "kind": "error_correction",
+        "reason": "Para ações no passado, usamos 'went' (passado de go) e 'bought' (passado de buy).",
+        "retry_required": true,
+        "suggested_text": "I went... I bought",
+        "user_text": "Yesterday I go to this coffee shop and I buyed a latte"
+      },
+      "suggested_words": [
+        "went",
+        "bought",
+        "yesterday",
+        "tasty"
+      ],
+      "must_retry": true,
+      "feedback": "",
+      "latency_ms": 20717
+    },
+    {
+      "test": "L08 – Word order error",
+      "mode": "learning",
+      "user_text": "How much costs a cappuccino?",
+      "verdict": "PASS",
+      "notes": [
+        "All checks passed"
+      ],
+      "ai_text": "A cappuccino costs four dollars. Would you like to add one to your order, or just stick with the latte?",
+      "translation": "Um cappuccino custa quatro dólares. Você gostaria de adicionar um ao seu pedido ou apenas ficar com o latte?",
+      "turn_feedback": {
+        "kind": "error_correction",
+        "reason": "Em perguntas com verbos comuns, usamos o auxiliar 'does' antes do sujeito: 'How much does it cost?'",
+        "retry_required": true,
+        "suggested_text": "How much does a cappuccino cost?",
+        "user_text": "How much costs a cappuccino?"
+      },
+      "suggested_words": [
+        "How",
+        "much",
+        "does",
+        "it"
+      ],
+      "must_retry": true,
+      "feedback": "",
+      "latency_ms": 23259
+    },
+    {
+      "test": "L09 – Double negative",
+      "mode": "learning",
+      "user_text": "I don't want nothing else",
+      "verdict": "PASS",
+      "notes": [
+        "All checks passed"
+      ],
+      "ai_text": "Thanks for practicing today. See you next time.",
+      "translation": "Obrigado por praticar hoje. Ate a proxima.",
+      "turn_feedback": {
+        "kind": "error_correction",
+        "reason": "Em inglês, evitamos a dupla negativa. Como você já usou 'don't' (not), o correto é usar 'anything' em vez de 'nothing'.",
+        "retry_required": true,
+        "suggested_text": "I don't want anything else",
+        "user_text": "I don't want nothing else"
+      },
+      "suggested_words": [
+        "anything",
+        "total",
+        "pay",
+        "cash"
+      ],
+      "must_retry": true,
+      "feedback": "",
+      "latency_ms": 26472
+    },
+    {
+      "test": "L10 – Wrong pronoun / possessive",
+      "mode": "learning",
+      "user_text": "Me want the biggest cup you has",
+      "verdict": "PASS",
+      "notes": [
+        "All checks passed"
+      ],
+      "ai_text": "Sure! I can get you the largest cup we have. Do you want that big latte to be hot or iced?",
+      "translation": "Claro! Eu posso te dar o maior copo que temos. Você quer que esse latte grande seja quente ou gelado?",
+      "turn_feedback": {
+        "kind": "error_correction",
+        "reason": "Use 'I' como sujeito da frase em vez de 'me', e use 'have' para concordar com 'you'.",
+        "retry_required": true,
+        "suggested_text": "I want the biggest cup you have",
+        "user_text": "Me want the biggest cup you has"
+      },
+      "suggested_words": [
+        "largest",
+        "size",
+        "available",
+        "extra-large"
+      ],
+      "must_retry": true,
+      "feedback": "",
+      "latency_ms": 18124
+    },
+    {
+      "test": "L11 – Too literal from PT",
+      "mode": "learning",
+      "user_text": "I want to ask one water, please",
+      "verdict": "PASS",
+      "notes": [
+        "All checks passed"
+      ],
+      "ai_text": "Sure, I can get a water for you! Would you like that bottled or in a glass with ice?",
+      "translation": "Claro, eu posso pegar uma água para você! Você gostaria de garrafa ou no copo com gelo?",
+      "turn_feedback": {
+        "kind": "error_correction",
+        "reason": "Usamos 'ask for' quando pedimos algo e 'a water' ou 'some water' em vez de 'one water' neste contexto.",
+        "retry_required": true,
+        "suggested_text": "I want to ask for a water",
+        "user_text": "I want to ask one water, please"
+      },
+      "suggested_words": [
+        "bottle",
+        "glass",
+        "still",
+        "sparkling"
+      ],
+      "must_retry": true,
+      "feedback": "",
+      "latency_ms": 9686
+    },
+    {
+      "test": "L12 – Awkward but understandable",
+      "mode": "learning",
+      "user_text": "Make for me one espresso",
+      "verdict": "PASS",
+      "notes": [
+        "All checks passed"
+      ],
+      "ai_text": "I'll make an espresso for you right away! Do you want that to be a single or a double shot?",
+      "translation": "Vou fazer um expresso para você agora mesmo! Você quer que seja curto ou duplo?",
+      "turn_feedback": {
+        "kind": "error_correction",
+        "reason": "Em inglês, 'make for me' soa muito direto/imperativo. Usamos 'make an espresso for me' ou, mais educadamente, 'Can I have...'. Além disso, usamos 'an' antes de palavras que começam com som de vogal.",
+        "retry_required": true,
+        "suggested_text": "Make an espresso for me / Can I have an espresso?",
+        "user_text": "Make for me one espresso"
+      },
+      "suggested_words": [
+        "prepare",
+        "single",
+        "double",
+        "shot"
+      ],
+      "must_retry": true,
+      "feedback": "",
+      "latency_ms": 9662
+    },
+    {
+      "test": "S01 – Correct greeting (sim)",
+      "mode": "simulator",
+      "user_text": "Hi there, could I get a black coffee?",
+      "verdict": "PASS",
+      "notes": [
+        "Sim feedback OK: Excelente uso de 'could I get' para fazer um pedido de forma educada."
+      ],
+      "ai_text": "Sure thing, one black coffee coming right up. Would you like our medium or large size?",
+      "translation": "Com certeza, um café preto saindo agora mesmo. Você gostaria do tamanho médio ou grande?",
+      "turn_feedback": {
+        "kind": "none",
+        "reason": "",
+        "retry_required": false,
+        "suggested_text": "",
+        "user_text": ""
+      },
+      "suggested_words": [],
+      "must_retry": false,
+      "feedback": "Excelente uso de 'could I get' para fazer um pedido de forma educada.",
+      "latency_ms": 27477
+    },
+    {
+      "test": "S02 – Correct follow-up (sim)",
+      "mode": "simulator",
+      "user_text": "I'll have a croissant as well, thanks.",
+      "verdict": "PASS",
+      "notes": [
+        "Sim feedback OK: Muito bem! O uso de 'as well' foi perfeito para adicionar um item ao pedido."
+      ],
+      "ai_text": "You got it, one croissant. Did you want that heated up or just as it is?",
+      "translation": "Com certeza, um croissant. Você quer que eu aqueça ou quer ele assim mesmo?",
+      "turn_feedback": {
+        "kind": "none",
+        "reason": "",
+        "retry_required": false,
+        "suggested_text": "",
+        "user_text": ""
+      },
+      "suggested_words": [],
+      "must_retry": false,
+      "feedback": "Muito bem! O uso de 'as well' foi perfeito para adicionar um item ao pedido.",
+      "latency_ms": 20535
+    },
+    {
+      "test": "S03 – Correct polite question (sim)",
+      "mode": "simulator",
+      "user_text": "Do you have any dairy-free options?",
+      "verdict": "PASS",
+      "notes": [
+        "Sim feedback OK: Boa pergunta! 'Dairy-free' é o termo perfeito para opções sem lactose."
+      ],
+      "ai_text": "We have oat, almond, and soy milk available. Which one would you like in your coffee?",
+      "translation": "Temos leite de aveia, amêndoas e soja disponíveis. Qual deles você gostaria no seu café?",
+      "turn_feedback": {
+        "kind": "none",
+        "reason": "",
+        "retry_required": false,
+        "suggested_text": "",
+        "user_text": ""
+      },
+      "suggested_words": [],
+      "must_retry": false,
+      "feedback": "Boa pergunta! 'Dairy-free' é o termo perfeito para opções sem lactose.",
+      "latency_ms": 7549
+    },
+    {
+      "test": "S04 – Grammar error (sim)",
+      "mode": "simulator",
+      "user_text": "I wants two coffee",
+      "verdict": "PASS",
+      "notes": [
+        "Sim feedback OK: Dica: Diga 'I want' ou 'I'd like' em vez de 'I wants', pois o 's' só é usado par"
+      ],
+      "ai_text": "Sure, I can get those two coffees for you. Would you like them both black, or do you want milk in one?",
+      "translation": "Claro, posso pegar esses dois cafés para você. Você gostaria de ambos puros ou quer leite em um deles?",
+      "turn_feedback": {
+        "kind": "none",
+        "reason": "",
+        "retry_required": false,
+        "suggested_text": "",
+        "user_text": ""
+      },
+      "suggested_words": [],
+      "must_retry": false,
+      "feedback": "Dica: Diga 'I want' ou 'I'd like' em vez de 'I wants', pois o 's' só é usado para he/she/it.",
+      "latency_ms": 40997
+    },
+    {
+      "test": "S05 – Wrong vocab (sim)",
+      "mode": "simulator",
+      "user_text": "Give me the most big cup",
+      "verdict": "PASS",
+      "notes": [
+        "Sim feedback OK: Dica: Use 'the biggest cup' ou 'the largest size' para soar mais natural ao pedi"
+      ],
+      "ai_text": "You got it, our largest size is twenty ounces. Do you want both of those coffees in the largest cup?",
+      "translation": "Com certeza, nosso maior tamanho é de 600ml. Você quer os dois cafés no copo maior?",
+      "turn_feedback": {
+        "kind": "none",
+        "reason": "",
+        "retry_required": false,
+        "suggested_text": "",
+        "user_text": ""
+      },
+      "suggested_words": [],
+      "must_retry": false,
+      "feedback": "Dica: Use 'the biggest cup' ou 'the largest size' para soar mais natural ao pedir o maior tamanho.",
+      "latency_ms": 10822
+    },
+    {
+      "test": "S06 – Article error (sim)",
+      "mode": "simulator",
+      "user_text": "Can I have cappuccino with the sugar?",
+      "verdict": "PASS",
+      "notes": [
+        "Sim feedback OK: Ao pedir, use 'a cappuccino with sugar' em vez de 'the sugar'."
+      ],
+      "ai_text": "Sure, a large cappuccino with sugar. How many spoonfuls of sugar would you like in that?",
+      "translation": "Claro, um cappuccino grande com açúcar. Quantas colheres de açúcar você gostaria?",
+      "turn_feedback": {
+        "kind": "none",
+        "reason": "",
+        "retry_required": false,
+        "suggested_text": "",
+        "user_text": ""
+      },
+      "suggested_words": [],
+      "must_retry": false,
+      "feedback": "Ao pedir, use 'a cappuccino with sugar' em vez de 'the sugar'.",
+      "latency_ms": 8320
+    },
+    {
+      "test": "S07 – Tense error (sim)",
+      "mode": "simulator",
+      "user_text": "I never drink espresso before, is it good?",
+      "verdict": "PASS",
+      "notes": [
+        "Sim feedback OK: Ao falar sobre experiências passadas, use 'I have never drunk' ou 'I have never "
+      ],
+      "ai_text": "It's very strong and has a bold flavor, so it's not for everyone. Since you've never had it, would you like to try a single or a double shot?",
+      "translation": "É muito forte e tem um sabor intenso, então não é para todos. Como você nunca tomou, gostaria de experimentar uma dose simples ou dupla?",
+      "turn_feedback": {
+        "kind": "none",
+        "reason": "",
+        "retry_required": false,
+        "suggested_text": "",
+        "user_text": ""
+      },
+      "suggested_words": [],
+      "must_retry": false,
+      "feedback": "Ao falar sobre experiências passadas, use 'I have never drunk' ou 'I have never had'.",
+      "latency_ms": 8824
+    },
+    {
+      "test": "L13 – Very broken (learning)",
+      "mode": "learning",
+      "user_text": "me no understand, what is cost the drink?",
+      "verdict": "PASS",
+      "notes": [
+        "All checks passed"
+      ],
+      "ai_text": "Oh, sorry! You don't understand? The total cost for the drink is four dollars. Would you like to pay with cash or card?",
+      "translation": "Oh, desculpe! Você não entendeu? O custo total da bebida é quatro dólares. Você gostaria de pagar com dinheiro ou cartão?",
+      "turn_feedback": {
+        "kind": "error_correction",
+        "reason": "Use 'I don't' para negar verbos e 'How much does it cost' para perguntar o preço de algo.",
+        "retry_required": true,
+        "suggested_text": "I don't understand, how much does the drink cost?",
+        "user_text": "me no understand, what is cost the drink?"
+      },
+      "suggested_words": [
+        "how much",
+        "price",
+        "total",
+        "bill"
+      ],
+      "must_retry": true,
+      "feedback": "",
+      "latency_ms": 17234
+    },
+    {
+      "test": "S08 – Very broken (sim)",
+      "mode": "simulator",
+      "user_text": "me no understand, what is cost the drink?",
+      "verdict": "PASS",
+      "notes": [
+        "Sim feedback OK: Para perguntar o preço, o natural é dizer: 'How much does the drink cost?'"
+      ],
+      "ai_text": "The large cappuccino costs four dollars and fifty cents. Would you like to pay with cash or a credit card?",
+      "translation": "O cappuccino grande custa quatro dólares e cinquenta centavos. Você gostaria de pagar com dinheiro ou cartão de crédito?",
+      "turn_feedback": {
+        "kind": "none",
+        "reason": "",
+        "retry_required": false,
+        "suggested_text": "",
+        "user_text": ""
+      },
+      "suggested_words": [],
+      "must_retry": false,
+      "feedback": "Para perguntar o preço, o natural é dizer: 'How much does the drink cost?'",
+      "latency_ms": 13957
+    }
+  ]
+}

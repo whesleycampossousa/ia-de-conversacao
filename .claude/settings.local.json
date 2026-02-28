@@ -1,14 +1,15 @@
 {
   "permissions": {
     "allow": [
-      "Bash(findstr:*)",
-      "Bash(python api/index.py:*)",
-      "Bash(python list_models.py:*)",
-      "Bash(curl:*)",
-      "Bash(python:*)",
-      "Bash(powershell -Command:*)",
-      "Bash(node:*)",
-      "Bash(tasklist /FI \"IMAGENAME eq python.exe\" /FO TABLE)"
+      "Bash",
+      "Read",
+      "Edit",
+      "Write",
+      "WebFetch",
+      "WebSearch",
+      "Grep",
+      "Glob",
+      "mcp__Claude_Preview__preview_start"
     ]
   }
 }

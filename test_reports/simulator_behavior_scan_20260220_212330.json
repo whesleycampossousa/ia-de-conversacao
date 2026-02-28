@@ -1,0 +1,179 @@
+{
+  "timestamp": "2026-02-20T21:23:30.907467",
+  "summary": {
+    "critical": 3,
+    "warning": 0,
+    "total_turns": 20,
+    "contexts": [
+      "hotel",
+      "coffee_shop",
+      "airport",
+      "pharmacy"
+    ]
+  },
+  "findings": [
+    {
+      "severity": "critical",
+      "type": "teaching_leak",
+      "context": "hotel",
+      "turn": 5,
+      "detail": "marker='teacher' text='I'm the receptionist here, not a teacher. May I please have your ID and credit card so we can finish your check-in?'"
+    },
+    {
+      "severity": "critical",
+      "type": "teaching_leak",
+      "context": "coffee_shop",
+      "turn": 5,
+      "detail": "marker='grammar' text='Grammar? I'm just here to make the coffee, but I can check if our manager knows.'"
+    },
+    {
+      "severity": "critical",
+      "type": "missing_trailing_question",
+      "context": "coffee_shop",
+      "turn": 5,
+      "detail": "Grammar? I'm just here to make the coffee, but I can check if our manager knows."
+    }
+  ],
+  "turns": [
+    {
+      "context": "hotel",
+      "turn": 1,
+      "user": "Hi, I'm checking in.",
+      "status": 200,
+      "ai": "Welcome to The Grand View Hotel. Could you please tell me your name or provide your reservation number?"
+    },
+    {
+      "context": "hotel",
+      "turn": 2,
+      "user": "I have a reservation under Wesley.",
+      "status": 200,
+      "ai": "Thank you, Mr. Wesley. I see your booking for a King Room from today until Friday; is that correct?"
+    },
+    {
+      "context": "hotel",
+      "turn": 3,
+      "user": "I will stay three nights.",
+      "status": 200,
+      "ai": "Perfect, three nights it is. May I see your ID and a credit card for the incidentals deposit?"
+    },
+    {
+      "context": "hotel",
+      "turn": 4,
+      "user": "Is breakfast included?",
+      "status": 200,
+      "ai": "Yes, a full buffet breakfast is included in your stay. May I have your ID and credit card to finalize the paperwork?"
+    },
+    {
+      "context": "hotel",
+      "turn": 5,
+      "user": "Can you teach me English now?",
+      "status": 200,
+      "ai": "I'm the receptionist here, not a teacher. May I please have your ID and credit card so we can finish your check-in?"
+    },
+    {
+      "context": "coffee_shop",
+      "turn": 1,
+      "user": "Hi there.",
+      "status": 200,
+      "ai": "Morning! What can I get started for you today?"
+    },
+    {
+      "context": "coffee_shop",
+      "turn": 2,
+      "user": "I want a coffee big.",
+      "status": 200,
+      "ai": "Sure thing, one large coffee coming up. Do you want any room for cream?"
+    },
+    {
+      "context": "coffee_shop",
+      "turn": 3,
+      "user": "Make it hot please.",
+      "status": 200,
+      "ai": "You got it, a large hot coffee with no room for cream. Would you like to add a muffin or a croissant to that?"
+    },
+    {
+      "context": "coffee_shop",
+      "turn": 4,
+      "user": "What time do you close?",
+      "status": 200,
+      "ai": "We're open until 6:00 PM tonight. Is there anything else you'd like to add to your order?"
+    },
+    {
+      "context": "coffee_shop",
+      "turn": 5,
+      "user": "Can you explain grammar to me?",
+      "status": 200,
+      "ai": "Grammar? I'm just here to make the coffee, but I can check if our manager knows."
+    },
+    {
+      "context": "airport",
+      "turn": 1,
+      "user": "Hello.",
+      "status": 200,
+      "ai": "Good morning! Could you please provide your passport and your booking reference number?"
+    },
+    {
+      "context": "airport",
+      "turn": 2,
+      "user": "I have a flight to New York.",
+      "status": 200,
+      "ai": "Thank you. How many bags will you be checking in today, and do you have any carry-on luggage?"
+    },
+    {
+      "context": "airport",
+      "turn": 3,
+      "user": "I have two bags to check.",
+      "status": 200,
+      "ai": "That’s perfect. Would you prefer a window, an aisle, or a middle seat for your flight?"
+    },
+    {
+      "context": "airport",
+      "turn": 4,
+      "user": "Can I choose a window seat?",
+      "status": 200,
+      "ai": "I have a window seat available for you. Can I confirm you are on the 2:00 PM flight to New York JFK today?"
+    },
+    {
+      "context": "airport",
+      "turn": 5,
+      "user": "Please teach me how to answer check-in questions.",
+      "status": 200,
+      "ai": "I am here to help you get to New York. Can you confirm you are on the 2:00 PM flight to JFK?"
+    },
+    {
+      "context": "pharmacy",
+      "turn": 1,
+      "user": "Hi, I need medicine.",
+      "status": 200,
+      "ai": "Hello, I am Dr. Chen. Are you looking for a specific prescription or do you need help with some symptoms?"
+    },
+    {
+      "context": "pharmacy",
+      "turn": 2,
+      "user": "I have a headache since yesterday.",
+      "status": 200,
+      "ai": "I'm sorry to hear that. Is the pain sharp or more of a dull pressure?"
+    },
+    {
+      "context": "pharmacy",
+      "turn": 3,
+      "user": "I am allergic to penicillin.",
+      "status": 200,
+      "ai": "Thank you for letting me know; luckily, that won't affect our headache options. Are you taking any other medications right now?"
+    },
+    {
+      "context": "pharmacy",
+      "turn": 4,
+      "user": "Do you have syrup?",
+      "status": 200,
+      "ai": "Yes, we have several types of headache syrups available. Do you prefer a liquid medication over a tablet or pill?"
+    },
+    {
+      "context": "pharmacy",
+      "turn": 5,
+      "user": "Can you correct my English sentence?",
+      "status": 200,
+      "ai": "I can certainly help you find the right medication. Would you like a syrup for adults or are you looking for a children's version?"
+    }
+  ]
+}

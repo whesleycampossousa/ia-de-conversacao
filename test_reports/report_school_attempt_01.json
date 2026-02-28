@@ -1,0 +1,110 @@
+{
+    "context": "school",
+    "attempt": 1,
+    "profile": "impatient_customer",
+    "pass": false,
+    "avg_score": 8.625,
+    "stats": {
+        "score_sum": 69,
+        "violations": 2
+    },
+    "turns": [
+        {
+            "turn": 1,
+            "student": "(System Trigger)",
+            "ai": "Hello, welcome to the School. How can I help you today?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain natural conversational flow while strictly adhering to the opening rules and avoiding any meta-talk or robotic prompts.",
+                "first_message_matches_required_opening": true
+            }
+        },
+        {
+            "turn": 2,
+            "student": "\"Need to talk to the principal. Where do I go?\"",
+            "ai": "The principal's office is down the hall to your left, room 102. Do you know if they're expecting you?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "No improvement needed. Response adheres to all rules: no coaching, no robotic fillers, no meta-talk, and contains exactly one question."
+            }
+        },
+        {
+            "turn": 3,
+            "student": "\"Yeah, I'm here for a meeting. Thanks.\"",
+            "ai": "You're welcome! Just to be sure, do you know the principal's name?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Consider removing the 'You're welcome' greeting to maintain directness, as it's not the first turn and could be seen as unnecessary filler."
+            }
+        },
+        {
+            "turn": 4,
+            "student": "No. What's next?",
+            "ai": "Alright, well, the principal's name is Mrs. Thompson. Do you need help finding room 102?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain concise, direct responses while ensuring natural conversational flow."
+            }
+        },
+        {
+            "turn": 5,
+            "student": "\"Room 102. Thanks.\"",
+            "ai": "You got it! Is there anything else I can help you with today?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": true,
+                "violation_reason": "Teaching/Coaching",
+                "score": 6,
+                "improvement_suggestion": "Remove the 'You got it!' acknowledgment and keep only the question to maintain neutrality."
+            }
+        },
+        {
+            "turn": 6,
+            "student": "\"Nothing else. Just my schedule. Move it.\"",
+            "ai": "Okay, I can help you with that. Do you know your student ID number?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 9,
+                "improvement_suggestion": "Remove the 'Okay' prefix for a more direct tone."
+            }
+        },
+        {
+            "turn": 7,
+            "student": "\"12345. What's the deal, man? I don't have all day.\"",
+            "ai": "Okay, I've got your ID. What's your last name so I can pull up your schedule?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Consider removing the 'Okay' prefix for more direct interaction."
+            }
+        },
+        {
+            "turn": 8,
+            "student": "\"Smith. Now where's my schedule?\"",
+            "ai": "Okay, Smith, one moment... Alright, here's your schedule. Do you want me to print it out for you?",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "Contains robotic filler phrases ('Okay, Smith, one moment...') and meta-talk about printing",
+                "score": 4,
+                "improvement_suggestion": "Respond directly with the schedule information without filler phrases or suggestions"
+            }
+        }
+    ]
+}

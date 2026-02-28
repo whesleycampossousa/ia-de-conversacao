@@ -1,0 +1,110 @@
+{
+    "context": "post_office",
+    "attempt": 1,
+    "profile": "silent_shy",
+    "pass": true,
+    "avg_score": 9.75,
+    "stats": {
+        "score_sum": 78,
+        "violations": 0
+    },
+    "turns": [
+        {
+            "turn": 1,
+            "student": "(System Trigger)",
+            "ai": "Hello, welcome to the Post Office. How can I help you today?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain consistent adherence to scenario-specific opening rules and natural conversational flow.",
+                "first_message_matches_required_opening": true
+            }
+        },
+        {
+            "turn": 2,
+            "student": "Um... just...",
+            "ai": "Just mailing something out today?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Consider using more open-ended phrasing to encourage elaboration, e.g., 'What are you mailing today?'"
+            }
+        },
+        {
+            "turn": 3,
+            "student": "Yeah. Just a postcard.",
+            "ai": "Alright, do you have the postcard with you?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain directness in questioning to preserve conversational flow."
+            }
+        },
+        {
+            "turn": 4,
+            "student": "N-no. I think I left it at home.",
+            "ai": "Oh, okay. Do you want to come back with it later, or would you like to mail it another day?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain concise, scenario-focused dialogue without adding extraneous information."
+            }
+        },
+        {
+            "turn": 5,
+            "student": "Um... maybe tomorrow?",
+            "ai": "Sounds good. Will you need stamps for it tomorrow?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain concise, scenario-relevant questioning without unnecessary elaboration."
+            }
+        },
+        {
+            "turn": 6,
+            "student": "No. I think I'll just... uh, check the counter for stamps tomorrow.",
+            "ai": "No problem. We'll have plenty of stamps here for you. Do you know what kind of stamp you'll need for the postcard?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 9,
+                "improvement_suggestion": "Simplify the response to focus directly on the question without introductory phrases."
+            }
+        },
+        {
+            "turn": 7,
+            "student": "Umm... I'm not sure. Do you know?",
+            "ai": "For a standard postcard going within the country, it's usually the postcard stamp. Are you sending it within the country?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain concise, direct questioning without unnecessary elaboration."
+            }
+        },
+        {
+            "turn": 8,
+            "student": "Yes... I think so.",
+            "ai": "Okay. Then it'll be the postcard stamp. Do you need anything else today?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 9,
+                "improvement_suggestion": "Consider removing the 'Okay.' to make the response more direct and natural."
+            }
+        }
+    ]
+}

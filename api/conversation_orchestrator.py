@@ -10,12 +10,6 @@ import json
 from typing import Dict, List, Optional, Tuple
 from enum import Enum
 
-# Importa classes do orchestrator
-from conversation_orchestrator import (
-    Intent, Phase, LanguageMode, LessonSpec, SessionState,
-    detect_intent, choose_policy_action, on_student_message
-)
-
 # ============================================================================
 # ENUMS E CONSTANTES
 # ============================================================================
@@ -759,7 +753,8 @@ def handle_set_language_mode(student_text: str, lesson_spec: LessonSpec, session
     elif new_mode == LanguageMode.EN:
         base = out_en(f"Great! We'll use English only (I can keep it simple).\n\nLet's continue with {lesson_spec.title_pt}.")
     else:
-        base = f"Perfeito! Vamos em modo bilíngue: explico em PT e praticamos em EN.\n{out_en('Let's practice in English.')}\n\nVamos continuar com o tema {lesson_spec.title_pt}."
+        practice_hint_en = out_en("Let's practice in English.")
+        base = f"Perfeito! Vamos em modo bilíngue: explico em PT e praticamos em EN.\n{practice_hint_en}\n\nVamos continuar com o tema {lesson_spec.title_pt}."
     
     # Mostra exemplo do tema
     current_micro_goal = None
@@ -927,3 +922,5 @@ def on_student_message(student_text: str, lesson_spec: LessonSpec, session_state
         return handle_stop_or_change(lesson_spec, session_state)
     else:
         return handle_off_topic(lesson_spec, session_state)
+
+

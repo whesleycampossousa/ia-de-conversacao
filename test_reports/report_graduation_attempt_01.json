@@ -1,0 +1,110 @@
+{
+    "context": "graduation",
+    "attempt": 1,
+    "profile": "silent_shy",
+    "pass": false,
+    "avg_score": 7.875,
+    "stats": {
+        "score_sum": 63,
+        "violations": 3
+    },
+    "turns": [
+        {
+            "turn": 1,
+            "student": "(System Trigger)",
+            "ai": "Hello, welcome to the Graduation. How can I help you today?",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "Robotic header 'Sure!' detected",
+                "score": 5,
+                "improvement_suggestion": "Remove the 'Sure!' header and start with a question like 'What can I get you today?'",
+                "first_message_matches_required_opening": true
+            }
+        },
+        {
+            "turn": 2,
+            "student": "\"Thank you... I'm just here to collect my diploma.\"",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Great response! Keep maintaining natural flow and role adherence."
+            }
+        },
+        {
+            "turn": 3,
+            "student": "Oops, sorry about that. Can I help?",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain natural flow by asking follow-up questions about preferences or additional needs."
+            }
+        },
+        {
+            "turn": 4,
+            "student": "\"Uh... that's not good. Need help?\"",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 9,
+                "improvement_suggestion": "Maintain conversational tone but ensure role-specific explanations (e.g., menu items) remain concise and context-appropriate."
+            }
+        },
+        {
+            "turn": 5,
+            "student": "Hmm, that's not good. Let me check...",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "Response must end with a question",
+                "score": 5,
+                "improvement_suggestion": "End your response with a question to maintain natural flow and engagement."
+            }
+        },
+        {
+            "turn": 6,
+            "student": "Hmm... error?",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain excellent natural flow and role adherence. Consider adding more contextual depth in service scenarios."
+            }
+        },
+        {
+            "turn": 7,
+            "student": "\"Uh... sorry about that. Let me know if you need anything else.\"",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "Response contains teaching feedback ('Good job!') which is prohibited for Peer role",
+                "score": 4,
+                "improvement_suggestion": "Avoid using evaluative feedback. Instead, ask open-ended questions like 'What did you think about that?' to maintain natural conversation flow"
+            }
+        },
+        {
+            "turn": 8,
+            "student": "Hmm.",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain natural flow by adding more contextual options (e.g., 'Or would you prefer a cappuccino?')"
+            }
+        }
+    ]
+}

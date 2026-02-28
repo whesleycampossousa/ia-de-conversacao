@@ -1,0 +1,44 @@
+============================================================
+  CONFIGURACAO AUTOMATICA - IA DE CONVERSAÇÃO
+============================================================
+
+EXECUTE ESTE ARQUIVO PARA CONFIGURAR TUDO AUTOMATICAMENTE:
+
+    EXECUTAR_TUDO.bat
+
+Este script vai:
+1. Testar se a API do TTS está configurada
+2. Abrir automaticamente o console do Google Cloud se necessário
+3. Iniciar o servidor Flask automaticamente
+4. Verificar se tudo está funcionando
+
+============================================================
+  INSTRUCOES RAPIDAS
+============================================================
+
+1. Execute: EXECUTAR_TUDO.bat
+
+2. Se aparecer mensagem sobre API não habilitada:
+   - O navegador vai abrir automaticamente
+   - Faça login no Google Cloud
+   - Clique em "ATIVAR" ou "ENABLE"
+   - Aguarde 10-30 segundos
+   - Execute EXECUTAR_TUDO.bat novamente
+
+3. Quando tudo estiver OK:
+   - Acesse: http://localhost:8912
+   - Faça login
+   - Escolha um tópico gramatical
+   - Selecione uma voz (Sarah, Emma ou James)
+   - Clique em "Play"
+   - O professor vai falar automaticamente!
+
+============================================================
+  OUTROS SCRIPTS DISPONIVEIS
+============================================================
+
+- INICIAR_TUDO.bat        : Inicia apenas o servidor Flask
+- configurar_tts.bat      : Testa apenas a configuração do TTS
+- HABILITAR_API_TTS.bat   : Abre o console para habilitar a API
+
+============================================================

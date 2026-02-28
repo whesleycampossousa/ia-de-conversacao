@@ -1,0 +1,110 @@
+{
+    "context": "doctor",
+    "attempt": 1,
+    "profile": "impatient_customer",
+    "pass": false,
+    "avg_score": 7.625,
+    "stats": {
+        "score_sum": 61,
+        "violations": 3
+    },
+    "turns": [
+        {
+            "turn": 1,
+            "student": "(System Trigger)",
+            "ai": "Hello, welcome to the Doctor. How can I help you today?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain natural flow by asking open-ended questions to keep the role-play engaging.",
+                "first_message_matches_required_opening": true
+            }
+        },
+        {
+            "turn": 2,
+            "student": "\"Quick, I need to see the doctor. What's the wait time?\"",
+            "ai": "I understand you need to see a doctor quickly. Could you tell me your name and what seems to be the issue?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Consider explicitly addressing the wait time inquiry if possible, but maintain strict adherence to the rules."
+            }
+        },
+        {
+            "turn": 3,
+            "student": "\"John. Headache and nausea. Need to see a doctor now.\"",
+            "ai": "Okay, John. I understand you have a headache and nausea and need to see a doctor right away.",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain concise, natural dialogue without adding explanatory remarks or procedural details."
+            }
+        },
+        {
+            "turn": 4,
+            "student": "\"Got it. Can I just get seen now? No need for the lecture.\"",
+            "ai": "Okay, John. I understand you're feeling unwell and want to be seen right away.",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "Natural Flow: Only 1 question per turn",
+                "score": 4,
+                "improvement_suggestion": "Ask a direct question to guide the patient's response (e.g., 'What symptoms are you experiencing?')"
+            }
+        },
+        {
+            "turn": 5,
+            "student": "\"Cut the small talk. I need to see the doctor now.\"",
+            "ai": "I understand you're in distress, John. I'll do my best to expedite the process.",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "Natural Flow violation: AI's response is a statement, not a question",
+                "score": 4,
+                "improvement_suggestion": "Ask a question instead of making a statement to maintain natural flow"
+            }
+        },
+        {
+            "turn": 6,
+            "student": "\"Cut the drama. I need to see the doctor. Now.\"",
+            "ai": "I understand you're in pain, John. I'm doing my best to get you seen as quickly as possible.",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain concise, empathetic statements to align with the urgency of the patient's request."
+            }
+        },
+        {
+            "turn": 7,
+            "student": "\"I don't have time for this. Just get me to the doctor.\"",
+            "ai": "I understand your urgency, John. I'm trying to get you seen as quickly as possible, but I need to ask a few questions to...",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "Natural Flow: AI should ask one question per turn, but provided a statement",
+                "score": 3,
+                "improvement_suggestion": "Ask a direct question about symptoms or urgency instead of providing explanatory statements"
+            }
+        },
+        {
+            "turn": 8,
+            "student": "\"Cut the small talk. Just get me in and check me out. I don\u2019t have time for questions.\"",
+            "ai": "I understand you're feeling pressed for time, John. To ensure you receive the most appropriate and efficient care, could you briefly rate your pain level on a scale of 1 to 10, with 10 being the worst pain imaginable?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Consider removing the acknowledgment ('I understand...') to maintain directness while still adhering to the strict QA rules."
+            }
+        }
+    ]
+}

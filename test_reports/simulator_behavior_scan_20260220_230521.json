@@ -1,0 +1,193 @@
+{
+  "timestamp": "2026-02-20T23:05:21.841133",
+  "summary": {
+    "critical": 0,
+    "warning": 0,
+    "total_turns": 25,
+    "contexts": [
+      "hotel",
+      "coffee_shop",
+      "airport",
+      "pharmacy",
+      "taxi"
+    ]
+  },
+  "findings": [],
+  "turns": [
+    {
+      "context": "hotel",
+      "turn": 1,
+      "user": "Hi, I'm checking in.",
+      "status": 200,
+      "ai": "Welcome to The Grand View Hotel! Could you please tell me your name or provide your reservation number?"
+    },
+    {
+      "context": "hotel",
+      "turn": 2,
+      "user": "I have a reservation under Wesley.",
+      "status": 200,
+      "ai": "Thank you, Mr. Wesley. I see your booking for a Deluxe King room for three nights; is that correct?"
+    },
+    {
+      "context": "hotel",
+      "turn": 3,
+      "user": "I will stay three nights.",
+      "status": 200,
+      "ai": "Perfect. May I please see your ID and a credit card for the incidental deposit?"
+    },
+    {
+      "context": "hotel",
+      "turn": 4,
+      "user": "Is breakfast included?",
+      "status": 200,
+      "ai": "Yes, breakfast is served daily from 7:00 AM to 10:00 AM in the lobby. May I have your ID and credit card to finalize the paperwork?"
+    },
+    {
+      "context": "hotel",
+      "turn": 5,
+      "user": "Can you teach me English now?",
+      "status": 200,
+      "ai": "I can certainly assist you with your check-in and room details today. May I please have your ID and credit card to finalize the reservation?"
+    },
+    {
+      "context": "coffee_shop",
+      "turn": 1,
+      "user": "Hi there.",
+      "status": 200,
+      "ai": "Morning! What can I get started for you today?"
+    },
+    {
+      "context": "coffee_shop",
+      "turn": 2,
+      "user": "I want a coffee big.",
+      "status": 200,
+      "ai": "Sure thing, one large coffee coming up. Do you want any room for cream or sugar in that?"
+    },
+    {
+      "context": "coffee_shop",
+      "turn": 3,
+      "user": "Make it hot please.",
+      "status": 200,
+      "ai": "You got it, one large hot coffee. Do you want our house blend or the dark roast today?"
+    },
+    {
+      "context": "coffee_shop",
+      "turn": 4,
+      "user": "What time do you close?",
+      "status": 200,
+      "ai": "We're open until 6:00 PM today. So, did you want the house blend or the dark roast for that large coffee?"
+    },
+    {
+      "context": "coffee_shop",
+      "turn": 5,
+      "user": "Can you explain grammar to me?",
+      "status": 200,
+      "ai": "I'm not really sure about that, I just make the coffee here. Do you want the house blend or the dark roast?"
+    },
+    {
+      "context": "airport",
+      "turn": 1,
+      "user": "Hello.",
+      "status": 200,
+      "ai": "Hello, welcome to the counter. May I please have your passport and booking reference number?"
+    },
+    {
+      "context": "airport",
+      "turn": 2,
+      "user": "I have a flight to New York.",
+      "status": 200,
+      "ai": "Thank you. How many bags will you be checking in today, and do you have any carry-on luggage?"
+    },
+    {
+      "context": "airport",
+      "turn": 3,
+      "user": "I have two bags to check.",
+      "status": 200,
+      "ai": "Perfect, I've tagged those for you. Would you prefer a window seat or an aisle seat for your flight to New York?"
+    },
+    {
+      "context": "airport",
+      "turn": 4,
+      "user": "Can I choose a window seat?",
+      "status": 200,
+      "ai": "Certainly, I have a window seat available for you. Just to confirm, you are on the 2:00 PM flight to New York, correct?"
+    },
+    {
+      "context": "airport",
+      "turn": 5,
+      "user": "Please teach me how to answer check-in questions.",
+      "status": 200,
+      "ai": "I can help you with your boarding pass right now. Since we have confirmed your flight to New York, may I print your documents for you?"
+    },
+    {
+      "context": "pharmacy",
+      "turn": 1,
+      "user": "Hi, I need medicine.",
+      "status": 200,
+      "ai": "Hello, I am Dr. Chen. Are you looking for a specific prescription or do you need help with symptoms like a cold or pain?"
+    },
+    {
+      "context": "pharmacy",
+      "turn": 2,
+      "user": "I have a headache since yesterday.",
+      "status": 200,
+      "ai": "I'm sorry to hear that. Is the pain sharp or is it more like a dull pressure?"
+    },
+    {
+      "context": "pharmacy",
+      "turn": 3,
+      "user": "I am allergic to penicillin.",
+      "status": 200,
+      "ai": "Thank you for letting me know. Are you currently taking any other medications for this headache?"
+    },
+    {
+      "context": "pharmacy",
+      "turn": 4,
+      "user": "Do you have syrup?",
+      "status": 200,
+      "ai": "We have several syrups for cough or pain relief. Is your headache also causing any throat pain or a cough?"
+    },
+    {
+      "context": "pharmacy",
+      "turn": 5,
+      "user": "Can you correct my English sentence?",
+      "status": 200,
+      "ai": "I can help with your medication request. Would you prefer a syrup for pain relief or for a cough?"
+    },
+    {
+      "context": "taxi",
+      "turn": 1,
+      "user": "Hi, can you take me downtown?",
+      "status": 200,
+      "ai": "Sure, I can take you downtown right now. Would you like to go to the shopping mall or the train station?"
+    },
+    {
+      "context": "taxi",
+      "turn": 2,
+      "user": "Please use the fastest route.",
+      "status": 200,
+      "ai": "You got it, I'll take the highway to avoid the traffic. Do you need me to drop you off at the main entrance or the side street?"
+    },
+    {
+      "context": "taxi",
+      "turn": 3,
+      "user": "Can you stop near central station?",
+      "status": 200,
+      "ai": "Of course, I can drop you off right at the main entrance. Would you like me to pull over now or keep driving to the corner?"
+    },
+    {
+      "context": "taxi",
+      "turn": 4,
+      "user": "Can I pay by card?",
+      "status": 200,
+      "ai": "Yes, we accept all major credit cards. Do you need a printed receipt or should I email it to you?"
+    },
+    {
+      "context": "taxi",
+      "turn": 5,
+      "user": "Can you explain my grammar?",
+      "status": 200,
+      "ai": "I'm just your driver, but I can help you with the bags or directions to the platform. Would you like me to open the trunk or wait here?"
+    }
+  ]
+}

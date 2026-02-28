@@ -1,0 +1,19 @@
+# Monitor reports and logs
+reports/*
+!reports/.gitkeep
+
+# Audio samples (generated)
+audio_samples/*.wav
+audio_samples/*.mp3
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo

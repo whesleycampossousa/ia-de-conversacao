@@ -1,0 +1,51 @@
+======================================================================
+  COMPREHENSIVE TEST REPORT
+  2026-01-31 08:31:33
+======================================================================
+
+  Total tests: 200
+  Total turns: 1193
+  Passed: 178 (89.0%)
+  Failed: 22 (11.0%)
+
+  Issues by severity:
+    CRITICAL: 2
+    HIGH:     13
+    MEDIUM:   5
+    LOW:      7
+
+  Issues by code:
+    NO_QUESTION: 11
+    EXCEPTION: 7
+    INCOMPLETE_SENTENCE: 5
+    OFF_TOPIC: 2
+    SIMULATOR_TEACHING: 2
+
+  Issues by mode:
+    grammar: 6 issues in 4 tests
+    simulator: 19 issues in 16 tests
+    learning: 2 issues in 2 tests
+
+  Failed tests:
+    grammar_conditionals_zero_first_intentional_errors: EXCEPTION
+    grammar_phrasal_verbs_off_topic_drift: OFF_TOPIC
+    grammar_comparatives_superlatives_correct_input: EXCEPTION
+    grammar_question_tags_correct_input: OFF_TOPIC
+    simulator_restaurant_normal_flow: SIMULATOR_TEACHING
+    simulator_airport_edge_case: NO_QUESTION
+    simulator_hotel_normal_flow: NO_QUESTION
+    simulator_doctor_edge_case: NO_QUESTION
+    simulator_supermarket_edge_case: INCOMPLETE_SENTENCE, NO_QUESTION
+    simulator_museum_edge_case: INCOMPLETE_SENTENCE
+    simulator_hair_salon_normal_flow: NO_QUESTION
+    simulator_flower_shop_normal_flow: SIMULATOR_TEACHING
+    simulator_flower_shop_edge_case: INCOMPLETE_SENTENCE
+    simulator_bakery_grammar_errors: NO_QUESTION
+    simulator_dental_clinic_grammar_errors: EXCEPTION
+    simulator_renting_car_normal_flow: NO_QUESTION
+    simulator_first_date_normal_flow: NO_QUESTION
+    simulator_first_date_grammar_errors: NO_QUESTION
+    simulator_first_date_edge_case: INCOMPLETE_SENTENCE, NO_QUESTION
+    simulator_school_normal_flow: INCOMPLETE_SENTENCE
+    ... and 2 more
+======================================================================

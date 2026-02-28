@@ -10,19 +10,19 @@ class APIClient {
         const port = window.location.port;
         const protocol = window.location.protocol;
         
-        // If page is being served by Flask on port 8912, use relative paths
+        // If page is being served by Flask on port 4344, use relative paths
         // If page is opened directly (file://) or on different port, use full URL
         if (hostname === '' || protocol === 'file:') {
             // File opened directly - need full URL
-            this.baseURL = 'http://localhost:8912';
+            this.baseURL = 'https://localhost:8912';
         } else if (port === '8912' || (hostname === 'localhost' && port === '')) {
             // Already being served by Flask - use relative paths
             this.baseURL = '';
         } else if (hostname === 'localhost' || hostname === '127.0.0.1') {
             // Local but different port - use full URL
-            this.baseURL = 'http://localhost:8912';
+            this.baseURL = `${protocol}//${hostname}:8912`;
         } else {
-            // Production/deployment - use relative paths
+            // Production/deployment or mobile accessing via LAN IP - use relative paths
             this.baseURL = '';
         }
         
@@ -62,7 +62,9 @@ class APIClient {
     /**
      * Fetch with timeout using AbortController
      */
-    fetchWithTimeout(url, options, timeoutMs = 20000) {
+    // Gemini / TTS can occasionally take longer (cold starts, congestion).
+    // Default to a more forgiving timeout to avoid aborting valid requests.
+    fetchWithTimeout(url, options, timeoutMs = 60000) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -139,12 +141,12 @@ class APIClient {
     /**
      * Send chat message
      */
-    async chat(text, context, lessonLang = 'en', practiceMode = 'learning') {
+    async chat(text, context, lessonLang = 'en', practiceMode = 'learning', meta = {}) {
         const response = await this.fetchWithTimeout(`${this.baseURL}/api/chat`, {
             method: 'POST',
             headers: this.getHeaders(),
-            body: JSON.stringify({ text, context, lessonLang, practiceMode })
-        }, 20000);
+            body: JSON.stringify({ text, context, lessonLang, practiceMode, ...meta })
+        }, 60000);
 
         await this.handleResponse(response);
         return await response.json();
@@ -158,7 +160,7 @@ class APIClient {
             method: 'POST',
             headers: this.getHeaders(),
             body: JSON.stringify({ action, ...payload })
-        }, 20000);
+        }, 60000);
 
         await this.handleResponse(response);
         return await response.json();
@@ -172,7 +174,7 @@ class APIClient {
             method: 'POST',
             headers: this.getHeaders(),
             body: JSON.stringify({ action, context, ...payload })
-        }, 20000);
+        }, 60000);
 
         await this.handleResponse(response);
         return await response.json();
@@ -200,6 +202,13 @@ class APIClient {
         if (!voice || voice === 'undefined') {
             voice = localStorage.getItem('preferred_voice') || 'female2';
         }
+
+        // Legacy aliases should not override backend-selected clone voice.
+        const legacyVoiceHints = new Set(['lesson', 'achernar', 'female1', 'female2', 'male1', 'male2']);
+        const normalizedVoice = String(voice || '').trim().toLowerCase();
+        if (legacyVoiceHints.has(normalizedVoice)) {
+            voice = '';
+        }
         
         console.log(`[api-client] getTTS called with voice: ${voice}, lessonLang: ${lessonLang}`);
         
@@ -207,7 +216,7 @@ class APIClient {
             method: 'POST',
             headers: this.getHeaders(),
             body: JSON.stringify({ text, speed, lessonLang, voice })
-        }, 12000);
+        }, 25000);
 
         await this.handleResponse(response);
         return await response.blob();
@@ -272,6 +281,18 @@ class APIClient {
     }
 
     /**
+     * Get current usage status
+     */
+    async getUsageStatus() {
+        const response = await fetch(`${this.baseURL}/api/usage/status`, {
+            method: 'GET',
+            headers: this.getHeaders()
+        });
+        await this.handleResponse(response);
+        return await response.json();
+    }
+
+    /**
      * Admin: Get all authorized emails
      */
     async getAuthorizedEmails() {
@@ -314,6 +335,30 @@ class APIClient {
     async reloadEmails() {
         const response = await fetch(`${this.baseURL}/api/admin/emails/reload`, {
             method: 'POST',
+            headers: this.getHeaders()
+        });
+        await this.handleResponse(response);
+        return await response.json();
+    }
+
+    /**
+     * Admin: live dashboard metrics
+     */
+    async getAdminLiveMetrics(windowMinutes = 10) {
+        const response = await fetch(`${this.baseURL}/api/admin/live-metrics?window_minutes=${encodeURIComponent(windowMinutes)}`, {
+            method: 'GET',
+            headers: this.getHeaders()
+        });
+        await this.handleResponse(response);
+        return await response.json();
+    }
+
+    /**
+     * Admin: weekly didactic report
+     */
+    async getAdminWeeklyReport(weeks = 8) {
+        const response = await fetch(`${this.baseURL}/api/admin/weekly-report?weeks=${encodeURIComponent(weeks)}`, {
+            method: 'GET',
             headers: this.getHeaders()
         });
         await this.handleResponse(response);

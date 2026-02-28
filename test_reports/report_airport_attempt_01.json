@@ -1,0 +1,110 @@
+{
+    "context": "airport",
+    "attempt": 1,
+    "profile": "confused_beginner",
+    "pass": false,
+    "avg_score": 9.125,
+    "stats": {
+        "score_sum": 73,
+        "violations": 1
+    },
+    "turns": [
+        {
+            "turn": 1,
+            "student": "(System Trigger)",
+            "ai": "Hello, welcome to the Airport. How can I help you today?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain the natural flow and concise questioning approach. Ensure all responses strictly adhere to the scenario-specific opening rules without adding extraneous explanations.",
+                "first_message_matches_required_opening": true
+            }
+        },
+        {
+            "turn": 2,
+            "student": "\"Hi, I need to check in for my flight to Brazil, please. Can you help me?\" (Confused about the airport terms, mixing Portuguese words like \"Brasil\" with English.)",
+            "ai": "Certainly! I can help you with that. May I see your passport, please?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Ask for flight details next to progress the interaction naturally."
+            }
+        },
+        {
+            "turn": 3,
+            "student": "Okay... passport? Where? I... I think I have it. Wait, do I need to show it now? *confused*",
+            "ai": "Yes, please. I need to see your passport to check you in. Do you have it with you?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain natural flow by keeping responses concise and focused on the scenario."
+            }
+        },
+        {
+            "turn": 4,
+            "student": "\"Ah, yes! I have it. Can I show it now?\" (I think... maybe I need to open the bag? *confused*)",
+            "ai": "Yes, please. Whenever you're ready, I need to see it to proceed with your check-in. Do you need help opening your bag?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain concise, action-focused responses without additional explanations."
+            }
+        },
+        {
+            "turn": 5,
+            "student": "No, thank you. I can do it myself. Where do I put it?",
+            "ai": "You can hand it to me, please. Do you have any bags to check?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Response is natural and compliant. No changes needed."
+            }
+        },
+        {
+            "turn": 6,
+            "student": "\"Ah, yes! I have a bag. Can I check it in? Or is it 'check in'?\" (confused, looking at the bag)",
+            "ai": "Yes, you can check your bag in. Is this the only bag you'll be checking?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain concise, question-based responses without added explanations."
+            }
+        },
+        {
+            "turn": 7,
+            "student": "\"Yup, this is the only bag. / \u00c9 s\u00f3 essa mala?\" (Confused, looking at the bag again.)",
+            "ai": "Okay, perfect. I'll take your bag now. Can I see your passport again to confirm the details?",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "Teaching/Coaching",
+                "score": 4,
+                "improvement_suggestion": "Remove the 'Okay, perfect' compliment and make the response more direct without evaluative language."
+            }
+        },
+        {
+            "turn": 8,
+            "student": "\"Por favor, sim. Why again? I showed before.\" (confused, repeating \"sim\" and \"por favor\")",
+            "ai": "I just need to double-check the passport details to print your baggage tag, sir. Is that okay?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 9,
+                "improvement_suggestion": "Consider simplifying the response to focus more directly on the single question, while maintaining procedural accuracy."
+            }
+        }
+    ]
+}

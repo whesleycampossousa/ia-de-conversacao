@@ -1,0 +1,23 @@
+# Monitor System Dependencies
+# Install with: .venv\Scripts\python.exe -m pip install -r monitor_requirements.txt
+
+# Core dependencies (already in main requirements.txt)
+requests>=2.32.0
+pyjwt>=2.8.0
+python-dotenv>=1.0.0
+
+# Audio processing
+# pydub>=0.25.1  # Optional: for advanced audio manipulation
+# soundfile>=0.12.1  # Optional: for reading/writing WAV files
+# pyttsx3>=2.90  # Optional: for local TTS generation
+
+# Testing & reporting
+# pytest>=8.0.0  # Optional: if using pytest framework
+# pytest-json-report>=1.5.0  # Optional: for JSON reports
+
+# Visualization (for HTML reports)
+# matplotlib>=3.8.0  # Optional: for generating charts in HTML reports
+# jinja2>=3.1.0  # Already in requirements.txt
+
+# Note: Most core dependencies are already in the main requirements.txt
+# Only install audio processing libraries if you plan to use audio_generator.py

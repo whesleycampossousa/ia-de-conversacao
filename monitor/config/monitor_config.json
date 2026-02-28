@@ -1,0 +1,53 @@
+{
+  "test_selection": {
+    "level1_endpoints": true,
+    "level2_scenario_count": 10,
+    "level3_grammar_count": 10,
+    "level4_audio_phrases": 20,
+    "level5_e2e_flows": 4,
+    "rotation_strategy": "round_robin"
+  },
+  "thresholds": {
+    "response_time_warning_ms": 3000,
+    "response_time_critical_ms": 5000,
+    "pass_rate_warning": 90,
+    "pass_rate_critical": 80,
+    "consecutive_failures_for_issue": 3
+  },
+  "auto_fix": {
+    "enabled": true,
+    "max_retries": 3,
+    "retry_delay_seconds": 2,
+    "encoding_fix": true,
+    "cache_clear": true,
+    "provider_fallback": true,
+    "github_issues": true
+  },
+  "notifications": {
+    "email": {
+      "enabled": false,
+      "to": "whesleycampos@hotmail.com",
+      "critical_only": true
+    },
+    "github_issues": {
+      "enabled": true,
+      "repo": "Whesleycampos/ia-de-conversacao",
+      "token_env": "GITHUB_TOKEN",
+      "labels": ["bug", "monitoring", "auto-generated"]
+    },
+    "open_html_on_critical": true
+  },
+  "logging": {
+    "level": "INFO",
+    "format": "json",
+    "rotate_size_mb": 10,
+    "keep_days": 30,
+    "console_output": true
+  },
+  "timeouts": {
+    "default_request_timeout": 30,
+    "tts_request_timeout": 15,
+    "transcribe_request_timeout": 20,
+    "chat_request_timeout": 30
+  }
+}

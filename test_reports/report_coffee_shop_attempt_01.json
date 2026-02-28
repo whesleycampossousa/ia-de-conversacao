@@ -1,0 +1,110 @@
+{
+    "context": "coffee_shop",
+    "attempt": 1,
+    "profile": "impatient_customer",
+    "pass": false,
+    "avg_score": 7.625,
+    "stats": {
+        "score_sum": 61,
+        "violations": 2
+    },
+    "turns": [
+        {
+            "turn": 1,
+            "student": "(System Trigger)",
+            "ai": "Hello, welcome to the Coffee Shop. How can I help you today?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain natural flow by keeping responses concise and focused on the scenario.",
+                "first_message_matches_required_opening": true
+            }
+        },
+        {
+            "turn": 2,
+            "student": "\"Latte, no sugar. Just get it over with.\"",
+            "ai": "Alright, one latte coming right up. Just so I'm clear, that's no sugar at all, right?",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "Evaluator output invalid JSON",
+                "score": 0,
+                "first_message_matches_required_opening": false
+            }
+        },
+        {
+            "turn": 3,
+            "student": "\"Got it. No sugar. Just make it fast.\"",
+            "ai": "Sure thing, I'll get that latte going right away! Are you in a hurry today?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain concise, task-focused dialogue to keep interactions streamlined."
+            }
+        },
+        {
+            "turn": 4,
+            "student": "\"I'm not in a hurry, but I'm waiting. Just get it done.\"",
+            "ai": "Okay, I'll make sure it's up to my usual standard then. Is this for here or to go?",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "Contains coaching language ('make sure it's up to my usual standard') and robotic filler ('Okay')",
+                "score": 3,
+                "improvement_suggestion": "Ask the question directly without explanatory statements"
+            }
+        },
+        {
+            "turn": 5,
+            "student": "\"To go. Just do it.\"",
+            "ai": "To go, got it. Name for the order?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 9,
+                "improvement_suggestion": "Consider streamlining the response to avoid perceived robotic phrasing while maintaining clarity."
+            }
+        },
+        {
+            "turn": 6,
+            "student": "\"Mack. What's the rush?\"",
+            "ai": "Mack, got it. No rush, just making sure I get everything right!",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain concise, conversational responses without unnecessary elaboration."
+            }
+        },
+        {
+            "turn": 7,
+            "student": "\"Sure, sure. Just don\u2019t make me wait forever.\"",
+            "ai": "I'll do my best, Mack. While I'm working on that, can I get you anything else?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 9,
+                "improvement_suggestion": "Consider simplifying the response to maintain tighter conversational flow."
+            }
+        },
+        {
+            "turn": 8,
+            "student": "\"Whatever. Just get my order out. I'm not waiting around.\"",
+            "ai": "Alright, Mack, I'm working as fast as I can. It'll be just a minute.",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Consider adding a brief question to engage the customer (e.g., 'Would you like anything else with that?') while maintaining the tone."
+            }
+        }
+    ]
+}

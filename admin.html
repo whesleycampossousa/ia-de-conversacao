@@ -33,12 +33,173 @@
                 <div class="stat-card">
                     <div class="stat-icon">👤</div>
                     <div class="stat-value" id="total-users">0</div>
-                    <div class="stat-label">Active Users Today</div>
+                    <div class="stat-label">Active Users (Live)</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon">⏱️</div>
-                    <div class="stat-value">10 min</div>
-                    <div class="stat-label">Daily Limit</div>
+                    <div class="stat-value">Weekend</div>
+                    <div class="stat-label">Usage Window</div>
+                </div>
+            </div>
+
+            <!-- Live Observer Section -->
+            <div class="admin-section">
+                <div class="section-header">
+                    <h2>📡 Live Observer</h2>
+                    <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+                        <label for="metrics-window" style="font-size:0.85rem;color:#94a3b8;">Window</label>
+                        <select id="metrics-window" class="action-btn" style="margin:0;padding:0.45rem 0.8rem;background:#1f2937;">
+                            <option value="10">10 min</option>
+                            <option value="20">20 min</option>
+                            <option value="30">30 min</option>
+                            <option value="60">60 min</option>
+                        </select>
+                        <button id="metrics-refresh-btn" class="action-btn" style="margin:0;padding:0.45rem 0.9rem;">Refresh</button>
+                        <span id="metrics-last-update" style="font-size:0.8rem;color:#94a3b8;">Last update: --</span>
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:0.75rem;margin-bottom:1rem;">
+                    <div class="stat-card" style="margin:0;">
+                        <div class="stat-value" id="metric-active-users">0</div>
+                        <div class="stat-label">Active users</div>
+                    </div>
+                    <div class="stat-card" style="margin:0;">
+                        <div class="stat-value" id="metric-msg-5m">0</div>
+                        <div class="stat-label">Messages (5m)</div>
+                    </div>
+                    <div class="stat-card" style="margin:0;">
+                        <div class="stat-value" id="metric-latency">0 ms</div>
+                        <div class="stat-label">Avg latency (5m)</div>
+                    </div>
+                    <div class="stat-card" style="margin:0;">
+                        <div class="stat-value" id="metric-error-rate">0%</div>
+                        <div class="stat-label">Error rate (5m)</div>
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.9rem;margin-bottom:1rem;">
+                    <div style="background:rgba(15,23,42,.6);border:1px solid rgba(148,163,184,.2);border-radius:12px;padding:0.8rem;">
+                        <div style="font-size:0.85rem;color:#94a3b8;margin-bottom:0.5rem;">Mode distribution (60m)</div>
+                        <div id="metrics-mode-breakdown" style="display:flex;flex-direction:column;gap:0.35rem;"></div>
+                    </div>
+                    <div style="background:rgba(15,23,42,.6);border:1px solid rgba(148,163,184,.2);border-radius:12px;padding:0.8rem;">
+                        <div style="font-size:0.85rem;color:#94a3b8;margin-bottom:0.5rem;">Top contexts (60m)</div>
+                        <div id="metrics-top-contexts" style="display:flex;flex-direction:column;gap:0.35rem;"></div>
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:0.9rem;margin-bottom:1rem;">
+                    <div style="background:rgba(15,23,42,.6);border:1px solid rgba(148,163,184,.2);border-radius:12px;padding:0.8rem;">
+                        <div style="font-size:0.85rem;color:#94a3b8;margin-bottom:0.5rem;">Messages/min (60m)</div>
+                        <svg id="chart-messages" viewBox="0 0 100 100" preserveAspectRatio="none" style="width:100%;height:92px;display:block;"></svg>
+                        <div id="chart-messages-meta" style="font-size:0.75rem;color:#94a3b8;margin-top:0.3rem;">No data</div>
+                    </div>
+                    <div style="background:rgba(15,23,42,.6);border:1px solid rgba(148,163,184,.2);border-radius:12px;padding:0.8rem;">
+                        <div style="font-size:0.85rem;color:#94a3b8;margin-bottom:0.5rem;">Latency ms/min (60m)</div>
+                        <svg id="chart-latency" viewBox="0 0 100 100" preserveAspectRatio="none" style="width:100%;height:92px;display:block;"></svg>
+                        <div id="chart-latency-meta" style="font-size:0.75rem;color:#94a3b8;margin-top:0.3rem;">No data</div>
+                    </div>
+                    <div style="background:rgba(15,23,42,.6);border:1px solid rgba(148,163,184,.2);border-radius:12px;padding:0.8rem;">
+                        <div style="font-size:0.85rem;color:#94a3b8;margin-bottom:0.5rem;">Error rate %/min (60m)</div>
+                        <svg id="chart-errors" viewBox="0 0 100 100" preserveAspectRatio="none" style="width:100%;height:92px;display:block;"></svg>
+                        <div id="chart-errors-meta" style="font-size:0.75rem;color:#94a3b8;margin-top:0.3rem;">No data</div>
+                    </div>
+                </div>
+
+                <div style="background:rgba(2,6,23,.45);border:1px solid rgba(148,163,184,.2);border-radius:12px;padding:0.8rem;overflow:auto;">
+                    <div style="font-size:0.9rem;color:#e2e8f0;font-weight:600;margin-bottom:0.5rem;">Active learners</div>
+                    <table style="width:100%;border-collapse:collapse;font-size:0.84rem;">
+                        <thead>
+                            <tr style="text-align:left;color:#94a3b8;border-bottom:1px solid rgba(148,163,184,.2);">
+                                <th style="padding:0.45rem 0.35rem;">Email</th>
+                                <th style="padding:0.45rem 0.35rem;">Context</th>
+                                <th style="padding:0.45rem 0.35rem;">Mode</th>
+                                <th style="padding:0.45rem 0.35rem;">Msgs</th>
+                                <th style="padding:0.45rem 0.35rem;">Latency</th>
+                                <th style="padding:0.45rem 0.35rem;">Last seen</th>
+                            </tr>
+                        </thead>
+                        <tbody id="metrics-users-body">
+                            <tr><td colspan="6" style="padding:0.8rem;color:#94a3b8;">Loading live metrics...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Weekly Didactic Report -->
+            <div class="admin-section">
+                <div class="section-header">
+                    <h2>📘 Weekly Didactic Report</h2>
+                    <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+                        <label for="weekly-range" style="font-size:0.85rem;color:#94a3b8;">Range</label>
+                        <select id="weekly-range" class="action-btn" style="margin:0;padding:0.45rem 0.8rem;background:#1f2937;">
+                            <option value="6">6 weeks</option>
+                            <option value="8" selected>8 weeks</option>
+                            <option value="12">12 weeks</option>
+                            <option value="16">16 weeks</option>
+                        </select>
+                        <button id="weekly-refresh-btn" class="action-btn" style="margin:0;padding:0.45rem 0.9rem;">Refresh</button>
+                        <span id="weekly-last-update" style="font-size:0.8rem;color:#94a3b8;">Last update: --</span>
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:0.75rem;margin-bottom:1rem;">
+                    <div class="stat-card" style="margin:0;">
+                        <div class="stat-value" id="weekly-active">0</div>
+                        <div class="stat-label">Active learners (week)</div>
+                    </div>
+                    <div class="stat-card" style="margin:0;">
+                        <div class="stat-value" id="weekly-returning">0</div>
+                        <div class="stat-label">Returning learners</div>
+                    </div>
+                    <div class="stat-card" style="margin:0;">
+                        <div class="stat-value" id="weekly-retention">0%</div>
+                        <div class="stat-label">Retention rate</div>
+                    </div>
+                    <div class="stat-card" style="margin:0;">
+                        <div class="stat-value" id="weekly-msgs">0</div>
+                        <div class="stat-label">Practice messages</div>
+                    </div>
+                    <div class="stat-card" style="margin:0;">
+                        <div class="stat-value" id="weekly-latency">0 ms</div>
+                        <div class="stat-label">Avg latency</div>
+                    </div>
+                    <div class="stat-card" style="margin:0;">
+                        <div class="stat-value" id="weekly-must-retry">0%</div>
+                        <div class="stat-label">Must retry rate</div>
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.9rem;margin-bottom:1rem;">
+                    <div style="background:rgba(15,23,42,.6);border:1px solid rgba(148,163,184,.2);border-radius:12px;padding:0.8rem;">
+                        <div style="font-size:0.85rem;color:#94a3b8;margin-bottom:0.5rem;">Mode shares (current week)</div>
+                        <div id="weekly-mode-shares" style="display:flex;flex-direction:column;gap:0.35rem;"></div>
+                    </div>
+                    <div style="background:rgba(15,23,42,.6);border:1px solid rgba(148,163,184,.2);border-radius:12px;padding:0.8rem;">
+                        <div style="font-size:0.85rem;color:#94a3b8;margin-bottom:0.5rem;">Top didactic contexts (week)</div>
+                        <div id="weekly-top-contexts" style="display:flex;flex-direction:column;gap:0.35rem;"></div>
+                    </div>
+                </div>
+
+                <div style="background:rgba(2,6,23,.45);border:1px solid rgba(148,163,184,.2);border-radius:12px;padding:0.8rem;overflow:auto;">
+                    <div style="font-size:0.9rem;color:#e2e8f0;font-weight:600;margin-bottom:0.5rem;">Weekly trend</div>
+                    <table style="width:100%;border-collapse:collapse;font-size:0.84rem;">
+                        <thead>
+                            <tr style="text-align:left;color:#94a3b8;border-bottom:1px solid rgba(148,163,184,.2);">
+                                <th style="padding:0.45rem 0.35rem;">Week</th>
+                                <th style="padding:0.45rem 0.35rem;">Active</th>
+                                <th style="padding:0.45rem 0.35rem;">Returning</th>
+                                <th style="padding:0.45rem 0.35rem;">Messages</th>
+                                <th style="padding:0.45rem 0.35rem;">Msg/active</th>
+                                <th style="padding:0.45rem 0.35rem;">Latency</th>
+                                <th style="padding:0.45rem 0.35rem;">Errors</th>
+                            </tr>
+                        </thead>
+                        <tbody id="weekly-report-body">
+                            <tr><td colspan="7" style="padding:0.8rem;color:#94a3b8;">Loading weekly report...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -120,6 +281,10 @@
 
             // Load emails
             await loadEmails();
+            await loadLiveMetrics();
+            await loadWeeklyReport();
+            liveMetricsTimer = setInterval(loadLiveMetrics, 10000);
+            weeklyReportTimer = setInterval(loadWeeklyReport, 60000);
 
             // Event listeners
             document.getElementById('add-email-btn').addEventListener('click', showAddModal);
@@ -127,7 +292,17 @@
             document.getElementById('confirm-add-btn').addEventListener('click', addEmail);
             document.getElementById('cancel-add-btn').addEventListener('click', hideAddModal);
             document.getElementById('search-input').addEventListener('input', filterEmails);
+            document.getElementById('metrics-refresh-btn').addEventListener('click', loadLiveMetrics);
+            document.getElementById('metrics-window').addEventListener('change', loadLiveMetrics);
+            document.getElementById('weekly-refresh-btn').addEventListener('click', loadWeeklyReport);
+            document.getElementById('weekly-range').addEventListener('change', loadWeeklyReport);
             document.getElementById('logout-btn').addEventListener('click', () => {
+                if (liveMetricsTimer) {
+                    clearInterval(liveMetricsTimer);
+                }
+                if (weeklyReportTimer) {
+                    clearInterval(weeklyReportTimer);
+                }
                 apiClient.logout();
                 window.location.href = 'index.html';
             });
@@ -141,16 +316,236 @@
         });
 
         let allEmails = [];
+        let currentAdminEmail = '';
+        let liveMetricsTimer = null;
+        let weeklyReportTimer = null;
+        window.addEventListener('beforeunload', () => {
+            if (liveMetricsTimer) clearInterval(liveMetricsTimer);
+            if (weeklyReportTimer) clearInterval(weeklyReportTimer);
+        });
+
+        function sanitizeText(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function formatMetricValue(value, decimals = 0) {
+            const n = Number(value);
+            if (!Number.isFinite(n)) return '0';
+            return n.toFixed(decimals);
+        }
+
+        function renderTrendChart(svgId, metaId, points, options = {}) {
+            const svg = document.getElementById(svgId);
+            const meta = document.getElementById(metaId);
+            if (!svg || !meta) return;
+
+            const color = options.color || '#22c55e';
+            const decimals = Number.isInteger(options.decimals) ? options.decimals : 0;
+            const suffix = options.suffix || '';
+            const values = (Array.isArray(points) ? points : [])
+                .map((p) => Number(p && p.value))
+                .filter((v) => Number.isFinite(v));
+
+            if (!values.length) {
+                svg.innerHTML = '<line x1="0" y1="98" x2="100" y2="98" stroke="rgba(148,163,184,.35)" stroke-width="1" />';
+                meta.textContent = 'No data';
+                return;
+            }
+
+            const minV = Math.min(...values);
+            const maxV = Math.max(...values);
+            const range = Math.max(1e-6, maxV - minV);
+            const coords = values.map((v, i) => {
+                const x = values.length === 1 ? 100 : (i / (values.length - 1)) * 100;
+                const y = 96 - ((v - minV) / range) * 90;
+                return [x, Math.max(4, Math.min(96, y))];
+            });
+
+            const polyline = coords.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(' ');
+            const area = `M 0 96 L ${coords.map(([x, y]) => `${x.toFixed(2)} ${y.toFixed(2)}`).join(' L ')} L 100 96 Z`;
+            const last = values[values.length - 1];
+            const recent = values.slice(-5);
+            const avgRecent = recent.reduce((acc, v) => acc + v, 0) / recent.length;
+
+            svg.innerHTML = `
+                <line x1="0" y1="96" x2="100" y2="96" stroke="rgba(148,163,184,.25)" stroke-width="1" />
+                <path d="${area}" fill="${color}" fill-opacity="0.18"></path>
+                <polyline points="${polyline}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></polyline>
+            `;
+            meta.textContent = `Last ${formatMetricValue(last, decimals)}${suffix} | 5m avg ${formatMetricValue(avgRecent, decimals)}${suffix}`;
+        }
 
         async function loadEmails() {
             try {
                 const data = await apiClient.getAuthorizedEmails();
                 allEmails = data.emails || [];
+                currentAdminEmail = (data.admin_email || '').toLowerCase();
                 document.getElementById('total-emails').textContent = data.total || 0;
                 renderEmails(allEmails);
             } catch (err) {
                 console.error('Failed to load emails:', err);
                 alert('Failed to load emails. Please try again.');
+            }
+        }
+
+        function updateMetricList(containerId, entries, formatter, emptyText) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            if (!entries || entries.length === 0) {
+                container.innerHTML = `<div style="color:#94a3b8;font-size:0.82rem;">${emptyText}</div>`;
+                return;
+            }
+            container.innerHTML = entries.map(formatter).join('');
+        }
+
+        function formatRelativeTime(isoDate) {
+            if (!isoDate) return '--';
+            const value = new Date(isoDate).getTime();
+            if (Number.isNaN(value)) return '--';
+            const deltaSec = Math.max(0, Math.round((Date.now() - value) / 1000));
+            if (deltaSec < 60) return `${deltaSec}s ago`;
+            if (deltaSec < 3600) return `${Math.floor(deltaSec / 60)}m ago`;
+            return `${Math.floor(deltaSec / 3600)}h ago`;
+        }
+
+        async function loadLiveMetrics() {
+            const windowEl = document.getElementById('metrics-window');
+            const selectedWindow = parseInt(windowEl ? windowEl.value : '10', 10) || 10;
+            try {
+                const data = await apiClient.getAdminLiveMetrics(selectedWindow);
+
+                document.getElementById('metric-active-users').textContent = data.active_users_count || 0;
+                document.getElementById('metric-msg-5m').textContent = data.messages_last_5m || 0;
+                document.getElementById('metric-latency').textContent = `${Math.round(data.avg_response_ms_5m || 0)} ms`;
+                document.getElementById('metric-error-rate').textContent = `${(data.error_rate_5m || 0).toFixed(1)}%`;
+                document.getElementById('total-users').textContent = data.active_users_count || 0;
+
+                const modeEntries = Object.entries(data.mode_breakdown_60m || {}).sort((a, b) => b[1] - a[1]);
+                updateMetricList(
+                    'metrics-mode-breakdown',
+                    modeEntries,
+                    ([mode, count]) => `<div style="display:flex;justify-content:space-between;color:#e2e8f0;"><span>${sanitizeText(mode)}</span><strong>${sanitizeText(count)}</strong></div>`,
+                    'No mode data yet.'
+                );
+
+                const contextEntries = Array.isArray(data.top_contexts_60m) ? data.top_contexts_60m : [];
+                updateMetricList(
+                    'metrics-top-contexts',
+                    contextEntries,
+                    (item) => `<div style="display:flex;justify-content:space-between;color:#e2e8f0;"><span>${sanitizeText(item.context || 'unknown')}</span><strong>${sanitizeText(item.count || 0)}</strong></div>`,
+                    'No context data yet.'
+                );
+
+                const charts = data.charts_60m || {};
+                renderTrendChart('chart-messages', 'chart-messages-meta', charts.messages_per_minute, {
+                    color: '#22c55e',
+                    decimals: 0,
+                    suffix: ' msg'
+                });
+                renderTrendChart('chart-latency', 'chart-latency-meta', charts.latency_ms_per_minute, {
+                    color: '#38bdf8',
+                    decimals: 0,
+                    suffix: ' ms'
+                });
+                renderTrendChart('chart-errors', 'chart-errors-meta', charts.error_rate_per_minute, {
+                    color: '#f97316',
+                    decimals: 1,
+                    suffix: '%'
+                });
+
+                const usersBody = document.getElementById('metrics-users-body');
+                const users = Array.isArray(data.active_users) ? data.active_users : [];
+                if (usersBody) {
+                    if (!users.length) {
+                        usersBody.innerHTML = '<tr><td colspan="6" style="padding:0.8rem;color:#94a3b8;">No active learners in selected window.</td></tr>';
+                    } else {
+                        usersBody.innerHTML = users.map((item) => `
+                            <tr style="border-bottom:1px solid rgba(148,163,184,.1);">
+                                <td style="padding:0.45rem 0.35rem;color:#e2e8f0;">${sanitizeText(item.email || '--')}</td>
+                                <td style="padding:0.45rem 0.35rem;color:#cbd5e1;">${sanitizeText(item.last_context || '--')}</td>
+                                <td style="padding:0.45rem 0.35rem;color:#cbd5e1;">${sanitizeText(item.last_mode || '--')}</td>
+                                <td style="padding:0.45rem 0.35rem;color:#cbd5e1;">${sanitizeText(item.messages || 0)}</td>
+                                <td style="padding:0.45rem 0.35rem;color:#cbd5e1;">${item.last_response_ms ? Math.round(item.last_response_ms) + ' ms' : '--'}</td>
+                                <td style="padding:0.45rem 0.35rem;color:#94a3b8;">${formatRelativeTime(item.last_seen)}</td>
+                            </tr>
+                        `).join('');
+                    }
+                }
+
+                const stampEl = document.getElementById('metrics-last-update');
+                if (stampEl) {
+                    stampEl.textContent = `Last update: ${new Date().toLocaleTimeString()}`;
+                }
+            } catch (err) {
+                console.error('Failed to load live metrics:', err);
+            }
+        }
+
+        async function loadWeeklyReport() {
+            const rangeEl = document.getElementById('weekly-range');
+            const selectedWeeks = parseInt(rangeEl ? rangeEl.value : '8', 10) || 8;
+            try {
+                const data = await apiClient.getAdminWeeklyReport(selectedWeeks);
+                const current = data.current_week || {};
+
+                document.getElementById('weekly-active').textContent = Math.round(Number(current.active_learners || 0));
+                document.getElementById('weekly-returning').textContent = Math.round(Number(current.returning_learners || 0));
+                document.getElementById('weekly-retention').textContent = `${Number(current.retention_rate || 0).toFixed(1)}%`;
+                document.getElementById('weekly-msgs').textContent = Math.round(Number(current.practice_messages || 0));
+                document.getElementById('weekly-latency').textContent = `${Math.round(Number(current.avg_response_ms || 0))} ms`;
+                document.getElementById('weekly-must-retry').textContent = `${Number(current.must_retry_rate || 0).toFixed(1)}%`;
+
+                const modeShareEntries = [
+                    ['learning', Number(current.learning_share || 0)],
+                    ['simulator', Number(current.simulator_share || 0)],
+                    ['guided', Number(current.guided_share || 0)]
+                ];
+                updateMetricList(
+                    'weekly-mode-shares',
+                    modeShareEntries,
+                    ([name, pct]) => `<div style="display:flex;justify-content:space-between;color:#e2e8f0;"><span>${sanitizeText(name)}</span><strong>${pct.toFixed(1)}%</strong></div>`,
+                    'No mode share data yet.'
+                );
+
+                const topContexts = Array.isArray(current.top_contexts) ? current.top_contexts : [];
+                updateMetricList(
+                    'weekly-top-contexts',
+                    topContexts,
+                    (item) => `<div style="display:flex;justify-content:space-between;color:#e2e8f0;"><span>${sanitizeText(item.context || 'unknown')}</span><strong>${sanitizeText(item.count || 0)}</strong></div>`,
+                    'No didactic context data yet.'
+                );
+
+                const bodyEl = document.getElementById('weekly-report-body');
+                const weeks = Array.isArray(data.weeks) ? data.weeks : [];
+                if (bodyEl) {
+                    if (!weeks.length) {
+                        bodyEl.innerHTML = '<tr><td colspan="7" style="padding:0.8rem;color:#94a3b8;">No weekly data yet.</td></tr>';
+                    } else {
+                        bodyEl.innerHTML = weeks.map((week) => `
+                            <tr style="border-bottom:1px solid rgba(148,163,184,.1);">
+                                <td style="padding:0.45rem 0.35rem;color:#e2e8f0;">${sanitizeText(week.week_label || week.week_id || '--')}</td>
+                                <td style="padding:0.45rem 0.35rem;color:#cbd5e1;">${Math.round(Number(week.active_learners || 0))}</td>
+                                <td style="padding:0.45rem 0.35rem;color:#cbd5e1;">${Math.round(Number(week.returning_learners || 0))} (${Number(week.retention_rate || 0).toFixed(1)}%)</td>
+                                <td style="padding:0.45rem 0.35rem;color:#cbd5e1;">${Math.round(Number(week.practice_messages || 0))}</td>
+                                <td style="padding:0.45rem 0.35rem;color:#cbd5e1;">${Number(week.avg_messages_per_active || 0).toFixed(1)}</td>
+                                <td style="padding:0.45rem 0.35rem;color:#cbd5e1;">${Math.round(Number(week.avg_response_ms || 0))} ms</td>
+                                <td style="padding:0.45rem 0.35rem;color:#cbd5e1;">${Number(week.error_rate || 0).toFixed(1)}%</td>
+                            </tr>
+                        `).join('');
+                    }
+                }
+
+                const stampEl = document.getElementById('weekly-last-update');
+                if (stampEl) {
+                    stampEl.textContent = `Last update: ${new Date().toLocaleTimeString()}`;
+                }
+            } catch (err) {
+                console.error('Failed to load weekly report:', err);
             }
         }
 
@@ -164,12 +559,12 @@
             list.innerHTML = emails.map((email, index) => `
                 <div class="email-item">
                     <div class="email-info">
-                        <span class="email-index">${index + 1}</span>
-                        <span class="email-address">${email}</span>
-                        ${email === 'everydayconversation1991@gmail.com' ? '<span class="admin-badge">ADMIN</span>' : ''}
+                        <span class="email-index">${sanitizeText(index + 1)}</span>
+                        <span class="email-address">${sanitizeText(email)}</span>
+                        ${email.toLowerCase() === currentAdminEmail ? '<span class="admin-badge">ADMIN</span>' : ''}
                     </div>
-                    ${email !== 'everydayconversation1991@gmail.com' ?
-                    `<button onclick="removeEmail('${email}')" class="remove-btn">🗑️ Remove</button>` :
+                    ${email.toLowerCase() !== currentAdminEmail ?
+                    `<button onclick="removeEmail(decodeURIComponent('${encodeURIComponent(email)}'))" class="remove-btn">🗑️ Remove</button>` :
                     '<span style="color: #94a3b8; font-size: 0.85rem;">Cannot remove</span>'}
                 </div>
             `).join('');

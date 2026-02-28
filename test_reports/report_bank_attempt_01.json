@@ -1,0 +1,110 @@
+{
+    "context": "bank",
+    "attempt": 1,
+    "profile": "confused_beginner",
+    "pass": false,
+    "avg_score": 6.875,
+    "stats": {
+        "score_sum": 55,
+        "violations": 4
+    },
+    "turns": [
+        {
+            "turn": 1,
+            "student": "(System Trigger)",
+            "ai": "Hello, welcome to the Bank. How can I help you today?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain natural dialogue flow and strictly adhere to the opening rule for consistency.",
+                "first_message_matches_required_opening": true
+            }
+        },
+        {
+            "turn": 2,
+            "student": "\"Good morning... I need to open an account. Can you help me?\" (Confused, looking at the desk.)",
+            "ai": "Good morning! Of course, I can help you with that. What type of account are you looking to open today?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain concise, direct questioning without excess politeness"
+            }
+        },
+        {
+            "turn": 3,
+            "student": "\"Uh... I don't know... can you help me? Pode me ajudar?\"",
+            "ai": "Of course! I can definitely help you figure out what kind of account would be best for you.",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "Natural Flow: Only 1 question per turn",
+                "score": 3,
+                "improvement_suggestion": "Ask a question instead of making a statement to maintain natural flow"
+            }
+        },
+        {
+            "turn": 4,
+            "student": "\"Okay... can you explain what is difference between saving account and checking account? I think I need... *conta poupan\u00e7a* or *conta corrente*?\" \ud83d\ude05",
+            "ai": "Certainly! A savings account is designed to hold money you want to save and usually earns interest.",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "Provided explanatory content instead of asking a question to simulate natural flow",
+                "score": 3,
+                "improvement_suggestion": "Ask a question to prompt the user to differentiate the accounts themselves, e.g., 'What are the key differences you notice between these account types?'"
+            }
+        },
+        {
+            "turn": 5,
+            "student": "\"Wait, does the money grow automatically? I'm confused.\"",
+            "ai": "It does! The bank adds interest to your savings account regularly.",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain concise, direct responses focused solely on the question without additional explanations."
+            }
+        },
+        {
+            "turn": 6,
+            "student": "\"Wait, so the bank gives more money? How often? (Confused, looking at my phone for words.)\"",
+            "ai": "Yes, it does! The bank adds interest to your savings account on a regular schedule, depending on the account. Would you like me to show you some options?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 9,
+                "improvement_suggestion": "Simplify the closing question to avoid filler phrasing (e.g., 'Would you like me to show you some options?' could be replaced with a direct question about account types)."
+            }
+        },
+        {
+            "turn": 7,
+            "student": "\"Wait... interest? What is that? Can you explain again? Or maybe 'conta'?\" (confused, mixing Portuguese)",
+            "ai": "Interest is extra money the bank adds to your account. It's like a small 'thank you' for keeping your money with us.",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "Teaching/Coaching",
+                "score": 4,
+                "improvement_suggestion": "Ask the student to clarify their confusion about 'conta' instead of providing an explanation."
+            }
+        },
+        {
+            "turn": 8,
+            "student": "\"Wait... so the bank gives me more money for keeping my money? Like, if I have $100, do they add $10 extra? But why? Is it like a reward?\" \ud83d\ude05",
+            "ai": "Well, it depends on the interest rate of the savings account! It might be a little more, or a little less than $10 extra for every $100 you save. Are you interested in learning more about how interest rates work?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": true,
+                "violation_reason": "Teaching/Coaching",
+                "score": 6,
+                "improvement_suggestion": "Avoid offering to teach or guide the student. Focus solely on answering the question without additional instruction."
+            }
+        }
+    ]
+}

@@ -62,7 +62,7 @@ echo.
 echo Para iniciar o servidor local:
 echo   python api/index.py
 echo.
-echo Depois acesse: http://localhost:4004
+echo Depois acesse: http://localhost:8912
 echo.
 echo Para fazer deploy no Vercel:
 echo   vercel --prod

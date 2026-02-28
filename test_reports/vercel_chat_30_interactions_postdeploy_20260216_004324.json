@@ -1,0 +1,623 @@
+{
+  "timestamp": "2026-02-16T00:36:37.035553+00:00",
+  "base_url": "https://ia-de-conversacao.vercel.app",
+  "total_interactions": 30,
+  "login": {
+    "status_code": 200,
+    "latency_ms": 512.2
+  },
+  "results": [
+    {
+      "index": 1,
+      "context": "coffee_shop",
+      "practiceMode": "learning",
+      "input": "Hi! I want to order a cappuccino and a cheese sandwich.",
+      "status_code": 200,
+      "latency_ms": 17593.0,
+      "response_keys": [
+        "feedback",
+        "lessonLang",
+        "must_retry",
+        "retry_prompt",
+        "suggested_words",
+        "text",
+        "translation"
+      ],
+      "response_preview": "That is a great start! To sound more polite when ordering, we often use 'I would like' instead of 'I want'. Would you like that hot or iced?",
+      "response_chars": 140,
+      "ok": true
+    },
+    {
+      "index": 2,
+      "context": "coffee_shop",
+      "practiceMode": "simulator",
+      "input": "Can I have it to go, please?",
+      "status_code": 200,
+      "latency_ms": 10655.8,
+      "response_keys": [
+        "feedback",
+        "lessonLang",
+        "must_retry",
+        "retry_prompt",
+        "suggested_words",
+        "text",
+        "translation"
+      ],
+      "response_preview": "Sure thing, I'll put that in a paper cup for you. Would you like any cream or sugar in there?",
+      "response_chars": 93,
+      "ok": true
+    },
+    {
+      "index": 3,
+      "context": "airport",
+      "practiceMode": "simulator",
+      "input": "I need to check in for my flight to New York.",
+      "status_code": 200,
+      "latency_ms": 1663.6,
+      "response_keys": [
+        "feedback",
+        "lessonLang",
+        "must_retry",
+        "retry_prompt",
+        "suggested_words",
+        "text",
+        "translation"
+      ],
+      "response_preview": "Hello! I can certainly help you with your flight to New York. May I please have your passport and booking reference?",
+      "response_chars": 116,
+      "ok": true
+    },
+    {
+      "index": 4,
+      "context": "airport",
+      "practiceMode": "learning",
+      "input": "My gate changed? I am not sure where to go.",
+      "status_code": 200,
+      "latency_ms": 13966.7,
+      "response_keys": [
+        "feedback",
+        "lessonLang",
+        "must_retry",
+        "retry_prompt",
+        "suggested_words",
+        "text",
+        "translation"
+      ],
+      "response_preview": "Don't worry, gate changes happen all the time! You can find the new gate on the big electronic screens called the 'Departure Board' (Painel de voos). Where are you flying today?",
+      "response_chars": 177,
+      "ok": true
+    },
+    {
+      "index": 5,
+      "context": "doctor",
+      "practiceMode": "simulator",
+      "input": "I have a headache and sore throat since yesterday.",
+      "status_code": 200,
+      "latency_ms": 15264.8,
+      "response_keys": [
+        "feedback",
+        "lessonLang",
+        "must_retry",
+        "retry_prompt",
+        "suggested_words",
+        "text",
+        "translation"
+      ],
+      "response_preview": "I'm sorry to hear that. On a scale of one to ten, how bad is the pain in your head and throat?",
+      "response_chars": 94,
+      "ok": true
+    },
+    {
+      "index": 6,
+      "context": "pharmacy",
+      "practiceMode": "learning",
+      "input": "Should I take this medicine before or after meals?",
+      "status_code": 200,
+      "latency_ms": 16513.7,
+      "response_keys": [
+        "feedback",
+        "lessonLang",
+        "must_retry",
+        "retry_prompt",
+        "suggested_words",
+        "text",
+        "translation"
+      ],
+      "response_preview": "That depends on the specific medicine, but usually, it's better to check the label first! You can ask the pharmacist: 'What is the dosage?' (Qual é a dosagem?). What symptoms do you have?",
+      "response_chars": 187,
+      "ok": true
+    },
+    {
+      "index": 7,
+      "context": "bank",
+      "practiceMode": "simulator",
+      "input": "I want to open a checking account.",
+      "status_code": 200,
+      "latency_ms": 14125.9,
+      "response_keys": [
+        "feedback",
+        "lessonLang",
+        "must_retry",
+        "retry_prompt",
+        "suggested_words",
+        "text",
+        "translation"
+      ],
+      "response_preview": "Welcome to First National Bank! I would be happy to help you open a checking account.",
+      "response_chars": 85,
+      "ok": true
+    },
+    {
+      "index": 8,
+      "context": "renting_car",
+      "practiceMode": "simulator",
+      "input": "What documents do I need to rent a car?",
+      "status_code": 200,
+      "latency_ms": 11130.6,
+      "response_keys": [
+        "feedback",
+        "lessonLang",
+        "must_retry",
+        "retry_prompt",
+        "suggested_words",
+        "text",
+        "translation"
+      ],
+      "response_preview": "You'll just need your driver's license and a credit card in your name. Do you already have a reservation or would you like to rent a car now?",
+      "response_chars": 141,
+      "ok": true
+    },
+    {
+      "index": 9,
+      "context": "clothing_store",
+      "practiceMode": "learning",
+      "input": "Could you show me where the fitting room is?",
+      "status_code": 200,
+      "latency_ms": 11857.3,
+      "response_keys": [
+        "feedback",
+        "lessonLang",
+        "must_retry",
+        "retry_prompt",
+        "suggested_words",
+        "text",
+        "translation"
+      ],
+      "response_preview": "Of course! The fitting rooms are right behind those blue jeans. What size do you need?",
+      "response_chars": 86,
+      "ok": true
+    },
+    {
+      "index": 10,
+      "context": "shopping",
+      "practiceMode": "learning",
+      "input": "I think these shoes are too expensive. Any discount?",
+      "status_code": 200,
+      "latency_ms": 2603.3,
+      "response_keys": [
+        "feedback",
+        "lessonLang",
+        "must_retry",
+        "retry_prompt",
+        "suggested_words",
+        "text",
+        "translation"
+      ],
+      "response_preview": "That is a very common situation when shopping! Instead of 'Any discount?', say 'Is there a discount on these?' (Tem desconto nestes?). Can you tell me a bit more about that?",
+      "response_chars": 173,
+      "ok": true
+    },
+    {
+      "index": 11,
+      "context": "verb_to_be",
+      "practiceMode": "learning",
+      "input": "I has two brother and they is very funny.",
+      "status_code": 200,
+      "latency_ms": 11400.3,
+      "response_keys": [
+        "feedback",
+        "lessonLang",
+        "must_retry",
+        "retry_prompt",
+        "suggested_words",
+        "text",
+        "translation"
+      ],
+      "response_preview": "Oh, that sounds like a lively house! Instead of 'they is', say: 'they are'. Are they older than you, or are you the big brother?",
+      "response_chars": 128,
+      "ok": true
+    },
+    {
+      "index": 12,
+      "context": "past_simple",
+      "practiceMode": "learning",
+      "input": "Yesterday I go to the market and buyed apples.",
+      "status_code": 200,
+      "latency_ms": 10919.2,
+      "response_keys": [
+        "feedback",
+        "lessonLang",
+        "must_retry",
+        "retry_prompt",
+        "suggested_words",
+        "text",
+        "translation"
+      ],
+      "response_preview": "Oh, nice! Instead of 'go' and 'buyed', say: went / bought. I also went to the store and I picked up some sweet oranges. What else did you buy?",
+      "response_chars": 142,
+      "ok": true
+    },
+    {
+      "index": 13,
+      "context": "present_simple",
+      "practiceMode": "learning",
+      "input": "She don't like spicy food, but she like pasta.",
+      "status_code": 200,
+      "latency_ms": 1368.6,
+      "response_keys": [
+        "feedback",
+        "lessonLang",
+        "must_retry",
+        "retry_prompt",
+        "suggested_words",
+        "text",
+        "translation"
+      ],
+      "response_preview": "Oh, my sister is the same! Instead of 'She don't like', say: She doesn't like. She loves pasta too! Does your friend cook it often?",
+      "response_chars": 131,
+      "ok": true
+    },
+    {
+      "index": 14,
+      "context": "some_any_no",
+      "practiceMode": "learning",
+      "input": "Can you explain when to use some and any?",
+      "status_code": 200,
+      "latency_ms": 11320.7,
+      "response_keys": [
+        "feedback",
+        "lessonLang",
+        "must_retry",
+        "retry_prompt",
+        "suggested_words",
+        "text",
+        "translation"
+      ],
+      "response_preview": "I have some free time to help! I have no plans today. Do you have any questions about your hobbies or work?",
+      "response_chars": 107,
+      "ok": true
+    },
+    {
+      "index": 15,
+      "context": "conditionals_zero_first",
+      "practiceMode": "learning",
+      "input": "If I will have time, I will visit my grandma.",
+      "status_code": 200,
+      "latency_ms": 16228.0,
+      "response_keys": [
+        "feedback",
+        "lessonLang",
+        "must_retry",
+        "retry_prompt",
+        "suggested_words",
+        "text",
+        "translation"
+      ],
+      "response_preview": "That's sweet! Instead of <will have time>, say: <have time>. If I have free time, I usually call my mom. What do you do if you have time?",
+      "response_chars": 137,
+      "ok": true
+    },
+    {
+      "index": 16,
+      "context": "present_perfect",
+      "practiceMode": "learning",
+      "input": "I have been to London two times since 2020.",
+      "status_code": 200,
+      "latency_ms": 1591.4,
+      "response_keys": [
+        "feedback",
+        "lessonLang",
+        "must_retry",
+        "retry_prompt",
+        "suggested_words",
+        "text",
+        "translation"
+      ],
+      "response_preview": "That's lovely! I've been there too and I've always loved the parks. Have you ever visited any famous museums in London?",
+      "response_chars": 119,
+      "ok": true
+    },
+    {
+      "index": 17,
+      "context": "passive_voice",
+      "practiceMode": "learning",
+      "input": "The cake was make by my sister.",
+      "status_code": 200,
+      "latency_ms": 10068.5,
+      "response_keys": [
+        "feedback",
+        "lessonLang",
+        "must_retry",
+        "retry_prompt",
+        "suggested_words",
+        "text",
+        "translation"
+      ],
+      "response_preview": "Instead of <make by>, say: made by. Oh, I love cake! Was the cake eaten quickly by your family?",
+      "response_chars": 95,
+      "ok": true
+    },
+    {
+      "index": 18,
+      "context": "comparatives_superlatives",
+      "practiceMode": "learning",
+      "input": "He is more taller than me.",
+      "status_code": 200,
+      "latency_ms": 1265.8,
+      "response_keys": [
+        "feedback",
+        "lessonLang",
+        "must_retry",
+        "retry_prompt",
+        "suggested_words",
+        "text",
+        "translation"
+      ],
+      "response_preview": "Instead of <more taller>, say: <taller>. I think I am the tallest person here! Who is the tallest person in your family?",
+      "response_chars": 120,
+      "ok": true
+    },
+    {
+      "index": 19,
+      "context": "job_interview",
+      "practiceMode": "learning",
+      "input": "Can you help me prepare for a job interview?",
+      "status_code": 200,
+      "latency_ms": 2790.3,
+      "response_keys": [
+        "feedback",
+        "lessonLang",
+        "must_retry",
+        "retry_prompt",
+        "suggested_words",
+        "text",
+        "translation"
+      ],
+      "response_preview": "That is a great idea because practice makes you feel much more confident! A very common way to start is: 'I have been working as a... Why do you want this job?",
+      "response_chars": 159,
+      "ok": true
+    },
+    {
+      "index": 20,
+      "context": "job_interview",
+      "practiceMode": "simulator",
+      "input": "What strengths should I mention for a customer support role?",
+      "status_code": 200,
+      "latency_ms": 23530.3,
+      "response_keys": [
+        "feedback",
+        "lessonLang",
+        "must_retry",
+        "retry_prompt",
+        "suggested_words",
+        "text",
+        "translation"
+      ],
+      "response_preview": "Mentioning empathy and problem-solving is usually best for support roles. Hello, I'm Sarah Mitchell; shall we begin the interview with a brief summary of your background?",
+      "response_chars": 170,
+      "ok": true
+    },
+    {
+      "index": 21,
+      "context": "lost_found",
+      "practiceMode": "simulator",
+      "input": "I lost my wallet in the train station.",
+      "status_code": 200,
+      "latency_ms": 1405.5,
+      "response_keys": [
+        "feedback",
+        "lessonLang",
+        "must_retry",
+        "retry_prompt",
+        "suggested_words",
+        "text",
+        "translation"
+      ],
+      "response_preview": "I'm sorry to hear that. Around what time did you last have your wallet with you?",
+      "response_chars": 80,
+      "ok": true
+    },
+    {
+      "index": 22,
+      "context": "street",
+      "practiceMode": "learning",
+      "input": "How can I ask for directions politely in English?",
+      "status_code": 200,
+      "latency_ms": 29564.5,
+      "response_keys": [
+        "feedback",
+        "lessonLang",
+        "must_retry",
+        "retry_prompt",
+        "suggested_words",
+        "text",
+        "translation"
+      ],
+      "response_preview": "That is a great question because being polite helps people want to help you! You can start with: 'Excuse me, could you help me find...?' (Com licença, você poderia me ajudar a encontrar...?). Can you tell me a bit more a",
+      "response_chars": 230,
+      "ok": true
+    },
+    {
+      "index": 23,
+      "context": "hotel",
+      "practiceMode": "simulator",
+      "input": "Can I book a room for two nights with breakfast included?",
+      "status_code": 200,
+      "latency_ms": 13072.8,
+      "response_keys": [
+        "feedback",
+        "lessonLang",
+        "must_retry",
+        "retry_prompt",
+        "suggested_words",
+        "text",
+        "translation"
+      ],
+      "response_preview": "Welcome to The Grand View Hotel. May I have your name to check our availability for those two nights?",
+      "response_chars": 101,
+      "ok": true
+    },
+    {
+      "index": 24,
+      "context": "dental_clinic",
+      "practiceMode": "learning",
+      "input": "I need to reschedule my dentist appointment.",
+      "status_code": 200,
+      "latency_ms": 14015.1,
+      "response_keys": [
+        "feedback",
+        "lessonLang",
+        "must_retry",
+        "retry_prompt",
+        "suggested_words",
+        "text",
+        "translation"
+      ],
+      "response_preview": "That is no problem, I can help you with that. A common way to start this conversation is to say: 'I'd like to move my appointment to another day' (Eu gostaria de mudar minha consulta para outro dia). What brings you in t",
+      "response_chars": 225,
+      "ok": true
+    },
+    {
+      "index": 25,
+      "context": "gym",
+      "practiceMode": "learning",
+      "input": "Could you recommend a beginner workout plan?",
+      "status_code": 200,
+      "latency_ms": 22941.5,
+      "response_keys": [
+        "feedback",
+        "lessonLang",
+        "must_retry",
+        "retry_prompt",
+        "suggested_words",
+        "text",
+        "translation"
+      ],
+      "response_preview": "That is a great idea to start slow so you don't get hurt! You should try a 'Full-body routine' (rotina de corpo inteiro) which focuses on all your muscles in one visit. What kind of workout do you want today?",
+      "response_chars": 208,
+      "ok": true
+    },
+    {
+      "index": 26,
+      "context": "post_office",
+      "practiceMode": "simulator",
+      "input": "I need to mail this package internationally.",
+      "status_code": 200,
+      "latency_ms": 1316.3,
+      "response_keys": [
+        "feedback",
+        "lessonLang",
+        "must_retry",
+        "retry_prompt",
+        "suggested_words",
+        "text",
+        "translation"
+      ],
+      "response_preview": "I can help you with that. Which country are you sending this package to?",
+      "response_chars": 72,
+      "ok": true
+    },
+    {
+      "index": 27,
+      "context": "first_date",
+      "practiceMode": "learning",
+      "input": "Can you suggest a nice conversation opener for a first date?",
+      "status_code": 200,
+      "latency_ms": 15569.4,
+      "response_keys": [
+        "feedback",
+        "lessonLang",
+        "must_retry",
+        "retry_prompt",
+        "suggested_words",
+        "text",
+        "translation"
+      ],
+      "response_preview": "That is a great question because the first few minutes are the most important! A very natural way to start is: 'Have you been to this place before?' (Você já esteve neste lugar antes?). Can you tell me a bit more about t",
+      "response_chars": 224,
+      "ok": true
+    },
+    {
+      "index": 28,
+      "context": "neighbor",
+      "practiceMode": "simulator",
+      "input": "I want to practice small talk with my neighbors.",
+      "status_code": 200,
+      "latency_ms": 13312.0,
+      "response_keys": [
+        "feedback",
+        "lessonLang",
+        "must_retry",
+        "retry_prompt",
+        "suggested_words",
+        "text",
+        "translation"
+      ],
+      "response_preview": "Hey there! I was just grabbing the mail and noticed your garden is looking great.",
+      "response_chars": 81,
+      "ok": true
+    },
+    {
+      "index": 29,
+      "context": "free_conversation_guided",
+      "practiceMode": "learning",
+      "input": "Please correct this sentence: 'She have went to school'.",
+      "status_code": 200,
+      "latency_ms": 13911.9,
+      "response_keys": [
+        "feedback",
+        "lessonLang",
+        "must_retry",
+        "retry_prompt",
+        "suggested_words",
+        "text",
+        "translation"
+      ],
+      "response_preview": "That is almost right, but the correct way to say it is: 'She has gone to school.' A very useful phrase for daily life is: 'She is already there' (Ela já está lá). Since we are talking about school, did you enjoy your sch",
+      "response_chars": 251,
+      "ok": true
+    },
+    {
+      "index": 30,
+      "context": "free_conversation_guided",
+      "practiceMode": "learning",
+      "input": "Let's finish: give me one realistic phrase I can use today at work.",
+      "status_code": 200,
+      "latency_ms": 12986.0,
+      "response_keys": [
+        "feedback",
+        "lessonLang",
+        "must_retry",
+        "retry_prompt",
+        "suggested_words",
+        "text",
+        "translation"
+      ],
+      "response_preview": "That is a great goal! A very useful phrase for the office is: 'I will send you the details by the end of the day.' (Eu te enviarei os detalhes até o fim do dia). Can you tell me a bit more about that?",
+      "response_chars": 200,
+      "ok": true
+    }
+  ],
+  "summary": {
+    "ok_count": 30,
+    "fail_count": 0,
+    "api_errors": 0,
+    "empty_responses": 0,
+    "exceptions": 0,
+    "potential_context_drift_hits": 0,
+    "min_latency_ms": 1265.8,
+    "max_latency_ms": 29564.5,
+    "avg_latency_ms": 11465.1
+  },
+  "potential_context_drift": []
+}

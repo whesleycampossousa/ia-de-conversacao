@@ -1,0 +1,110 @@
+{
+    "context": "pizza_delivery",
+    "attempt": 1,
+    "profile": "impatient_customer",
+    "pass": false,
+    "avg_score": 5.125,
+    "stats": {
+        "score_sum": 41,
+        "violations": 4
+    },
+    "turns": [
+        {
+            "turn": 1,
+            "student": "(System Trigger)",
+            "ai": "Hello, welcome to the Pizza Delivery. How can I help you today?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain natural flow by keeping responses concise and focused on the scenario.",
+                "first_message_matches_required_opening": true
+            }
+        },
+        {
+            "turn": 2,
+            "student": "\"I want a large pepperoni pizza, fast.\"",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 3,
+                "improvement_suggestion": "Handle user order requests instead of returning technical errors. Provide appropriate responses for pizza delivery scenarios."
+            }
+        },
+        {
+            "turn": 3,
+            "student": "\"What's the problem? Can you fix it?\"",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "AI did not ask a question as required by natural flow",
+                "score": 3,
+                "improvement_suggestion": "Ask the student a question instead of providing an error message"
+            }
+        },
+        {
+            "turn": 4,
+            "student": "\"Where's my pizza? I don't have time for this tech nonsense.\"",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "Provided technical error message instead of engaging with the user's frustration through a question",
+                "score": 3,
+                "improvement_suggestion": "Ask the user what they need help with instead of displaying technical errors"
+            }
+        },
+        {
+            "turn": 5,
+            "student": "\"Fix that or I'm leaving. Don't waste my time with tech talk.\"",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 8,
+                "improvement_suggestion": "Provide more actionable information without violating rules, e.g., '[API ERROR 500] - Check internet connection'"
+            }
+        },
+        {
+            "turn": 6,
+            "student": "\"Ugh, that's not helpful. Just get my pizza here. I don't have time for tech errors.\"",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 9,
+                "improvement_suggestion": "Consider adding a brief error explanation while maintaining strict rule compliance"
+            }
+        },
+        {
+            "turn": 7,
+            "student": "\"What's the problem? Can't you just deliver the pizza?\"",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "AI provided technical error message instead of asking a question",
+                "score": 2,
+                "improvement_suggestion": "Ask a question about the delivery scenario instead of returning technical errors"
+            }
+        },
+        {
+            "turn": 8,
+            "student": "\"Fix it. I don't have time for errors.\"",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "Did not ask a question as per natural flow rule",
+                "score": 3,
+                "improvement_suggestion": "Ask a question instead of providing an error message"
+            }
+        }
+    ]
+}

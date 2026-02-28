@@ -1,0 +1,43 @@
+{
+  "environments": [
+    {
+      "name": "production",
+      "url": "https://ia-de-conversacao.vercel.app",
+      "enabled": true,
+      "priority": "critical",
+      "description": "Deploy principal no Vercel"
+    },
+    {
+      "name": "clone1",
+      "url": "PREENCHER_URL_CLONE_1",
+      "enabled": false,
+      "priority": "high",
+      "description": "Clone 1 - Preencher URL e habilitar"
+    },
+    {
+      "name": "clone2",
+      "url": "PREENCHER_URL_CLONE_2",
+      "enabled": false,
+      "priority": "high",
+      "description": "Clone 2 - Preencher URL e habilitar"
+    },
+    {
+      "name": "clone3",
+      "url": "PREENCHER_URL_CLONE_3",
+      "enabled": false,
+      "priority": "medium",
+      "description": "Clone 3 - Preencher URL e habilitar"
+    },
+    {
+      "name": "clone4",
+      "url": "PREENCHER_URL_CLONE_4",
+      "enabled": false,
+      "priority": "medium",
+      "description": "Clone 4 - Preencher URL e habilitar"
+    }
+  ],
+  "auth": {
+    "email": "everydayconversation1991@gmail.com",
+    "password_env": "MONITOR_PASSWORD"
+  }
+}

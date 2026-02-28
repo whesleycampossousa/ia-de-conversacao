@@ -284,6 +284,33 @@
             font-weight: 600;
         }
 
+        .progress-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-top: 4px;
+        }
+
+        .progress-badge.green {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+        }
+
+        .progress-badge.yellow {
+            background: rgba(234, 179, 8, 0.15);
+            color: #eab308;
+        }
+
+        .last-practiced {
+            font-size: 0.7rem;
+            color: #666;
+            margin-top: 2px;
+        }
+
         /* Mobile Responsive */
         @media (max-width: 768px) {
             .netflix-header {
@@ -341,13 +368,137 @@
             max-width: 500px;
             width: 90%;
         }
+        /* Usage Timer Banner */
+        .usage-timer-banner {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            padding: 8px 18px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .usage-timer-banner.timer-ok {
+            border-color: #22c55e;
+            color: #22c55e;
+        }
+
+        .usage-timer-banner.timer-warning {
+            border-color: #eab308;
+            color: #eab308;
+        }
+
+        .usage-timer-banner.timer-critical {
+            border-color: #ef4444;
+            color: #ef4444;
+            animation: pulse-red 1.5s ease-in-out infinite;
+        }
+
+        .usage-timer-banner.timer-blocked {
+            border-color: #ef4444;
+            color: #ef4444;
+            opacity: 0.8;
+        }
+
+        @keyframes pulse-red {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        #timer-remaining {
+            font-variant-numeric: tabular-nums;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+        }
+
+        #timer-label {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            font-weight: 400;
+        }
+
+        /* Blocked Overlay */
+        .blocked-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: rgba(0, 0, 0, 0.92);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(8px);
+        }
+
+        .blocked-modal {
+            background: #1a1a2e;
+            border: 1px solid #333;
+            border-radius: 16px;
+            padding: 3rem;
+            max-width: 440px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .blocked-modal .modal-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .blocked-modal h2 {
+            font-size: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: #fff;
+        }
+
+        .blocked-modal p {
+            color: #94a3b8;
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 0.5rem;
+        }
+
+        .blocked-modal .highlight {
+            color: #22c55e;
+            font-weight: 600;
+        }
+
+        .blocked-modal .btn-back {
+            margin-top: 1.5rem;
+            padding: 12px 32px;
+            background: #e50914;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .blocked-modal .btn-back:hover {
+            background: #b0070f;
+        }
     </style>
 </head>
 
 <body>
     <!-- Header -->
-    <header class="netflix-header">
+    <header class="netflix-header" style="display: flex; justify-content: space-between; align-items: center;">
         <div class="netflix-logo">Everyday Conversation</div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div id="usage-timer-banner" class="usage-timer-banner">
+                <span id="timer-icon">⏱</span>
+                <span id="timer-remaining">40:00</span>
+                <span id="timer-label">restantes</span>
+                <button id="timer-toggle" onclick="toggleTimerVisibility()" style="background: none; border: none; cursor: pointer; font-size: 1.1rem; padding: 0 0 0 6px; line-height: 1;" title="Mostrar/esconder tempo">👁</button>
+            </div>
+            <button onclick="logoutUser()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #ccc; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; font-family: inherit; transition: all 0.2s;" onmouseover="this.style.background='#e50914'; this.style.color='#fff'; this.style.borderColor='#e50914'" onmouseout="this.style.background='rgba(255,255,255,0.1)'; this.style.color='#ccc'; this.style.borderColor='rgba(255,255,255,0.2)'">Sair</button>
+        </div>
     </header>
 
     <!-- Hero Section -->
@@ -388,12 +539,6 @@
     <section class="category-section">
         <h2 class="section-title">Trending Now</h2>
         <div class="category-row" id="trending-row"></div>
-    </section>
-
-    <!-- Grammar & Foundations -->
-    <section class="category-section">
-        <h2 class="section-title">Grammar & Foundations</h2>
-        <div class="category-row" id="grammar-row"></div>
     </section>
 
     <!-- All Content -->
@@ -621,12 +766,13 @@
             'wish_if_only': 'Wish / If Only'
         };
 
-        // Hero backgrounds
+        // Hero backgrounds (responsive: smaller images on mobile)
+        const _imgWidth = window.innerWidth <= 768 ? 800 : 1920;
         const heroBackgrounds = {
-            'job_interview': 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=1920&h=1080&fit=crop',
-            'airport': 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1920&h=1080&fit=crop',
-            'restaurant': 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1920&h=1080&fit=crop',
-            'hotel': 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1920&h=1080&fit=crop'
+            'job_interview': `https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=${_imgWidth}&h=${Math.round(_imgWidth * 1080/1920)}&fit=crop`,
+            'airport': `https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=${_imgWidth}&h=${Math.round(_imgWidth * 1080/1920)}&fit=crop`,
+            'restaurant': `https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=${_imgWidth}&h=${Math.round(_imgWidth * 1080/1920)}&fit=crop`,
+            'hotel': `https://images.unsplash.com/photo-1566073771259-6a8506099945?w=${_imgWidth}&h=${Math.round(_imgWidth * 1080/1920)}&fit=crop`
         };
 
         const heroDescriptions = {
@@ -635,11 +781,13 @@
             'restaurant': 'Order like a local. Master dining vocabulary, make reservations, and handle special requests with confidence.',
             'hotel': 'Check in and out smoothly. Learn to make requests, report issues, and enjoy your stay.'
         };
+        const pageParams = new URLSearchParams(window.location.search);
+        const selectedSpeed = parseFloat(pageParams.get('speed'));
+        const selectedLevel = (pageParams.get('level') || '').toUpperCase();
 
         // Category definitions - expandido com todos os cenários disponíveis
         const categories = {
             trending: ['coffee_shop', 'job_interview', 'airport', 'restaurant', 'supermarket', 'hotel', 'gym'],
-            grammar: ['basic_structures'],
             allContent: ['free_conversation', 'basic_structures', 'coffee_shop', 'street', 'parents_house', 'school', 'airport', 'supermarket', 'doctor', 'pharmacy'],
             travel: ['airport', 'hotel', 'train_station', 'renting_car', 'bus_stop', 'restaurant', 'museum', 'park'],
             business: ['job_interview', 'tech_support', 'bank', 'post_office'],
@@ -681,6 +829,32 @@
             loadScenarios();
         });
 
+        // Get best progress for a scenario
+        function getScenarioProgress(scenarioId) {
+            try {
+                const stored = localStorage.getItem('practice_progress');
+                if (!stored) return null;
+                const progress = JSON.parse(stored);
+                if (!Array.isArray(progress)) return null;
+                const entries = progress.filter(p => p.scenario_id === scenarioId);
+                if (entries.length === 0) return null;
+                // Best score and most recent
+                const best = entries.reduce((a, b) => (b.score > a.score ? b : a));
+                const latest = entries.reduce((a, b) => (b.timestamp > a.timestamp ? b : a));
+                return { bestScore: best.score, lastDate: latest.date, count: entries.length };
+            } catch (e) { return null; }
+        }
+
+        function getTimeAgo(dateStr) {
+            const d = new Date(dateStr);
+            const now = new Date();
+            const diffDays = Math.floor((now - d) / (1000 * 60 * 60 * 24));
+            if (diffDays === 0) return 'Praticado hoje';
+            if (diffDays === 1) return 'Praticado ontem';
+            if (diffDays < 7) return `Praticado ha ${diffDays} dias`;
+            return `Praticado ha ${Math.floor(diffDays / 7)} sem.`;
+        }
+
         // Create scenario card
         function createCard(id, title) {
             const card = document.createElement('div');
@@ -689,14 +863,39 @@
 
             const img = scenarioImages[id] || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=300&fit=crop';
             const ptTitle = scenarioPT[id] || title;
+            const prog = getScenarioProgress(id);
+            const safeLabel = String(title || 'Scenario').replace(/[^\w\s]/g, '').trim().slice(0, 24) || 'Scenario';
+            const fallbackSvg = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
+                `<svg xmlns='http://www.w3.org/2000/svg' width='400' height='240'>
+                    <defs>
+                        <linearGradient id='bg' x1='0' y1='0' x2='1' y2='1'>
+                            <stop offset='0%' stop-color='#1f2937'/>
+                            <stop offset='100%' stop-color='#111827'/>
+                        </linearGradient>
+                    </defs>
+                    <rect width='100%' height='100%' fill='url(#bg)'/>
+                    <text x='50%' y='52%' dominant-baseline='middle' text-anchor='middle'
+                        fill='#e5e7eb' font-family='Arial, sans-serif' font-size='22'>${safeLabel}</text>
+                </svg>`
+            )}`;
+
+            let badgeHTML = '';
+            if (prog) {
+                const badgeClass = prog.bestScore >= 80 ? 'green' : 'yellow';
+                const icon = prog.bestScore >= 80 ? '&#10003;' : '&#9679;';
+                badgeHTML = `
+                    <div class="progress-badge ${badgeClass}">${icon} ${prog.bestScore}/100</div>
+                    <div class="last-practiced">${getTimeAgo(prog.lastDate)}</div>
+                `;
+            }
 
             card.innerHTML = `
                 <img src="${img}" alt="${title}" class="scenario-image"
-                    onerror="this.src='https://via.placeholder.com/200x120?text=${encodeURIComponent(title)}'">
+                    onerror="this.onerror=null;this.src='${fallbackSvg}'">
                 <div class="scenario-card-content">
                     <div class="scenario-card-title">${title}</div>
                     <div class="scenario-card-subtitle">${ptTitle}</div>
-                    <div class="scenario-match">98% Match</div>
+                    ${badgeHTML || '<div class="scenario-match">98% Match</div>'}
                 </div>
             `;
             return card;
@@ -708,7 +907,14 @@
             const encodedTitle = encodeURIComponent(title);
             // Default to 'learning' mode unless specified logic exists for others
             // Redirect to practice.html with context
-            window.location.href = `practice.html?context=${id}&title=${encodedTitle}&mode=speaking`;
+            let nextUrl = `practice.html?context=${id}&title=${encodedTitle}&mode=speaking`;
+            if (!Number.isNaN(selectedSpeed)) {
+                nextUrl += `&speed=${encodeURIComponent(selectedSpeed.toString())}`;
+            }
+            if (selectedLevel) {
+                nextUrl += `&level=${encodeURIComponent(selectedLevel)}`;
+            }
+            window.location.href = nextUrl;
         }
 
         // Load scenarios from API and populate rows
@@ -717,31 +923,22 @@
                 console.log('[loadScenarios] Iniciando carregamento...');
 
                 // Show loading state if rows exist
-                const rows = ['trending-row', 'grammar-row', 'all-content-row', 'travel-row', 'business-row', 'daily-row'];
+                const rows = ['trending-row', 'all-content-row', 'travel-row', 'business-row', 'daily-row'];
                 rows.forEach(rowId => {
                     const row = document.getElementById(rowId);
                     if (row) row.innerHTML = '<div style="color: #666; padding: 10px;">Carregando...</div>';
                 });
 
-                // Fetch BOTH scenarios and grammar topics
-                const [scenarios, grammarTopics] = await Promise.all([
-                    fetch('/api/scenarios').then(r => {
-                        if (!r.ok) throw new Error(`Scenarios API error: ${r.status}`);
-                        return r.json();
-                    }),
-                    fetch('/api/grammar-topics').then(r => {
-                        if (!r.ok) throw new Error(`Grammar API error: ${r.status}`);
-                        return r.json();
-                    })
-                ]);
+                // Fetch scenarios
+                const scenarios = await fetch('/api/scenarios').then(r => {
+                    if (!r.ok) throw new Error(`Scenarios API error: ${r.status}`);
+                    return r.json();
+                });
 
-                console.log('[loadScenarios] Cenários:', scenarios.length, 'Gramática:', grammarTopics.length);
+                console.log('[loadScenarios] Cenários:', scenarios.length);
 
                 const scenarioMap = {};
                 scenarios.forEach(s => { if (s && s.id) scenarioMap[s.id] = s.title; });
-
-                const grammarMap = {};
-                grammarTopics.forEach(g => { if (g && g.id) grammarMap[g.id] = g.title; });
 
                 // Clear loading indicators
                 rows.forEach(rowId => {
@@ -751,7 +948,6 @@
 
                 // Rows
                 const trendingRow = document.getElementById('trending-row');
-                const grammarRow = document.getElementById('grammar-row');
                 const allContentRow = document.getElementById('all-content-row');
                 const travelRow = document.getElementById('travel-row');
                 const businessRow = document.getElementById('business-row');
@@ -762,14 +958,7 @@
                     if (scenarioMap[id] && trendingRow) trendingRow.appendChild(createCard(id, scenarioMap[id]));
                 });
 
-                // 2. Grammar & Foundations (From grammarTopics API - all 42 topics)
-                if (grammarRow) {
-                    grammarTopics.forEach(g => {
-                        grammarRow.appendChild(createCard(g.id, g.title));
-                    });
-                }
-
-                // 3. All Content
+                // 2. All Content
                 if (allContentRow) {
                     scenarios.forEach(s => allContentRow.appendChild(createCard(s.id, s.title)));
                 }
@@ -806,7 +995,7 @@
                 console.error('[loadScenarios] Erro:', err);
 
                 // Visible error feedback
-                const rows = ['trending-row', 'grammar-row', 'all-content-row', 'travel-row', 'business-row', 'daily-row'];
+                const rows = ['trending-row', 'all-content-row', 'travel-row', 'business-row', 'daily-row'];
                 rows.forEach(rowId => {
                     const row = document.getElementById(rowId);
                     if (row) {
@@ -820,6 +1009,183 @@
         }
 
         // loadScenarios(); // Moved to DOMContentLoaded
+
+        // ========== LOGOUT ==========
+        function logoutUser() {
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('conversation_token');
+            localStorage.removeItem('conversation_user');
+            localStorage.removeItem('conversation_backup');
+            localStorage.removeItem('usage_data');
+            localStorage.removeItem('last_context');
+            localStorage.removeItem('practice_mode');
+            window.location.href = 'index.html';
+        }
+
+        // ========== USAGE TIMER ==========
+        let timerHidden = false;
+        let currentRemaining = 2400;
+
+        function toggleTimerVisibility() {
+            timerHidden = !timerHidden;
+            const display = document.getElementById('timer-remaining');
+            const toggleBtn = document.getElementById('timer-toggle');
+            if (timerHidden) {
+                display.textContent = '--:--';
+                toggleBtn.textContent = '👁‍🗨';
+                toggleBtn.title = 'Mostrar tempo';
+            } else {
+                updateTimerText(currentRemaining);
+                toggleBtn.textContent = '👁';
+                toggleBtn.title = 'Esconder tempo';
+            }
+        }
+
+        function updateTimerText(seconds) {
+            const display = document.getElementById('timer-remaining');
+            if (!display || timerHidden) return;
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            display.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function updateTimerColor(seconds, banner) {
+            banner.classList.remove('timer-ok', 'timer-warning', 'timer-critical', 'timer-blocked');
+            if (seconds <= 0) {
+                banner.classList.add('timer-blocked');
+            } else if (seconds < 120) {
+                banner.classList.add('timer-critical');
+            } else if (seconds < 300) {
+                banner.classList.add('timer-warning');
+            } else {
+                banner.classList.add('timer-ok');
+            }
+        }
+
+        async function initUsageTimer() {
+            const banner = document.getElementById('usage-timer-banner');
+            const timerDisplay = document.getElementById('timer-remaining');
+            const timerLabel = document.getElementById('timer-label');
+            if (!banner || !timerDisplay) return;
+
+            // Get token — the app stores it as 'auth_token'
+            const token = localStorage.getItem('auth_token');
+            if (!token) return;
+            let isAdminUser = false;
+            try {
+                const userRaw = localStorage.getItem('conversation_user');
+                if (userRaw) {
+                    const parsedUser = JSON.parse(userRaw);
+                    isAdminUser = !!(parsedUser && parsedUser.is_admin);
+                }
+            } catch (e) { /* ignore */ }
+
+            let remaining = 2400;
+            let isWeekend = true;
+            let isBlocked = false;
+
+            // Fetch fresh data from API
+            try {
+                const res = await fetch('/api/usage/status', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    remaining = data.remaining_seconds ?? 0;
+                    isWeekend = data.is_weekend !== false;
+                    isBlocked = data.is_blocked || false;
+                    localStorage.setItem('usage_data', JSON.stringify(data));
+                }
+            } catch (e) {
+                // Fallback to localStorage
+                try {
+                    const stored = localStorage.getItem('usage_data');
+                    if (stored) {
+                        const data = JSON.parse(stored);
+                        remaining = data.remaining_seconds ?? 0;
+                        isWeekend = data.is_weekend !== false;
+                        isBlocked = data.is_blocked || false;
+                    }
+                } catch (e2) { /* ignore */ }
+            }
+
+            currentRemaining = remaining;
+
+            // Show blocked overlay if needed
+            if (!isAdminUser && !isWeekend) {
+                banner.classList.add('timer-blocked');
+                timerDisplay.textContent = '0:00';
+                timerLabel.textContent = 'bloqueado';
+                showBlockedOverlay(
+                    '🔒',
+                    'Disponível nos Fins de Semana',
+                    'A prática está disponível apenas no <span class="highlight">Sábado e Domingo</span>.',
+                    'Volte no próximo sábado para usar seus 40 minutos de prática!'
+                );
+                return;
+            }
+
+            if (!isAdminUser && (isBlocked || remaining <= 0)) {
+                banner.classList.add('timer-blocked');
+                timerDisplay.textContent = '0:00';
+                timerLabel.textContent = 'esgotado';
+                showBlockedOverlay(
+                    '⏰',
+                    'Tempo Esgotado',
+                    'Você usou seus <span class="highlight">40 minutos</span> de prática deste fim de semana.',
+                    'Volte no próximo sábado para mais 40 minutos!'
+                );
+                return;
+            }
+
+            // Show time and start live countdown
+            updateTimerText(remaining);
+            updateTimerColor(remaining, banner);
+
+            // Countdown every second (visual only — actual tracking happens in practice.html)
+            setInterval(() => {
+                // Re-read from localStorage in case practice.html updated it
+                try {
+                    const stored = localStorage.getItem('usage_data');
+                    if (stored) {
+                        const data = JSON.parse(stored);
+                        const serverRemaining = data.remaining_seconds ?? currentRemaining;
+                        if (serverRemaining < currentRemaining) {
+                            currentRemaining = serverRemaining;
+                        }
+                    }
+                } catch (e) { /* ignore */ }
+
+                updateTimerText(currentRemaining);
+                updateTimerColor(currentRemaining, banner);
+
+                if (currentRemaining <= 0) {
+                    timerLabel.textContent = 'esgotado';
+                }
+            }, 1000);
+        }
+
+        function showBlockedOverlay(icon, title, message, submessage) {
+            if (document.getElementById('blocked-overlay')) return;
+            const overlay = document.createElement('div');
+            overlay.id = 'blocked-overlay';
+            overlay.className = 'blocked-overlay';
+            overlay.innerHTML = `
+                <div class="blocked-modal">
+                    <div class="modal-icon">${icon}</div>
+                    <h2>${title}</h2>
+                    <p>${message}</p>
+                    <p style="margin-top: 0.5rem;">${submessage}</p>
+                    <button class="btn-back" onclick="window.location.href='dashboard.html'">Voltar ao Início</button>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        }
+
+        // Run on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            initUsageTimer();
+        });
 
     </script>
 </body>

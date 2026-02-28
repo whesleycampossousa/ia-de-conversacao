@@ -1,0 +1,110 @@
+{
+    "context": "hair_salon",
+    "attempt": 1,
+    "profile": "silent_shy",
+    "pass": false,
+    "avg_score": 4.875,
+    "stats": {
+        "score_sum": 39,
+        "violations": 7
+    },
+    "turns": [
+        {
+            "turn": 1,
+            "student": "(System Trigger)",
+            "ai": "Hello, welcome to the Hair Salon. How can I help you today?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain the natural flow and concise questioning approach. No changes needed for this response.",
+                "first_message_matches_required_opening": true
+            }
+        },
+        {
+            "turn": 2,
+            "student": "Um... I need a haircut.",
+            "ai": "Alright! Have a seat and let's talk about what you're looking for.",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": true,
+                "violation_reason": "Teaching/Coaching",
+                "score": 6,
+                "improvement_suggestion": "Avoid instructive commands. Instead, ask open-ended questions to maintain natural flow."
+            }
+        },
+        {
+            "turn": 3,
+            "student": "Okay... Not sure yet.",
+            "ai": "No worries! A lot of people come in not knowing exactly what they want.",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "Did not ask a question as required by natural flow",
+                "score": 4,
+                "improvement_suggestion": "Ask a question to maintain conversational flow (e.g., 'What services are you considering?')"
+            }
+        },
+        {
+            "turn": 4,
+            "student": "Thanks... um... What do you recommend?",
+            "ai": "Well, what kind of hair do you have? Is it thick, thin, curly, straight?",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "Multiple questions in one turn",
+                "score": 6,
+                "improvement_suggestion": "Ask one question at a time to maintain natural flow"
+            }
+        },
+        {
+            "turn": 5,
+            "student": "Um... straight. Do you... need help with anything?",
+            "ai": "Straight hair is so versatile! We can do so much with it.",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "Natural flow violation: AI did not ask a question in response.",
+                "score": 4,
+                "improvement_suggestion": "Ask a question to maintain natural flow and adhere to the one-question-per-turn rule."
+            }
+        },
+        {
+            "turn": 6,
+            "student": "Hmm... I guess.",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "response lacks natural flow as it's an error message instead of a question",
+                "score": 2,
+                "improvement_suggestion": "respond with a question to maintain simulation flow instead of technical errors"
+            }
+        },
+        {
+            "turn": 7,
+            "student": "Huh? That's not working. Can I help?",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "The AI responded with a system error instead of engaging with the student's question in a natural conversational flow",
+                "score": 3,
+                "improvement_suggestion": "Respond with a question about the technical issue rather than displaying an error code"
+            }
+        },
+        {
+            "turn": 8,
+            "student": "Hmm... What's wrong?",
+            "ai": "Oh, nothing's wrong! I just meant, we can do a lot of different styles.",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "Failed to maintain natural flow by not asking a question. The response was a statement instead of a question.",
+                "score": 4,
+                "improvement_suggestion": "Ask a question to maintain conversational flow, e.g., 'What style are you interested in trying?'"
+            }
+        }
+    ]
+}

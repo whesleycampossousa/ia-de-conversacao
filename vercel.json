@@ -5,6 +5,7 @@
       "src": "api/index.py",
       "use": "@vercel/python",
       "config": {
+        "maxDuration": 30,
         "excludeFiles": "audio_cache/**"
       }
     },

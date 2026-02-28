@@ -1,0 +1,723 @@
+{
+  "timestamp": "2026-02-20T22:12:57.185590",
+  "summary": {
+    "critical": 0,
+    "warning": 0,
+    "total_turns": 100,
+    "contexts": [
+      "hotel",
+      "coffee_shop",
+      "airport",
+      "pharmacy",
+      "restaurant",
+      "bank",
+      "gym",
+      "supermarket",
+      "doctor",
+      "taxi"
+    ]
+  },
+  "findings": [],
+  "turns": [
+    {
+      "context": "hotel",
+      "turn": 1,
+      "user": "Hi, I am checking in now.",
+      "status": 200,
+      "ai": "Welcome to The Grand View Hotel. Could you please tell me your name or provide your reservation number?"
+    },
+    {
+      "context": "hotel",
+      "turn": 2,
+      "user": "I have a reservation under Wesley.",
+      "status": 200,
+      "ai": "Thank you, Mr. Wesley. I see your booking for a Deluxe King Room from today until Friday; is that correct?"
+    },
+    {
+      "context": "hotel",
+      "turn": 3,
+      "user": "Can I have a quiet room?",
+      "status": 200,
+      "ai": "I will make sure you have a quiet room on a high floor. May I see your ID and a credit card for the incidentals?"
+    },
+    {
+      "context": "hotel",
+      "turn": 4,
+      "user": "I will stay three nights.",
+      "status": 200,
+      "ai": "Perfect, three nights it is. May I have your ID and a credit card for the incidentals?"
+    },
+    {
+      "context": "hotel",
+      "turn": 5,
+      "user": "Is breakfast included?",
+      "status": 200,
+      "ai": "Yes, breakfast is served daily in the lobby from 7:00 AM to 10:00 AM. May I have your ID and credit card now?"
+    },
+    {
+      "context": "hotel",
+      "turn": 6,
+      "user": "Can I check out at 1 PM?",
+      "status": 200,
+      "ai": "Yes, I can extend your checkout to 1 PM for you. May I please have your ID and credit card to finalize the paperwork?"
+    },
+    {
+      "context": "hotel",
+      "turn": 7,
+      "user": "Can you teach me English?",
+      "status": 200,
+      "ai": "I can help you with your check-in right now. May I see your ID and a credit card to finish your registration?"
+    },
+    {
+      "context": "hotel",
+      "turn": 8,
+      "user": "What documents do you need?",
+      "status": 200,
+      "ai": "I just need your passport or driver's license and a credit card for the room deposit. Do you have those documents ready?"
+    },
+    {
+      "context": "hotel",
+      "turn": 9,
+      "user": "I need an extra towel.",
+      "status": 200,
+      "ai": "I will have housekeeping deliver extra towels to your room immediately. May I please have your ID and credit card to finish the check-in?"
+    },
+    {
+      "context": "hotel",
+      "turn": 10,
+      "user": "Can I pay with card?",
+      "status": 200,
+      "ai": "Yes, we accept all major credit cards. May I have yours along with your ID to complete the registration?"
+    },
+    {
+      "context": "coffee_shop",
+      "turn": 1,
+      "user": "Hello.",
+      "status": 200,
+      "ai": "Hi there! What can I get started for you today?"
+    },
+    {
+      "context": "coffee_shop",
+      "turn": 2,
+      "user": "I want a large cappuccino.",
+      "status": 200,
+      "ai": "You got it, one large cappuccino. Do you want any chocolate or cinnamon sprinkled on top?"
+    },
+    {
+      "context": "coffee_shop",
+      "turn": 3,
+      "user": "Make it hot please.",
+      "status": 200,
+      "ai": "Coming right up, one extra hot large cappuccino. Would you like a pastry or a muffin to go with that?"
+    },
+    {
+      "context": "coffee_shop",
+      "turn": 4,
+      "user": "No sugar, please.",
+      "status": 200,
+      "ai": "No problem, I'll leave the sugar out. Will that be for here or to go?"
+    },
+    {
+      "context": "coffee_shop",
+      "turn": 5,
+      "user": "Do you have oat milk?",
+      "status": 200,
+      "ai": "Yes, we have oat milk and almond milk. Would you like to swap the regular milk for oat milk in your cappuccino?"
+    },
+    {
+      "context": "coffee_shop",
+      "turn": 6,
+      "user": "Can you explain my grammar?",
+      "status": 200,
+      "ai": "I'm just the barista here, but I can certainly get that oat milk cappuccino started for you. Would you like a sleeve for your cup?"
+    },
+    {
+      "context": "coffee_shop",
+      "turn": 7,
+      "user": "I also want a cheese sandwich.",
+      "status": 200,
+      "ai": "Sure thing, one cheese sandwich. Would you like me to toast that for you?"
+    },
+    {
+      "context": "coffee_shop",
+      "turn": 8,
+      "user": "How long will it take?",
+      "status": 200,
+      "ai": "It'll be about five minutes for the coffee and the sandwich. Is there any other drink you need for your order?"
+    },
+    {
+      "context": "coffee_shop",
+      "turn": 9,
+      "user": "Can I sit near the window?",
+      "status": 200,
+      "ai": "Of course, you can sit at any of the open tables by the window. Do you want me to bring the food over to your table when it's ready?"
+    },
+    {
+      "context": "coffee_shop",
+      "turn": 10,
+      "user": "Can I pay now?",
+      "status": 200,
+      "ai": "Sure, you can pay now. Will you be paying with cash or a card?"
+    },
+    {
+      "context": "airport",
+      "turn": 1,
+      "user": "Hi, I need to check in.",
+      "status": 200,
+      "ai": "Hello! I can certainly help you with that. May I please have your passport and your booking reference number?"
+    },
+    {
+      "context": "airport",
+      "turn": 2,
+      "user": "My destination is New York.",
+      "status": 200,
+      "ai": "Thank you for the information. How many bags will you be checking in today, and do you have any carry-on luggage?"
+    },
+    {
+      "context": "airport",
+      "turn": 3,
+      "user": "I have one carry-on and one suitcase.",
+      "status": 200,
+      "ai": "Perfect, please place the suitcase on the scale. Would you prefer a window, an aisle, or a middle seat for your flight?"
+    },
+    {
+      "context": "airport",
+      "turn": 4,
+      "user": "Can I get an aisle seat?",
+      "status": 200,
+      "ai": "I have secured an aisle seat for you. Can you confirm you are flying to New York on the 2:00 PM flight?"
+    },
+    {
+      "context": "airport",
+      "turn": 5,
+      "user": "Is gate B12 still correct?",
+      "status": 200,
+      "ai": "Yes, it is still gate B12. Here is your boarding pass; would you like me to show you where the security entrance is?"
+    },
+    {
+      "context": "airport",
+      "turn": 6,
+      "user": "My flight leaves at 8 PM.",
+      "status": 200,
+      "ai": "Oh, it seems there is a misunderstanding, as the New York flight is at 2:00 PM. May I double-check your booking reference to confirm the 8:00 PM departure?"
+    },
+    {
+      "context": "airport",
+      "turn": 7,
+      "user": "Can you correct my English?",
+      "status": 200,
+      "ai": "I can certainly assist with your travel documents. May I double-check your booking reference to confirm that 8:00 PM departure time for you?"
+    },
+    {
+      "context": "airport",
+      "turn": 8,
+      "user": "Do I need to remove electronics?",
+      "status": 200,
+      "ai": "Yes, please remove all electronics and liquids from your carry-on at security. May I hand you your boarding pass now?"
+    },
+    {
+      "context": "airport",
+      "turn": 9,
+      "user": "Where is security line?",
+      "status": 200,
+      "ai": "The security line is just behind you to the right. Have you already placed your luggage on the scale?"
+    },
+    {
+      "context": "airport",
+      "turn": 10,
+      "user": "Thank you, what is next?",
+      "status": 200,
+      "ai": "Since your bag is on the scale, everything is ready. Your flight leaves at 8:00 PM; shall I hand you your boarding pass now?"
+    },
+    {
+      "context": "pharmacy",
+      "turn": 1,
+      "user": "Hello, I need medicine for headache.",
+      "status": 200,
+      "ai": "I'm sorry to hear about your headache. Is it a sharp pain or more like a dull pressure?"
+    },
+    {
+      "context": "pharmacy",
+      "turn": 2,
+      "user": "The pain started yesterday.",
+      "status": 200,
+      "ai": "I understand. Aside from the headache, are you feeling any other symptoms like a fever or a sore throat?"
+    },
+    {
+      "context": "pharmacy",
+      "turn": 3,
+      "user": "I am allergic to penicillin.",
+      "status": 200,
+      "ai": "Thank you for letting me know about the penicillin allergy. Are you currently taking any other medications for your headache or other conditions?"
+    },
+    {
+      "context": "pharmacy",
+      "turn": 4,
+      "user": "Do you have syrup for cough?",
+      "status": 200,
+      "ai": "Yes, we have a few options for cough syrup. Is it a dry cough or are you bringing up mucus?"
+    },
+    {
+      "context": "pharmacy",
+      "turn": 5,
+      "user": "Can you show dosage instructions?",
+      "status": 200,
+      "ai": "For this syrup, take two teaspoons every six hours as needed. Are you currently taking any other medications for your cough or headache?"
+    },
+    {
+      "context": "pharmacy",
+      "turn": 6,
+      "user": "Can you teach me a useful phrase?",
+      "status": 200,
+      "ai": "I can help with your symptoms or explain how to take your medicine. Would you like to pay for the cough syrup now?"
+    },
+    {
+      "context": "pharmacy",
+      "turn": 7,
+      "user": "I also need thermometer batteries.",
+      "status": 200,
+      "ai": "We have those batteries right here near the counter. Should I add a pack of them to your total for the cough syrup?"
+    },
+    {
+      "context": "pharmacy",
+      "turn": 8,
+      "user": "Is there a generic option?",
+      "status": 200,
+      "ai": "Yes, we have a generic version that is much cheaper and has the same ingredients. Would you like the generic syrup instead?"
+    },
+    {
+      "context": "pharmacy",
+      "turn": 9,
+      "user": "How many times per day should I take it?",
+      "status": 200,
+      "ai": "You should take two teaspoons every six hours, but not more than four doses in twenty-four hours. Do you have any allergies to other medications?"
+    },
+    {
+      "context": "pharmacy",
+      "turn": 10,
+      "user": "Can I pay with card?",
+      "status": 200,
+      "ai": "Yes, we accept all major credit cards. Would you like to use your card for the generic syrup and the batteries now?"
+    },
+    {
+      "context": "restaurant",
+      "turn": 1,
+      "user": "Hi, table for one please.",
+      "status": 200,
+      "ai": "Welcome to The Golden Plate! Would you prefer a quiet corner or a seat by the window?"
+    },
+    {
+      "context": "restaurant",
+      "turn": 2,
+      "user": "Can I see the menu?",
+      "status": 200,
+      "ai": "Of course! Here is our menu. Would you like to start with a drink?"
+    },
+    {
+      "context": "restaurant",
+      "turn": 3,
+      "user": "I would like grilled chicken.",
+      "status": 200,
+      "ai": "Excellent choice, the grilled chicken is delicious. Would you like to start with an appetizer like our bruschetta or a Caesar salad?"
+    },
+    {
+      "context": "restaurant",
+      "turn": 4,
+      "user": "No onions, please.",
+      "status": 200,
+      "ai": "Understood, no onions on your chicken. Would you like to add a side of roasted potatoes or steamed vegetables to your order?"
+    },
+    {
+      "context": "restaurant",
+      "turn": 5,
+      "user": "Can I get sparkling water?",
+      "status": 200,
+      "ai": "Certainly, one sparkling water coming right up. Would you like a slice of lemon or lime with that?"
+    },
+    {
+      "context": "restaurant",
+      "turn": 6,
+      "user": "Can you teach me how to order better?",
+      "status": 200,
+      "ai": "I can certainly help you with your food choices today. Since you are having the chicken, would you like a side of roasted potatoes or steamed vegetables?"
+    },
+    {
+      "context": "restaurant",
+      "turn": 7,
+      "user": "Is service charge included?",
+      "status": 200,
+      "ai": "Yes, a ten percent service charge is already included in the final bill. Would you like to add a side of roasted potatoes or steamed vegetables to your chicken?"
+    },
+    {
+      "context": "restaurant",
+      "turn": 8,
+      "user": "Can I have dessert menu?",
+      "status": 200,
+      "ai": "Of course! We have our famous homemade Tiramisu or the warm chocolate fondant. Which one would you like to try?"
+    },
+    {
+      "context": "restaurant",
+      "turn": 9,
+      "user": "Could you bring the bill?",
+      "status": 200,
+      "ai": "Certainly, I will bring the check right away. Would you like to pay by cash or credit card?"
+    },
+    {
+      "context": "restaurant",
+      "turn": 10,
+      "user": "Can I split payment?",
+      "status": 200,
+      "ai": "Of course, we can split the bill for you. Will you be paying your portion with cash or a credit card?"
+    },
+    {
+      "context": "bank",
+      "turn": 1,
+      "user": "Hello, I need to open an account.",
+      "status": 200,
+      "ai": "I'd be happy to help you open an account today. Would you like to open a checking account or a savings account?"
+    },
+    {
+      "context": "bank",
+      "turn": 2,
+      "user": "What documents are required?",
+      "status": 200,
+      "ai": "To open an account, I need your photo ID and proof of address. Do you have your driver's license or passport with you today?"
+    },
+    {
+      "context": "bank",
+      "turn": 3,
+      "user": "I have my ID and proof of address.",
+      "status": 200,
+      "ai": "Thank you. Would you like to open a checking account or a savings account today?"
+    },
+    {
+      "context": "bank",
+      "turn": 4,
+      "user": "Can I get a debit card today?",
+      "status": 200,
+      "ai": "Yes, we can issue a debit card as soon as we finish opening the account. Should we start with a checking or a savings account today?"
+    },
+    {
+      "context": "bank",
+      "turn": 5,
+      "user": "What is the monthly fee?",
+      "status": 200,
+      "ai": "Our standard checking account has a five dollar monthly fee, but we waive it if you keep a minimum balance. Would you like to start with a checking account?"
+    },
+    {
+      "context": "bank",
+      "turn": 6,
+      "user": "Can you explain grammar quickly?",
+      "status": 200,
+      "ai": "I am only here to assist you with your banking needs. Should we proceed with opening your checking account or would you like to discuss our savings interest rates?"
+    },
+    {
+      "context": "bank",
+      "turn": 7,
+      "user": "How do I reset my PIN?",
+      "status": 200,
+      "ai": "I can help you reset that at the ATM or here at the counter. May I see your photo ID to verify your account?"
+    },
+    {
+      "context": "bank",
+      "turn": 8,
+      "user": "Can I transfer money internationally?",
+      "status": 200,
+      "ai": "Yes, we can process international transfers at this branch. Do you have the recipient's bank details and your photo ID ready?"
+    },
+    {
+      "context": "bank",
+      "turn": 9,
+      "user": "What is the exchange rate today?",
+      "status": 200,
+      "ai": "Our current exchange rate is 1.08 dollars per Euro. Would you like to exchange currency or transfer funds to an international account?"
+    },
+    {
+      "context": "bank",
+      "turn": 10,
+      "user": "Is there a mobile app?",
+      "status": 200,
+      "ai": "Yes, we have a mobile app where you can check your balance and transfer funds. Would you like me to help you set up your online access?"
+    },
+    {
+      "context": "gym",
+      "turn": 1,
+      "user": "Hi, I want to sign up.",
+      "status": 200,
+      "ai": "Welcome to FitZone! Are you looking for a monthly, yearly, or premium membership plan?"
+    },
+    {
+      "context": "gym",
+      "turn": 2,
+      "user": "Do you have monthly plans?",
+      "status": 200,
+      "ai": "Yes, we have a great monthly plan for $40. Are you looking to lose weight, build muscle, or just improve your general fitness?"
+    },
+    {
+      "context": "gym",
+      "turn": 3,
+      "user": "I am a beginner.",
+      "status": 200,
+      "ai": "That is great, we love helping beginners. Would you like a tour of our cardio and weight lifting areas?"
+    },
+    {
+      "context": "gym",
+      "turn": 4,
+      "user": "Can you show me the locker room?",
+      "status": 200,
+      "ai": "Of course, I can show you the locker rooms and the showers right now. After the tour, would you like to see our yoga or spinning class schedule?"
+    },
+    {
+      "context": "gym",
+      "turn": 5,
+      "user": "Are group classes included?",
+      "status": 200,
+      "ai": "Yes, our monthly and premium plans include all classes. Would you like to see the schedule for yoga, spinning, or CrossFit?"
+    },
+    {
+      "context": "gym",
+      "turn": 6,
+      "user": "Can you teach me how to say this in English?",
+      "status": 200,
+      "ai": "I can help you with your registration right now. Would you like to see the yoga, spinning, or CrossFit schedule first?"
+    },
+    {
+      "context": "gym",
+      "turn": 7,
+      "user": "What time do you open tomorrow?",
+      "status": 200,
+      "ai": "We open at 6:00 AM tomorrow. Would you like to see the schedule for our morning yoga or spinning classes?"
+    },
+    {
+      "context": "gym",
+      "turn": 8,
+      "user": "Do you have a personal trainer?",
+      "status": 200,
+      "ai": "I am one of our personal trainers here. Would you like to see the schedule for yoga, spinning, or CrossFit first?"
+    },
+    {
+      "context": "gym",
+      "turn": 9,
+      "user": "Is there a cancellation fee?",
+      "status": 200,
+      "ai": "There is no cancellation fee for our monthly plan. Would you like to sign up for the monthly or the premium membership today?"
+    },
+    {
+      "context": "gym",
+      "turn": 10,
+      "user": "Can I pay with credit card?",
+      "status": 200,
+      "ai": "Yes, we accept all major credit cards. Should we process your first month of the monthly plan or the premium plan?"
+    },
+    {
+      "context": "supermarket",
+      "turn": 1,
+      "user": "Hello, where is the dairy section?",
+      "status": 200,
+      "ai": "The dairy section is in aisle four, right at the back of the store. Are you looking for a specific type of milk or cheese today?"
+    },
+    {
+      "context": "supermarket",
+      "turn": 2,
+      "user": "I need eggs and milk.",
+      "status": 200,
+      "ai": "The milk is right here in aisle four, and our organic eggs are currently on a 'buy one get one half off' deal. Would you like the large or medium eggs?"
+    },
+    {
+      "context": "supermarket",
+      "turn": 3,
+      "user": "Do you have whole-grain bread?",
+      "status": 200,
+      "ai": "Yes, our whole-grain bread is in aisle seven, though we are currently out of the sliced loaves. Would you like a fresh whole-grain baguette instead?"
+    },
+    {
+      "context": "supermarket",
+      "turn": 4,
+      "user": "Is there any discount today?",
+      "status": 200,
+      "ai": "We have a great deal on our bakery items and the 'buy one get one half off' on organic eggs. Do you have a loyalty card?"
+    },
+    {
+      "context": "supermarket",
+      "turn": 5,
+      "user": "Can I use this coupon?",
+      "status": 200,
+      "ai": "Of course, I can apply that coupon for you. Do you have any other vouchers or your loyalty card to scan?"
+    },
+    {
+      "context": "supermarket",
+      "turn": 6,
+      "user": "Can you correct my sentence?",
+      "status": 200,
+      "ai": "I can certainly help you with your shopping list right here. Are you ready to head to the checkout or are you still looking for more groceries?"
+    },
+    {
+      "context": "supermarket",
+      "turn": 7,
+      "user": "Where can I find pasta sauce?",
+      "status": 200,
+      "ai": "The pasta sauce is in aisle three next to the dried pasta. Would you like the traditional tomato sauce or a creamy alfredo?"
+    },
+    {
+      "context": "supermarket",
+      "turn": 8,
+      "user": "Do you have self-checkout?",
+      "status": 200,
+      "ai": "Yes, we have self-checkout kiosks right past the registers. Would you like me to help you scan your items there or do you prefer a staffed lane?"
+    },
+    {
+      "context": "supermarket",
+      "turn": 9,
+      "user": "Can I return this item?",
+      "status": 200,
+      "ai": "I can process that return for you if you have your receipt. Would you like a refund to your card or a store credit voucher?"
+    },
+    {
+      "context": "supermarket",
+      "turn": 10,
+      "user": "Can I pay with phone?",
+      "status": 200,
+      "ai": "Yes, we accept all contactless payments including phone apps. Would you like a paper or plastic bag for your groceries today?"
+    },
+    {
+      "context": "doctor",
+      "turn": 1,
+      "user": "Hi, I have an appointment at 10.",
+      "status": 200,
+      "ai": "Hello, I am Dr. Williams. What brings you into the clinic today?"
+    },
+    {
+      "context": "doctor",
+      "turn": 2,
+      "user": "I have fever and sore throat.",
+      "status": 200,
+      "ai": "I'm sorry to hear that. When exactly did these symptoms start?"
+    },
+    {
+      "context": "doctor",
+      "turn": 3,
+      "user": "Symptoms started two days ago.",
+      "status": 200,
+      "ai": "Two days is quite a while to deal with that. On a scale of one to ten, how bad is the pain in your throat?"
+    },
+    {
+      "context": "doctor",
+      "turn": 4,
+      "user": "I am taking ibuprofen.",
+      "status": 200,
+      "ai": "I see you are taking ibuprofen. Besides that, are you taking any other medications or do you have any allergies I should know about?"
+    },
+    {
+      "context": "doctor",
+      "turn": 5,
+      "user": "Do I need a blood test?",
+      "status": 200,
+      "ai": "We might need a blood test, but first, do you have any other medical conditions or take daily vitamins?"
+    },
+    {
+      "context": "doctor",
+      "turn": 6,
+      "user": "Can you teach me English now?",
+      "status": 200,
+      "ai": "I can only assist you with your medical concerns today. Have you noticed any swelling in your neck or difficulty swallowing?"
+    },
+    {
+      "context": "doctor",
+      "turn": 7,
+      "user": "Is this contagious?",
+      "status": 200,
+      "ai": "It could be contagious if it is a viral or bacterial infection. May I take a look at your throat and feel your glands?"
+    },
+    {
+      "context": "doctor",
+      "turn": 8,
+      "user": "Can I get a medical note?",
+      "status": 200,
+      "ai": "I can certainly provide a medical note for your records. Before I write that, have you been having any trouble sleeping because of the pain?"
+    },
+    {
+      "context": "doctor",
+      "turn": 9,
+      "user": "When should I return?",
+      "status": 200,
+      "ai": "You should return in three days if your fever doesn't go down. Have you been eating and drinking enough water despite the throat pain?"
+    },
+    {
+      "context": "doctor",
+      "turn": 10,
+      "user": "Can I take this medicine after food?",
+      "status": 200,
+      "ai": "Yes, taking your medicine after a meal will help protect your stomach. Have you noticed any rashes or other side effects since starting the ibuprofen?"
+    },
+    {
+      "context": "taxi",
+      "turn": 1,
+      "user": "Hi, can you take me downtown?",
+      "status": 200,
+      "ai": "Sure thing, I can give you a ride downtown. Do you want to go to the shopping center or the train station?"
+    },
+    {
+      "context": "taxi",
+      "turn": 2,
+      "user": "Please use the fastest route.",
+      "status": 200,
+      "ai": "You got it, I'll take the highway to avoid traffic. Should I drop you off at the main entrance or the side street?"
+    },
+    {
+      "context": "taxi",
+      "turn": 3,
+      "user": "Can you stop near the station?",
+      "status": 200,
+      "ai": "No problem, I can pull over right by the entrance. Do you need help with your bags, or are you all set?"
+    },
+    {
+      "context": "taxi",
+      "turn": 4,
+      "user": "How long will it take?",
+      "status": 200,
+      "ai": "It should take about fifteen minutes with the current traffic. Do you want me to wait while you grab your ticket or should I just head out?"
+    },
+    {
+      "context": "taxi",
+      "turn": 5,
+      "user": "Can I pay by card?",
+      "status": 200,
+      "ai": "Of course, I accept all major credit cards. Would you like a printed receipt or should I email it to you?"
+    },
+    {
+      "context": "taxi",
+      "turn": 6,
+      "user": "Can you explain my grammar?",
+      "status": 200,
+      "ai": "I can certainly help you with your payment or directions to the station. Should I swipe your card now or do you want to see the total first?"
+    },
+    {
+      "context": "taxi",
+      "turn": 7,
+      "user": "Please turn on the meter.",
+      "status": 200,
+      "ai": "The meter is already running. Do you want me to drop you at the north or south entrance?"
+    },
+    {
+      "context": "taxi",
+      "turn": 8,
+      "user": "Can you wait for five minutes?",
+      "status": 200,
+      "ai": "I can wait, but the meter will keep running. Should I pull over here or wait in the loading zone?"
+    },
+    {
+      "context": "taxi",
+      "turn": 9,
+      "user": "Can you help with my luggage?",
+      "status": 200,
+      "ai": "I'd be happy to help you with your luggage. Should I put these heavy bags in the trunk or on the back seat?"
+    },
+    {
+      "context": "taxi",
+      "turn": 10,
+      "user": "Could you drop me at the main entrance?",
+      "status": 200,
+      "ai": "I'll pull up to the main entrance right now. Do you want me to help you carry your bags inside or leave them on the sidewalk?"
+    }
+  ]
+}

@@ -1,0 +1,304 @@
+{
+  "run_date": "2026-01-31T08:31:33.506704",
+  "total_tests": 200,
+  "total_turns": 1193,
+  "passed": 178,
+  "failed": 22,
+  "pass_rate": "89.0%",
+  "issues_by_severity": {
+    "CRITICAL": 2,
+    "HIGH": 13,
+    "MEDIUM": 5,
+    "LOW": 7
+  },
+  "issues_by_code": {
+    "EXCEPTION": 7,
+    "OFF_TOPIC": 2,
+    "SIMULATOR_TEACHING": 2,
+    "NO_QUESTION": 11,
+    "INCOMPLETE_SENTENCE": 5
+  },
+  "issues_by_mode": {
+    "grammar": {
+      "total": 6,
+      "tests_affected": 4
+    },
+    "simulator": {
+      "total": 19,
+      "tests_affected": 16
+    },
+    "learning": {
+      "total": 2,
+      "tests_affected": 2
+    }
+  },
+  "failed_tests": [
+    {
+      "test_id": "grammar_conditionals_zero_first_intentional_errors",
+      "mode": "grammar",
+      "issues": [
+        {
+          "turn": 2,
+          "code": "EXCEPTION",
+          "detail": "HTTPConnectionPool(host='localhost', port=8912): Read timed out. (read timeout=30)"
+        },
+        {
+          "turn": 4,
+          "code": "EXCEPTION",
+          "detail": "HTTPConnectionPool(host='localhost', port=8912): Read timed out. (read timeout=30)"
+        }
+      ]
+    },
+    {
+      "test_id": "grammar_phrasal_verbs_off_topic_drift",
+      "mode": "grammar",
+      "issues": [
+        {
+          "turn": 4,
+          "code": "OFF_TOPIC",
+          "detail": "No keywords for 'phrasal_verbs' found in response"
+        }
+      ]
+    },
+    {
+      "test_id": "grammar_comparatives_superlatives_correct_input",
+      "mode": "grammar",
+      "issues": [
+        {
+          "turn": 4,
+          "code": "EXCEPTION",
+          "detail": "HTTPConnectionPool(host='localhost', port=8912): Read timed out. (read timeout=30)"
+        },
+        {
+          "turn": 5,
+          "code": "EXCEPTION",
+          "detail": "HTTPConnectionPool(host='localhost', port=8912): Read timed out. (read timeout=30)"
+        }
+      ]
+    },
+    {
+      "test_id": "grammar_question_tags_correct_input",
+      "mode": "grammar",
+      "issues": [
+        {
+          "turn": 4,
+          "code": "OFF_TOPIC",
+          "detail": "No keywords for 'question_tags' found in response"
+        }
+      ]
+    },
+    {
+      "test_id": "simulator_restaurant_normal_flow",
+      "mode": "simulator",
+      "issues": [
+        {
+          "turn": 4,
+          "code": "SIMULATOR_TEACHING",
+          "detail": "Teaching in simulator: 'excellent'"
+        }
+      ]
+    },
+    {
+      "test_id": "simulator_airport_edge_case",
+      "mode": "simulator",
+      "issues": [
+        {
+          "turn": 2,
+          "code": "NO_QUESTION",
+          "detail": "Response doesn't end with '?': ...ssed your flight. I can find a new ticket or check a refund."
+        }
+      ]
+    },
+    {
+      "test_id": "simulator_hotel_normal_flow",
+      "mode": "simulator",
+      "issues": [
+        {
+          "turn": 2,
+          "code": "NO_QUESTION",
+          "detail": "Response doesn't end with '?': ...Thank you, Mr. Campos."
+        }
+      ]
+    },
+    {
+      "test_id": "simulator_doctor_edge_case",
+      "mode": "simulator",
+      "issues": [
+        {
+          "turn": 1,
+          "code": "NO_QUESTION",
+          "detail": "Response doesn't end with '?': ...Hello. I am here to help you."
+        },
+        {
+          "turn": 3,
+          "code": "NO_QUESTION",
+          "detail": "Response doesn't end with '?': ...I am sorry work is hard. Stress often causes these feelings."
+        }
+      ]
+    },
+    {
+      "test_id": "simulator_supermarket_edge_case",
+      "mode": "simulator",
+      "issues": [
+        {
+          "turn": 1,
+          "code": "NO_QUESTION",
+          "detail": "Response doesn't end with '?': ... help you find items, check a price, or start your checkout."
+        },
+        {
+          "turn": 2,
+          "code": "INCOMPLETE_SENTENCE",
+          "detail": "Ends with trailing: ...resh one or a different brand?"
+        }
+      ]
+    },
+    {
+      "test_id": "simulator_museum_edge_case",
+      "mode": "simulator",
+      "issues": [
+        {
+          "turn": 6,
+          "code": "INCOMPLETE_SENTENCE",
+          "detail": "Ends with trailing: ... head, or the museum director?"
+        }
+      ]
+    },
+    {
+      "test_id": "simulator_hair_salon_normal_flow",
+      "mode": "simulator",
+      "issues": [
+        {
+          "turn": 1,
+          "code": "NO_QUESTION",
+          "detail": "Response doesn't end with '?': ...Hi there! I am so happy you are here."
+        }
+      ]
+    },
+    {
+      "test_id": "simulator_flower_shop_normal_flow",
+      "mode": "simulator",
+      "issues": [
+        {
+          "turn": 3,
+          "code": "SIMULATOR_TEACHING",
+          "detail": "Teaching in simulator: 'excellent'"
+        }
+      ]
+    },
+    {
+      "test_id": "simulator_flower_shop_edge_case",
+      "mode": "simulator",
+      "issues": [
+        {
+          "turn": 6,
+          "code": "INCOMPLETE_SENTENCE",
+          "detail": "Ends with trailing: ... a message for the supervisor?"
+        }
+      ]
+    },
+    {
+      "test_id": "simulator_bakery_grammar_errors",
+      "mode": "simulator",
+      "issues": [
+        {
+          "turn": 1,
+          "code": "NO_QUESTION",
+          "detail": "Response doesn't end with '?': ...Hello! I am making your free pizza now."
+        }
+      ]
+    },
+    {
+      "test_id": "simulator_dental_clinic_grammar_errors",
+      "mode": "simulator",
+      "issues": [
+        {
+          "turn": 1,
+          "code": "EXCEPTION",
+          "detail": "HTTPConnectionPool(host='localhost', port=8912): Read timed out. (read timeout=30)"
+        }
+      ]
+    },
+    {
+      "test_id": "simulator_renting_car_normal_flow",
+      "mode": "simulator",
+      "issues": [
+        {
+          "turn": 1,
+          "code": "NO_QUESTION",
+          "detail": "Response doesn't end with '?': ...Hello. My manager is here to help you."
+        }
+      ]
+    },
+    {
+      "test_id": "simulator_first_date_normal_flow",
+      "mode": "simulator",
+      "issues": [
+        {
+          "turn": 1,
+          "code": "NO_QUESTION",
+          "detail": "Response doesn't end with '?': ...Oh, hello! I am so sorry for the wait."
+        }
+      ]
+    },
+    {
+      "test_id": "simulator_first_date_grammar_errors",
+      "mode": "simulator",
+      "issues": [
+        {
+          "turn": 2,
+          "code": "NO_QUESTION",
+          "detail": "Response doesn't end with '?': ...Oh, I am so sorry! I can help you right now."
+        }
+      ]
+    },
+    {
+      "test_id": "simulator_first_date_edge_case",
+      "mode": "simulator",
+      "issues": [
+        {
+          "turn": 4,
+          "code": "NO_QUESTION",
+          "detail": "Response doesn't end with '?': ...Oh, I am so sorry! I will try to fix it."
+        },
+        {
+          "turn": 6,
+          "code": "INCOMPLETE_SENTENCE",
+          "detail": "Ends with trailing: ...the manager or the supervisor?"
+        }
+      ]
+    },
+    {
+      "test_id": "simulator_school_normal_flow",
+      "mode": "simulator",
+      "issues": [
+        {
+          "turn": 1,
+          "code": "INCOMPLETE_SENTENCE",
+          "detail": "Ends with trailing: ...the manager or the supervisor?"
+        }
+      ]
+    },
+    {
+      "test_id": "learning_airport_progression",
+      "mode": "learning",
+      "issues": [
+        {
+          "turn": 3,
+          "code": "EXCEPTION",
+          "detail": "HTTPConnectionPool(host='localhost', port=8912): Read timed out. (read timeout=30)"
+        }
+      ]
+    },
+    {
+      "test_id": "learning_doctor_errors",
+      "mode": "learning",
+      "issues": [
+        {
+          "turn": 4,
+          "code": "EXCEPTION",
+          "detail": "HTTPConnectionPool(host='localhost', port=8912): Read timed out. (read timeout=30)"
+        }
+      ]
+    }
+  ]
+}

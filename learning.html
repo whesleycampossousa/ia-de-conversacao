@@ -11,7 +11,7 @@
 
 <body>
     <!-- Transparent Header -->
-    <header class="netflix-remote-header scrolled" id="main-header">
+    <header class="netflix-remote-header scrolled" id="main-header" style="display: flex; justify-content: space-between; align-items: center;">
         <div class="logo-big" onclick="window.location.href='dashboard.html'">EVERYDAY</div>
         <nav>
             <ul class="nav-links">
@@ -20,6 +20,7 @@
                 <li><a href="dashboard.html">Dashboard</a></li>
             </ul>
         </nav>
+        <button onclick="localStorage.removeItem('auth_token'); localStorage.removeItem('conversation_token'); localStorage.removeItem('conversation_user'); localStorage.removeItem('usage_data'); localStorage.removeItem('conversation_backup'); localStorage.removeItem('last_context'); localStorage.removeItem('practice_mode'); window.location.href='index.html';" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #ccc; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; font-family: inherit; margin-left: 16px;">Sair</button>
     </header>
 
     <!-- Hero Billboard -->
@@ -202,14 +203,15 @@
             'default': 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=400&q=80'
         };
 
-        // Hero images for billboard
+        // Hero images for billboard (responsive: smaller on mobile)
+        const _heroW = window.innerWidth <= 768 ? 800 : 1920;
         const heroImages = {
-            'verb_to_be': 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80',
-            'greetings': 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1920&q=80',
-            'articles': 'https://images.unsplash.com/photo-1456324504439-367cee3b3c32?auto=format&fit=crop&w=1920&q=80',
-            'present_simple': 'https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?auto=format&fit=crop&w=1920&q=80',
-            'present_perfect': 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=1920&q=80',
-            'default': 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80'
+            'verb_to_be': `https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?ixlib=rb-4.0.3&auto=format&fit=crop&w=${_heroW}&q=80`,
+            'greetings': `https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=${_heroW}&q=80`,
+            'articles': `https://images.unsplash.com/photo-1456324504439-367cee3b3c32?auto=format&fit=crop&w=${_heroW}&q=80`,
+            'present_simple': `https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?auto=format&fit=crop&w=${_heroW}&q=80`,
+            'present_perfect': `https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=${_heroW}&q=80`,
+            'default': `https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?ixlib=rb-4.0.3&auto=format&fit=crop&w=${_heroW}&q=80`
         };
 
         function getTopicImage(id) {

@@ -1,0 +1,110 @@
+{
+    "context": "wedding",
+    "attempt": 1,
+    "profile": "curious_tourist",
+    "pass": false,
+    "avg_score": 6.125,
+    "stats": {
+        "score_sum": 49,
+        "violations": 5
+    },
+    "turns": [
+        {
+            "turn": 1,
+            "student": "(System Trigger)",
+            "ai": "Hello, welcome to the Wedding. How can I help you today?",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "The response contains a robotic header 'Sure!' and ends with a statement instead of a question",
+                "score": 4,
+                "improvement_suggestion": "Remove the 'Sure!' header, ensure the response ends with a question, and maintain natural conversational flow without robotic patterns",
+                "first_message_matches_required_opening": true
+            }
+        },
+        {
+            "turn": 2,
+            "student": "\"Thank you so much for welcoming me! I\u2019m so excited to be here\u2014do you know if there\u2019s a traditional dance or ritual during the ceremony? The decorations are absolutely stunning!\"",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain natural flow and role adherence. Keep responses concise and question-ended to simulate authentic conversation."
+            }
+        },
+        {
+            "turn": 3,
+            "student": "\"Ah, I see! I'm sorry about the technical hiccup. Is there anything else I can help you with while we wait? Maybe point you to the reception area or share some local wedding traditions?\"",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "Natural Flow: Multiple questions in one turn",
+                "score": 5,
+                "improvement_suggestion": "Ask one question per turn and end with a single question to maintain natural flow."
+            }
+        },
+        {
+            "turn": 4,
+            "student": "\"Oops! Is there a way I can still learn about the wedding traditions? I\u2019m so excited to see the local culture in action!\"",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "Natural Flow violation: response ended with a statement instead of a question",
+                "score": 4,
+                "improvement_suggestion": "Ensure all responses end with a question to maintain conversational flow."
+            }
+        },
+        {
+            "turn": 5,
+            "student": "\"Oh no! Is everything okay? I was hoping to learn more about the local wedding traditions here\u2014do you have any tips for first-time guests?\"",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 9,
+                "improvement_suggestion": "Consider adding more contextual details about the coffee shop menu to enhance role adherence."
+            }
+        },
+        {
+            "turn": 6,
+            "student": "\"Oh no! That's not good. Let me know if you need help with anything else!\"",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "Contains robotic header 'Sure!' and ends with a statement instead of a question",
+                "score": 3,
+                "improvement_suggestion": "Remove the 'Sure!' header and rephrase to end with a question: 'Our signature blend is a dark roast with a rich, bold flavor. Would you like to try it?'"
+            }
+        },
+        {
+            "turn": 7,
+            "student": "\"Oops, did something go wrong? Is there a problem with the wedding setup? I hope everything's okay\u2014I'm so excited to see the celebration!\"",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain natural conversational tone and continue with open-ended questions to keep dialogue flowing."
+            }
+        },
+        {
+            "turn": 8,
+            "student": "\"Uh, is there a way I can get more info about the wedding without the system crashing? I\u2019m just trying to learn about the traditions!\"",
+            "ai": "[API ERROR 500]",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "The AI used a robotic header 'Sure!' and did not end with a question.",
+                "score": 4,
+                "improvement_suggestion": "Avoid robotic headers and ensure all responses end with a question to maintain natural flow."
+            }
+        }
+    ]
+}

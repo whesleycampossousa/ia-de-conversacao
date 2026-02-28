@@ -1,0 +1,110 @@
+{
+    "context": "job_interview",
+    "attempt": 1,
+    "profile": "confused_beginner",
+    "pass": false,
+    "avg_score": 7.75,
+    "stats": {
+        "score_sum": 62,
+        "violations": 3
+    },
+    "turns": [
+        {
+            "turn": 1,
+            "student": "(System Trigger)",
+            "ai": "Hello, welcome to the interview. Please, have a seat. Tell me a little about yourself.",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain natural flow by keeping responses concise and focused on the conversation without added commentary.",
+                "first_message_matches_required_opening": true
+            }
+        },
+        {
+            "turn": 2,
+            "student": "\"Hello, thank you. My name is... I am... I like to work... Please, can you repeat the question?\" (nervous, looking at hands)",
+            "ai": "Hello, no problem at all. It's perfectly normal to be a little nervous. To reiterate, could you please share a bit about yourself and what interests you about this position?",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "Contains coaching phrases ('no problem at all', 'perfectly normal') and excessive reassurance violating Rule 1",
+                "score": 3,
+                "improvement_suggestion": "Remove all reassuring language and focus solely on the required question without additional commentary"
+            }
+        },
+        {
+            "turn": 3,
+            "student": "\"Hello... um, I'm [Name], and I... I'm a bit nervous too. I like this job because it's about [something], and I think I can help with [something else]. Wait, do you mean...?\"",
+            "ai": "Hello [Name], it's alright to be nervous. Many people are during interviews. It's good to hear you already have an idea about what you could bring to the role. Could you elaborate on the skills or experiences that make you feel you'd be a good fit for this position?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain natural flow but avoid initial reassurance (e.g., 'it's alright to be nervous') to keep the interaction more focused on the task."
+            }
+        },
+        {
+            "turn": 4,
+            "student": "\"Thank you! I'm a bit nervous, but I'm ready. I'm good at hard work and teamwork. I once helped my team finish a big project on time. I think these skills can help here!\"",
+            "ai": "That's great to hear! Being able to work under pressure and collaborate effectively are definitely valuable assets. Can you tell me more about the big project you mentioned and what role you played on the team?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain concise, conversational tone while ensuring questions remain focused on the candidate's experience."
+            }
+        },
+        {
+            "turn": 5,
+            "student": "\"Sure! I led a project to launch a new product, coordinating with designers and developers. I managed timelines and ensured everyone stayed on task. Did I mention the team size? Hmm...\" (pauses, confused) \"Was it 5 or 6 people?\"",
+            "ai": "That sounds like a significant accomplishment! Managing a product launch requires a diverse skill set. To get a clearer picture, could you describe a specific challenge you faced during that project and how you overcame it?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 10,
+                "improvement_suggestion": "Maintain focus on eliciting specific examples without adding evaluative commentary"
+            }
+        },
+        {
+            "turn": 6,
+            "student": "\"Um challenge was when the team didn't talk clearly. I made meetings and used simple words to help everyone understand. It worked!\"",
+            "ai": "That's a great initiative. Communication breakdowns can really derail a project. To delve deeper, can you give me a specific example of a miscommunication and how your actions directly resolved it?",
+            "eval": {
+                "is_natural": false,
+                "contract_violation": true,
+                "violation_reason": "Teaching/coaching through praise and meta-talk about 'delving deeper'",
+                "score": 4,
+                "improvement_suggestion": "Remove evaluative language and direct questioning without explanatory framing"
+            }
+        },
+        {
+            "turn": 7,
+            "student": "\"Sim, I once misunderstood a task. I asked for clarification, then fixed it. Por favor, can you explain more?\"",
+            "ai": "It's commendable that you took responsibility for the misunderstanding and sought clarification. Could you tell me more about the task you misunderstood and what specific steps you took to correct it?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": false,
+                "violation_reason": null,
+                "score": 9,
+                "improvement_suggestion": "Avoid explicit positive reinforcement to maintain neutral feedback tone."
+            }
+        },
+        {
+            "turn": 8,
+            "student": "\"Thank you! I was working on a project where I misread a step. I realized my mistake, double-checked the instructions, and fixed it right away. It taught me to be more careful!\"",
+            "ai": "That's a great example of taking initiative and learning from mistakes. How did that experience influence your approach to similar tasks or projects afterward?",
+            "eval": {
+                "is_natural": true,
+                "contract_violation": true,
+                "violation_reason": "Teaching/Coaching",
+                "score": 6,
+                "improvement_suggestion": "Remove the positive feedback and ask the question directly without commentary."
+            }
+        }
+    ]
+}
