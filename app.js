@@ -5974,7 +5974,8 @@ function handleLogin() {
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const email = emailInput.value.trim();
-        const password = passwordInput ? passwordInput.value.trim() : '';
+        const isAdminLoginAttempt = Boolean(passwordGroup && passwordGroup.style.display === 'block');
+        const password = (isAdminLoginAttempt && passwordInput) ? passwordInput.value.trim() : '';
         const submitBtn = form.querySelector('button[type="submit"]');
 
         if (!email) {
@@ -6021,9 +6022,11 @@ function handleLogin() {
                     : window.location.origin;
                 errorMsg = `Servidor offline ou URL incorreta. Inicie o backend e tente: ${apiBase || 'http://localhost:8912'}`;
             } else if (rawMsg.includes('not authorized') || rawMsg.includes('not registered')) {
-                errorMsg = 'This email is not authorized to access the platform. Please contact support.';
+                errorMsg = 'Este e-mail nao esta cadastrado para acessar a plataforma.';
+            } else if (rawMsg.includes('Admin password required')) {
+                errorMsg = 'Esse e-mail exige senha de admin. Alunos entram apenas com o e-mail cadastrado.';
             } else if (rawMsg.includes('Invalid admin password')) {
-                errorMsg = 'Invalid admin password. Try again or login without password for regular access.';
+                errorMsg = 'Senha de admin invalida. Alunos entram apenas com o e-mail cadastrado.';
             }
 
             alert(errorMsg);

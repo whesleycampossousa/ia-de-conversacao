@@ -145,7 +145,12 @@ except Exception as e:
         print(f"[WARNING] Failed to create cache directories: {e}")
 
 # Security Configuration
-app.config['SECRET_KEY'] = os.environ.get('SESSION_SECRET', 'dev-secret-change-in-production')
+_session_secret = (os.environ.get('SESSION_SECRET') or '').strip()
+if not _session_secret:
+    # Keep local dev working without shipping a predictable JWT signing key.
+    _session_secret = hashlib.sha256(os.urandom(32)).hexdigest()
+    print("[SECURITY] SESSION_SECRET not set. Using an ephemeral secret for this process.")
+app.config['SECRET_KEY'] = _session_secret
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.json.ensure_ascii = False  # Return UTF-8 characters directly in JSON responses
@@ -312,7 +317,7 @@ class GeminiModelAdapter:
                 print(f"[GEMINI] 503/UNAVAILABLE on attempt {attempt + 1}/{max_retries}, retrying in {wait_time:.1f}s...")
                 time.sleep(wait_time)
 
-        # All retries with primary model failed Ã¢â‚¬â€ try fallback model
+        # All retries with primary model failed - try fallback model
         if fallback_model and fallback_model != self.model_name:
             try:
                 print(f"[GEMINI] Primary model '{self.model_name}' unavailable after {max_retries} retries. Falling back to '{fallback_model}'...")
@@ -328,7 +333,7 @@ class GeminiModelAdapter:
             except Exception as fallback_err:
                 print(f"[GEMINI] Fallback model also failed: {fallback_err}")
 
-        # Everything failed Ã¢â‚¬â€ raise the original error
+        # Everything failed - raise the original error
         raise last_error
 
 if GOOGLE_API_KEY and GENAI_AVAILABLE:
@@ -1193,11 +1198,11 @@ LEARNING_GENERIC_WORKER_ONLY_PATTERNS = [
 ]
 
 PORTUGUESE_HINT_WORDS = {
-    'eu', 'voce', 'vocÃƒÂª', 'nao', 'nÃƒÂ£o', 'sim', 'quero', 'queria', 'gosto', 'gostaria',
+    'eu', 'voce', 'você', 'nao', 'não', 'sim', 'quero', 'queria', 'gosto', 'gostaria',
     'preciso', 'posso', 'pode', 'poderia', 'me', 'meu', 'minha', 'seu', 'sua', 'nos',
-    'nÃƒÂ³s', 'eles', 'elas', 'ela', 'ele', 'de', 'da', 'do', 'em', 'para', 'por', 'com',
+    'nós', 'eles', 'elas', 'ela', 'ele', 'de', 'da', 'do', 'em', 'para', 'por', 'com',
     'sobre', 'sem', 'um', 'uma', 'uns', 'umas', 'este', 'esta', 'isso', 'aqui', 'ali',
-    'agora', 'hoje', 'amanha', 'amanhÃƒÂ£', 'ontem', 'sempre', 'nunca', 'tambem', 'tambÃƒÂ©m',
+    'agora', 'hoje', 'amanha', 'amanhã', 'ontem', 'sempre', 'nunca', 'tambem', 'também',
     'porque', 'por que', 'que', 'como', 'onde', 'quando', 'quanto', 'muito', 'pouco'
 }
 
@@ -1507,7 +1512,7 @@ def _normalize_feedback_text(value):
     text = re.sub(r'[\[\]()"""\'`.,!?;:]+', ' ', text)
     text = re.sub(r'\s+', ' ', text).strip()
     # Re-join common contractions split by punctuation removal:
-    # "don t" Ã¢â€ â€™ "dont", "doesn t" Ã¢â€ â€™ "doesnt", "isn t" Ã¢â€ â€™ "isnt", etc.
+    # "don t" -> "dont", "doesn t" -> "doesnt", "isn t" -> "isnt", etc.
     text = re.sub(r"\b(don|doesn|isn|aren|wasn|weren|hasn|haven|wouldn|couldn|shouldn|won|can|didn) t\b", r"\1t", text)
     return text
 
@@ -1692,9 +1697,9 @@ def _classify_turn_feedback(user_text, ai_text, practice_mode, must_retry=False,
     has_style_marker = any(marker in source.lower() for marker in style_markers)
 
     patterns = [
-        r'Instead of\s*[\"Ã¢â‚¬Å“]?([^\"Ã¢â‚¬Â]+?)[\"Ã¢â‚¬Â]?\s*,?\s*say\s*:?\s*[\"Ã¢â‚¬Å“]?([^\"Ã¢â‚¬Â]+?)[\"Ã¢â‚¬Â]?(?:[.?!]|$)',
+        r'Instead of\s*["“”]?([^"“”]+?)["“”]?\s*,?\s*say\s*:?\s*["“”]?([^"“”]+?)["“”]?(?:[.?!]|$)',
         r'Em vez de\s*\[EN\](.*?)\[/EN\]\s*,?\s*diga\s*:?\s*\[EN\](.*?)\[/EN\](?:[.?!]|$)',
-        r'Em vez de\s*[\"Ã¢â‚¬Å“]?([^\"Ã¢â‚¬Â]+?)[\"Ã¢â‚¬Â]?\s*,?\s*diga\s*:?\s*[\"Ã¢â‚¬Å“]?([^\"Ã¢â‚¬Â]+?)[\"Ã¢â‚¬Â]?(?:[.?!]|$)',
+        r'Em vez de\s*["“”]?([^"“”]+?)["“”]?\s*,?\s*diga\s*:?\s*["“”]?([^"“”]+?)["“”]?(?:[.?!]|$)',
     ]
 
     wrong_part = ""
@@ -1702,8 +1707,8 @@ def _classify_turn_feedback(user_text, ai_text, practice_mode, must_retry=False,
     for pattern in patterns:
         match = re.search(pattern, source, re.IGNORECASE)
         if match:
-            wrong_part = str(match.group(1) or '').strip().strip('\'"Ã¢â‚¬Å“Ã¢â‚¬Â')
-            corrected = str(match.group(2) or '').strip().strip('\'"Ã¢â‚¬Å“Ã¢â‚¬Â')
+            wrong_part = str(match.group(1) or '').strip().strip('\'"“”')
+            corrected = str(match.group(2) or '').strip().strip('\'"“”')
             corrected = corrected.split(" - ")[0].split(" (")[0].strip().strip("'\"")
             break
 
@@ -2631,7 +2636,14 @@ def get_grammar_topics():
 # Merge prompts handled in load_context_data
 
 # Email whitelist configuration
-AUTHORIZED_EMAILS_FILE = os.path.join(BASE_DIR, 'authorized_emails.json')
+AUTHORIZED_EMAILS_BUNDLED_FILE = os.path.join(BASE_DIR, 'authorized_emails.json')
+AUTHORIZED_EMAILS_FILE = (os.environ.get('AUTHORIZED_EMAILS_FILE') or '').strip()
+if not AUTHORIZED_EMAILS_FILE:
+    AUTHORIZED_EMAILS_FILE = (
+        os.path.join(CACHE_ROOT, 'authorized_emails.json')
+        if os.environ.get('VERCEL')
+        else AUTHORIZED_EMAILS_BUNDLED_FILE
+    )
 DEFAULT_ADMIN_EMAIL = 'admin@example.com'
 
 def _env_non_empty(name, fallback):
@@ -2653,12 +2665,14 @@ MAINTENANCE_MESSAGE = "IA de conversa\u00e7\u00e3o indispon\u00edvel no momento.
 def load_authorized_emails():
     """Load authorized emails from JSON file"""
     try:
-        # Check if file exists first
-        if not os.path.exists(AUTHORIZED_EMAILS_FILE):
-             print(f"[WARNING] Authorized emails file not found at: {AUTHORIZED_EMAILS_FILE}")
-             return set(ADMIN_LOGIN_EMAILS)
-             
-        with open(AUTHORIZED_EMAILS_FILE, 'r', encoding='utf-8-sig') as f:
+        source_path = AUTHORIZED_EMAILS_FILE
+        if not os.path.exists(source_path) and source_path != AUTHORIZED_EMAILS_BUNDLED_FILE and os.path.exists(AUTHORIZED_EMAILS_BUNDLED_FILE):
+            source_path = AUTHORIZED_EMAILS_BUNDLED_FILE
+        if not os.path.exists(source_path):
+            print(f"[WARNING] Authorized emails file not found at: {AUTHORIZED_EMAILS_FILE}")
+            return set(ADMIN_LOGIN_EMAILS)
+
+        with open(source_path, 'r', encoding='utf-8-sig') as f:
             content = f.read().strip()
             if not content:
                 return set(ADMIN_LOGIN_EMAILS)
@@ -2692,6 +2706,9 @@ def save_authorized_emails(emails_set):
         'authorized_emails': emails_list
     }
     try:
+        directory = os.path.dirname(AUTHORIZED_EMAILS_FILE)
+        if directory:
+            os.makedirs(directory, exist_ok=True)
         with open(AUTHORIZED_EMAILS_FILE, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
         return True
@@ -2955,8 +2972,8 @@ def chat():
     needs_slowdown = bool(re.search(
         r"(don't understand|do not understand|what does that mean|repeat|say again|slower|more slowly|i don't get it|"
         r"i don't know|not sure|no idea|"
-        r"nao entendi|nÃƒÂ£o entendi|nao entendo|nÃƒÂ£o entendo|pode repetir|repete|mais devagar|"
-        r"nao sei|nÃƒÂ£o sei|nÃƒÂ£o tenho certeza|nao tenho certeza)",
+        r"nao entendi|não entendi|nao entendo|não entendo|pode repetir|repete|mais devagar|"
+        r"nao sei|não sei|não tenho certeza|nao tenho certeza)",
         user_text,
         re.IGNORECASE
     ))
@@ -3617,7 +3634,7 @@ GRAMMAR ERROR DETECTION (CRITICAL):
   3. Set "must_retry" to true
 - Examples of CLEAR errors: "He have" (has), "She don't" (doesn't), "They was" (were), "I goed" (went), "chole" (not a word)
 - ONLY mark as correct if ALL words are real English words AND grammar is correct
-- Do NOT flag correct sentences as errors. "I have been here since morning" is CORRECT Ã¢â‚¬â€ do NOT correct it.
+- Do NOT flag correct sentences as errors. "I have been here since morning" is CORRECT - do NOT correct it.
 - Only set must_retry to true for REAL grammar mistakes, never for style preferences.
 
 Return JSON: {{"en": "natural response as character", "pt": "traducao", "suggested_words": [], "must_retry": false, "correction": null}}
@@ -3740,7 +3757,7 @@ Return JSON: {{"en": "...", "pt": "...", "suggested_words": [], "must_retry": fa
                     # Fallback deterministic teacher message - IMMEDIATE (No 2nd model call)
                     # This prevents Vercel timeouts by avoiding a double LLM round-trip.
                     if lesson_lang == 'pt':
-                        ai_text = "Legal! Hoje vamos praticar [EN]this/that/these/those[/EN]. Regra rÃƒÂ¡pida: [EN]this/these[/EN] = perto, [EN]that/those[/EN] = longe. Olhe ao seu redor e diga: o que ÃƒÂ© [EN]this[/EN] perto de vocÃƒÂª e o que ÃƒÂ© [EN]that[/EN] mais longe? Responda com duas frases curtas."
+                        ai_text = "Legal! Hoje vamos praticar [EN]this/that/these/those[/EN]. Regra rápida: [EN]this/these[/EN] = perto, [EN]that/those[/EN] = longe. Olhe ao seu redor e diga: o que é [EN]this[/EN] perto de você e o que é [EN]that[/EN] mais longe? Responda com duas frases curtas."
                     else:
                         ai_text = "Nice! Today we're practicing this/that/these/those. Quick rule: this/these = near, that/those = far. Look around you and tell me: what is this near you and what is that far from you? Answer with two short sentences."
                     suggested_words = ["this", "that", "these", "those"]
@@ -3877,9 +3894,9 @@ Return JSON: {{"en": "...", "pt": "...", "suggested_words": [], "must_retry": fa
             ai_text = _re.sub(r'Learning mode:\s*[^.!?]*[.!?]?\s*', '', ai_text, flags=_re.IGNORECASE).strip()
             ai_text = _re.sub(r'I will\s+(coach|show|give|share)\s+(easy\s+|simple\s+)?(lines?|sentences?|phrases?)\s+you\s+can\s+(say|use)[^.!?]*[.!?]?\s*', '', ai_text, flags=_re.IGNORECASE).strip()
             if ai_trans:
-                ai_trans = _re.sub(r'Hoje vocÃƒÂª (vai|irÃƒÂ¡) aprender[^.]*\.?\s*', '', ai_trans, flags=_re.IGNORECASE).strip()
+                ai_trans = _re.sub(r'Hoje você (vai|irá) aprender[^.]*\.?\s*', '', ai_trans, flags=_re.IGNORECASE).strip()
                 ai_trans = _re.sub(r'Modo Learning:\s*[^.!?]*[.!?]?\s*', '', ai_trans, flags=_re.IGNORECASE).strip()
-                ai_trans = _re.sub(r'(Eu vou|Vou)\s+(guiar|mostrar|dar)\s+frases?\s+(simples\s+)?que\s+voce\s+pode\s+(dizer|usar)[^.!?]*[.!?]?\s*', '', ai_trans, flags=_re.IGNORECASE).strip()
+                ai_trans = _re.sub(r'(Eu vou|Vou)\s+(guiar|mostrar|dar)\s+frases?\s+(simples\s+)?que\s+você\s+pode\s+(dizer|usar)[^.!?]*[.!?]?\s*', '', ai_trans, flags=_re.IGNORECASE).strip()
 
         # Rewrite repeated/answered trailing questions to improve memory and didactics.
         if practice_mode == 'learning':
@@ -5105,39 +5122,39 @@ def report():
     if context_key == 'basic_structures':
         # Special prompt for Basic Structures training
         prompt = f"""
-VocÃƒÂª ÃƒÂ© um professor de inglÃƒÂªs analisando uma sessÃƒÂ£o de TREINAMENTO DE ESTRUTURAS BÃƒÂSICAS.
+Você é um professor de inglês analisando uma sessão de TREINAMENTO DE ESTRUTURAS BÁSICAS.
 
-O aluno praticou responder a 6 perguntas sobre como fazer pedidos educados em inglÃƒÂªs.
+O aluno praticou responder a 6 perguntas sobre como fazer pedidos educados em inglês.
 
-TranscriÃƒÂ§ÃƒÂ£o completa:
+Transcrição completa:
 {transcript_text}
 
-Analise cada resposta do aluno e gere um relatÃƒÂ³rio focado em:
-1. Quais estruturas educadas o aluno jÃƒÂ¡ domina bem
-2. Quais estruturas precisam de mais prÃƒÂ¡tica
+Analise cada resposta do aluno e gere um relatório focado em:
+1. Quais estruturas educadas o aluno já domina bem
+2. Quais estruturas precisam de mais prática
 3. Alternativas de como expressar a mesma coisa
 
 REGRAS DE QUALIDADE:
-- Use SOMENTE frases da transcriÃƒÂ§ÃƒÂ£o (nÃƒÂ£o invente falas).
-- Se houver erros, inclua pelo menos 3 correÃƒÂ§ÃƒÂµes importantes.
+- Use SOMENTE frases da transcrição (não invente falas).
+- Se houver erros, inclua pelo menos 3 correções importantes.
 - Se houver poucos erros, use "Correta, mas Pouco Natural" para sugerir formas mais naturais.
-- Dicas devem ser acionÃƒÂ¡veis e ligadas a erros reais observados.
+- Dicas devem ser acionáveis e ligadas a erros reais observados.
 
-Retorne APENAS um JSON vÃƒÂ¡lido seguindo EXATAMENTE este formato:
+Retorne APENAS um JSON válido seguindo EXATAMENTE este formato:
 {{
-  "titulo": "Ãƒâ€œtimo treino de estruturas bÃƒÂ¡sicas!",
-  "emoji": "Ã°Å¸â€œâ€“",
+  "titulo": "Ótimo treino de estruturas básicas!",
+  "emoji": "🎓",
   "tom": "educacional e encorajador",
   "correcoes": [
-    {{"ruim": "frase EXATA do aluno", "boa": "forma mais natural/educada", "explicacao": "por que essa forma ÃƒÂ© melhor"}}
+    {{"ruim": "frase EXATA do aluno", "boa": "forma mais natural/educada", "explicacao": "por que essa forma é melhor"}}
   ],
   "analise_frases": [
     {{
       "frase_aluno": "frase EXATA como o aluno falou",
       "naturalidade": 50,
-      "nivel": "CompreensÃƒÂ­vel, mas nÃƒÂ£o natural",
+      "nivel": "Compreensível, mas não natural",
       "frase_natural": "como um nativo diria a mesma coisa",
-      "explicacao": "breve explicaÃƒÂ§ÃƒÂ£o de por que a versÃƒÂ£o natural ÃƒÂ© melhor"
+      "explicacao": "breve explicação de por que a versão natural é melhor"
     }}
   ],
   "elogios": ["estrutura que usou bem 1", "estrutura que usou bem 2", "estrutura que usou bem 3"],
@@ -5150,105 +5167,105 @@ Retorne APENAS um JSON vÃƒÂ¡lido seguindo EXATAMENTE este formato:
 }}
 
 REGRAS:
-- MÃƒÂ¡ximo 3 correÃƒÂ§ÃƒÂµes (foque nas mais importantes)
-- Analise TODAS as falas do aluno em "analise_frases" (nÃƒÂ£o apenas erros)
-- "naturalidade": 0-100 (90-100=perfeita, 60-89=boa, 40-59=compreensÃƒÂ­vel mas nÃƒÂ£o natural, 0-39=erro grave)
+- Máximo 3 correções (foque nas mais importantes)
+- Analise TODAS as falas do aluno em "analise_frases" (não apenas erros)
+- "naturalidade": 0-100 (90-100=perfeita, 60-89=boa, 40-59=compreensível mas não natural, 0-39=erro grave)
 - Pelo menos 3 elogios sobre estruturas que usou bem
-- Dicas devem sugerir estruturas especÃƒÂ­ficas para estudar
-- "erros_recorrentes": 2-4 padrÃƒÂµes observados com base nas falas do aluno
-- "plano_estudo": 3 aÃƒÂ§ÃƒÂµes claras e curtas para a prÃƒÂ³xima semana (baseadas nos erros)
+- Dicas devem sugerir estruturas específicas para estudar
+- "erros_recorrentes": 2-4 padrões observados com base nas falas do aluno
+- "plano_estudo": 3 ações claras e curtas para a próxima semana (baseadas nos erros)
 - Tom sempre positivo e motivador
-- "nota_geral": nÃƒÂºmero de 0 a 100 representando a performance geral (60% naturalidade mÃƒÂ©dia das frases + 20% frases corretas + 20% variedade de vocabulÃƒÂ¡rio)
-- "resumo_gramatical": lista de 2-4 pontos gramaticais ou de vocabulÃƒÂ¡rio cobertos na conversa (ex: "Estruturas de pedido educado", "Uso de would/could")
+- "nota_geral": número de 0 a 100 representando a performance geral (60% naturalidade média das frases + 20% frases corretas + 20% variedade de vocabulário)
+- "resumo_gramatical": lista de 2-4 pontos gramaticais ou de vocabulário cobertos na conversa (ex: "Estruturas de pedido educado", "Uso de would/could")
 - SEM texto fora do JSON
 """
     else:
         # Standard prompt for conversation scenarios
         prompt = f"""
-VocÃƒÂª ÃƒÂ© um professor de inglÃƒÂªs MUITO ENCORAJADOR analisando a performance de um aluno em uma conversa prÃƒÂ¡tica.
+Você é um professor de inglês MUITO ENCORAJADOR analisando a performance de um aluno em uma conversa prática.
 
 Contexto da conversa: {context_key}
-System prompt do cenÃƒÂ¡rio: {system_prompt}
+System prompt do cenário: {system_prompt}
 
-TranscriÃƒÂ§ÃƒÂ£o completa (ordem cronolÃƒÂ³gica):
+Transcrição completa (ordem cronológica):
 {transcript_text}
 
-Analise CUIDADOSAMENTE cada fala do usuÃƒÂ¡rio seguindo estas prioridades:
+Analise CUIDADOSAMENTE cada fala do usuário seguindo estas prioridades:
 1. PRIMEIRO: Identifique 3-4 PONTOS POSITIVOS (o que o aluno fez bem)
 2. Depois: Para CADA frase do aluno, avalie e classifique
-3. Dicas prÃƒÂ¡ticas e construtivas para evoluir
+3. Dicas práticas e construtivas para evoluir
 
 REGRAS DE QUALIDADE:
-- Use SOMENTE frases da transcriÃƒÂ§ÃƒÂ£o (nÃƒÂ£o invente falas).
-- Se houver erros, inclua pelo menos 3 correÃƒÂ§ÃƒÂµes importantes.
+- Use SOMENTE frases da transcrição (não invente falas).
+- Se houver erros, inclua pelo menos 3 correções importantes.
 - Se houver poucos erros, use "Correta, mas Pouco Natural" para sugerir formas mais naturais.
-- Dicas devem ser acionÃƒÂ¡veis e ligadas a erros reais observados.
-- Evite elogios genÃƒÂ©ricos: cite evidÃƒÂªncias concretas do que o aluno fez bem.
+- Dicas devem ser acionáveis e ligadas a erros reais observados.
+- Evite elogios genéricos: cite evidências concretas do que o aluno fez bem.
 
-Gere um relatÃƒÂ³rio em portuguÃƒÂªs e retorne APENAS um JSON vÃƒÂ¡lido seguindo EXATAMENTE este formato:
+Gere um relatório em português e retorne APENAS um JSON válido seguindo EXATAMENTE este formato:
 {{
-  "titulo": "Frase MUITO MOTIVADORA e positiva sobre o progresso (ex: 'VocÃƒÂª estÃƒÂ¡ indo muito bem!', 'Ãƒâ€œtimo progresso!')",
-  "emoji": "emoji positivo (Ã°Å¸Å½â€°, Ã¢Å“Â¨, Ã°Å¸Å’Å¸, Ã°Å¸â€˜Â, Ã°Å¸â€™Âª)",
+  "titulo": "Frase MUITO MOTIVADORA e positiva sobre o progresso (ex: 'Você está indo muito bem!', 'Ótimo progresso!')",
+  "emoji": "emoji positivo (🎉, ✨, 🌟, 👍, 💪)",
   "tom": "positivo e encorajador",
   "correcoes": [
     {{
       "fraseOriginal": "frase EXATA como o aluno falou",
-      "fraseCorrigida": "versÃƒÂ£o corrigida da frase",
-      "avaliacaoGeral": "Correta|AceitÃƒÂ¡vel|Incorreta",
-      "comentarioBreve": "ComentÃƒÂ¡rio de 1 frase simples, como um professor explicaria na sala de aula",
-      "tag": "Estrutura Incorreta|Incorreta, mas CompreensÃƒÂ­vel|Correta, mas Pouco Natural",
-      "explicacaoDetalhada": "ExplicaÃƒÂ§ÃƒÂ£o DIDÃƒÂTICA e SIMPLES como um professor falaria para o aluno em sala de aula. SEM termos tÃƒÂ©cnicos de gramÃƒÂ¡tica. Use exemplos do dia-a-dia, analogias e linguagem acessÃƒÂ­vel. Ex: 'Em inglÃƒÂªs, quando vocÃƒÂª quer pedir algo educadamente, ÃƒÂ© como dizer Eu gostaria em vez de Eu quero - soa mais gentil!'"
+      "fraseCorrigida": "versão corrigida da frase",
+      "avaliacaoGeral": "Correta|Aceitável|Incorreta",
+      "comentarioBreve": "Comentário de 1 frase simples, como um professor explicaria na sala de aula",
+      "tag": "Estrutura Incorreta|Incorreta, mas Compreensível|Correta, mas Pouco Natural",
+      "explicacaoDetalhada": "Explicação DIDÁTICA e SIMPLES como um professor falaria para o aluno em sala de aula. SEM termos técnicos de gramática. Use exemplos do dia a dia, analogias e linguagem acessível. Ex: 'Em inglês, quando você quer pedir algo educadamente, é como dizer Eu gostaria em vez de Eu quero: soa mais gentil!'"
     }}
   ],
   "analise_frases": [
     {{
       "frase_aluno": "frase EXATA como o aluno falou",
       "naturalidade": 50,
-      "nivel": "CompreensÃƒÂ­vel, mas nÃƒÂ£o natural",
+      "nivel": "Compreensível, mas não natural",
       "frase_natural": "como um nativo diria a mesma coisa",
-      "explicacao": "breve explicaÃƒÂ§ÃƒÂ£o de por que a versÃƒÂ£o natural ÃƒÂ© melhor"
+      "explicacao": "breve explicação de por que a versão natural é melhor"
     }}
   ],
-  "elogios": ["elogio especÃƒÂ­fico 1", "elogio especÃƒÂ­fico 2", "elogio especÃƒÂ­fico 3", "elogio especÃƒÂ­fico 4"],
+  "elogios": ["elogio específico 1", "elogio específico 2", "elogio específico 3", "elogio específico 4"],
   "dicas": ["dica construtiva 1", "dica construtiva 2"],
-  "frase_pratica": "prÃƒÂ³xima frase em inglÃƒÂªs para o aluno treinar neste contexto",
+  "frase_pratica": "próxima frase em inglês para o aluno treinar neste contexto",
   "erros_recorrentes": ["erro recorrente 1", "erro recorrente 2"],
   "plano_estudo": ["pratique X por 10 min", "repita Y com exemplos", "grave 3 frases usando Z"],
   "nota_geral": 75,
-  "resumo_gramatical": ["ponto gramatical coberto 1", "ponto de vocabulÃƒÂ¡rio coberto 2"]
+  "resumo_gramatical": ["ponto gramatical coberto 1", "ponto de vocabulário coberto 2"]
 }}
 
-ANÃƒÂLISE FRASE A FRASE (use em "analise_frases"):
-- Analise TODAS as falas do aluno, nÃƒÂ£o apenas as com erro
-- "naturalidade" ÃƒÂ© um nÃƒÂºmero de 0 a 100 representando quÃƒÂ£o natural a frase soa para um nativo
-- Escala: 90-100 = perfeita/natural, 60-89 = boa mas pode melhorar, 40-59 = compreensÃƒÂ­vel mas nÃƒÂ£o natural, 0-39 = erro grave
-- "nivel" deve descrever o nÃƒÂ­vel em portuguÃƒÂªs (ex: "Perfeita!", "Boa, mas pode melhorar", "CompreensÃƒÂ­vel, mas nÃƒÂ£o natural", "Precisa de correÃƒÂ§ÃƒÂ£o")
-- "frase_natural" deve ser EXATAMENTE como um nativo falaria (mesmo que a original jÃƒÂ¡ esteja correta, repita-a)
-- Se a frase do aluno jÃƒÂ¡ for perfeita, dÃƒÂª 90-100% e elogie na explicaÃƒÂ§ÃƒÂ£o
+ANÁLISE FRASE A FRASE (use em "analise_frases"):
+- Analise TODAS as falas do aluno, não apenas as com erro
+- "naturalidade" é um número de 0 a 100 representando quão natural a frase soa para um nativo
+- Escala: 90-100 = perfeita/natural, 60-89 = boa mas pode melhorar, 40-59 = compreensível mas não natural, 0-39 = erro grave
+- "nivel" deve descrever o nível em português (ex: "Perfeita!", "Boa, mas pode melhorar", "Compreensível, mas não natural", "Precisa de correção")
+- "frase_natural" deve ser EXATAMENTE como um nativo falaria (mesmo que a original já esteja correta, repita-a)
+- Se a frase do aluno já for perfeita, dê 90-100% e elogie na explicação
 
-TAGS DE CLASSIFICAÃƒâ€¡ÃƒÆ’O (use em "tag"):
-- "Estrutura Incorreta": Erro gramatical grave que compromete a compreensÃƒÂ£o
-- "Incorreta, mas CompreensÃƒÂ­vel": Erro pequeno ou de concordancia que nÃƒÂ£o impede o entendimento
-- "Correta, mas Pouco Natural": NÃƒÂ£o ÃƒÂ© erro gramatical, mas um nativo nÃƒÂ£o falaria assim (estranho ou formal demais)
-- Se a frase estiver 100% correta e natural, nÃƒÂ£o inclua o campo "tag"
+TAGS DE CLASSIFICACAO (use em "tag"):
+- "Estrutura Incorreta": Erro gramatical grave que compromete a compreensão
+- "Incorreta, mas Compreensível": Erro pequeno ou de concordância que não impede o entendimento
+- "Correta, mas Pouco Natural": Não é erro gramatical, mas um nativo não falaria assim (estranho ou formal demais)
+- Se a frase estiver 100% correta e natural, não inclua o campo "tag"
 
-AVALIAÃƒâ€¡ÃƒÆ’O GERAL (use em "avaliacaoGeral"):
+AVALIACAO GERAL (use em "avaliacaoGeral"):
 - "Correta": Frase gramaticalmente correta e natural
-- "AceitÃƒÂ¡vel": Tem pequenos erros mas comunica bem a mensagem
+- "Aceitável": Tem pequenos erros mas comunica bem a mensagem
 - "Incorreta": Tem erros significativos que precisam ser corrigidos
 
-REGRAS CRÃƒÂTICAS:
-- SEMPRE inclua "avaliacaoGeral" e "comentarioBreve" para CADA correÃƒÂ§ÃƒÂ£o
-- O "comentarioBreve" deve dar ao aluno uma noÃƒÂ§ÃƒÂ£o rÃƒÂ¡pida do status da frase
-- SEMPRE comece com 3-4 elogios ANTES das correÃƒÂ§ÃƒÂµes
+REGRAS CRÍTICAS:
+- SEMPRE inclua "avaliacaoGeral" e "comentarioBreve" para CADA correção
+- O "comentarioBreve" deve dar ao aluno uma noção rápida do status da frase
+- SEMPRE comece com 3-4 elogios ANTES das correções
 - Tom SEMPRE positivo e motivador
-- Elogios devem ser ESPECÃƒÂFICOS sobre o que o aluno fez bem
-- Dicas devem ser construtivas, nÃƒÂ£o crÃƒÂ­ticas
-- "erros_recorrentes": 2-4 padrÃƒÂµes observados com base nas falas do aluno
-- "plano_estudo": 3 aÃƒÂ§ÃƒÂµes claras e curtas para a prÃƒÂ³xima semana (baseadas nos erros)
+- Elogios devem ser ESPECÍFICOS sobre o que o aluno fez bem
+- Dicas devem ser construtivas, não críticas
+- "erros_recorrentes": 2-4 padrões observados com base nas falas do aluno
+- "plano_estudo": 3 ações claras e curtas para a próxima semana (baseadas nos erros)
 - Se o aluno estiver muito bem, elogie ainda mais!
-- "nota_geral": nÃƒÂºmero de 0 a 100 representando a performance geral do aluno (60% naturalidade mÃƒÂ©dia das frases + 20% quantidade de frases corretas + 20% variedade de vocabulÃƒÂ¡rio)
-- "resumo_gramatical": lista de 2-4 pontos gramaticais ou de vocabulÃƒÂ¡rio cobertos na conversa (ex: "Simple Past", "Phrasal verbs com 'get'", "VocabulÃƒÂ¡rio de restaurante")
+- "nota_geral": número de 0 a 100 representando a performance geral do aluno (60% naturalidade média das frases + 20% quantidade de frases corretas + 20% variedade de vocabulário)
+- "resumo_gramatical": lista de 2-4 pontos gramaticais ou de vocabulário cobertos na conversa (ex: "Simple Past", "Phrasal verbs com 'get'", "Vocabulário de restaurante")
 - SEM texto fora do JSON
 """
 
@@ -6616,7 +6633,9 @@ def reload_authorized_emails():
 @require_auth
 def transcribe_audio():
     """Transcribe audio using Google Speech-to-Text, Deepgram Nova-2, or Groq Whisper"""
-    if not (GOOGLE_API_KEY or DEEPGRAM_API_KEY or GROQ_API_KEY):
+    google_sa_json = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON", "").strip()
+    has_google_stt = bool(SPEECH_AVAILABLE and google_sa_json)
+    if not (has_google_stt or DEEPGRAM_API_KEY or GROQ_API_KEY):
         return jsonify({"error": "Transcription service not configured"}), 503
     
     if not REQUESTS_AVAILABLE:
@@ -6676,7 +6695,6 @@ def transcribe_audio():
         google_low_confidence = False  # track if Google returned low-quality result
 
         # 1. Try GOOGLE SPEECH-TO-TEXT with Service Account (only for WebM/Opus)
-        google_sa_json = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON", "").strip()
         if SPEECH_AVAILABLE and google_sa_json and is_webm:
             try:
                 sa_info = json.loads(google_sa_json)
@@ -6889,7 +6907,7 @@ def debug_imports():
         }
     })
 
-# Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ FEEDBACK SYSTEM Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+# ---------------- FEEDBACK SYSTEM ----------------
 # In-memory feedback store (persisted to JSON file)
 FEEDBACK_FILE = os.path.join(CACHE_ROOT, 'feedbacks.json')
 
@@ -6999,7 +7017,7 @@ def get_feedback_stats():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ END FEEDBACK SYSTEM Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+# ---------------- END FEEDBACK SYSTEM ----------------
 
 @app.route('/<path:path>')
 def serve_static(path):
@@ -7056,8 +7074,8 @@ def serve_static(path):
         return jsonify({"error": "File not found"}), 404
 
 if __name__ == '__main__':
-    # PORT 4344
-    app.run(debug=False, port=4344)
+    app_port = _safe_int_env('PORT', 8912)
+    app.run(debug=False, host='0.0.0.0', port=app_port)
 
 
 

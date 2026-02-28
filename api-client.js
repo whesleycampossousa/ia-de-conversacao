@@ -10,7 +10,7 @@ class APIClient {
         const port = window.location.port;
         const protocol = window.location.protocol;
         
-        // If page is being served by Flask on port 4344, use relative paths
+        // If page is being served by the local app on port 8912, use relative paths
         // If page is opened directly (file://) or on different port, use full URL
         if (hostname === '' || protocol === 'file:') {
             // File opened directly - need full URL

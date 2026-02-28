@@ -101,7 +101,7 @@ try:
         ssl_context.load_cert_chain(CERT_FILE, KEY_FILE)
 
     print("  Servidor iniciando...\n")
-    app.run(debug=True, port=8912, host='0.0.0.0', use_reloader=False, ssl_context=ssl_context)
+    app.run(debug=False, port=8912, host='0.0.0.0', use_reloader=False, ssl_context=ssl_context)
 except KeyboardInterrupt:
     print("\n\n  Servidor encerrado pelo usuário.")
     sys.exit(0)
