@@ -826,6 +826,8 @@ WEEKEND_LIMIT_SECONDS = _safe_int_env('WEEKEND_LIMIT_SECONDS', 10800)  # 3 hours
 USAGE_TZ_OFFSET_HOURS = _safe_int_env('USAGE_TZ_OFFSET_HOURS', 0)
 TEMP_GLOBAL_UNLOCK_ENABLED = os.environ.get('TEMP_GLOBAL_UNLOCK_ENABLED', '').strip().lower() in ('1', 'true', 'yes', 'on')
 REQUIRE_WEEKEND_ONLY = os.environ.get('REQUIRE_WEEKEND_ONLY', 'false').strip().lower() in ('1', 'true', 'yes', 'on')
+WEEKEND_OPEN_ACCESS = os.environ.get('WEEKEND_OPEN_ACCESS', 'true').strip().lower() in ('1', 'true', 'yes', 'on')
+WEEKEND_OPEN_ACCESS_LIMIT_SECONDS = _safe_int_env('WEEKEND_OPEN_ACCESS_LIMIT_SECONDS', 2400)  # 40 min for open access users
 TEMP_GLOBAL_UNLOCK_UNTIL_UTC_RAW = os.environ.get('TEMP_GLOBAL_UNLOCK_UNTIL_UTC', '').strip()
 
 # --- Per-user maintenance bypass ---
@@ -941,6 +943,10 @@ def is_weekend():
         return True
     return usage_now().weekday() in (5, 6)  # 5=Sat, 6=Sun
 
+def is_actual_weekend():
+    """Check if today is actually Saturday or Sunday, regardless of REQUIRE_WEEKEND_ONLY."""
+    return usage_now().weekday() in (5, 6)
+
 def get_weekend_key():
     """Get the Saturday date for the current weekend period.
     Returns the Saturday date string if it's a weekend, None otherwise."""
@@ -997,6 +1003,9 @@ def _effective_limit(email):
     """Return the usage limit in seconds for this email (bypass users get their own limit)."""
     if _is_bypass_email(str(email or '').strip().lower()):
         return TEMP_BYPASS_LIMIT_SECONDS
+    # Open access users (not in whitelist) get the shorter weekend limit
+    if WEEKEND_OPEN_ACCESS and not is_email_authorized(email):
+        return WEEKEND_OPEN_ACCESS_LIMIT_SECONDS
     return WEEKEND_LIMIT_SECONDS
 
 def get_remaining_seconds(email):
@@ -2809,6 +2818,8 @@ def maintenance_gate():
 authorized_emails = load_authorized_emails()
 print(f"[OK] Loaded {len(authorized_emails)} authorized emails")
 print(f"[OK] Admin login emails active: {sorted(list(ADMIN_LOGIN_EMAILS))}")
+if WEEKEND_OPEN_ACCESS:
+    print(f"[OPEN ACCESS] Weekend open access ENABLED — any email gets {WEEKEND_OPEN_ACCESS_LIMIT_SECONDS // 60} min on weekends")
 
 @app.route('/api/auth/login', methods=['POST'])
 @limiter.limit("10 per minute")
@@ -2842,14 +2853,18 @@ def login():
                 record_live_activity("anonymous", email, "/api/auth/login", status="missing_admin_password", mode="auth")
                 return jsonify({"error": "Admin password required"}), 401
         else:
-            # Regular user must be authorized
+            # Regular user must be authorized — or open access on weekends
             if not is_email_authorized(email):
-                print(f"Login failed: Email {email} not in authorized list (size: {len(authorized_emails)})")
-                record_live_activity("anonymous", email, "/api/auth/login", status="denied", mode="auth")
-                return jsonify({
-                    "error": "Email not authorized",
-                    "message": "This email is not registered in our system. Please contact support if you believe this is an error."
-                }), 403
+                if WEEKEND_OPEN_ACCESS and is_actual_weekend():
+                    print(f"[OPEN ACCESS] Weekend login for {email} (limit: {WEEKEND_OPEN_ACCESS_LIMIT_SECONDS}s)")
+                    record_live_activity("anonymous", email, "/api/auth/login", status="open_access", mode="auth")
+                else:
+                    print(f"Login failed: Email {email} not in authorized list (size: {len(authorized_emails)})")
+                    record_live_activity("anonymous", email, "/api/auth/login", status="denied", mode="auth")
+                    return jsonify({
+                        "error": "Email not authorized",
+                        "message": "This email is not registered in our system. Please contact support if you believe this is an error."
+                    }), 403
         
         # Generate user ID and token
         user_id = f"{email}_{int(datetime.now().timestamp())}"
