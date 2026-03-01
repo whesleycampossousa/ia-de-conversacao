@@ -822,7 +822,7 @@ def build_weekly_didactic_report(total_weeks=8):
 _load_weekly_activity_store()
 print(f"[OK] Weekly analytics loaded: {len(weekly_activity_days)} daily buckets")
 
-WEEKEND_LIMIT_SECONDS = _safe_int_env('WEEKEND_LIMIT_SECONDS', 10800)  # 3 hours per weekend by default
+WEEKEND_LIMIT_SECONDS = _safe_int_env('WEEKEND_LIMIT_SECONDS', 2400)  # 40 min per weekend for all users
 USAGE_TZ_OFFSET_HOURS = _safe_int_env('USAGE_TZ_OFFSET_HOURS', 0)
 TEMP_GLOBAL_UNLOCK_ENABLED = os.environ.get('TEMP_GLOBAL_UNLOCK_ENABLED', '').strip().lower() in ('1', 'true', 'yes', 'on')
 REQUIRE_WEEKEND_ONLY = os.environ.get('REQUIRE_WEEKEND_ONLY', 'false').strip().lower() in ('1', 'true', 'yes', 'on')
