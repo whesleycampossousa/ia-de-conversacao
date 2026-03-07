@@ -1692,13 +1692,26 @@ def _stt_context_correct(user_text, context_text):
             if (low.startswith(ctx_low) or ctx_low.startswith(low)
                     or low in ctx_low or ctx_low in low):
                 continue
+            # Skip if words share a long common prefix (same root, e.g. reserve/reservation)
+            _pfx = 0
+            for _ci in range(min(len(low), len(ctx_low))):
+                if low[_ci] == ctx_low[_ci]:
+                    _pfx += 1
+                else:
+                    break
+            if _pfx >= 4:
+                continue
             ratio = SequenceMatcher(None, low, ctx_low).ratio()
             is_match = ratio >= 0.6
             # Special case for very short words (3-4 letters): STT often confuses
-            # words like bed/bag, hat/hot, sit/set. Accept if same first letter
-            # and same length (±1), even with low SequenceMatcher ratio.
+            # words like bed/bag, hat/hot, sit/set. Accept if same first letter,
+            # same length (±1), AND both end in same char type (vowel/consonant).
+            # The ending-type check prevents false positives like sit→see.
             if not is_match and len(low) <= 4 and len(ctx_low) <= 4:
-                if low[0] == ctx_low[0] and abs(len(low) - len(ctx_low)) <= 1:
+                _vowels = 'aeiou'
+                if (low[0] == ctx_low[0]
+                        and len(low) == len(ctx_low)
+                        and (low[-1] in _vowels) == (ctx_low[-1] in _vowels)):
                     is_match = True
                     ratio = max(ratio, 0.6)  # Mark as sufficient match
             if is_match:
@@ -1759,11 +1772,23 @@ def _stt_context_correct_against_target(user_text, target_phrase):
             if (low.startswith(t_low) or t_low.startswith(low)
                     or low in t_low or t_low in low):
                 continue
+            # Skip if words share a long common prefix (same root)
+            _pfx = 0
+            for _ci in range(min(len(low), len(t_low))):
+                if low[_ci] == t_low[_ci]:
+                    _pfx += 1
+                else:
+                    break
+            if _pfx >= 4:
+                continue
             ratio = SequenceMatcher(None, low, t_low).ratio()
             is_match = ratio >= 0.6
-            # Short-word STT correction: same first letter + same length
+            # Short-word STT correction: same first letter + same length + same ending type
             if not is_match and len(low) <= 4 and len(t_low) <= 4:
-                if low[0] == t_low[0] and abs(len(low) - len(t_low)) <= 1:
+                _vowels = 'aeiou'
+                if (low[0] == t_low[0]
+                        and len(low) == len(t_low)
+                        and (low[-1] in _vowels) == (t_low[-1] in _vowels)):
                     is_match = True
                     ratio = max(ratio, 0.6)
             if is_match and ratio > best_ratio:
