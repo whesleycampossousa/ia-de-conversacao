@@ -5668,6 +5668,10 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
 
             // Only advance if the student's practice was good enough
             if (data.ready_for_next) {
+                // If backend corrected STT errors, log for debugging
+                if (data.corrected_text) {
+                    console.log('[LESSON] STT corrected:', data.corrected_text);
+                }
                 await advanceLesson();
             } else {
                 // Keep in practice mode for retry - student can try again

@@ -1628,7 +1628,160 @@ def _looks_real_grammar_error(fragment):
     return any(re.search(pattern, text) for pattern in patterns)
 
 
-def _classify_turn_feedback(user_text, ai_text, practice_mode, must_retry=False, suggested_words=None, structured_correction=None):
+# --- STT Context-Aware Correction ---
+# When STT misrecognises a word that's similar to a word from the AI's question,
+# correct it automatically so the student sees the right word in feedback.
+# E.g. AI asks about "bags", STT hears "bed" → auto-correct to "bag".
+
+def _stt_context_correct(user_text, context_text):
+    """Compare user's STT text word-by-word against context (AI question) and
+    auto-correct likely STT errors.  Returns (corrected_text, was_corrected).
+    Only corrects words with SequenceMatcher ratio >= 0.6 against a context word,
+    and only when the words share NO common root (prevents check→checking)."""
+    if not user_text or not context_text:
+        return user_text, False
+
+    # Build context vocabulary (include singular/plural variants)
+    context_words_raw = re.findall(r"[a-zA-Z']+", context_text)
+    context_vocab = {}  # lowercase -> original_form
+    for w in context_words_raw:
+        low = w.lower().strip("'")
+        if len(low) < 3:
+            continue
+        context_vocab[low] = w
+        # Add singular form if word ends in 's' (simple stemming)
+        if low.endswith('s') and len(low) > 3:
+            singular = low[:-1]
+            if singular not in context_vocab:
+                context_vocab[singular] = w[:-1] if w[-1].lower() == 's' else w
+        # Add plural form
+        plural = low + 's'
+        if plural not in context_vocab:
+            context_vocab[plural] = w + 's'
+
+    # Only skip pure function words that would never be STT errors for content words
+    function_words = {
+        'yes', 'not', 'but', 'can', 'the', 'for', 'and', 'are', 'its',
+        'this', 'that', 'with', 'from', 'they', 'been', 'some', 'all',
+        'any', 'each', 'than', 'then', 'them', 'into', 'only', 'also',
+        'just', 'very', 'too', 'much', 'many', 'here', 'there',
+    }
+
+    tokens = re.findall(r"[a-zA-Z']+|[^a-zA-Z']+", user_text)
+    result = []
+    was_corrected = False
+
+    for token in tokens:
+        low = token.lower().strip("'")
+        # Skip non-alpha, short words, words already in context
+        if not re.match(r"[a-zA-Z]", token) or len(low) < 3:
+            result.append(token)
+            continue
+        if low in context_vocab:
+            result.append(token)  # Already matches context
+            continue
+
+        # Find best matching context word
+        best_match_key = None
+        best_ratio = 0.0
+        best_len_diff = 999
+        for ctx_low in context_vocab:
+            if low == ctx_low:
+                continue
+            # Skip if words share the same root or one is substring of the other
+            if (low.startswith(ctx_low) or ctx_low.startswith(low)
+                    or low in ctx_low or ctx_low in low):
+                continue
+            ratio = SequenceMatcher(None, low, ctx_low).ratio()
+            is_match = ratio >= 0.6
+            # Special case for very short words (3-4 letters): STT often confuses
+            # words like bed/bag, hat/hot, sit/set. Accept if same first letter
+            # and same length (±1), even with low SequenceMatcher ratio.
+            if not is_match and len(low) <= 4 and len(ctx_low) <= 4:
+                if low[0] == ctx_low[0] and abs(len(low) - len(ctx_low)) <= 1:
+                    is_match = True
+                    ratio = max(ratio, 0.6)  # Mark as sufficient match
+            if is_match:
+                len_diff = abs(len(low) - len(ctx_low))
+                # Prefer same-length matches (e.g. "bag" over "bags" for "bed")
+                if (ratio > best_ratio) or (ratio == best_ratio and len_diff < best_len_diff):
+                    best_match_key = ctx_low
+                    best_ratio = ratio
+                    best_len_diff = len_diff
+
+        if best_match_key and low not in function_words:
+            replacement = context_vocab[best_match_key]
+            # Preserve original capitalisation
+            if token[0].isupper():
+                replacement = replacement[0].upper() + replacement[1:]
+            else:
+                replacement = replacement.lower()
+            result.append(replacement)
+            was_corrected = True
+            print(f"[STT-CORRECT] '{token}' → '{replacement}' (ratio={best_ratio:.2f}, context word='{best_match_key}')")
+        else:
+            result.append(token)
+
+    return ''.join(result), was_corrected
+
+
+def _stt_context_correct_against_target(user_text, target_phrase):
+    """Correct user STT text word-by-word against a known target phrase.
+    Used for structured lessons where the exact target is known.
+    Returns the corrected text string."""
+    if not user_text or not target_phrase:
+        return user_text
+
+    target_words = re.findall(r"[a-zA-Z']+", target_phrase)
+    target_low = {}  # lowercase -> original_form
+    for w in target_words:
+        low = w.lower().strip("'")
+        if len(low) >= 2:
+            target_low[low] = w
+
+    tokens = re.findall(r"[a-zA-Z']+|[^a-zA-Z']+", user_text)
+    result = []
+    for token in tokens:
+        low = token.lower().strip("'")
+        if not re.match(r"[a-zA-Z]", token) or len(low) < 2:
+            result.append(token)
+            continue
+        if low in target_low:
+            result.append(token)
+            continue
+        # Find closest target word
+        best_match = None
+        best_ratio = 0.0
+        for t_low, t_orig in target_low.items():
+            if low == t_low:
+                continue
+            # Skip words sharing the same root or one is substring of the other
+            if (low.startswith(t_low) or t_low.startswith(low)
+                    or low in t_low or t_low in low):
+                continue
+            ratio = SequenceMatcher(None, low, t_low).ratio()
+            is_match = ratio >= 0.6
+            # Short-word STT correction: same first letter + same length
+            if not is_match and len(low) <= 4 and len(t_low) <= 4:
+                if low[0] == t_low[0] and abs(len(low) - len(t_low)) <= 1:
+                    is_match = True
+                    ratio = max(ratio, 0.6)
+            if is_match and ratio > best_ratio:
+                best_match = t_orig
+                best_ratio = ratio
+        if best_match:
+            # Preserve capitalisation
+            if token[0].isupper():
+                replacement = best_match[0].upper() + best_match[1:]
+            else:
+                replacement = best_match.lower()
+            result.append(replacement)
+        else:
+            result.append(token)
+    return ''.join(result)
+
+
+def _classify_turn_feedback(user_text, ai_text, practice_mode, must_retry=False, suggested_words=None, structured_correction=None, ai_question_text=''):
     """Classify turn feedback into real error correction vs style suggestion."""
     if not LEARNING_CORRECTION_KIND_ENABLED:
         return None
@@ -1777,6 +1930,20 @@ def _classify_turn_feedback(user_text, ai_text, practice_mode, must_retry=False,
             "reason": "Revise a estrutura da frase e tente responder de novo.",
             "retry_required": True
         }
+
+    # STT context correction: if no real error was found, check if STT
+    # misrecognised words that are similar to words in the AI's question.
+    # Show the corrected version as suggested_text so the student sees the right word.
+    if ai_question_text and student:
+        stt_corrected, stt_was_corrected = _stt_context_correct(student, ai_question_text)
+        if stt_was_corrected:
+            return {
+                "kind": "ok",
+                "user_text": student,
+                "suggested_text": stt_corrected,
+                "reason": "Sua resposta funciona bem nesse contexto.",
+                "retry_required": False
+            }
 
     return {
         "kind": "none",
@@ -2152,8 +2319,41 @@ def _normalize_for_match(text):
     return ''.join(ch for ch in normalized if unicodedata.category(ch) != 'Mn')
 
 
+# Contraction map for question normalization (prevents "what's" vs "what is" duplicates)
+_CONTRACTION_MAP = {
+    "what's": "what is", "where's": "where is", "who's": "who is",
+    "how's": "how is", "that's": "that is", "there's": "there is",
+    "here's": "here is", "it's": "it is", "he's": "he is",
+    "she's": "she is", "let's": "let us", "i'm": "i am",
+    "you're": "you are", "we're": "we are", "they're": "they are",
+    "i've": "i have", "you've": "you have", "we've": "we have",
+    "they've": "they have", "i'd": "i would", "you'd": "you would",
+    "he'd": "he would", "she'd": "she would", "we'd": "we would",
+    "they'd": "they would", "i'll": "i will", "you'll": "you will",
+    "he'll": "he will", "she'll": "she will", "we'll": "we will",
+    "they'll": "they will", "isn't": "is not", "aren't": "are not",
+    "wasn't": "was not", "weren't": "were not", "won't": "will not",
+    "wouldn't": "would not", "don't": "do not", "doesn't": "does not",
+    "didn't": "did not", "can't": "cannot", "couldn't": "could not",
+    "shouldn't": "should not", "haven't": "have not", "hasn't": "has not",
+    "hadn't": "had not",
+}
+
+def _expand_contractions(text):
+    """Expand English contractions for normalisation comparison."""
+    # Normalize smart apostrophes to ASCII first
+    text = text.replace('\u2019', "'").replace('\u2018', "'")
+    lowered = text.lower()
+    for contraction, expansion in _CONTRACTION_MAP.items():
+        lowered = re.sub(r'\b' + re.escape(contraction) + r'\b', expansion, lowered)
+    return lowered
+
 def _normalize_question_text(text):
     normalized = _normalize_for_match(text)
+    # Normalize smart apostrophes and expand contractions before stripping punctuation
+    normalized = normalized.replace('\u2019', "'").replace('\u2018', "'")
+    for contraction, expansion in _CONTRACTION_MAP.items():
+        normalized = re.sub(r'\b' + re.escape(contraction) + r'\b', expansion, normalized)
     normalized = re.sub(r'[^a-z0-9\s]', ' ', normalized)
     return re.sub(r'\s+', ' ', normalized).strip()
 
@@ -2548,6 +2748,12 @@ def _rewrite_repetitive_trailing_question(text, context_key, memory_snapshot=Non
     question_slot = _infer_slot_from_question(last_question)
 
     is_duplicate = last_normalized in recent_questions
+    # Fuzzy dedup: catch near-duplicate questions that differ slightly in wording
+    if not is_duplicate:
+        for recent_q in recent_questions:
+            if SequenceMatcher(None, last_normalized, recent_q).ratio() >= 0.85:
+                is_duplicate = True
+                break
     already_answered_slot = bool(question_slot and question_slot in answered_slots)
 
     if not is_duplicate and not already_answered_slot:
@@ -4006,13 +4212,19 @@ Return JSON: {{"en": "...", "pt": "...", "suggested_words": [], "must_retry": fa
 
         # Keep Learning responses conversational; feedback is shown in structured popup instead.
 
+        # Extract the last AI question for STT context correction
+        _last_ai_question = ''
+        if recent_turns_for_user:
+            _last_ai_question = str(recent_turns_for_user[-1].get('ai', '') or '')
+
         turn_feedback = _classify_turn_feedback(
             user_text,
             ai_text,
             practice_mode,
             must_retry=must_retry,
             suggested_words=suggested_words,
-            structured_correction=locals().get('structured_correction', None)
+            structured_correction=locals().get('structured_correction', None),
+            ai_question_text=_last_ai_question
         )
 
         if practice_mode == 'learning':
@@ -5115,6 +5327,14 @@ def lesson():
             else:
                 next_layer = current_layer + 1
 
+        # Word-level STT correction against target phrase
+        corrected_text = None
+        if ready_for_next and user_text and target_phrase:
+            corrected = _stt_context_correct_against_target(user_text, target_phrase)
+            if corrected != user_text:
+                corrected_text = corrected
+                print(f"[LESSON] STT corrected: '{user_text}' → '{corrected}'")
+
         print(f"[LESSON] evaluate_practice: target='{target_phrase}', user='{user_text}', overlap={overlap:.2f}, char_sim={char_similarity:.2f}, ready={ready_for_next}")
 
         return jsonify({
@@ -5122,6 +5342,7 @@ def lesson():
             "text": text_en,
             "translation": text_pt,
             "ready_for_next": ready_for_next,
+            "corrected_text": corrected_text,
             "layer": current_layer,
             "next_layer": next_layer,
             "total_layers": total_layers,
