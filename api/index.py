@@ -3073,6 +3073,7 @@ def login():
 
         # Check if this is an admin login attempt (bypasses whitelist).
         is_admin = False
+        is_open_access_user = False
         if email in ADMIN_LOGIN_EMAILS:
             if password:
                 if is_admin_credentials(email, password):
@@ -3089,12 +3090,13 @@ def login():
                 if WEEKEND_OPEN_ACCESS and is_actual_weekend():
                     print(f"[OPEN ACCESS] Weekend login for {email} (limit: {WEEKEND_OPEN_ACCESS_LIMIT_SECONDS}s)")
                     record_live_activity("anonymous", email, "/api/auth/login", status="open_access", mode="auth")
+                    is_open_access_user = True
                 else:
                     print(f"Login failed: Email {email} not in authorized list (size: {len(authorized_emails)})")
                     record_live_activity("anonymous", email, "/api/auth/login", status="denied", mode="auth")
                     return jsonify({
                         "error": "Email not authorized",
-                        "message": "This email is not registered in our system. Please contact support if you believe this is an error."
+                        "message": "Este email não está cadastrado. Acesso livre disponível nos finais de semana!"
                     }), 403
         
         # Generate user ID and token
@@ -3108,6 +3110,8 @@ def login():
             'name': name,
             'email': email,
             'is_admin': is_admin,
+            'is_open_access': is_open_access_user,
+            'session_limit_seconds': WEEKEND_OPEN_ACCESS_LIMIT_SECONDS if is_open_access_user else None,
             'exp': _utc_now() + timedelta(days=7)
         }
 
@@ -3139,7 +3143,9 @@ def login():
                 "user_id": user_id,
                 "name": name,
                 "email": email,
-                "is_admin": is_admin
+                "is_admin": is_admin,
+                "is_open_access": is_open_access_user,
+                "session_limit_seconds": WEEKEND_OPEN_ACCESS_LIMIT_SECONDS if is_open_access_user else None
             },
             "maintenance": {
                 "active": maintenance_blocked,
