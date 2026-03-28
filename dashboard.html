@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - IA de Conversação</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         .lang-toggle {
             position: absolute;
@@ -50,10 +50,471 @@
             fill: none;
             margin-bottom: 1.5rem;
         }
+
+        /* ====== PROGRESS SECTION ====== */
+        .progress-section {
+            margin-top: 32px;
+            background: linear-gradient(135deg, rgba(24, 24, 24, 0.95), rgba(24, 24, 24, 0.7));
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .progress-section h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            line-height: 1.1;
+        }
+
+        .stat-value.accent {
+            color: #e50914;
+        }
+
+        .stat-value.green {
+            color: #22c55e;
+        }
+
+        .stat-value.blue {
+            color: #38bdf8;
+        }
+
+        .stat-value.orange {
+            color: #f59e0b;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* Score history mini chart */
+        .score-history {
+            margin-top: 16px;
+        }
+
+        .score-history h4 {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .score-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 6px;
+            height: 60px;
+        }
+
+        .score-bar-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            max-width: 40px;
+        }
+
+        .score-bar {
+            width: 100%;
+            border-radius: 4px 4px 0 0;
+            min-height: 4px;
+            transition: height 0.5s ease;
+        }
+
+        .score-bar.high { background: #22c55e; }
+        .score-bar.medium { background: #f59e0b; }
+        .score-bar.low { background: #ef4444; }
+
+        .score-bar-label {
+            font-size: 0.6rem;
+            color: var(--text-secondary);
+        }
+
+        /* Top errors */
+        .top-errors {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .top-errors h4 {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .error-tag {
+            display: inline-block;
+            background: rgba(239, 68, 68, 0.12);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            color: #fca5a5;
+            font-size: 0.78rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+            margin: 3px 4px 3px 0;
+        }
+
+        /* Scenarios practiced */
+        .scenarios-done {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .scenarios-done h4 {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .scenario-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .scenario-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            color: #86efac;
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        /* Empty state */
+        .progress-empty {
+            text-align: center;
+            padding: 24px;
+            color: var(--text-secondary);
+        }
+
+        .progress-empty .empty-icon {
+            font-size: 2.5rem;
+            margin-bottom: 8px;
+        }
+
+        .progress-empty p {
+            font-size: 0.9rem;
+        }
+
+        /* ====== ACHIEVEMENTS SECTION ====== */
+        .achievements-section {
+            margin-top: 20px;
+            background: linear-gradient(135deg, rgba(24, 24, 24, 0.95), rgba(24, 24, 24, 0.7));
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .achievements-section h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Streak banner */
+        .streak-banner {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(239, 68, 68, 0.1));
+            border: 1px solid rgba(245, 158, 11, 0.25);
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-bottom: 16px;
+        }
+
+        .streak-flame {
+            font-size: 2rem;
+            line-height: 1;
+        }
+
+        .streak-info {
+            flex: 1;
+        }
+
+        .streak-count {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #fbbf24;
+        }
+
+        .streak-label {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+        }
+
+        /* Badges */
+        .badges-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
+        }
+
+        .badge-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            padding: 14px;
+            text-align: center;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .badge-card.unlocked {
+            border-color: rgba(34, 197, 94, 0.3);
+            background: rgba(34, 197, 94, 0.06);
+        }
+
+        .badge-card.locked {
+            opacity: 0.45;
+            filter: grayscale(0.8);
+        }
+
+        .badge-icon {
+            font-size: 1.8rem;
+            margin-bottom: 6px;
+        }
+
+        .badge-name {
+            font-size: 0.78rem;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .badge-desc {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+        }
+
+        .badge-check {
+            position: absolute;
+            top: 6px;
+            right: 8px;
+            font-size: 0.75rem;
+        }
+
+        /* Daily goal bar */
+        .daily-goal {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .daily-goal h4 {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .goal-bar-container {
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 8px;
+            height: 10px;
+            overflow: hidden;
+        }
+
+        .goal-bar-fill {
+            height: 100%;
+            border-radius: 8px;
+            background: linear-gradient(90deg, #22c55e, #86efac);
+            transition: width 0.8s ease;
+        }
+
+        /* Review errors button */
+        .review-errors-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.08));
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.85rem;
+            font-family: inherit;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .review-errors-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.5);
+            transform: translateY(-1px);
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .badges-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* ====== MOBILE TIP POPUP ====== */
+        .tip-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            background: rgba(0, 0, 0, 0.75);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(6px);
+            animation: tipFadeIn 0.3s ease;
+        }
+
+        @keyframes tipFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes tipSlideUp {
+            from { opacity: 0; transform: translateY(24px) scale(0.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .tip-modal {
+            background: linear-gradient(145deg, #1a1a2e 0%, #16162a 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 36px 28px 28px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255,255,255,0.05);
+            animation: tipSlideUp 0.4s ease 0.1s both;
+        }
+
+        .tip-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 18px;
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(139, 92, 246, 0.15));
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+        }
+
+        .tip-modal h2 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #fff;
+            line-height: 1.4;
+        }
+
+        .tip-modal p {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin-bottom: 4px;
+        }
+
+        .tip-modal .tip-highlight {
+            color: #38bdf8;
+            font-weight: 600;
+        }
+
+        .tip-btn {
+            margin-top: 22px;
+            padding: 12px 36px;
+            background: linear-gradient(135deg, #e50914, #c2070f);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+            box-shadow: 0 4px 16px rgba(229, 9, 20, 0.3);
+        }
+
+        .tip-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(229, 9, 20, 0.4);
+        }
+
+        .tip-dismiss {
+            display: block;
+            margin-top: 12px;
+            background: none;
+            border: none;
+            color: #64748b;
+            font-size: 0.78rem;
+            cursor: pointer;
+            font-family: inherit;
+            transition: color 0.2s;
+        }
+
+        .tip-dismiss:hover {
+            color: #94a3b8;
+        }
     </style>
 </head>
 
 <body class="dashboard-body">
+    <!-- Mobile Tip Popup -->
+    <div class="tip-overlay" id="tip-overlay" style="display: none;">
+        <div class="tip-modal">
+            <div class="tip-icon">📱</div>
+            <h2>Dica para uma melhor experiência</h2>
+            <p>Para esta atividade, se possível, dê preferência para realizá-la no <span class="tip-highlight">celular</span>, pois a captação do microfone costuma ser de <span class="tip-highlight">maior qualidade</span>.</p>
+            <button class="tip-btn" onclick="closeTipPopup()">Entendi!</button>
+            <button class="tip-dismiss" onclick="closeTipPopup(true)">Não mostrar novamente</button>
+        </div>
+    </div>
+
     <div class="dashboard-container">
 
         <div class="lang-toggle">
@@ -67,7 +528,7 @@
             <button id="admin-panel-btn" class="action-btn"
                 style="display: none; margin: 1rem auto 0; padding: 0.5rem 1rem; font-size: 0.9rem; background: #475569;"
                 onclick="window.location.href='admin.html'">
-                🛠️ Painel Admin
+                Painel Admin
             </button>
         </header>
 
@@ -100,15 +561,44 @@
             </a>
         </div>
 
+        <!-- Progress Section -->
+        <div class="progress-section" id="progress-section">
+            <h3 id="progress-title">Meu Progresso</h3>
+            <div id="progress-content"></div>
+        </div>
+
+        <!-- Achievements Section -->
+        <div class="achievements-section" id="achievements-section">
+            <h3 id="achievements-title">Conquistas</h3>
+            <div id="achievements-content"></div>
+        </div>
+
         <div class="dashboard-footer">
             <button onclick="logout()" class="btn-logout" id="logout-btn">Sair</button>
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
     <script src="api-client.js"></script>
     <script>
-        // Check auth on load
-        const apiClient = new APIClient();
+        // Mobile tip popup
+        function showTipPopup() {
+            if (localStorage.getItem('tip_mobile_dismissed')) return;
+            const overlay = document.getElementById('tip-overlay');
+            if (overlay) overlay.style.display = 'flex';
+        }
+
+        function closeTipPopup(permanently) {
+            const overlay = document.getElementById('tip-overlay');
+            if (overlay) overlay.style.display = 'none';
+            if (permanently) {
+                localStorage.setItem('tip_mobile_dismissed', 'true');
+            }
+        }
+
+        setTimeout(showTipPopup, 600);
+
+        // Auth check (apiClient is declared in api-client.js)
         if (!localStorage.getItem('auth_token')) {
             window.location.href = 'index.html';
         } else {
@@ -124,7 +614,313 @@
             window.location.href = 'index.html';
         }
 
-        // Language Logic
+        // ====== PROGRESS DATA (localStorage) ======
+        function getProgressData() {
+            try {
+                return JSON.parse(localStorage.getItem('student_progress') || 'null') || {
+                    totalSessions: 0,
+                    totalMinutes: 0,
+                    scores: [],          // [{score, date, context}]
+                    scenarios: [],       // unique scenario keys
+                    errors: [],          // [{wrong, right, count, lastSeen}]
+                    streakWeeks: 0,
+                    lastPracticeWeek: null,
+                    badgesUnlocked: [],
+                    dailyMinutesToday: 0,
+                    dailyDate: null
+                };
+            } catch (e) { return null; }
+        }
+
+        function saveProgressData(data) {
+            try {
+                localStorage.setItem('student_progress', JSON.stringify(data));
+            } catch (e) { /* quota */ }
+        }
+
+        // ====== RENDER PROGRESS ======
+        function renderProgress() {
+            const data = getProgressData();
+            const container = document.getElementById('progress-content');
+            if (!data || data.totalSessions === 0) {
+                container.innerHTML = `
+                    <div class="progress-empty">
+                        <div class="empty-icon">📊</div>
+                        <p id="empty-progress-msg">Complete sua primeira sessão para ver seu progresso aqui!</p>
+                    </div>`;
+                return;
+            }
+
+            const avgScore = data.scores.length > 0
+                ? Math.round(data.scores.reduce((a, b) => a + b.score, 0) / data.scores.length)
+                : 0;
+
+            // Stats grid
+            let html = `<div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value accent">${data.totalSessions}</div>
+                    <div class="stat-label" data-i18n="stat-sessions">Sessões</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value blue">${data.totalMinutes}</div>
+                    <div class="stat-label" data-i18n="stat-minutes">Minutos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value green">${avgScore}</div>
+                    <div class="stat-label" data-i18n="stat-avg-score">Nota Média</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value orange">${data.scenarios.length}</div>
+                    <div class="stat-label" data-i18n="stat-scenarios">Cenários</div>
+                </div>
+            </div>`;
+
+            // Score history chart (last 8 sessions)
+            if (data.scores.length > 1) {
+                const recent = data.scores.slice(-8);
+                const maxScore = 100;
+                html += `<div class="score-history">
+                    <h4 data-i18n="score-evolution">Evolução das Notas</h4>
+                    <div class="score-bars">`;
+                recent.forEach((s, i) => {
+                    const height = Math.max(4, (s.score / maxScore) * 56);
+                    const cls = s.score >= 75 ? 'high' : s.score >= 50 ? 'medium' : 'low';
+                    const label = s.date ? new Date(s.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : `#${i + 1}`;
+                    html += `<div class="score-bar-wrapper">
+                        <div class="score-bar ${cls}" style="height: ${height}px;" title="${s.score}"></div>
+                        <span class="score-bar-label">${label}</span>
+                    </div>`;
+                });
+                html += `</div></div>`;
+            }
+
+            // Scenarios practiced
+            if (data.scenarios.length > 0) {
+                html += `<div class="scenarios-done">
+                    <h4 data-i18n="scenarios-practiced">Cenários Praticados</h4>
+                    <div class="scenario-chips">`;
+                data.scenarios.slice(0, 12).forEach(s => {
+                    const name = s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                    html += `<span class="scenario-chip">&#10003; ${name}</span>`;
+                });
+                html += `</div></div>`;
+            }
+
+            // Top errors
+            if (data.errors.length > 0) {
+                const topErrors = data.errors
+                    .sort((a, b) => b.count - a.count)
+                    .slice(0, 5);
+                html += `<div class="top-errors">
+                    <h4 data-i18n="top-errors">Erros Mais Frequentes</h4>
+                    <div>`;
+                topErrors.forEach(e => {
+                    html += `<span class="error-tag">"${e.wrong}" → "${e.right}"</span>`;
+                });
+                html += `</div>
+                    <a href="review.html" class="review-errors-btn" id="review-errors-btn" data-i18n-text="review-btn">
+                        Revisar Meus Erros
+                    </a>
+                </div>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // ====== BADGES DEFINITION ======
+        const BADGES = [
+            { id: 'first_session', icon: '🎯', name: 'Primeira Sessão', nameEn: 'First Session', desc: 'Complete 1 sessão', descEn: 'Complete 1 session', check: d => d.totalSessions >= 1 },
+            { id: 'five_sessions', icon: '⭐', name: '5 Sessões', nameEn: '5 Sessions', desc: 'Complete 5 sessões', descEn: 'Complete 5 sessions', check: d => d.totalSessions >= 5 },
+            { id: 'ten_sessions', icon: '🏆', name: '10 Sessões', nameEn: '10 Sessions', desc: 'Complete 10 sessões', descEn: 'Complete 10 sessions', check: d => d.totalSessions >= 10 },
+            { id: 'score_80', icon: '💎', name: 'Nota 80+', nameEn: 'Score 80+', desc: 'Tire nota 80 ou mais', descEn: 'Get a score of 80+', check: d => d.scores.some(s => s.score >= 80) },
+            { id: 'score_95', icon: '👑', name: 'Quase Perfeito', nameEn: 'Near Perfect', desc: 'Tire nota 95 ou mais', descEn: 'Get a score of 95+', check: d => d.scores.some(s => s.score >= 95) },
+            { id: 'five_scenarios', icon: '🗺️', name: 'Explorador', nameEn: 'Explorer', desc: 'Pratique 5 cenários', descEn: 'Practice 5 scenarios', check: d => d.scenarios.length >= 5 },
+            { id: 'ten_scenarios', icon: '🌍', name: 'Viajante', nameEn: 'World Traveler', desc: 'Pratique 10 cenários', descEn: 'Practice 10 scenarios', check: d => d.scenarios.length >= 10 },
+            { id: 'streak_3', icon: '🔥', name: '3 Semanas', nameEn: '3-Week Streak', desc: 'Pratique 3 semanas seguidas', descEn: 'Practice 3 weeks in a row', check: d => d.streakWeeks >= 3 },
+            { id: 'thirty_min', icon: '⏱️', name: 'Maratonista', nameEn: 'Marathoner', desc: '30 min em uma sessão', descEn: '30 min in one session', check: d => d.scores.some(s => (s.minutes || 0) >= 30) },
+            { id: 'hundred_min', icon: '📚', name: '100 Minutos', nameEn: '100 Minutes', desc: 'Acumule 100 min totais', descEn: 'Accumulate 100 min total', check: d => d.totalMinutes >= 100 },
+        ];
+
+        // ====== RENDER ACHIEVEMENTS ======
+        function renderAchievements() {
+            const data = getProgressData();
+            const container = document.getElementById('achievements-content');
+            if (!data) return;
+
+            const lang = localStorage.getItem('interface_lang') || 'pt';
+            let html = '';
+
+            // Streak banner
+            html += `<div class="streak-banner">
+                <div class="streak-flame">${data.streakWeeks > 0 ? '🔥' : '❄️'}</div>
+                <div class="streak-info">
+                    <div class="streak-count">${data.streakWeeks} ${lang === 'pt' ? (data.streakWeeks === 1 ? 'semana' : 'semanas') : (data.streakWeeks === 1 ? 'week' : 'weeks')}</div>
+                    <div class="streak-label" data-i18n="streak-label">${lang === 'pt' ? 'Sequência de prática' : 'Practice streak'}</div>
+                </div>
+            </div>`;
+
+            // Daily goal
+            const today = new Date().toISOString().slice(0, 10);
+            const dailyMin = data.dailyDate === today ? data.dailyMinutesToday : 0;
+            const goalMin = 15;
+            const goalPct = Math.min(100, Math.round((dailyMin / goalMin) * 100));
+            html += `<div class="daily-goal">
+                <h4>
+                    <span data-i18n="daily-goal">${lang === 'pt' ? 'Meta Diária' : 'Daily Goal'}</span>
+                    <span style="color: ${goalPct >= 100 ? '#22c55e' : '#fff'}; font-size: 0.8rem;">${dailyMin}/${goalMin} min</span>
+                </h4>
+                <div class="goal-bar-container">
+                    <div class="goal-bar-fill" style="width: ${goalPct}%;"></div>
+                </div>
+            </div>`;
+
+            // Badges
+            html += `<div style="margin-top: 16px;"><h4 style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 10px; font-weight: 600;" data-i18n="badges-title">${lang === 'pt' ? 'Badges' : 'Badges'}</h4></div>`;
+            html += `<div class="badges-grid">`;
+
+            let newBadgesUnlocked = [];
+            BADGES.forEach(badge => {
+                const unlocked = badge.check(data);
+                const wasUnlocked = data.badgesUnlocked.includes(badge.id);
+                if (unlocked && !wasUnlocked) {
+                    newBadgesUnlocked.push(badge.id);
+                }
+                const name = lang === 'pt' ? badge.name : badge.nameEn;
+                const desc = lang === 'pt' ? badge.desc : badge.descEn;
+                html += `<div class="badge-card ${unlocked ? 'unlocked' : 'locked'}">
+                    ${unlocked ? '<span class="badge-check">&#10003;</span>' : ''}
+                    <div class="badge-icon">${badge.icon}</div>
+                    <div class="badge-name">${name}</div>
+                    <div class="badge-desc">${desc}</div>
+                </div>`;
+            });
+            html += `</div>`;
+
+            container.innerHTML = html;
+
+            // Save newly unlocked badges and fire confetti
+            if (newBadgesUnlocked.length > 0) {
+                data.badgesUnlocked = [...data.badgesUnlocked, ...newBadgesUnlocked];
+                saveProgressData(data);
+                setTimeout(() => {
+                    if (typeof confetti === 'function') {
+                        confetti({ particleCount: 120, spread: 80, origin: { y: 0.7 } });
+                    }
+                }, 500);
+            }
+        }
+
+        // ====== UPDATE STREAK ======
+        function updateStreak(data) {
+            const now = new Date();
+            // Get ISO week number
+            const getWeek = (d) => {
+                const dt = new Date(d);
+                dt.setHours(0, 0, 0, 0);
+                dt.setDate(dt.getDate() + 3 - (dt.getDay() + 6) % 7);
+                const week1 = new Date(dt.getFullYear(), 0, 4);
+                return Math.round(((dt - week1) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7) + 1;
+            };
+            const currentWeek = `${now.getFullYear()}-W${getWeek(now)}`;
+
+            if (data.lastPracticeWeek === currentWeek) return; // already counted this week
+
+            if (data.lastPracticeWeek) {
+                // Check if last week was consecutive
+                const prevDate = new Date(now);
+                prevDate.setDate(prevDate.getDate() - 7);
+                const prevWeek = `${prevDate.getFullYear()}-W${getWeek(prevDate)}`;
+                if (data.lastPracticeWeek === prevWeek) {
+                    data.streakWeeks++;
+                } else {
+                    data.streakWeeks = 1; // streak broken
+                }
+            } else {
+                data.streakWeeks = 1;
+            }
+            data.lastPracticeWeek = currentWeek;
+        }
+
+        // ====== SAVE REPORT DATA TO PROGRESS ======
+        // Called from practice page via localStorage event
+        function processNewReport(report, context, minutes) {
+            const data = getProgressData() || {
+                totalSessions: 0, totalMinutes: 0, scores: [], scenarios: [],
+                errors: [], streakWeeks: 0, lastPracticeWeek: null,
+                badgesUnlocked: [], dailyMinutesToday: 0, dailyDate: null
+            };
+
+            data.totalSessions++;
+            data.totalMinutes += (minutes || 0);
+
+            // Daily tracking
+            const today = new Date().toISOString().slice(0, 10);
+            if (data.dailyDate !== today) {
+                data.dailyMinutesToday = 0;
+                data.dailyDate = today;
+            }
+            data.dailyMinutesToday += (minutes || 0);
+
+            // Score
+            if (report && report.nota_geral != null) {
+                data.scores.push({
+                    score: report.nota_geral,
+                    date: new Date().toISOString(),
+                    context: context || 'unknown',
+                    minutes: minutes || 0
+                });
+                // Keep last 20 scores
+                if (data.scores.length > 20) data.scores = data.scores.slice(-20);
+            }
+
+            // Scenario
+            if (context && !data.scenarios.includes(context)) {
+                data.scenarios.push(context);
+            }
+
+            // Errors from report
+            if (report && report.correcoes) {
+                report.correcoes.forEach(c => {
+                    if (!c.fraseOriginal || !c.fraseCorrigida) return;
+                    const existing = data.errors.find(e =>
+                        e.wrong === c.fraseOriginal && e.right === c.fraseCorrigida
+                    );
+                    if (existing) {
+                        existing.count++;
+                        existing.lastSeen = new Date().toISOString();
+                    } else {
+                        data.errors.push({
+                            wrong: c.fraseOriginal,
+                            right: c.fraseCorrigida,
+                            count: 1,
+                            lastSeen: new Date().toISOString()
+                        });
+                    }
+                });
+                // Keep top 30 errors
+                data.errors.sort((a, b) => b.count - a.count);
+                if (data.errors.length > 30) data.errors = data.errors.slice(0, 30);
+            }
+
+            // Update streak
+            updateStreak(data);
+
+            saveProgressData(data);
+        }
+
+        // Listen for report events from practice page
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'last_report_data') {
+                try {
+                    const payload = JSON.parse(e.newValue);
+                    processNewReport(payload.report, payload.context, payload.minutes);
+                    renderProgress();
+                    renderAchievements();
+                } catch (err) { /* ignore */ }
+            }
+        });
+
+        // ====== LANGUAGE ======
         const translations = {
             'pt': {
                 welcome: 'Bem-vindo!',
@@ -135,7 +931,10 @@
                 learnTitle: 'Aprendizado',
                 learnDesc: 'Aulas estruturadas de gramática e vocabulário. Do zero ao avançado.',
                 learnBtn: 'Começar aulas',
-                logout: 'Sair'
+                logout: 'Sair',
+                progressTitle: 'Meu Progresso',
+                achievementsTitle: 'Conquistas',
+                emptyProgress: 'Complete sua primeira sessão para ver seu progresso aqui!'
             },
             'en': {
                 welcome: 'Welcome!',
@@ -146,34 +945,70 @@
                 learnTitle: 'Learning',
                 learnDesc: 'Structured grammar and vocabulary lessons. From zero to advanced.',
                 learnBtn: 'Start Lessons',
-                logout: 'Logout'
+                logout: 'Logout',
+                progressTitle: 'My Progress',
+                achievementsTitle: 'Achievements',
+                emptyProgress: 'Complete your first session to see your progress here!'
             }
         };
 
         function setLanguage(lang) {
-            document.getElementById('welcome-msg').innerText = translations[lang].welcome;
-            document.getElementById('subtitle-msg').innerText = translations[lang].subtitle;
+            const t = translations[lang];
+            document.getElementById('welcome-msg').innerText = t.welcome;
+            document.getElementById('subtitle-msg').innerText = t.subtitle;
+            document.getElementById('conv-title').innerText = t.convTitle;
+            document.getElementById('conv-desc').innerText = t.convDesc;
+            document.getElementById('conv-btn').innerText = t.convBtn;
+            document.getElementById('logout-btn').innerText = t.logout;
+            document.getElementById('progress-title').innerText = t.progressTitle;
+            document.getElementById('achievements-title').innerText = t.achievementsTitle;
 
-            document.getElementById('conv-title').innerText = translations[lang].convTitle;
-            document.getElementById('conv-desc').innerText = translations[lang].convDesc;
-            document.getElementById('conv-btn').innerText = translations[lang].convBtn;
+            const emptyMsg = document.getElementById('empty-progress-msg');
+            if (emptyMsg) emptyMsg.innerText = t.emptyProgress;
 
-            // Learning mode is hidden, but keep translations for future use
-            // document.getElementById('learn-title').innerText = translations[lang].learnTitle;
-            // document.getElementById('learn-desc').innerText = translations[lang].learnDesc;
-            // document.getElementById('learn-btn').innerText = translations[lang].learnBtn;
-
-            document.getElementById('logout-btn').innerText = translations[lang].logout;
-
-            // Update buttons state
             document.getElementById('btn-pt').className = lang === 'pt' ? 'lang-btn active' : 'lang-btn';
             document.getElementById('btn-en').className = lang === 'en' ? 'lang-btn active' : 'lang-btn';
-
-            // Persist preference
             localStorage.setItem('interface_lang', lang);
+
+            // Re-render with new language
+            renderProgress();
+            renderAchievements();
         }
 
-        // Initialize language
+        // Bootstrap: import existing practice_progress data if student_progress is empty
+        function bootstrapFromLegacyProgress() {
+            const data = getProgressData();
+            if (data && data.totalSessions > 0) return; // already has data
+
+            try {
+                const legacy = JSON.parse(localStorage.getItem('practice_progress') || '[]');
+                if (!Array.isArray(legacy) || legacy.length === 0) return;
+
+                const fresh = {
+                    totalSessions: legacy.length,
+                    totalMinutes: legacy.reduce((sum, e) => sum + Math.round((e.interactions || 0) * 0.5), 0),
+                    scores: legacy.filter(e => e.score != null).map(e => ({
+                        score: e.score,
+                        date: e.date || e.timestamp ? new Date(e.timestamp).toISOString() : new Date().toISOString(),
+                        context: e.scenario_id || 'unknown',
+                        minutes: Math.round((e.interactions || 0) * 0.5)
+                    })),
+                    scenarios: [...new Set(legacy.map(e => e.scenario_id).filter(Boolean))],
+                    errors: [],
+                    streakWeeks: 1,
+                    lastPracticeWeek: null,
+                    badgesUnlocked: [],
+                    dailyMinutesToday: 0,
+                    dailyDate: null
+                };
+                updateStreak(fresh);
+                saveProgressData(fresh);
+                console.log('[Dashboard] Bootstrapped progress from legacy data:', fresh.totalSessions, 'sessions');
+            } catch (e) { /* ignore */ }
+        }
+        bootstrapFromLegacyProgress();
+
+        // Initialize
         const savedLang = localStorage.getItem('interface_lang') || 'pt';
         setLanguage(savedLang);
     </script>

@@ -483,6 +483,118 @@
         .blocked-modal .btn-back:hover {
             background: #b0070f;
         }
+
+        /* Onboarding Tour */
+        .tour-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 10000;
+            transition: opacity 0.3s ease;
+        }
+
+        .tour-highlight {
+            position: relative;
+            z-index: 10001 !important;
+            box-shadow: 0 0 0 4px rgba(229, 9, 20, 0.7), 0 0 20px rgba(229, 9, 20, 0.4);
+            border-radius: 12px;
+            transition: box-shadow 0.3s ease;
+        }
+
+        .tour-tooltip {
+            position: absolute;
+            z-index: 10002;
+            background: #1a1a2e;
+            color: #fff;
+            border-radius: 12px;
+            padding: 1.5rem;
+            max-width: 320px;
+            width: 90vw;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(229, 9, 20, 0.3);
+            animation: tourFadeIn 0.3s ease;
+        }
+
+        @keyframes tourFadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .tour-tooltip-text {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+
+        .tour-arrow {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border: 8px solid transparent;
+        }
+
+        .tour-arrow-up {
+            top: -16px;
+            left: 24px;
+            border-bottom-color: #1a1a2e;
+        }
+
+        .tour-arrow-down {
+            bottom: -16px;
+            left: 24px;
+            border-top-color: #1a1a2e;
+        }
+
+        .tour-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+        }
+
+        .tour-step-indicator {
+            display: flex;
+            gap: 6px;
+        }
+
+        .tour-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.25);
+            transition: background 0.3s;
+        }
+
+        .tour-dot.active {
+            background: #e50914;
+        }
+
+        .tour-btn {
+            background: #e50914;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 0.55rem 1.2rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        .tour-btn:hover {
+            background: #b0070f;
+        }
+
+        @media (max-width: 768px) {
+            .tour-tooltip {
+                max-width: 280px;
+                padding: 1.2rem;
+            }
+        }
     </style>
 </head>
 
@@ -766,13 +878,12 @@
             'wish_if_only': 'Wish / If Only'
         };
 
-        // Hero backgrounds (responsive: smaller images on mobile)
-        const _imgWidth = window.innerWidth <= 768 ? 800 : 1920;
+        // Hero backgrounds
         const heroBackgrounds = {
-            'job_interview': `https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=${_imgWidth}&h=${Math.round(_imgWidth * 1080/1920)}&fit=crop`,
-            'airport': `https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=${_imgWidth}&h=${Math.round(_imgWidth * 1080/1920)}&fit=crop`,
-            'restaurant': `https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=${_imgWidth}&h=${Math.round(_imgWidth * 1080/1920)}&fit=crop`,
-            'hotel': `https://images.unsplash.com/photo-1566073771259-6a8506099945?w=${_imgWidth}&h=${Math.round(_imgWidth * 1080/1920)}&fit=crop`
+            'job_interview': 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=1920&h=1080&fit=crop',
+            'airport': 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1920&h=1080&fit=crop',
+            'restaurant': 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1920&h=1080&fit=crop',
+            'hotel': 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1920&h=1080&fit=crop'
         };
 
         const heroDescriptions = {
@@ -929,8 +1040,11 @@
                     if (row) row.innerHTML = '<div style="color: #666; padding: 10px;">Carregando...</div>';
                 });
 
-                // Fetch scenarios
-                const scenarios = await fetch('/api/scenarios').then(r => {
+                // Fetch scenarios (include auth token so bypass users pass maintenance gate)
+                const headers = {};
+                const authToken = localStorage.getItem('auth_token');
+                if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+                const scenarios = await fetch('/api/scenarios', { headers }).then(r => {
                     if (!r.ok) throw new Error(`Scenarios API error: ${r.status}`);
                     return r.json();
                 });
@@ -1182,9 +1296,171 @@
             document.body.appendChild(overlay);
         }
 
+        // Onboarding Tour
+        function startOnboardingTour() {
+            if (localStorage.getItem('onboarding_scenarios_done')) return;
+
+            const steps = [
+                {
+                    target: '.start-here-card',
+                    text: 'Comece por aqui! Escolha "Conversação Livre" para praticar qualquer tema.',
+                    position: 'top'
+                },
+                {
+                    target: '#hero-play-btn',
+                    text: 'Ou escolha um cenário específico e clique em Play para começar.',
+                    position: 'bottom'
+                },
+                {
+                    target: '#usage-timer-banner',
+                    text: 'Aqui você acompanha seu tempo restante de prática.',
+                    position: 'bottom'
+                }
+            ];
+
+            let currentStep = 0;
+            let overlay = null;
+            let tooltip = null;
+            let prevHighlight = null;
+
+            function createOverlay() {
+                overlay = document.createElement('div');
+                overlay.className = 'tour-overlay';
+                document.body.appendChild(overlay);
+            }
+
+            function removeHighlight() {
+                if (prevHighlight) {
+                    prevHighlight.classList.remove('tour-highlight');
+                    prevHighlight = null;
+                }
+            }
+
+            function removeTooltip() {
+                if (tooltip) {
+                    tooltip.remove();
+                    tooltip = null;
+                }
+            }
+
+            function buildDots(total, active) {
+                let html = '';
+                for (let i = 0; i < total; i++) {
+                    html += '<div class="tour-dot' + (i === active ? ' active' : '') + '"></div>';
+                }
+                return html;
+            }
+
+            function showStep(index) {
+                removeHighlight();
+                removeTooltip();
+
+                const step = steps[index];
+                const target = document.querySelector(step.target);
+                if (!target) {
+                    // Skip missing targets
+                    if (index < steps.length - 1) {
+                        currentStep++;
+                        showStep(currentStep);
+                    } else {
+                        endTour();
+                    }
+                    return;
+                }
+
+                // Scroll target into view
+                target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                setTimeout(() => {
+                    // Highlight
+                    target.classList.add('tour-highlight');
+                    prevHighlight = target;
+
+                    // Create tooltip
+                    tooltip = document.createElement('div');
+                    tooltip.className = 'tour-tooltip';
+
+                    const isLast = index === steps.length - 1;
+                    const btnText = isLast ? 'Entendi!' : 'Próximo';
+
+                    const arrowClass = step.position === 'bottom' ? 'tour-arrow-up' : 'tour-arrow-down';
+
+                    tooltip.innerHTML =
+                        '<div class="tour-arrow ' + arrowClass + '"></div>' +
+                        '<div class="tour-tooltip-text">' + step.text + '</div>' +
+                        '<div class="tour-footer">' +
+                        '  <div class="tour-step-indicator">' + buildDots(steps.length, index) + '</div>' +
+                        '  <button class="tour-btn" id="tour-next-btn">' + btnText + '</button>' +
+                        '</div>';
+
+                    document.body.appendChild(tooltip);
+
+                    // Position tooltip relative to target
+                    positionTooltip(target, step.position);
+
+                    // Button handler
+                    document.getElementById('tour-next-btn').addEventListener('click', () => {
+                        if (isLast) {
+                            endTour();
+                        } else {
+                            currentStep++;
+                            showStep(currentStep);
+                        }
+                    });
+                }, 400);
+            }
+
+            function positionTooltip(target, position) {
+                const rect = target.getBoundingClientRect();
+                const tooltipRect = tooltip.getBoundingClientRect();
+                let top, left;
+
+                if (position === 'bottom') {
+                    top = rect.bottom + window.scrollY + 16;
+                } else {
+                    top = rect.top + window.scrollY - tooltipRect.height - 16;
+                }
+
+                left = rect.left + window.scrollX;
+                // Keep tooltip within viewport horizontally
+                const maxLeft = window.innerWidth - tooltipRect.width - 16;
+                if (left > maxLeft) left = maxLeft;
+                if (left < 16) left = 16;
+
+                tooltip.style.position = 'absolute';
+                tooltip.style.top = top + 'px';
+                tooltip.style.left = left + 'px';
+
+                // Adjust arrow position to point at target center
+                const arrow = tooltip.querySelector('.tour-arrow');
+                if (arrow) {
+                    const targetCenter = rect.left + rect.width / 2;
+                    const arrowLeft = Math.max(16, Math.min(targetCenter - left, tooltipRect.width - 24));
+                    arrow.style.left = arrowLeft + 'px';
+                }
+            }
+
+            function endTour() {
+                removeHighlight();
+                removeTooltip();
+                if (overlay) {
+                    overlay.remove();
+                    overlay = null;
+                }
+                localStorage.setItem('onboarding_scenarios_done', 'true');
+            }
+
+            // Close tour on overlay click
+            createOverlay();
+            overlay.addEventListener('click', endTour);
+
+            showStep(0);
+        }
+
         // Run on page load
         document.addEventListener('DOMContentLoaded', () => {
             initUsageTimer();
+            setTimeout(startOnboardingTour, 1500);
         });
 
     </script>

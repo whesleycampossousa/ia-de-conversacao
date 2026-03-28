@@ -367,16 +367,6 @@ body {
     opacity: 1;
 }
 
-/* Touch devices: always show play overlay since hover doesn't exist */
-@media (hover: none) and (pointer: coarse) {
-    .poster-overlay {
-        opacity: 0.7;
-    }
-    .poster-card:active .poster-overlay {
-        opacity: 1;
-    }
-}
-
 /* Hover Effect - The "Pop" */
 .poster-card:hover {
     transform: scale(1.08);
@@ -1583,6 +1573,73 @@ body {
     font-size: 0.8rem;
     color: #dbeafe;
     opacity: 0.95;
+}
+
+/* --- Previous turn collapse (mobile clarity) --- */
+.previous-turn-feedback {
+    display: none !important;
+}
+
+.subtitle-group.previous-turn {
+    opacity: 0.45;
+    transition: opacity 0.3s ease;
+    max-height: 120px;
+    overflow: hidden;
+    position: relative;
+}
+
+.subtitle-group.previous-turn::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40px;
+    background: linear-gradient(transparent, rgba(15, 23, 42, 0.95));
+    pointer-events: none;
+}
+
+.subtitle-group.previous-turn:hover,
+.subtitle-group.previous-turn:active {
+    opacity: 0.85;
+    max-height: none;
+}
+
+.subtitle-group.previous-turn:hover::after,
+.subtitle-group.previous-turn:active::after {
+    display: none;
+}
+
+/* Turn divider between conversation turns */
+.turn-divider {
+    text-align: center;
+    margin: 0.5rem 0;
+    font-size: 0.65rem;
+    color: rgba(148, 163, 184, 0.5);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.turn-divider::before,
+.turn-divider::after {
+    content: '';
+    display: inline-block;
+    width: 30px;
+    height: 1px;
+    background: rgba(148, 163, 184, 0.25);
+    vertical-align: middle;
+    margin: 0 8px;
+}
+
+/* Mobile: more compact suggested words when collapsed */
+@media (max-width: 768px) {
+    .suggested-words-card:not(.expanded) {
+        margin-top: 0.35rem;
+    }
+    .suggested-words-card:not(.expanded) .suggested-words-toggle {
+        padding: 0.25rem 0.45rem;
+        font-size: 0.7rem;
+    }
 }
 
 .learning-feedback-overlay {
@@ -3233,70 +3290,5 @@ body {
 
     .report-modal-body .report-actions {
         flex-direction: column;
-    }
-}
-
-/* =========================================
-   MOBILE-SPECIFIC FIXES
-   ========================================= */
-
-/* Safe area for notched devices (iPhone X+) */
-.player-top-bar {
-    padding-top: max(16px, env(safe-area-inset-top));
-}
-
-/* Touch devices: prevent sticky hover states */
-@media (hover: none) and (pointer: coarse) {
-    .poster-card:hover {
-        transform: none;
-        box-shadow: var(--card-shadow);
-    }
-    .poster-card:active {
-        transform: scale(1.03);
-    }
-    .featured-card:hover {
-        transform: none;
-    }
-    .featured-card:active {
-        transform: scale(0.98);
-    }
-
-    /* Increase touch target sizes for difficulty pills and topic chips */
-    .difficulty-pill {
-        min-height: 44px;
-        min-width: 44px;
-        padding: 0.5rem 1rem !important;
-        font-size: 0.8rem !important;
-    }
-    .topic-chip {
-        min-height: 44px;
-        padding: 0.5rem 0.8rem !important;
-        font-size: 0.78rem !important;
-    }
-    .free-session-chip {
-        min-height: 44px;
-        padding: 0.5rem 1rem;
-    }
-    .pmode-card {
-        min-height: 80px;
-    }
-
-    /* Fix virtual keyboard pushing content out of view */
-    .cinematic-player {
-        position: absolute;
-        min-height: 100vh;
-        min-height: 100dvh;
-    }
-
-    /* Allow scrolling on practice page body */
-    body.audio-only-mode {
-        overflow: auto !important;
-        overflow-x: hidden !important;
-    }
-
-    /* Subtitle container must be scrollable on mobile */
-    .subtitle-container {
-        overflow-y: auto !important;
-        -webkit-overflow-scrolling: touch;
     }
 }

@@ -249,6 +249,11 @@
         groups.forEach((group, idx) => {
             const hideGroup = !historyExpanded && idx < keepFromIndex;
             group.classList.toggle('history-hidden', hideGroup);
+            // Also hide/show turn dividers adjacent to hidden groups
+            const prevSibling = group.previousElementSibling;
+            if (prevSibling && prevSibling.classList.contains('turn-divider')) {
+                prevSibling.style.display = hideGroup ? 'none' : '';
+            }
         });
 
         chatWindow.classList.toggle('history-expanded', historyExpanded);
@@ -1155,26 +1160,6 @@
     const conversationLog = [];
     let lastAIQuestionPrompt = '';
     let currentAudio = null; // Track current audio for skip functionality
-    let mobileAudioUnlocked = false; // Track if audio playback has been unlocked on mobile
-
-    // --- Mobile Audio Unlock ---
-    // iOS Safari and Chrome Android block audio.play() unless triggered by a user gesture.
-    // We unlock audio on the first tap/click anywhere on the page.
-    function unlockMobileAudio() {
-        if (mobileAudioUnlocked) return;
-        const silentAudio = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=');
-        silentAudio.volume = 0;
-        silentAudio.play().then(() => {
-            mobileAudioUnlocked = true;
-            console.log('[Mobile] Audio playback unlocked');
-            silentAudio.pause();
-        }).catch(() => {
-            // Will retry on next user gesture
-        });
-    }
-    document.addEventListener('touchstart', unlockMobileAudio, { once: false, passive: true });
-    document.addEventListener('click', unlockMobileAudio, { once: false, passive: true });
-
     let ttsCancelled = false;
     let userMessageCount = 0; // Track user messages for report button
     let hasPracticeStarted = false;
@@ -2807,6 +2792,10 @@
                 const transcribeResult = await transcribeWithDeepgram(audioBlob, apiClient.token, sttLang, recorderMime);
 
                 if (transcribeResult.success) {
+                    // Show pronunciation confidence feedback
+                    if (typeof transcribeResult.confidence === 'number' && window.showPronunciationFeedback) {
+                        window.showPronunciationFeedback(transcribeResult.confidence);
+                    }
                     const transcript = (transcribeResult.transcript || '').trim();
                     if (!isMeaningfulSpeechText(transcript)) {
                         addMessage('System', 'Não entendi bem. Pode repetir em uma frase curta?', true);
@@ -3024,7 +3013,8 @@
                 turnFeedback: inlineLearningFeedback || (hasTurnFeedback ? data.turn_feedback : null),
                 turnCorrection: !hasTurnFeedback && backendSupportsKinds ? (data.turn_correction || null) : null,
                 enableLegacyCorrectionFallback: !hasTurnFeedback,
-                showInlineFeedback: Boolean(inlineLearningFeedback) || practiceMode !== 'learning'
+                // Learning mode: popup already shows feedback, skip inline cards to reduce mobile clutter
+                showInlineFeedback: practiceMode !== 'learning'
             });
 
             const showSuggestedWords = practiceMode !== 'simulator';
@@ -3242,33 +3232,9 @@
 
             audio.play()
                 .then(() => {
-                    mobileAudioUnlocked = true;
                     if (window.startAvatarTalking) window.startAvatarTalking();
                 })
-                .catch((err) => {
-                    console.warn('[Audio] Playback blocked:', err.name);
-                    if (err.name === 'NotAllowedError' && !mobileAudioUnlocked) {
-                        // Show a visible message so user knows to tap
-                        if (statusIndicator) {
-                            statusIndicator.textContent = '🔇 Toque na tela para ativar o audio';
-                            statusIndicator.style.color = '#ff6b6b';
-                        }
-                        // Retry playback on next user gesture
-                        const retryPlay = () => {
-                            audio.play().then(() => {
-                                mobileAudioUnlocked = true;
-                                if (statusIndicator) statusIndicator.style.color = '';
-                                if (window.startAvatarTalking) window.startAvatarTalking();
-                            }).catch(() => cleanup());
-                            document.removeEventListener('touchstart', retryPlay);
-                            document.removeEventListener('click', retryPlay);
-                        };
-                        document.addEventListener('touchstart', retryPlay, { once: true });
-                        document.addEventListener('click', retryPlay, { once: true });
-                    } else {
-                        cleanup();
-                    }
-                });
+                .catch(() => cleanup());
         });
     }
 
@@ -3468,6 +3434,16 @@
 
             localStorage.setItem('practice_progress', JSON.stringify(progress));
             console.log('[Progress] Saved session:', entry);
+
+            // Notify dashboard progress system (Melhoria: Progresso + Conquistas)
+            try {
+                const reportPayload = {
+                    report: info,
+                    context: context,
+                    minutes: Math.round((stats.total || 0) * 0.5) // estimate ~30s per interaction
+                };
+                localStorage.setItem('last_report_data', JSON.stringify(reportPayload));
+            } catch (e2) { /* ignore */ }
         } catch (e) {
             console.error('[Progress] Failed to save:', e);
         }
@@ -4258,7 +4234,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 // 5. Frase Corrigida
                 const goodLine = document.createElement('div');
                 goodLine.className = 'correction-line good';
-                goodLine.innerHTML = `<span style="color:#10b981;">✓ Tente assim:</span> "${escapeHtml(correction.fraseCorrigida || correction.boa || '')}"`;
+                goodLine.innerHTML = `<span style="color:#10b981;">✓ Melhor forma:</span> "${escapeHtml(correction.fraseCorrigida || correction.boa || '')}"`;
                 li.appendChild(goodLine);
 
                 // 6. Explicação Detalhada
@@ -4274,7 +4250,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                         border-radius: 6px;
                         border-left: 3px solid #8b5cf6;
                     `;
-                    explanationLine.innerHTML = `💡 <strong>Como pensar nisso:</strong> ${escapeHtml(correction.explicacaoDetalhada || correction.explicacao)}`;
+                    explanationLine.innerHTML = `💡 <strong>Por que mudar:</strong> ${escapeHtml(correction.explicacaoDetalhada || correction.explicacao)}`;
                     li.appendChild(explanationLine);
                 }
 
@@ -4368,7 +4344,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 kind,
                 user_text: String(source.user_text || baseUserText).trim() || baseUserText,
                 suggested_text: suggested,
-                reason: reason || 'Veja uma forma mais clara de responder.'
+                reason: reason || 'Aqui esta uma forma melhor para esta resposta.'
             };
         }
 
@@ -4384,7 +4360,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 kind: 'style_upgrade',
                 user_text: baseUserText,
                 suggested_text: suggestion,
-                reason: 'Para soar mais natural, faca o pedido com "I\'d like ... , please."'
+                reason: 'Para soar mais natural e educado, prefira "I\'d like ... , please."'
             };
         }
 
@@ -4397,7 +4373,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 kind: 'error_correction',
                 user_text: baseUserText,
                 suggested_text: suggestedWords.join(' '),
-                reason: 'Troque pela frase sugerida e tente responder de novo.'
+                reason: 'Ajuste a estrutura para ficar mais natural neste contexto.'
             };
         }
 
@@ -4405,7 +4381,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
             kind: 'ok',
             user_text: baseUserText,
             suggested_text: baseUserText,
-            reason: 'Sua resposta funciona bem nesse contexto.'
+            reason: 'Sua resposta esta correta para o contexto.'
         };
     }
 
@@ -4446,7 +4422,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 kind: 'error_correction',
                 user_text: text,
                 suggested_text: "I'd like a hot coffee, please.",
-                reason: 'Coloque primeiro a caracteristica e depois a bebida.'
+                reason: 'A ordem das palavras ficou incorreta. Use: adjective + drink.'
             };
         }
 
@@ -4459,20 +4435,26 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 kind: 'error_correction',
                 user_text: text,
                 suggested_text: `I'd like a ${adjective} ${drink}, please.`,
-                reason: 'Primeiro diga a caracteristica e depois a bebida.'
+                reason: 'Use primeiro o adjetivo e depois a bebida.'
             };
         }
 
         if (promptIntent === 'order_request') {
-            const hasDrink = /\b(coffee|latte|cappuccino|espresso|tea|drink)\b/i.test(normalized);
-            const hasVerb = /\b(i('| )?d like|can i have|i want|just|a|an)\b/i.test(normalized);
-            if (!hasDrink && hasVerb) {
-                return {
-                    kind: 'style_upgrade',
-                    user_text: text,
-                    suggested_text: "I'd like a hot coffee, please.",
-                    reason: 'Diga a bebida e faca o pedido de forma educada.'
-                };
+            const knownItems = /\b(coffee|latte|cappuccino|espresso|tea|drink|water|juice|soda|beer|wine|burger|sandwich|salad|cake|pie|muffin|croissant|bagel|toast|pizza|pasta|soup|steak|chicken|fish|fries|cookie|donut|pancake|waffle|omelette|breakfast|lunch|dinner|meal)\b/i;
+            const hasKnownItem = knownItems.test(normalized);
+            const hasVerb = /\b(i('| )?d like|can i have|i want|i would like|just|give me|get me)\b/i.test(normalized);
+            if (hasVerb && !hasKnownItem) {
+                // Try to extract the item the user mentioned (noun after verb phrase)
+                const itemMatch = normalized.match(/\b(?:like|want|have|get)\s+(?:a|an|some)?\s*(.+?)(?:\s*please)?$/i);
+                if (itemMatch && itemMatch[1]) {
+                    const userItem = itemMatch[1].trim();
+                    return {
+                        kind: 'style_upgrade',
+                        user_text: text,
+                        suggested_text: `I'd like ${/^[aeiou]/i.test(userItem) ? 'an' : 'a'} ${userItem}, please.`,
+                        reason: 'Use "I\'d like" + item para soar mais educado.'
+                    };
+                }
             }
         }
 
@@ -4637,7 +4619,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
             title.className = 'learning-feedback-title';
             title.textContent = aiQuestionDisplay
                 ? `\u{1F5E3}\uFE0F "${aiQuestionDisplay}"`
-                : 'Vamos ajustar sua resposta';
+                : 'Sobre a sua resposta';
             modal.appendChild(title);
 
             const stepBadge = document.createElement('div');
@@ -4657,8 +4639,8 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 const status = document.createElement('div');
                 status.className = 'learning-guidance-status';
                 status.textContent = kind === 'error_correction'
-                    ? '⚠️ Ajuste rapido'
-                    : (kind === 'style_upgrade' ? '💡 Pode soar mais natural' : '✅ Sua resposta funcionou');
+                    ? '⚠️ Precisa ajustar'
+                    : (kind === 'style_upgrade' ? '💡 Pode melhorar' : '✅ Resposta correta');
                 contentWrap.appendChild(status);
 
                 const saidLine = document.createElement('div');
@@ -4669,10 +4651,10 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 const suggestionLine = document.createElement('div');
                 suggestionLine.className = 'learning-feedback-line suggestion';
                 suggestionLine.innerHTML = kind === 'error_correction'
-                    ? `<span>✨ Tente assim:</span> "${escapeHtml(suggested)}"`
+                    ? `<span>✨ Forma sugerida:</span> "${escapeHtml(suggested)}"`
                     : (kind === 'style_upgrade'
-                        ? `<span>✨ Uma forma mais natural:</span> "${escapeHtml(suggested)}"`
-                        : `<span>✅ Voce pode manter:</span> "${escapeHtml(suggested)}"`);
+                        ? `<span>✨ Forma mais natural:</span> "${escapeHtml(suggested)}"`
+                        : `<span>✅ Está correto:</span> "${escapeHtml(suggested)}"`);
                 contentWrap.appendChild(suggestionLine);
 
                 if (reason) {
@@ -4685,7 +4667,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 const useBtn = document.createElement('button');
                 useBtn.type = 'button';
                 useBtn.className = 'learning-feedback-btn secondary';
-                useBtn.textContent = 'Colocar no campo';
+                useBtn.textContent = 'Usar frase sugerida';
                 useBtn.addEventListener('click', () => {
                     if (textInput) {
                         textInput.value = suggested;
@@ -4699,7 +4681,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 contentWrap.innerHTML = '';
                 const stepTitle = document.createElement('div');
                 stepTitle.className = 'learning-guidance-options-title';
-                stepTitle.innerHTML = 'Outras respostas possiveis: <span style="color:#FFD700;font-weight:bold;font-size:0.85em;">(Opcional)</span>';
+                stepTitle.innerHTML = 'Outras formas de responder: <span style="color:#FFD700;font-weight:bold;font-size:0.85em;">(Opcional)</span>';
                 contentWrap.appendChild(stepTitle);
 
                 const list = document.createElement('div');
@@ -4767,12 +4749,12 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 if (step === 'feedback') {
                     title.textContent = aiQuestionDisplay
                         ? `\u{1F5E3}\uFE0F "${aiQuestionDisplay}"`
-                        : 'Vamos ajustar sua resposta';
+                        : 'Sobre a sua resposta';
                     renderFeedbackStep();
                 } else {
                     title.textContent = aiQuestionDisplay
                         ? `\u{1F5E3}\uFE0F "${aiQuestionDisplay}"`
-                        : 'Outras respostas possiveis';
+                        : 'Outras formas de responder';
                     renderAnswersStep();
                 }
 
@@ -4797,7 +4779,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
 
             const helper = document.createElement('div');
             helper.className = 'learning-feedback-helper';
-            helper.textContent = 'Depois de continuar, voce pode responder com a sugestao ou com a sua propria versao.';
+            helper.textContent = 'Depois de continuar, a conversa segue normalmente com a proxima pergunta.';
             modal.appendChild(helper);
 
             modal.appendChild(actions);
@@ -4821,7 +4803,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
 
         const title = document.createElement('div');
         title.className = kind === 'error_correction' ? 'turn-correction-title' : 'turn-style-title';
-        title.textContent = kind === 'error_correction' ? 'Ajuste rapido da sua frase' : 'Jeito mais natural de dizer';
+        title.textContent = kind === 'error_correction' ? 'Correção da interação' : 'Sugestão de naturalidade';
         card.appendChild(title);
 
         const studentLine = document.createElement('div');
@@ -4833,7 +4815,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
 
         const suggestedLine = document.createElement('div');
         suggestedLine.className = kind === 'error_correction' ? 'turn-correction-line good' : 'turn-style-line good';
-        suggestedLine.innerHTML = `<span>${kind === 'error_correction' ? '✅ Tente assim:' : '✅ Sugestao:'}</span> "${escapeHtml(suggested)}"`;
+        suggestedLine.innerHTML = `<span>${kind === 'error_correction' ? '✅ Mais natural:' : '✅ Sugestão:'}</span> "${escapeHtml(suggested)}"`;
         card.appendChild(suggestedLine);
 
         const reason = String(feedback.reason || '').trim();
@@ -4847,7 +4829,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         const useBtn = document.createElement('button');
         useBtn.type = 'button';
         useBtn.className = 'correction-use-btn';
-        useBtn.textContent = 'Colocar no campo';
+        useBtn.textContent = kind === 'error_correction' ? 'Usar frase corrigida' : 'Usar sugestão';
         useBtn.addEventListener('click', () => {
             if (textInput) {
                 textInput.value = suggested;
@@ -5021,6 +5003,24 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
     function addMessage(sender, text, isAI = false, logMessage = true, translation = "", options = {}) {
         if (!chatWindow) return null;
 
+        // Collapse previous turns' feedback cards and dim old messages for clarity
+        if (isAI) {
+            chatWindow.querySelectorAll('.turn-correction-card, .turn-style-card, .correction-hint').forEach(card => {
+                card.classList.add('previous-turn-feedback');
+            });
+            chatWindow.querySelectorAll('.subtitle-group').forEach(group => {
+                group.classList.add('previous-turn');
+            });
+            // Add turn divider before new AI response (if there are previous messages)
+            const existingGroups = chatWindow.querySelectorAll('.subtitle-group');
+            if (existingGroups.length > 0) {
+                const divider = document.createElement('div');
+                divider.className = 'turn-divider';
+                divider.textContent = 'nova pergunta';
+                chatWindow.appendChild(divider);
+            }
+        }
+
         const messageGroup = document.createElement('div');
         messageGroup.className = 'subtitle-group';
         messageGroup.setAttribute('data-sender', isAI ? 'ai' : 'user');
@@ -5151,6 +5151,9 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         if (groups.length > MAX_VISIBLE_GROUPS) {
             const removeCount = groups.length - MAX_VISIBLE_GROUPS;
             for (let i = 0; i < removeCount; i++) {
+                // Also remove any turn-divider immediately before the group
+                const prev = groups[i].previousElementSibling;
+                if (prev && prev.classList.contains('turn-divider')) prev.remove();
                 groups[i].remove();
             }
         }
@@ -5190,17 +5193,20 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         const card = document.createElement('div');
         card.className = 'suggested-words-card';
 
+        const isMobile = window.innerWidth <= 768;
+        const startExpanded = !isMobile;
+
         const toggle = document.createElement('button');
         toggle.type = 'button';
         toggle.className = 'suggested-words-toggle';
-        toggle.setAttribute('aria-expanded', 'true');
+        toggle.setAttribute('aria-expanded', startExpanded ? 'true' : 'false');
         toggle.innerHTML = `💡 Dica de resposta (${replies.length}) <span style="color:#FFD700;font-weight:bold;font-size:0.85em;margin-left:6px;">(Opcional)</span>`;
         card.appendChild(toggle);
 
         const details = document.createElement('div');
         details.className = 'suggested-words-details';
-        details.style.display = 'block';
-        card.classList.add('expanded');
+        details.style.display = startExpanded ? 'block' : 'none';
+        if (startExpanded) card.classList.add('expanded');
 
         const title = document.createElement('div');
         title.className = 'suggested-words-title';
@@ -5668,10 +5674,6 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
 
             // Only advance if the student's practice was good enough
             if (data.ready_for_next) {
-                // If backend corrected STT errors, log for debugging
-                if (data.corrected_text) {
-                    console.log('[LESSON] STT corrected:', data.corrected_text);
-                }
                 await advanceLesson();
             } else {
                 // Keep in practice mode for retry - student can try again
@@ -5791,24 +5793,17 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         URL.revokeObjectURL(url);
     }
 
-    // Fallback check: verify both getUserMedia and MediaRecorder are available
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === 'undefined') {
+    // Fallback check replaced by Deepgram/Groq logic
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         if (recordBtn) recordBtn.style.display = 'none';
         const fallbackInfo = document.createElement('div');
         fallbackInfo.className = 'message system-message';
-        const isHTTP = window.location.protocol === 'http:' && window.location.hostname !== 'localhost';
-        let warningMsg = '⚠️ Gravacao de voz nao suportada neste navegador. Use Chrome, Safari 14.3+ ou Edge.';
-        if (isHTTP) {
-            warningMsg = '⚠️ O microfone requer conexao HTTPS. Acesse via https:// para usar a voz.';
-        } else if (typeof MediaRecorder === 'undefined') {
-            warningMsg = '⚠️ Seu navegador nao suporta gravacao de audio. Atualize para Safari 14.3+ ou use Chrome.';
-        }
         fallbackInfo.innerHTML = `
             <div class="bubble">
-                <p>${warningMsg}</p>
+                <p>⚠️ Voice input not supported in this browser. Please use Chrome or Edge for voice features.</p>
             </div>
         `;
-        if (chatWindow) chatWindow.appendChild(fallbackInfo);
+        chatWindow.appendChild(fallbackInfo);
     }
 
     // Text input intentionally disabled in voice-only practice UI.
@@ -5978,8 +5973,7 @@ function handleLogin() {
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const email = emailInput.value.trim();
-        const isAdminLoginAttempt = Boolean(passwordGroup && passwordGroup.style.display === 'block');
-        const password = (isAdminLoginAttempt && passwordInput) ? passwordInput.value.trim() : '';
+        const password = passwordInput ? passwordInput.value.trim() : '';
         const submitBtn = form.querySelector('button[type="submit"]');
 
         if (!email) {
@@ -6026,11 +6020,9 @@ function handleLogin() {
                     : window.location.origin;
                 errorMsg = `Servidor offline ou URL incorreta. Inicie o backend e tente: ${apiBase || 'http://localhost:8912'}`;
             } else if (rawMsg.includes('not authorized') || rawMsg.includes('not registered')) {
-                errorMsg = 'Este e-mail nao esta cadastrado para acessar a plataforma.';
-            } else if (rawMsg.includes('Admin password required')) {
-                errorMsg = 'Esse e-mail exige senha de admin. Alunos entram apenas com o e-mail cadastrado.';
+                errorMsg = 'This email is not authorized to access the platform. Please contact support.';
             } else if (rawMsg.includes('Invalid admin password')) {
-                errorMsg = 'Senha de admin invalida. Alunos entram apenas com o e-mail cadastrado.';
+                errorMsg = 'Invalid admin password. Try again or login without password for regular access.';
             }
 
             alert(errorMsg);

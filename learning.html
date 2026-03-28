@@ -203,15 +203,14 @@
             'default': 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=400&q=80'
         };
 
-        // Hero images for billboard (responsive: smaller on mobile)
-        const _heroW = window.innerWidth <= 768 ? 800 : 1920;
+        // Hero images for billboard
         const heroImages = {
-            'verb_to_be': `https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?ixlib=rb-4.0.3&auto=format&fit=crop&w=${_heroW}&q=80`,
-            'greetings': `https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=${_heroW}&q=80`,
-            'articles': `https://images.unsplash.com/photo-1456324504439-367cee3b3c32?auto=format&fit=crop&w=${_heroW}&q=80`,
-            'present_simple': `https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?auto=format&fit=crop&w=${_heroW}&q=80`,
-            'present_perfect': `https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=${_heroW}&q=80`,
-            'default': `https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?ixlib=rb-4.0.3&auto=format&fit=crop&w=${_heroW}&q=80`
+            'verb_to_be': 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80',
+            'greetings': 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1920&q=80',
+            'articles': 'https://images.unsplash.com/photo-1456324504439-367cee3b3c32?auto=format&fit=crop&w=1920&q=80',
+            'present_simple': 'https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?auto=format&fit=crop&w=1920&q=80',
+            'present_perfect': 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=1920&q=80',
+            'default': 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80'
         };
 
         function getTopicImage(id) {
@@ -301,10 +300,11 @@
                 const apiUrl = `${apiClient.baseURL}/api/grammar-topics`;
                 console.log('Tentando carregar tópicos de:', apiUrl);
                 
+                const fetchHeaders = { 'Content-Type': 'application/json' };
+                const authToken = localStorage.getItem('auth_token');
+                if (authToken) fetchHeaders['Authorization'] = `Bearer ${authToken}`;
                 const response = await fetch(apiUrl, {
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
+                    headers: fetchHeaders
                 });
 
                 if (!response.ok) {

@@ -13,7 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 
-<body style="background: black;" class="audio-only-mode">
+<body style="background: black; overflow: hidden;" class="audio-only-mode">
 
     <div class="cinematic-player">
 
@@ -163,6 +163,13 @@
                     <div id="record-text" style="display: none;"></div>
                 </div>
 
+                <div id="pronunciation-feedback" class="pronunciation-feedback" style="display: none;">
+                    <div class="pronunciation-bar">
+                        <div class="pronunciation-fill" id="pronunciation-fill"></div>
+                    </div>
+                    <span class="pronunciation-label" id="pronunciation-label"></span>
+                </div>
+
                 <div id="report-bar" class="report-bar">
                     <button id="report-bar-btn">
                         📊 Gerar relatório da conversa
@@ -308,10 +315,7 @@
 
         const getBgUrl = (url) => {
             if (!url) return url;
-            // Use smaller images on mobile to save bandwidth and speed up loading
-            const isMobile = window.innerWidth <= 768;
-            const targetWidth = isMobile ? 800 : 1920;
-            return url.replace(/w=\d+/g, `w=${targetWidth}`);
+            return url.replace(/w=\d+/g, 'w=1920');
         };
 
         const currentBg = getBgUrl(categoryImages[contextId] || categoryImages['default']);
@@ -551,6 +555,50 @@
         if (footerBar) footerBar.style.display = 'none';
 
         initModeSelection();
+
+        // Pronunciation confidence feedback
+        window.showPronunciationFeedback = function(confidence) {
+            const container = document.getElementById('pronunciation-feedback');
+            const fill = document.getElementById('pronunciation-fill');
+            const label = document.getElementById('pronunciation-label');
+            if (!container || !fill || !label) return;
+
+            // Determine color and label text based on confidence
+            let color, text;
+            if (confidence >= 0.85) {
+                color = '#22c55e';
+                text = 'Pronúncia: Excelente!';
+            } else if (confidence >= 0.65) {
+                color = '#eab308';
+                text = 'Pronúncia: Boa';
+            } else {
+                color = '#ef4444';
+                text = 'Pronúncia: Tente de novo';
+            }
+
+            // Apply styles
+            fill.style.width = (confidence * 100) + '%';
+            fill.style.backgroundColor = color;
+            label.style.color = color;
+            label.textContent = text;
+
+            // Show with reset
+            container.classList.remove('fade-out');
+            container.style.display = 'flex';
+
+            // Clear any existing timeout
+            if (window._pronFeedbackTimeout) clearTimeout(window._pronFeedbackTimeout);
+            if (window._pronFadeTimeout) clearTimeout(window._pronFadeTimeout);
+
+            // Auto-hide after 5 seconds with fade
+            window._pronFadeTimeout = setTimeout(function() {
+                container.classList.add('fade-out');
+                window._pronFeedbackTimeout = setTimeout(function() {
+                    container.style.display = 'none';
+                    container.classList.remove('fade-out');
+                }, 500);
+            }, 5000);
+        };
     </script>
 
     <!-- Load App Logic -->
@@ -1198,6 +1246,44 @@
             50% {
                 transform: scale(1.35);
             }
+        }
+
+        /* Pronunciation confidence feedback */
+        .pronunciation-feedback {
+            display: flex;
+            flex-direction: row;
+            gap: 8px;
+            align-items: center;
+            padding: 4px 16px;
+            width: 100%;
+            justify-content: center;
+            opacity: 1;
+            transition: opacity 0.5s ease;
+        }
+
+        .pronunciation-feedback.fade-out {
+            opacity: 0;
+        }
+
+        .pronunciation-bar {
+            background: #333;
+            height: 6px;
+            border-radius: 3px;
+            flex: 1;
+            max-width: 200px;
+            overflow: hidden;
+        }
+
+        .pronunciation-fill {
+            height: 100%;
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .pronunciation-label {
+            font-size: 0.75rem;
+            white-space: nowrap;
         }
     </style>
 </body>

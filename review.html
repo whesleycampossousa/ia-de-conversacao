@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revisar Erros - IA de Conversação</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .review-body {
+            background: radial-gradient(circle at 10% 20%, rgba(239, 68, 68, 0.08), transparent 30%),
+                radial-gradient(circle at 80% 0%, rgba(109, 109, 110, 0.12), transparent 35%),
+                #0f0f0f;
+            min-height: 100vh;
+        }
+
+        .review-container {
+            max-width: 640px;
+            margin: 0 auto;
+            padding: 80px 20px 40px;
+        }
+
+        .review-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
+        }
+
+        .review-header h1 {
+            font-size: 1.6rem;
+            font-weight: 800;
+        }
+
+        .btn-back {
+            padding: 8px 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.04);
+            color: #fff;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            font-family: inherit;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-back:hover {
+            border-color: rgba(229, 9, 20, 0.4);
+        }
+
+        /* Progress indicator */
+        .review-progress {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .progress-bar-bg {
+            flex: 1;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e50914, #f59e0b);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        .progress-text {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        /* Card */
+        .review-card {
+            background: linear-gradient(135deg, rgba(24, 24, 24, 0.95), rgba(24, 24, 24, 0.7));
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 18px;
+            padding: 32px 28px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+            text-align: center;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .review-card.correct {
+            border-color: rgba(34, 197, 94, 0.4);
+            box-shadow: 0 0 30px rgba(34, 197, 94, 0.1);
+        }
+
+        .review-card.incorrect {
+            border-color: rgba(239, 68, 68, 0.4);
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.1);
+        }
+
+        .error-count-badge {
+            display: inline-block;
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+            margin-bottom: 16px;
+        }
+
+        .wrong-phrase {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #fca5a5;
+            margin-bottom: 8px;
+            text-decoration: line-through;
+            text-decoration-color: rgba(239, 68, 68, 0.4);
+        }
+
+        .prompt-text {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        /* Answer input */
+        .answer-input {
+            width: 100%;
+            padding: 14px 18px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 1.1rem;
+            font-family: inherit;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .answer-input:focus {
+            border-color: rgba(229, 9, 20, 0.5);
+        }
+
+        .answer-input.correct-input {
+            border-color: #22c55e;
+            background: rgba(34, 197, 94, 0.08);
+        }
+
+        .answer-input.incorrect-input {
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.08);
+        }
+
+        /* Suggestion chips */
+        .suggestion-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 16px;
+        }
+
+        .suggestion-chip {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
+            color: #fff;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .suggestion-chip:hover {
+            background: rgba(229, 9, 20, 0.15);
+            border-color: rgba(229, 9, 20, 0.3);
+        }
+
+        /* Feedback area */
+        .feedback-area {
+            margin-top: 20px;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            display: none;
+        }
+
+        .feedback-area.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .feedback-correct {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.25);
+            color: #86efac;
+        }
+
+        .feedback-incorrect {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            color: #fca5a5;
+        }
+
+        .correct-answer {
+            font-weight: 700;
+            color: #22c55e;
+            font-size: 1.1rem;
+            margin-top: 6px;
+        }
+
+        /* Buttons */
+        .review-actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn-check {
+            padding: 12px 28px;
+            background: #e50914;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .btn-check:hover {
+            background: #b0070f;
+        }
+
+        .btn-skip {
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text-secondary);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .btn-skip:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-next {
+            padding: 12px 28px;
+            background: rgba(34, 197, 94, 0.15);
+            color: #86efac;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+            display: none;
+        }
+
+        .btn-next:hover {
+            background: rgba(34, 197, 94, 0.25);
+        }
+
+        /* Completion screen */
+        .review-complete {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .review-complete .complete-icon {
+            font-size: 3.5rem;
+            margin-bottom: 16px;
+        }
+
+        .review-complete h2 {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+
+        .review-complete p {
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .review-score {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin: 16px 0;
+        }
+
+        .review-score.great { color: #22c55e; }
+        .review-score.good { color: #f59e0b; }
+        .review-score.needs-work { color: #ef4444; }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-state .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+        }
+
+        .empty-state p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+
+        .shake {
+            animation: shake 0.3s ease;
+        }
+    </style>
+</head>
+
+<body class="review-body">
+    <div class="review-container">
+        <div class="review-header">
+            <h1 id="page-title">Revisar Meus Erros</h1>
+            <a href="dashboard.html" class="btn-back" id="back-btn">Voltar</a>
+        </div>
+
+        <div id="review-progress" class="review-progress" style="display: none;">
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progress-fill" style="width: 0%;"></div>
+            </div>
+            <span class="progress-text" id="progress-text">0/0</span>
+        </div>
+
+        <div id="review-area"></div>
+    </div>
+
+    <script>
+        // ====== LOAD ERRORS FROM STUDENT PROGRESS ======
+        function getErrors() {
+            try {
+                const data = JSON.parse(localStorage.getItem('student_progress') || '{}');
+                return (data.errors || []).filter(e => e.wrong && e.right);
+            } catch (e) { return []; }
+        }
+
+        // Spaced repetition: prioritize errors by frequency and staleness
+        function prioritizeErrors(errors) {
+            const now = Date.now();
+            return errors
+                .map(e => {
+                    const age = (now - new Date(e.lastSeen || 0).getTime()) / (1000 * 60 * 60 * 24); // days
+                    // Higher priority = more frequent + older (needs review)
+                    const priority = e.count * 1.5 + Math.min(age, 30) * 0.5;
+                    return { ...e, priority };
+                })
+                .sort((a, b) => b.priority - a.priority);
+        }
+
+        // Generate distractor options (wrong answers)
+        function generateOptions(correctAnswer, allErrors) {
+            const options = [correctAnswer];
+            const distractors = allErrors
+                .map(e => e.right)
+                .filter(r => r !== correctAnswer && r.length > 0);
+
+            // Shuffle and pick up to 2 distractors
+            for (let i = distractors.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [distractors[i], distractors[j]] = [distractors[j], distractors[i]];
+            }
+            options.push(...distractors.slice(0, 2));
+
+            // Shuffle final options
+            for (let i = options.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [options[i], options[j]] = [options[j], options[i]];
+            }
+            return options;
+        }
+
+        // ====== REVIEW SESSION ======
+        let reviewErrors = [];
+        let currentIndex = 0;
+        let correctCount = 0;
+        let answered = false;
+
+        function initReview() {
+            const allErrors = getErrors();
+            if (allErrors.length === 0) {
+                showEmptyState();
+                return;
+            }
+
+            reviewErrors = prioritizeErrors(allErrors).slice(0, 10); // max 10 per session
+            currentIndex = 0;
+            correctCount = 0;
+
+            document.getElementById('review-progress').style.display = 'flex';
+            showCurrentError();
+        }
+
+        function showEmptyState() {
+            const area = document.getElementById('review-area');
+            area.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">&#9989;</div>
+                    <h2>Nenhum erro para revisar!</h2>
+                    <p>Continue praticando e gere relatórios para que seus erros apareçam aqui.</p>
+                    <a href="dashboard.html" class="btn-back" style="display: inline-block; margin-top: 20px;">Voltar ao Dashboard</a>
+                </div>`;
+        }
+
+        function showCurrentError() {
+            if (currentIndex >= reviewErrors.length) {
+                showCompletion();
+                return;
+            }
+
+            answered = false;
+            const error = reviewErrors[currentIndex];
+            const options = generateOptions(error.right, reviewErrors);
+            const total = reviewErrors.length;
+            const pct = Math.round((currentIndex / total) * 100);
+
+            document.getElementById('progress-fill').style.width = pct + '%';
+            document.getElementById('progress-text').textContent = `${currentIndex + 1}/${total}`;
+
+            const area = document.getElementById('review-area');
+            area.innerHTML = `
+                <div class="review-card" id="review-card">
+                    <span class="error-count-badge">${error.count}x repetido</span>
+                    <div class="wrong-phrase">${escapeHtml(error.wrong)}</div>
+                    <div class="prompt-text">Como seria o correto?</div>
+
+                    <input type="text" class="answer-input" id="answer-input"
+                        placeholder="Digite a forma correta..." autocomplete="off" spellcheck="false">
+
+                    <div class="suggestion-chips" id="suggestion-chips">
+                        ${options.map(o => `<button class="suggestion-chip" onclick="selectOption(this, '${escapeAttr(o)}')">${escapeHtml(o)}</button>`).join('')}
+                    </div>
+
+                    <div class="feedback-area" id="feedback-area"></div>
+
+                    <div class="review-actions">
+                        <button class="btn-check" id="btn-check" onclick="checkAnswer()">Verificar</button>
+                        <button class="btn-skip" onclick="skipError()">Pular</button>
+                        <button class="btn-next" id="btn-next" onclick="nextError()">Próximo</button>
+                    </div>
+                </div>`;
+
+            // Focus input
+            setTimeout(() => {
+                const input = document.getElementById('answer-input');
+                if (input) input.focus();
+            }, 100);
+
+            // Enter key to check
+            const input = document.getElementById('answer-input');
+            if (input) {
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        if (answered) nextError();
+                        else checkAnswer();
+                    }
+                });
+            }
+        }
+
+        function selectOption(btn, value) {
+            const input = document.getElementById('answer-input');
+            if (input && !answered) {
+                input.value = value;
+                // Remove active from all chips
+                document.querySelectorAll('.suggestion-chip').forEach(c => c.style.borderColor = 'rgba(255,255,255,0.12)');
+                btn.style.borderColor = '#e50914';
+            }
+        }
+
+        function checkAnswer() {
+            if (answered) return;
+            answered = true;
+
+            const input = document.getElementById('answer-input');
+            const error = reviewErrors[currentIndex];
+            const userAnswer = (input.value || '').trim().toLowerCase();
+            const correctAnswer = error.right.trim().toLowerCase();
+
+            const isCorrect = userAnswer === correctAnswer ||
+                normalizeForComparison(userAnswer) === normalizeForComparison(correctAnswer);
+
+            const card = document.getElementById('review-card');
+            const feedback = document.getElementById('feedback-area');
+            const btnCheck = document.getElementById('btn-check');
+            const btnNext = document.getElementById('btn-next');
+
+            if (isCorrect) {
+                correctCount++;
+                card.className = 'review-card correct';
+                input.className = 'answer-input correct-input';
+                feedback.className = 'feedback-area feedback-correct show';
+                feedback.innerHTML = '&#10003; Correto! Muito bem!';
+            } else {
+                card.className = 'review-card incorrect shake';
+                input.className = 'answer-input incorrect-input';
+                feedback.className = 'feedback-area feedback-incorrect show';
+                feedback.innerHTML = `&#10007; A resposta correta é:<div class="correct-answer">${escapeHtml(error.right)}</div>`;
+            }
+
+            btnCheck.style.display = 'none';
+            btnNext.style.display = 'inline-block';
+
+            // Disable chips
+            document.querySelectorAll('.suggestion-chip').forEach(c => {
+                c.style.pointerEvents = 'none';
+                c.style.opacity = '0.5';
+            });
+        }
+
+        function skipError() {
+            nextError();
+        }
+
+        function nextError() {
+            currentIndex++;
+            showCurrentError();
+        }
+
+        function showCompletion() {
+            const total = reviewErrors.length;
+            const pct = total > 0 ? Math.round((correctCount / total) * 100) : 0;
+            const scoreClass = pct >= 75 ? 'great' : pct >= 50 ? 'good' : 'needs-work';
+
+            document.getElementById('progress-fill').style.width = '100%';
+            document.getElementById('progress-text').textContent = `${total}/${total}`;
+
+            const area = document.getElementById('review-area');
+            area.innerHTML = `
+                <div class="review-card">
+                    <div class="review-complete">
+                        <div class="complete-icon">${pct >= 75 ? '🎉' : pct >= 50 ? '👍' : '💪'}</div>
+                        <h2>${pct >= 75 ? 'Excelente!' : pct >= 50 ? 'Bom trabalho!' : 'Continue praticando!'}</h2>
+                        <p>Você acertou</p>
+                        <div class="review-score ${scoreClass}">${correctCount}/${total}</div>
+                        <p style="font-size: 0.85rem;">${pct}% de acerto</p>
+                        <div class="review-actions" style="margin-top: 24px;">
+                            <button class="btn-check" onclick="initReview()">Revisar Novamente</button>
+                            <a href="dashboard.html" class="btn-back">Voltar</a>
+                        </div>
+                    </div>
+                </div>`;
+
+            // Update last review date in progress
+            try {
+                const data = JSON.parse(localStorage.getItem('student_progress') || '{}');
+                if (data.errors) {
+                    // Decrease count for correctly answered errors (spaced repetition)
+                    reviewErrors.forEach((e, i) => {
+                        if (i < correctCount) {
+                            const match = data.errors.find(de => de.wrong === e.wrong && de.right === e.right);
+                            if (match && match.count > 1) match.count--;
+                        }
+                    });
+                    localStorage.setItem('student_progress', JSON.stringify(data));
+                }
+            } catch (e) { /* ignore */ }
+        }
+
+        // ====== UTILS ======
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function escapeAttr(str) {
+            return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        }
+
+        function normalizeForComparison(str) {
+            return str.replace(/[''`]/g, "'")
+                .replace(/[""]/g, '"')
+                .replace(/\s+/g, ' ')
+                .replace(/[.,!?;:]+$/g, '')
+                .trim();
+        }
+
+        // ====== INIT ======
+        if (!localStorage.getItem('auth_token')) {
+            window.location.href = 'index.html';
+        }
+        initReview();
+    </script>
+</body>
+
+</html>
