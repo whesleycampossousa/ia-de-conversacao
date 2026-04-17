@@ -124,17 +124,24 @@
                     </div>
 
                     <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5); margin-top: 12px; text-align:center; line-height:1.4;">
-                        As alterações são salvas automaticamente e aplicadas na próxima mensagem da IA.
+                        As alterações são salvas automaticamente.
                     </div>
-                    <button onclick="closeSettingsPanel()" style="width:100%; margin-top: 10px; padding: 10px; background: #e50914; border: none; border-radius: 8px; color: white; font-weight: 700; font-size: 0.95rem; cursor: pointer;">Pronto</button>
+                    <button id="settings-primary-btn"
+                            onclick="confirmSettingsAndStart()"
+                            style="width:100%; margin-top: 10px; padding: 14px; background: #e50914; border: none; border-radius: 8px; color: white; font-weight: 700; font-size: 1.05rem; cursor: pointer;">
+                        ▶ Começar prática
+                    </button>
                 </div>
             </div>
 
             <!-- Objective removed -->
 
-            <!-- Start Overlay -->
+            <!-- Start Overlay (hidden: configuration now lives in the Settings Panel,
+                 which opens automatically on load. This overlay stays in the DOM because
+                 app.js's startConversationFlow hides it imperatively — we keep that path
+                 working by making the overlay invisible from the start.) -->
             <div id="start-overlay" class="start-overlay-container"
-                style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; background: rgba(0,0,0,0.95); position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 100;">
+                style="display: none; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; background: rgba(0,0,0,0.95); position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 100;">
 
                 <!-- Onboarding (shown only first time) -->
                 <div id="onboarding-overlay" style="display: none; text-align: center; margin-bottom: 1rem; max-width: 360px;">
@@ -639,6 +646,7 @@
             document.getElementById('settings-speed-value').textContent = spdEl.value + '×';
 
             overlay.style.display = 'block';
+            updateSettingsPrimaryButtonLabel();
         }
         window.openSettingsPanel = openSettingsPanel;
 
@@ -647,6 +655,27 @@
             if (overlay) overlay.style.display = 'none';
         }
         window.closeSettingsPanel = closeSettingsPanel;
+
+        // Primary action of the panel: "Começar prática" (first time) or
+        // "Continuar prática" (if user opened the panel mid-session to tweak something).
+        function confirmSettingsAndStart() {
+            closeSettingsPanel();
+            // If the practice hasn't started yet, click the (hidden) Play button
+            // to trigger the exact same startup logic app.js already wires up.
+            if (!window.__practiceStarted) {
+                window.__practiceStarted = true;
+                const startBtn = document.getElementById('start-btn');
+                if (startBtn) startBtn.click();
+            }
+        }
+        window.confirmSettingsAndStart = confirmSettingsAndStart;
+
+        // Update the primary button label depending on whether practice has started.
+        function updateSettingsPrimaryButtonLabel() {
+            const btn = document.getElementById('settings-primary-btn');
+            if (!btn) return;
+            btn.textContent = window.__practiceStarted ? '✓ Continuar prática' : '▶ Começar prática';
+        }
 
         // Wire up pill groups — click to select, persist, apply presets
         function wireSettingsPills(groupId, key, onChange) {
@@ -732,14 +761,24 @@
                 window.ttsSpeed = v;
             });
 
-            // Close on ESC or click outside the panel
+            // Close on ESC or click outside the panel (only if practice has started —
+            // before the first Play, they must commit via the primary button).
             document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') closeSettingsPanel();
+                if (e.key === 'Escape' && window.__practiceStarted) closeSettingsPanel();
             });
             const overlay = document.getElementById('settings-overlay');
             if (overlay) overlay.addEventListener('click', (e) => {
-                if (e.target === overlay) closeSettingsPanel();
+                if (e.target === overlay && window.__practiceStarted) closeSettingsPanel();
             });
+
+            // Auto-open the settings panel on first page load — this replaces the old
+            // start overlay (mode pills + difficulty pills + toggles + Play button).
+            // Wait for app.js to wire startBtn before opening.
+            setTimeout(() => {
+                if (!window.__practiceStarted && document.getElementById('settings-overlay')) {
+                    window.openSettingsPanel();
+                }
+            }, 200);
         });
 
         // Apply preset based on difficulty (respects user's manual override per feature).
