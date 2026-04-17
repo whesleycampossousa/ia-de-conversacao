@@ -368,6 +368,14 @@
     // localStorage 'tts_pt_first' = 'true' | 'false'
     window.ptFirst = localStorage.getItem('tts_pt_first') === 'true';
 
+    // Volume boost multiplier for TTS playback (via Web Audio API GainNode).
+    // The cloned PT voice came back quiet — 1.6 = +60% compensates for that without
+    // distortion on typical voice samples. User can override via localStorage.
+    const savedVolumeBoost = parseFloat(localStorage.getItem('tts_volume_boost'));
+    window.ttsVolumeBoost = (Number.isFinite(savedVolumeBoost) && savedVolumeBoost > 0)
+        ? savedVolumeBoost
+        : 1.6;
+
     // Suggestions for Learning Mode (Grammar)
     const suggestionSets = {
         'verb_to_be': [
@@ -3296,6 +3304,22 @@
         return chunks;
     }
 
+    // Lazy-init AudioContext for volume boost (Web Audio API).
+    // Required because HTML5 <audio> volume is capped at 1.0 — we need gain > 1
+    // to make the cloned voice (recorded quietly) comfortable to hear.
+    let _ttsAudioContext = null;
+    function getTtsAudioContext() {
+        if (!_ttsAudioContext) {
+            const AC = window.AudioContext || window.webkitAudioContext;
+            if (!AC) return null;
+            _ttsAudioContext = new AC();
+        }
+        if (_ttsAudioContext.state === 'suspended') {
+            _ttsAudioContext.resume().catch(() => {});
+        }
+        return _ttsAudioContext;
+    }
+
     function playAudioBlob(blob) {
         return new Promise((resolve) => {
             // Stop any previous audio to prevent overlap
@@ -3311,6 +3335,25 @@
             const audioUrl = URL.createObjectURL(blob);
             const audio = new Audio(audioUrl);
             currentAudio = audio;
+
+            // Volume boost via Web Audio API when the cloned voice is too quiet.
+            // window.ttsVolumeBoost can be set by app code/localStorage (default 1.6 = +60%).
+            const boost = Number(window.ttsVolumeBoost || 1.0);
+            if (boost > 1.01) {
+                try {
+                    const ctx = getTtsAudioContext();
+                    if (ctx) {
+                        const source = ctx.createMediaElementSource(audio);
+                        const gainNode = ctx.createGain();
+                        gainNode.gain.value = boost;
+                        source.connect(gainNode);
+                        gainNode.connect(ctx.destination);
+                    }
+                } catch (e) {
+                    // If gain setup fails (e.g. CORS, already-used element), fall back silently to normal playback
+                    console.warn('[TTS] Volume boost unavailable, playing at default volume:', e && e.message);
+                }
+            }
             let cleaned = false;
             const cleanup = () => {
                 if (cleaned) return;
