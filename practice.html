@@ -33,12 +33,101 @@
                     <span id="player-mode-badge" data-i18n-en="Mode: Learning" data-i18n-pt="Modo: Aprender">Modo: Aprender</span>
                 </div>
 
-                <!-- Subtitle Toggle Button + Interface Language Toggle -->
+                <!-- Subtitle Toggle + Settings Button (unified config panel) -->
                 <button id="subtitle-toggle-btn" class="subtitle-toggle-btn" onclick="toggleSubtitles()">Ativar legendas</button>
-                <button id="interface-lang-toggle" class="subtitle-toggle-btn"
-                    onclick="setInterfaceLang(getInterfaceLang() === 'pt' ? 'en' : 'pt')"
-                    title="Mudar idioma da interface"
-                    style="margin-left: 6px; min-width: 40px;">EN</button>
+                <button id="settings-open-btn" class="subtitle-toggle-btn"
+                    onclick="openSettingsPanel()"
+                    title="Configurações gerais"
+                    style="margin-left: 6px;">⚙ Configurações</button>
+            </div>
+
+            <!-- ===== SETTINGS PANEL (unified config modal) ===== -->
+            <div id="settings-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:500; overflow-y:auto; padding: 20px;">
+                <div id="settings-panel" style="max-width: 560px; margin: 20px auto; background: #181b22; border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 1.2rem 1.4rem 1rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
+                        <div style="font-size: 1.15rem; font-weight: 700; color: #fff;">⚙ Configurações gerais</div>
+                        <button onclick="closeSettingsPanel()" style="background: transparent; border: none; color: rgba(255,255,255,0.7); font-size: 1.5rem; cursor: pointer; padding: 0 6px;">×</button>
+                    </div>
+
+                    <!-- Nível -->
+                    <div class="settings-group">
+                        <div class="settings-label">🎯 Seu nível de inglês</div>
+                        <div class="settings-hint">Isso ajusta: tamanho das respostas, vocabulário, legendas e tradução</div>
+                        <div class="settings-pills" id="settings-difficulty">
+                            <button class="settings-pill" data-value="beginner">Iniciante (A1-A2)</button>
+                            <button class="settings-pill" data-value="intermediate">Intermediário (B1-B2)</button>
+                            <button class="settings-pill" data-value="advanced">Avançado (C1+)</button>
+                        </div>
+                    </div>
+
+                    <!-- Modo -->
+                    <div class="settings-group">
+                        <div class="settings-label">🎭 Modo de prática</div>
+                        <div class="settings-hint">Aprender: com correções imediatas. Simulador: conversa livre sem interrupção.</div>
+                        <div class="settings-pills" id="settings-mode">
+                            <button class="settings-pill" data-value="learning">📚 Aprender</button>
+                            <button class="settings-pill" data-value="simulator">🎭 Simulador</button>
+                        </div>
+                    </div>
+
+                    <!-- Idioma da interface -->
+                    <div class="settings-group">
+                        <div class="settings-label">🌐 Idioma da interface</div>
+                        <div class="settings-hint">Botões, títulos e mensagens do app</div>
+                        <div class="settings-pills" id="settings-interface-lang">
+                            <button class="settings-pill" data-value="pt">Português</button>
+                            <button class="settings-pill" data-value="en">English</button>
+                        </div>
+                    </div>
+
+                    <!-- Legendas -->
+                    <div class="settings-group">
+                        <div class="settings-label">📝 Legendas e tradução</div>
+                        <label class="settings-row">
+                            <span>Mostrar legendas e tradução em PT</span>
+                            <input type="checkbox" id="settings-subtitles" class="settings-toggle-input" />
+                            <span class="toggle-switch"></span>
+                        </label>
+                    </div>
+
+                    <!-- Voz da IA -->
+                    <div class="settings-group">
+                        <div class="settings-label">🔊 Voz da IA</div>
+                        <label class="settings-row">
+                            <span>Falar tradução PT após o EN</span>
+                            <input type="checkbox" id="settings-dual-tts" class="settings-toggle-input" />
+                            <span class="toggle-switch"></span>
+                        </label>
+                        <label class="settings-row">
+                            <span>Ouvir PT <em>primeiro</em>, depois EN</span>
+                            <input type="checkbox" id="settings-pt-first" class="settings-toggle-input" />
+                            <span class="toggle-switch"></span>
+                        </label>
+                        <label class="settings-row" style="flex-direction:column; align-items:flex-start; gap:4px;">
+                            <span>Volume do áudio: <span id="settings-volume-value" style="opacity:0.7;">1.6×</span></span>
+                            <input type="range" id="settings-volume" min="0.8" max="2.4" step="0.1" style="width:100%; accent-color:#e50914;" />
+                        </label>
+                        <label class="settings-row" style="flex-direction:column; align-items:flex-start; gap:4px;">
+                            <span>Velocidade da voz EN: <span id="settings-speed-value" style="opacity:0.7;">1.0×</span></span>
+                            <input type="range" id="settings-speed" min="0.6" max="1.2" step="0.05" style="width:100%; accent-color:#e50914;" />
+                        </label>
+                    </div>
+
+                    <!-- Gravação -->
+                    <div class="settings-group">
+                        <div class="settings-label">🎤 Gravação</div>
+                        <label class="settings-row">
+                            <span>Confirmar transcrição antes de enviar</span>
+                            <input type="checkbox" id="settings-confirm-transcription" class="settings-toggle-input" />
+                            <span class="toggle-switch"></span>
+                        </label>
+                    </div>
+
+                    <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5); margin-top: 12px; text-align:center; line-height:1.4;">
+                        As alterações são salvas automaticamente e aplicadas na próxima mensagem da IA.
+                    </div>
+                    <button onclick="closeSettingsPanel()" style="width:100%; margin-top: 10px; padding: 10px; background: #e50914; border: none; border-radius: 8px; color: white; font-weight: 700; font-size: 0.95rem; cursor: pointer;">Pronto</button>
+                </div>
             </div>
 
             <!-- Objective removed -->
@@ -504,6 +593,155 @@
         // Make toggleSubtitles available globally
         window.toggleSubtitles = toggleSubtitles;
 
+        // ===== SETTINGS PANEL WIRING =====
+        // Single unified panel to change every important setting in one place.
+        // Each control reads/writes the same localStorage keys the rest of the app
+        // already uses, so no new plumbing needed — they share state.
+        function openSettingsPanel() {
+            const overlay = document.getElementById('settings-overlay');
+            if (!overlay) return;
+
+            // Hydrate each section with current values
+            const currentDifficulty = localStorage.getItem('practice_difficulty') || 'intermediate';
+            const currentMode = localStorage.getItem('practice_mode') || 'learning';
+            const currentLang = window.getInterfaceLang ? window.getInterfaceLang() : 'pt';
+            const subsOn = window.subtitlesEnabled !== false;
+            const dualOn = localStorage.getItem('tts_speak_pt') === 'true'
+                || (localStorage.getItem('tts_speak_pt_user_set') !== 'true' && currentDifficulty === 'beginner');
+            const ptFirstOn = localStorage.getItem('tts_pt_first') === 'true';
+            const boost = parseFloat(localStorage.getItem('tts_volume_boost')) || 1.6;
+            const speed = parseFloat(localStorage.getItem('tts_speed')) || (currentDifficulty === 'beginner' ? 0.85 : 1.0);
+            const confirmTr = localStorage.getItem('confirm_transcription') === 'true';
+
+            // Pills: mark the active one
+            document.querySelectorAll('#settings-difficulty .settings-pill').forEach(p => {
+                p.classList.toggle('active', p.dataset.value === currentDifficulty);
+            });
+            document.querySelectorAll('#settings-mode .settings-pill').forEach(p => {
+                p.classList.toggle('active', p.dataset.value === currentMode);
+            });
+            document.querySelectorAll('#settings-interface-lang .settings-pill').forEach(p => {
+                p.classList.toggle('active', p.dataset.value === currentLang);
+            });
+
+            // Checkboxes
+            document.getElementById('settings-subtitles').checked = subsOn;
+            document.getElementById('settings-dual-tts').checked = !!dualOn;
+            document.getElementById('settings-pt-first').checked = ptFirstOn;
+            document.getElementById('settings-confirm-transcription').checked = confirmTr;
+
+            // Ranges + labels
+            const volEl = document.getElementById('settings-volume');
+            volEl.value = boost;
+            document.getElementById('settings-volume-value').textContent = boost.toFixed(1) + '×';
+            const spdEl = document.getElementById('settings-speed');
+            spdEl.value = speed;
+            document.getElementById('settings-speed-value').textContent = spdEl.value + '×';
+
+            overlay.style.display = 'block';
+        }
+        window.openSettingsPanel = openSettingsPanel;
+
+        function closeSettingsPanel() {
+            const overlay = document.getElementById('settings-overlay');
+            if (overlay) overlay.style.display = 'none';
+        }
+        window.closeSettingsPanel = closeSettingsPanel;
+
+        // Wire up pill groups — click to select, persist, apply presets
+        function wireSettingsPills(groupId, key, onChange) {
+            const group = document.getElementById(groupId);
+            if (!group) return;
+            group.querySelectorAll('.settings-pill').forEach(pill => {
+                pill.addEventListener('click', () => {
+                    const val = pill.dataset.value;
+                    group.querySelectorAll('.settings-pill').forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    localStorage.setItem(key, val);
+                    if (typeof onChange === 'function') onChange(val);
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            wireSettingsPills('settings-difficulty', 'practice_difficulty', (val) => {
+                // Update in-memory selection and re-apply presets that depend on level
+                if (typeof selectedDifficulty !== 'undefined') { /* no-op: shadowed */ }
+                try { window.applyDifficultyPreset && window.applyDifficultyPreset(val); } catch (_) {}
+                // Also keep the start-overlay pills in sync if visible
+                document.querySelectorAll('.difficulty-pill').forEach(p => {
+                    p.classList.toggle('selected', p.dataset.difficulty === val);
+                });
+            });
+            wireSettingsPills('settings-mode', 'practice_mode', (val) => {
+                // Reflect on the mode cards in the start overlay (if still visible)
+                document.querySelectorAll('.pmode-card').forEach(c => {
+                    c.classList.toggle('selected', c.dataset.mode === val);
+                });
+                window.practiceMode = val;
+                if (window.updateHeaderInfo) window.updateHeaderInfo();
+            });
+            wireSettingsPills('settings-interface-lang', 'interface_lang', (val) => {
+                window.setInterfaceLang && window.setInterfaceLang(val);
+                if (window.updateHeaderInfo) window.updateHeaderInfo();
+            });
+
+            // Checkboxes
+            const subs = document.getElementById('settings-subtitles');
+            if (subs) subs.addEventListener('change', () => {
+                localStorage.setItem('auto_translate', subs.checked ? 'true' : 'false');
+                localStorage.setItem('auto_translate_user_set', 'true');
+                window.subtitlesEnabled = subs.checked;
+                if (typeof updateToggleUI === 'function') updateToggleUI();
+                if (typeof applySubtitleState === 'function') applySubtitleState();
+            });
+            const dual = document.getElementById('settings-dual-tts');
+            if (dual) dual.addEventListener('change', () => {
+                localStorage.setItem('tts_speak_pt', dual.checked ? 'true' : 'false');
+                localStorage.setItem('tts_speak_pt_user_set', 'true');
+                window.speakPtTranslation = dual.checked;
+            });
+            const ptf = document.getElementById('settings-pt-first');
+            if (ptf) ptf.addEventListener('change', () => {
+                localStorage.setItem('tts_pt_first', ptf.checked ? 'true' : 'false');
+                window.ptFirst = ptf.checked;
+                const mainCheckbox = document.getElementById('pt-first-checkbox');
+                if (mainCheckbox) mainCheckbox.checked = ptf.checked;
+            });
+            const conf = document.getElementById('settings-confirm-transcription');
+            if (conf) conf.addEventListener('change', () => {
+                localStorage.setItem('confirm_transcription', conf.checked ? 'true' : 'false');
+                const mainCheckbox = document.getElementById('confirm-toggle-checkbox');
+                if (mainCheckbox) mainCheckbox.checked = conf.checked;
+            });
+
+            // Ranges
+            const vol = document.getElementById('settings-volume');
+            if (vol) vol.addEventListener('input', () => {
+                const v = parseFloat(vol.value);
+                document.getElementById('settings-volume-value').textContent = v.toFixed(1) + '×';
+                localStorage.setItem('tts_volume_boost', v.toString());
+                window.ttsVolumeBoost = v;
+            });
+            const spd = document.getElementById('settings-speed');
+            if (spd) spd.addEventListener('input', () => {
+                const v = parseFloat(spd.value);
+                document.getElementById('settings-speed-value').textContent = v.toFixed(2) + '×';
+                localStorage.setItem('tts_speed', v.toString());
+                localStorage.setItem('tts_speed_user_set', 'true');
+                window.ttsSpeed = v;
+            });
+
+            // Close on ESC or click outside the panel
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeSettingsPanel();
+            });
+            const overlay = document.getElementById('settings-overlay');
+            if (overlay) overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) closeSettingsPanel();
+            });
+        });
+
         // Apply preset based on difficulty (respects user's manual override per feature).
         // Called when the user switches difficulty levels.
         function applyDifficultyPreset(difficulty) {
@@ -943,13 +1181,80 @@
         /* Selector list covers every toggle checkbox in the page.
            When adding a new toggle, include its id here. */
         #confirm-toggle-checkbox:checked ~ .toggle-switch,
-        #pt-first-checkbox:checked ~ .toggle-switch {
+        #pt-first-checkbox:checked ~ .toggle-switch,
+        .settings-toggle-input:checked ~ .toggle-switch {
             background: #e50914;
         }
         #confirm-toggle-checkbox:checked ~ .toggle-switch::after,
-        #pt-first-checkbox:checked ~ .toggle-switch::after {
+        #pt-first-checkbox:checked ~ .toggle-switch::after,
+        .settings-toggle-input:checked ~ .toggle-switch::after {
             transform: translateX(16px);
             background: #fff;
+        }
+
+        /* Settings panel styles */
+        .settings-group {
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .settings-group:last-of-type {
+            border-bottom: none;
+        }
+        .settings-label {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 3px;
+        }
+        .settings-hint {
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 8px;
+            line-height: 1.35;
+        }
+        .settings-pills {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .settings-pill {
+            flex: 1;
+            min-width: 80px;
+            padding: 8px 10px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: rgba(255,255,255,0.8);
+            font-size: 0.78rem;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .settings-pill:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .settings-pill.active {
+            background: #e50914;
+            border-color: #e50914;
+            color: white;
+            font-weight: 600;
+        }
+        .settings-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 7px 0;
+            font-size: 0.82rem;
+            color: rgba(255,255,255,0.85);
+            cursor: pointer;
+            gap: 10px;
+        }
+        .settings-row input[type="checkbox"] {
+            display: none;
+        }
+        .settings-row input[type="range"] {
+            width: 100%;
+            cursor: pointer;
         }
 
         .player-objective {

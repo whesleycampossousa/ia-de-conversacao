@@ -38,7 +38,7 @@ ENROLLMENT_URL = os.environ.get(
 ).strip()
 
 TARGET_MODEL = os.environ.get("QWEN_TTS_CLONE_MODEL", "qwen3-tts-vc-2026-01-22").strip()
-PREFIX = "clonept"  # distinct from the EN clone prefix (clone16)
+PREFIX = "cloneptv2"  # v2 = natural conversational recording (v1 was scripted)
 AUDIO_FILE = ROOT / "voice_references" / "minha_voz_pt.mp3"
 
 if not AUDIO_FILE.exists():
