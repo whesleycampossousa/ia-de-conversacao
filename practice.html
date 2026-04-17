@@ -109,6 +109,15 @@
                     </label>
                 </div>
 
+                <!-- PT-first toggle: let super-beginners hear Portuguese BEFORE English -->
+                <div id="pt-first-step" style="text-align: center; margin: 0.4rem 0;">
+                    <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <span style="font-size: 0.7rem; color: rgba(255,255,255,0.5);">Ouvir PT primeiro, depois EN</span>
+                        <input type="checkbox" id="pt-first-checkbox" style="display: none;" />
+                        <span class="toggle-switch"></span>
+                    </label>
+                </div>
+
                 <!-- Voice selector (handled by app.js) -->
                 <div id="voice-selection-step" style="display: none;"></div>
 
@@ -404,6 +413,15 @@
         // Apply on load
         window.applyInterfaceLang(window.getInterfaceLang());
 
+        // Map URL ?level= (A1/A2/B1/B2/C1/C2) to our difficulty buckets.
+        // When the student comes in via scenarios.html or levels.html, the URL
+        // carries the CEFR level — we sync it to localStorage so beginner presets fire.
+        const urlLevel = (new URLSearchParams(window.location.search).get('level') || '').toUpperCase();
+        const levelToDifficulty = { 'A1': 'beginner', 'A2': 'beginner', 'B1': 'intermediate', 'B2': 'intermediate', 'C1': 'advanced', 'C2': 'advanced' };
+        if (urlLevel && levelToDifficulty[urlLevel]) {
+            localStorage.setItem('practice_difficulty', levelToDifficulty[urlLevel]);
+        }
+
         // Subtitle visibility state (default ON for better comprehension)
         // Preset rule: if difficulty === 'beginner' AND user never manually set it,
         // force subtitles ON. Beginners need the translation safety net.
@@ -601,6 +619,17 @@
                 });
             }
 
+            // --- PT-first toggle (dual TTS order) ---
+            const ptFirstCheckbox = document.getElementById('pt-first-checkbox');
+            if (ptFirstCheckbox) {
+                ptFirstCheckbox.checked = localStorage.getItem('tts_pt_first') === 'true';
+                ptFirstCheckbox.addEventListener('change', () => {
+                    const val = ptFirstCheckbox.checked ? 'true' : 'false';
+                    localStorage.setItem('tts_pt_first', val);
+                    window.ptFirst = ptFirstCheckbox.checked;
+                });
+            }
+
             // --- Difficulty pills ---
             difficultyPills.forEach(pill => {
                 if (pill.dataset.difficulty === selectedDifficulty) pill.classList.add('selected');
@@ -685,7 +714,7 @@
     </script>
 
     <!-- Load App Logic -->
-    <script src="app.js?v=20260221-07"></script>
+    <script src="app.js?v=20260417-beginner-ux"></script>
 
     <style>
         /* Top bar styles */
@@ -911,10 +940,14 @@
             border-radius: 50%;
             transition: transform 0.2s;
         }
-        #confirm-toggle-checkbox:checked ~ .toggle-switch {
+        /* Selector list covers every toggle checkbox in the page.
+           When adding a new toggle, include its id here. */
+        #confirm-toggle-checkbox:checked ~ .toggle-switch,
+        #pt-first-checkbox:checked ~ .toggle-switch {
             background: #e50914;
         }
-        #confirm-toggle-checkbox:checked ~ .toggle-switch::after {
+        #confirm-toggle-checkbox:checked ~ .toggle-switch::after,
+        #pt-first-checkbox:checked ~ .toggle-switch::after {
             transform: translateX(16px);
             background: #fff;
         }

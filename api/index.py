@@ -207,6 +207,10 @@ QWEN_TTS_CLONE_MODEL = os.environ.get("QWEN_TTS_CLONE_MODEL", "qwen3-tts-vc-2026
 QWEN_TTS_VOICE = os.environ.get("QWEN_TTS_VOICE", "Cherry").strip() or "Cherry"
 QWEN_TTS_CLONE_VOICE = os.environ.get("QWEN_TTS_CLONE_VOICE", "").strip()
 QWEN_TTS_CLONE_PREFIX = os.environ.get("QWEN_TTS_CLONE_PREFIX", "clone16").strip() or "clone16"
+# Optional separate PT clone (recorded natively in Portuguese).
+# When set, TTS requests with lessonLang='pt' use this voice instead of the EN clone.
+# Created via scripts/enroll_qwen_clone_pt.py.
+QWEN_TTS_CLONE_VOICE_PT = os.environ.get("QWEN_TTS_CLONE_VOICE_PT", "").strip()
 try:
     QWEN_TTS_TIMEOUT_SEC = int(os.environ.get("QWEN_TTS_TIMEOUT_SEC", "30"))
 except Exception:
@@ -1516,13 +1520,16 @@ def _extract_json_field_value(raw_text, field_name):
     except Exception:
         return _clean_learning_output_artifacts(payload)
 
-def _build_learning_system_prompt(context_key, base_prompt, objective_text=''):
+def _build_learning_system_prompt(context_key, base_prompt, objective_text='', difficulty_length_rule=''):
     """Strengthen Learning mode so scenario prompts do not drift into pure simulator behavior."""
     base = (base_prompt or '').strip()
     objective = (objective_text or '').strip()
     objective_line = f"- Session objective: {objective}" if objective else "- Session objective: guide practical communication in this context."
     context_label = (context_key or 'conversation').replace('_', ' ')
     student_role = _learning_student_role_label(context_key)
+    # Fallback when caller did not provide a difficulty rule (keeps backward compat).
+    if not difficulty_length_rule:
+        difficulty_length_rule = "Keep responses short and clear (1-3 sentences)."
     return f"""{base}
 
 LEARNING MODE (STRICT):
@@ -1545,7 +1552,7 @@ CRITICAL RULES:
 """
 
 
-def _resolve_chat_system_prompt(context_key, practice_mode, is_grammar_topic, objective_text=''):
+def _resolve_chat_system_prompt(context_key, practice_mode, is_grammar_topic, objective_text='', difficulty_length_rule=''):
     """Pick system prompt and mode label for chat generation."""
     fallback_prompt = CONTEXT_PROMPTS.get(context_key, CONTEXT_PROMPTS.get('coffee_shop', ''))
     if practice_mode == 'simulator':
@@ -1556,7 +1563,7 @@ def _resolve_chat_system_prompt(context_key, practice_mode, is_grammar_topic, ob
 
     prompt = fallback_prompt
     if not is_grammar_topic:
-        prompt = _build_learning_system_prompt(context_key, prompt, objective_text)
+        prompt = _build_learning_system_prompt(context_key, prompt, objective_text, difficulty_length_rule)
     return prompt, 'learning', 'learning_prompt'
 
 
@@ -3105,12 +3112,17 @@ def chat():
         topic_title = GRAMMAR_TOPIC_TITLES.get(context_key, context_key.replace('_', ' ').title())
         objective_text = f"Practice {topic_title} in natural conversation."
 
+    # Difficulty rule needs to be computed BEFORE building the system prompt,
+    # because _build_learning_system_prompt embeds it in the CRITICAL RULES block.
+    difficulty_length_rule = build_difficulty_length_rule(difficulty, turn_count)
+
     # Get System Prompt based on context and practice mode
     system_prompt, active_mode, prompt_source = _resolve_chat_system_prompt(
         context_key=context_key,
         practice_mode=practice_mode,
         is_grammar_topic=is_grammar_topic,
-        objective_text=objective_text
+        objective_text=objective_text,
+        difficulty_length_rule=difficulty_length_rule
     )
     if active_mode == 'simulator':
         if prompt_source == 'fallback_context_prompt':
@@ -3184,8 +3196,8 @@ def chat():
         "- If a complex word is needed, prefer a simpler synonym.\n"
     )
 
-    # Difficulty-driven length & vocabulary instruction (replaces hardcoded "1-2 sentences" everywhere)
-    difficulty_length_rule = build_difficulty_length_rule(difficulty, turn_count)
+    # Difficulty-driven length & vocabulary instruction (replaces hardcoded "1-2 sentences" everywhere).
+    # difficulty_length_rule was already computed above (before building the system prompt).
     difficulty_note = f"\n### DIFFICULTY\n- {difficulty_length_rule}\n"
     difficulty_profile = get_difficulty_profile(difficulty)
 
@@ -6094,7 +6106,11 @@ def convert_to_bilingual_ssml(text):
 
     def pt_segment(value):
         safe = escape_ssml(value)
-        return f'<voice name="pt-BR-Chirp3-HD-Achernar"><lang xml:lang="pt-BR">{safe}</lang></voice>'
+        # Using Neural2 instead of Chirp3-HD for Portuguese: Chirp3-HD mispronounces
+        # ç/ã/õ (e.g. reads "começar" as "comecar"). Neural2 handles them correctly
+        # and supports proper SSML. Slight timbre mismatch with the EN voice is
+        # acceptable — correct pronunciation matters more for A1/A2 learners.
+        return f'<voice name="pt-BR-Wavenet-B"><lang xml:lang="pt-BR">{safe}</lang></voice>'
 
     def en_segment(value):
         safe = escape_ssml(value)
@@ -6167,11 +6183,16 @@ def tts_endpoint():
             # Legacy UI aliases (lesson/achernar/etc.) should not override clone voice.
             requested_voice = ""
 
-        # Single Google fallback voice for all interactions (Achernar)
+        # EN uses Chirp3-HD-Achernar (modern neural, excellent English prosody, female).
+        # PT uses Neural2-B instead of Chirp3-HD because Chirp3-HD mispronounces
+        # Portuguese diacritics (ç, ã, õ). Neural2-B is the adult male neural voice
+        # for pt-BR — stronger/more confident tone per product feedback.
+        # Gender is per-language because EN female + PT male.
         voice_config = {
             'en': 'en-US-Chirp3-HD-Achernar',
-            'pt': 'pt-BR-Chirp3-HD-Achernar',
-            'gender': 'FEMALE',
+            'pt': 'pt-BR-Wavenet-B',
+            'en_gender': 'FEMALE',
+            'pt_gender': 'MALE',
             'name': 'Achernar'
         }
 
@@ -6215,8 +6236,17 @@ def tts_endpoint():
             effective_speed = speed
 
         clone_prefix = str(data.get('voicePrefix') or QWEN_TTS_CLONE_PREFIX or "clone16").strip() or "clone16"
-        selected_qwen_voice = requested_voice or QWEN_TTS_CLONE_VOICE or QWEN_TTS_VOICE
-        selected_qwen_model = requested_model or (QWEN_TTS_CLONE_MODEL if (requested_voice or QWEN_TTS_CLONE_VOICE) else QWEN_TTS_MODEL)
+
+        # Pick the default clone by language: if a PT-specific clone exists and the
+        # request is in Portuguese, use it; otherwise fall back to the general clone.
+        # This lets us run a native-PT clone for pt-BR requests without affecting EN.
+        if lesson_lang == 'pt' and QWEN_TTS_CLONE_VOICE_PT:
+            default_clone_voice = QWEN_TTS_CLONE_VOICE_PT
+        else:
+            default_clone_voice = QWEN_TTS_CLONE_VOICE
+
+        selected_qwen_voice = requested_voice or default_clone_voice or QWEN_TTS_VOICE
+        selected_qwen_model = requested_model or (QWEN_TTS_CLONE_MODEL if (requested_voice or default_clone_voice) else QWEN_TTS_MODEL)
 
         # Resolve/prepare Clone16 voice when VC model is selected.
         if QWEN_API_KEY and selected_qwen_model == QWEN_TTS_CLONE_MODEL:
@@ -6318,7 +6348,7 @@ def tts_endpoint():
                 "voice": {
                     "languageCode": "pt-BR",
                     "name": voice_config['pt'],
-                    "ssmlGender": voice_config['gender']
+                    "ssmlGender": voice_config['pt_gender']
                 },
                 "audioConfig": {
                     "audioEncoding": "MP3",
@@ -6332,7 +6362,7 @@ def tts_endpoint():
                 "voice": {
                     "languageCode": "pt-BR",
                     "name": voice_config['pt'],
-                    "ssmlGender": voice_config['gender']
+                    "ssmlGender": voice_config['pt_gender']
                 },
                 "audioConfig": {
                     "audioEncoding": "MP3",
@@ -6346,7 +6376,7 @@ def tts_endpoint():
                 "voice": {
                     "languageCode": "en-US",
                     "name": voice_config['en'],
-                    "ssmlGender": voice_config['gender']
+                    "ssmlGender": voice_config['en_gender']
                 },
                 "audioConfig": {
                     "audioEncoding": "MP3",

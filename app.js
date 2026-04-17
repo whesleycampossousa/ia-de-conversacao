@@ -34,6 +34,14 @@
     let studentLevel = '';
 
 
+    const MODE_LABELS_PT = {
+        learning: 'Aprender',
+        simulator: 'Simulador'
+    };
+    const MODE_LABELS_EN = {
+        learning: 'Learning',
+        simulator: 'Simulator'
+    };
     const MODE_LABELS = {
         learning: 'Learning',
         simulator: 'Simulator'
@@ -353,6 +361,12 @@
         speakPtTranslation = currentDifficultyForTts === 'beginner';
     }
     window.speakPtTranslation = speakPtTranslation;
+
+    // PT-first mode — play the Portuguese translation BEFORE the English audio.
+    // Useful for true super-beginners (A1 just starting out) who need to know the
+    // meaning before their ear engages with the English. Opt-in.
+    // localStorage 'tts_pt_first' = 'true' | 'false'
+    window.ptFirst = localStorage.getItem('tts_pt_first') === 'true';
 
     // Suggestions for Learning Mode (Grammar)
     const suggestionSets = {
@@ -1084,7 +1098,12 @@
         const scenarioTitle = document.getElementById('player-scenario-title');
         const selectedMode = window.getSelectedMode ? window.getSelectedMode() : 'learning';
         if (scenarioTitle && contextName) scenarioTitle.textContent = contextName;
-        if (modeBadge) modeBadge.textContent = `Mode: ${MODE_LABELS[selectedMode] || selectedMode}`;
+        if (modeBadge) {
+            const lang = (window.getInterfaceLang && window.getInterfaceLang()) || 'pt';
+            const labelMap = (lang === 'en') ? MODE_LABELS_EN : MODE_LABELS_PT;
+            const modeLabel = labelMap[selectedMode] || selectedMode;
+            modeBadge.textContent = (lang === 'en' ? `Mode: ${modeLabel}` : `Modo: ${modeLabel}`);
+        }
         if (levelBadge) levelBadge.textContent = `Nivel: ${studentLevel || '--'}`;
         if (objectiveEl) objectiveEl.textContent = getObjectiveText();
         if (typeof sessionGoalTurns !== 'undefined') {
@@ -3378,6 +3397,28 @@
             if (chunks.length === 0) return;
             const skipBtn = showSkipAudioButton();
 
+            // Helper: play PT translation if dual-TTS enabled
+            const playPtIfNeeded = async () => {
+                if (!shouldSpeakPt || !ptBlobPromise || ttsCancelled) return;
+                try {
+                    const ptBlob = await ptBlobPromise;
+                    if (ptBlob && ptBlob.size > 0 && !ttsCancelled) {
+                        await playAudioBlob(ptBlob);
+                    }
+                } catch (err) {
+                    console.warn('[Dual TTS] PT playback failed:', err);
+                }
+            };
+
+            // Order controlled by window.ptFirst (localStorage 'tts_pt_first'):
+            //  - false (default): EN first, then PT (intermediate anchoring)
+            //  - true:            PT first, then EN (super-beginner needs meaning first)
+            const ptFirst = !!window.ptFirst;
+            if (ptFirst) {
+                // Play PT first so student understands meaning, then the target EN
+                await playPtIfNeeded();
+            }
+
             let nextBlobPromise = firstBlobPromise;
 
             for (let i = 0; i < chunks.length; i++) {
@@ -3397,18 +3438,9 @@
                 }
             }
 
-            // Dual-TTS: after the EN audio finishes, play the PT translation
-            // so beginners can anchor on their language. Uses pt-BR-Chirp3-HD
-            // (same neural voice family, so it sounds like "the same speaker").
-            if (shouldSpeakPt && ptBlobPromise && !ttsCancelled) {
-                try {
-                    const ptBlob = await ptBlobPromise;
-                    if (ptBlob && ptBlob.size > 0 && !ttsCancelled) {
-                        await playAudioBlob(ptBlob);
-                    }
-                } catch (err) {
-                    console.warn('[Dual TTS] PT playback failed:', err);
-                }
+            if (!ptFirst) {
+                // Default: PT comes after the EN
+                await playPtIfNeeded();
             }
 
             finalizePlayback(skipBtn);
