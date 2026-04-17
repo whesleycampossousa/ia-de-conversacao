@@ -1133,6 +1133,26 @@ body {
     box-shadow: 0 6px 25px rgba(229, 9, 20, 0.6);
 }
 
+@media (max-width: 768px) {
+    /* Compact footer on mobile to address student feedback that the UI feels cluttered */
+    .player-controls.footer-bar {
+        padding: 2px 12px calc(4px + env(safe-area-inset-bottom));
+        gap: 4px;
+    }
+    .player-controls.footer-bar .input-row {
+        min-height: 52px;
+    }
+    .player-controls.footer-bar .control-btn.mic-btn {
+        flex: 0 0 50px;
+        width: 50px;
+        height: 50px;
+    }
+    .player-controls.footer-bar .report-bar button {
+        padding: 7px 14px;
+        font-size: 0.84rem;
+    }
+}
+
 .player-controls.footer-bar .report-bar button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
@@ -2044,8 +2064,8 @@ body {
     }
 
     .player-controls.footer-bar .control-btn.mic-btn {
-        width: 56px;
-        height: 56px;
+        width: 50px;
+        height: 50px;
     }
 }
 

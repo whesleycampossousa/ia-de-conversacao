@@ -609,6 +609,10 @@
                 <span id="timer-label">restantes</span>
                 <button id="timer-toggle" onclick="toggleTimerVisibility()" style="background: none; border: none; cursor: pointer; font-size: 1.1rem; padding: 0 0 0 6px; line-height: 1;" title="Mostrar/esconder tempo">👁</button>
             </div>
+            <button id="interface-lang-toggle"
+                onclick="setInterfaceLang(getInterfaceLang() === 'pt' ? 'en' : 'pt')"
+                title="Mudar idioma da interface"
+                style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #ccc; padding: 8px 12px; border-radius: 20px; cursor: pointer; font-size: 0.8rem; font-family: inherit; min-width: 40px;">EN</button>
             <button onclick="logoutUser()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #ccc; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; font-family: inherit; transition: all 0.2s;" onmouseover="this.style.background='#e50914'; this.style.color='#fff'; this.style.borderColor='#e50914'" onmouseout="this.style.background='rgba(255,255,255,0.1)'; this.style.color='#ccc'; this.style.borderColor='rgba(255,255,255,0.2)'">Sair</button>
         </div>
     </header>
@@ -620,11 +624,11 @@
             <p class="hero-description" id="hero-description">Prepare for your dream career. Master the art of
                 professional dialogue, answer tough questions with confidence, and leave a lasting impression.</p>
             <div class="hero-buttons">
-                <button class="btn-play" id="hero-play-btn">
-                    <span>&#9658;</span> Play
+                <button class="btn-play" id="hero-play-btn" data-i18n-en="▶ Play" data-i18n-pt="▶ Começar">
+                    <span>&#9658;</span> Começar
                 </button>
-                <button class="btn-info" id="hero-info-btn">
-                    <span>&#9432;</span> More Info
+                <button class="btn-info" id="hero-info-btn" data-i18n-en="ⓘ More Info" data-i18n-pt="ⓘ Mais Informações">
+                    <span>&#9432;</span> Mais Informações
                 </button>
             </div>
         </div>
@@ -632,7 +636,7 @@
 
     <!-- Start Here Section -->
     <section class="start-here">
-        <h2 class="section-title"><span style="color: #e50914;">&#127919;</span> Start Here</h2>
+        <h2 class="section-title" data-i18n-en="🎯 Start Here" data-i18n-pt="🎯 Comece Aqui"><span style="color: #e50914;">&#127919;</span> Comece Aqui</h2>
         <div class="start-here-card" onclick="goToPractice('free_conversation', 'Free Conversation')">
             <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=300&fit=crop"
                 alt="Free Conversation" class="start-here-image">
@@ -648,32 +652,39 @@
     </section>
 
     <!-- Trending Now -->
+    <!-- "Recomendado para você" - Shown dynamically based on user's difficulty.
+         Populated by loadScenarios() with scenarios matching the student's level. -->
+    <section class="category-section" id="recommended-section" style="display: none;">
+        <h2 class="section-title" id="recommended-title">Recomendado para você</h2>
+        <div class="category-row" id="recommended-row"></div>
+    </section>
+
     <section class="category-section">
-        <h2 class="section-title">Trending Now</h2>
+        <h2 class="section-title" data-i18n-en="Trending Now" data-i18n-pt="Em Alta">Em Alta</h2>
         <div class="category-row" id="trending-row"></div>
     </section>
 
     <!-- All Content -->
     <section class="category-section">
-        <h2 class="section-title">All Content</h2>
+        <h2 class="section-title" data-i18n-en="All Content" data-i18n-pt="Todo Conteúdo">Todo Conteúdo</h2>
         <div class="category-row" id="all-content-row"></div>
     </section>
 
     <!-- Travel & Adventure -->
     <section class="category-section">
-        <h2 class="section-title">Travel & Adventure</h2>
+        <h2 class="section-title" data-i18n-en="Travel & Adventure" data-i18n-pt="Viagens & Aventura">Viagens & Aventura</h2>
         <div class="category-row" id="travel-row"></div>
     </section>
 
     <!-- Business & Career -->
     <section class="category-section">
-        <h2 class="section-title">Business & Career</h2>
+        <h2 class="section-title" data-i18n-en="Business & Career" data-i18n-pt="Negócios & Carreira">Negócios & Carreira</h2>
         <div class="category-row" id="business-row"></div>
     </section>
 
     <!-- Daily Life -->
     <section class="category-section">
-        <h2 class="section-title">Daily Life</h2>
+        <h2 class="section-title" data-i18n-en="Daily Life" data-i18n-pt="Dia a Dia">Dia a Dia</h2>
         <div class="category-row" id="daily-row"></div>
     </section>
 
@@ -696,6 +707,29 @@
 
     <script>
         console.log('[DEBUG] Script principal iniciando... v=2026-01-26-FIX-APPLIED');
+
+        // ===== I18N ENGINE (interface language: pt/en) =====
+        // Shared with practice.html. Default 'pt' for Brazilian students.
+        window.getInterfaceLang = () => localStorage.getItem('interface_lang') || 'pt';
+        window.applyInterfaceLang = (lang) => {
+            const chosen = (lang === 'en') ? 'en' : 'pt';
+            document.querySelectorAll('[data-i18n-pt]').forEach(el => {
+                const pt = el.getAttribute('data-i18n-pt');
+                const en = el.getAttribute('data-i18n-en');
+                if (pt && en) el.textContent = (chosen === 'en') ? en : pt;
+            });
+            const btn = document.getElementById('interface-lang-toggle');
+            if (btn) btn.textContent = chosen === 'en' ? 'PT' : 'EN';
+        };
+        window.setInterfaceLang = (lang) => {
+            const chosen = (lang === 'en') ? 'en' : 'pt';
+            localStorage.setItem('interface_lang', chosen);
+            window.applyInterfaceLang(chosen);
+        };
+        // Apply on load
+        document.addEventListener('DOMContentLoaded', () => {
+            window.applyInterfaceLang(window.getInterfaceLang());
+        });
 
         // Data definitions - imagens para todos os cenários
         const scenarioImages = {
@@ -905,6 +939,58 @@
             daily: ['supermarket', 'pharmacy', 'bank', 'post_office', 'gym', 'coffee_shop', 'restaurant', 'doctor', 'library', 'cinema', 'gas_station', 'hair_salon', 'clothing_store', 'bakery', 'dental_clinic', 'pizza_delivery']
         };
 
+        // Difficulty mapping: each scenario tagged with the CEFR-ish level that
+        // matches its typical vocabulary load and interaction complexity.
+        // Used to show a badge on each card and to build a "Recomendado para você" row.
+        const scenarioDifficulty = {
+            // BEGINNER (A1-A2): simple greetings, basic orders, present simple
+            'free_conversation': 'beginner', // adapts to user level
+            'basic_structures': 'beginner',
+            'coffee_shop': 'beginner',
+            'restaurant': 'beginner',
+            'supermarket': 'beginner',
+            'bakery': 'beginner',
+            'pharmacy': 'beginner',
+            'bus_stop': 'beginner',
+            'pizza_delivery': 'beginner',
+            'flower_shop': 'beginner',
+            'pet_shop': 'beginner',
+            'neighbor': 'beginner',
+            'park': 'beginner',
+            'gas_station': 'beginner',
+            'clothing_store': 'beginner',
+            'hotel': 'beginner',
+            // INTERMEDIATE (B1-B2): explain problems, give opinions, describe
+            'airport': 'intermediate',
+            'doctor': 'intermediate',
+            'bank': 'intermediate',
+            'post_office': 'intermediate',
+            'gym': 'intermediate',
+            'train_station': 'intermediate',
+            'library': 'intermediate',
+            'hair_salon': 'intermediate',
+            'cinema': 'intermediate',
+            'dental_clinic': 'intermediate',
+            'tech_support': 'intermediate',
+            'renting_car': 'intermediate',
+            'lost_found': 'intermediate',
+            'street': 'intermediate',
+            'school': 'intermediate',
+            'parents_house': 'intermediate',
+            'museum': 'intermediate',
+            // ADVANCED (C1+): nuance, argumentation, specialized vocabulary
+            'job_interview': 'advanced',
+            'first_date': 'advanced',
+            'wedding': 'advanced',
+            'graduation': 'advanced'
+        };
+        const difficultyLabel = {
+            beginner: { label: 'Iniciante', short: 'A1-A2', color: '#22c55e' },
+            intermediate: { label: 'Intermediário', short: 'B1-B2', color: '#eab308' },
+            advanced: { label: 'Avançado', short: 'C1+', color: '#ef4444' }
+        };
+        const userDifficulty = (localStorage.getItem('practice_difficulty') || 'intermediate').toLowerCase();
+
         // Set random hero
         const heroOptions = ['job_interview', 'airport', 'restaurant', 'hotel'];
         const randomHero = heroOptions[Math.floor(Math.random() * heroOptions.length)];
@@ -1000,7 +1086,39 @@
                 `;
             }
 
+            // Difficulty badge on the image corner so students pick scenarios
+            // that match their level. Also helps beginners avoid advanced ones.
+            const diff = scenarioDifficulty[id];
+            let difficultyBadgeHTML = '';
+            if (diff && difficultyLabel[diff]) {
+                const meta = difficultyLabel[diff];
+                difficultyBadgeHTML = `<div class="difficulty-badge" style="
+                    position: absolute;
+                    top: 8px;
+                    left: 8px;
+                    background: ${meta.color};
+                    color: #fff;
+                    font-size: 10px;
+                    font-weight: 700;
+                    padding: 3px 8px;
+                    border-radius: 10px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+                    z-index: 2;
+                ">${meta.label}</div>`;
+            }
+
+            // Dim scenarios that are harder than the user's selected level
+            // (only when user is beginner — for intermediate/advanced, all are fine).
+            if (userDifficulty === 'beginner' && diff && diff !== 'beginner') {
+                card.style.opacity = '0.55';
+                card.title = 'Este cenário é ' + (difficultyLabel[diff]?.label || diff) + '. Para seu nível, recomendamos cenários Iniciante primeiro.';
+            }
+
+            card.style.position = 'relative';
             card.innerHTML = `
+                ${difficultyBadgeHTML}
                 <img src="${img}" alt="${title}" class="scenario-image"
                     onerror="this.onerror=null;this.src='${fallbackSvg}'">
                 <div class="scenario-card-content">
@@ -1066,6 +1184,26 @@
                 const travelRow = document.getElementById('travel-row');
                 const businessRow = document.getElementById('business-row');
                 const dailyRow = document.getElementById('daily-row');
+                const recommendedRow = document.getElementById('recommended-row');
+                const recommendedSection = document.getElementById('recommended-section');
+                const recommendedTitle = document.getElementById('recommended-title');
+
+                // 0. Recommended for your level - shown for every difficulty,
+                // but especially important for beginners who are choosing among 37 scenarios.
+                if (recommendedRow && recommendedSection) {
+                    const matchingIds = Object.keys(scenarioDifficulty)
+                        .filter(id => scenarioDifficulty[id] === userDifficulty && scenarioMap[id]);
+                    if (matchingIds.length > 0) {
+                        const levelLabel = (difficultyLabel[userDifficulty] || {}).label || userDifficulty;
+                        if (recommendedTitle) {
+                            recommendedTitle.textContent = `Recomendado para você (${levelLabel})`;
+                        }
+                        matchingIds.forEach(id => {
+                            recommendedRow.appendChild(createCard(id, scenarioMap[id]));
+                        });
+                        recommendedSection.style.display = 'block';
+                    }
+                }
 
                 // 1. Trending
                 categories.trending.forEach(id => {

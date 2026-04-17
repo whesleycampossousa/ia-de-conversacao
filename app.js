@@ -324,13 +324,35 @@
     };
 
     // TTS Speed Logic
+    // Priority: URL param > user's manual setting > difficulty preset > grammar mode > 1.0
     let ttsSpeed = 1.0;
     const urlSpeed = parseFloat(urlParams.get('speed'));
+    const ttsSpeedUserOverride = localStorage.getItem('tts_speed_user_set') === 'true';
+    const savedTtsSpeed = parseFloat(localStorage.getItem('tts_speed'));
+    const currentDifficultyForTts = localStorage.getItem('practice_difficulty') || 'intermediate';
+
     if (urlSpeed && !isNaN(urlSpeed)) {
         ttsSpeed = urlSpeed;
+    } else if (ttsSpeedUserOverride && !isNaN(savedTtsSpeed) && savedTtsSpeed > 0) {
+        ttsSpeed = savedTtsSpeed; // Respect user's manual override
+    } else if (currentDifficultyForTts === 'beginner') {
+        ttsSpeed = 0.85; // Preset: slow down for beginners so they can follow
     } else if (urlParams.get('type') === 'grammar') {
         ttsSpeed = 0.7;
     }
+    window.ttsSpeed = ttsSpeed;
+
+    // Dual TTS (speak PT translation after EN) — helps beginners feel comfortable
+    // while still hearing the real English audio first. Opt-in; default ON for beginner.
+    const dualTtsUserOverride = localStorage.getItem('tts_speak_pt_user_set') === 'true';
+    const savedDualTts = localStorage.getItem('tts_speak_pt');
+    let speakPtTranslation;
+    if (dualTtsUserOverride) {
+        speakPtTranslation = savedDualTts === 'true';
+    } else {
+        speakPtTranslation = currentDifficultyForTts === 'beginner';
+    }
+    window.speakPtTranslation = speakPtTranslation;
 
     // Suggestions for Learning Mode (Grammar)
     const suggestionSets = {
@@ -2405,6 +2427,15 @@
         if (window.__tipsModalShownThisSession) return;
         if (tipsModalPromise) return tipsModalPromise;
 
+        // Only show on first practice session ever (per browser).
+        // The tips were appearing on every session and adding to UI clutter.
+        try {
+            if (localStorage.getItem('practice_tips_seen') === '1') {
+                window.__tipsModalShownThisSession = true;
+                return;
+            }
+        } catch (_) {}
+
         const tipsModal = document.getElementById('tips-modal');
         if (!tipsModal) {
             window.__tipsModalShownThisSession = true;
@@ -2417,6 +2448,7 @@
             if (!okBtn) {
                 tipsModal.style.display = 'none';
                 window.__tipsModalShownThisSession = true;
+                try { localStorage.setItem('practice_tips_seen', '1'); } catch (_) {}
                 resolve();
                 return;
             }
@@ -2424,6 +2456,7 @@
             okBtn.addEventListener('click', () => {
                 tipsModal.style.display = 'none';
                 window.__tipsModalShownThisSession = true;
+                try { localStorage.setItem('practice_tips_seen', '1'); } catch (_) {}
                 resolve();
             }, { once: true });
         });
@@ -2634,10 +2667,54 @@
                 }
             };
 
-            const contextGreeting = contextGreetings[context];
+            // BEGINNER overrides: shorter greetings, A1-A2 vocabulary,
+            // simple present, max ~8 words. Keeps the scenario role but
+            // removes complex structures ("May I see...", "What can I get started...").
+            const beginnerContextGreetings = {
+                'coffee_shop': {
+                    en: "Hi! Welcome. What would you like to drink?",
+                    pt: "Oi! Bem-vindo. O que você gostaria de beber?"
+                },
+                'restaurant': {
+                    en: "Hello! Welcome. How many people?",
+                    pt: "Olá! Bem-vindo. Quantas pessoas?"
+                },
+                'airport': {
+                    en: "Hello! Your passport, please?",
+                    pt: "Olá! Seu passaporte, por favor?"
+                },
+                'supermarket': {
+                    en: "Hi! Did you find everything?",
+                    pt: "Oi! Você encontrou tudo?"
+                },
+                'doctor': {
+                    en: "Hi! Please sit down. How can I help you?",
+                    pt: "Oi! Por favor, sente-se. Como posso ajudar?"
+                },
+                'hotel': {
+                    en: "Hi! Are you checking in? What's your name?",
+                    pt: "Oi! Você está fazendo check-in? Qual é o seu nome?"
+                },
+                'free_conversation': {
+                    en: "Hi! Let's talk. What did you do today?",
+                    pt: "Oi! Vamos conversar. O que você fez hoje?"
+                }
+            };
+
+            const selectedDifficulty = window.getSelectedDifficulty ? window.getSelectedDifficulty() : 'intermediate';
+            const isBeginner = selectedDifficulty === 'beginner';
+
+            const contextGreeting = (isBeginner && beginnerContextGreetings[context])
+                ? beginnerContextGreetings[context]
+                : contextGreetings[context];
+
             if (contextGreeting) {
                 greeting = contextGreeting.en;
                 translation = contextGreeting.pt;
+            } else if (isBeginner) {
+                // Generic fallback for beginner on scenarios without a specific override
+                greeting = "Hi! How are you today?";
+                translation = "Oi! Como você está hoje?";
             } else {
                 // Generic fallback for other scenarios
                 greeting = "Hello! How are you doing today?";
@@ -2974,13 +3051,20 @@
             let responseHints = [];
             if (!lessonState.active) {
                 const suggestionBaseText = sanitizeCoachDisplayText(responseText) || responseText;
-                // Step 1: Fetch inline suggestions (shown below chat)
-                responseHints = await fetchDynamicSuggestions(suggestionBaseText, false);
+                // Run both suggestion fetches in PARALLEL (was sequential, ~2x slower)
+                // popup no longer waits for dynamic; we dedupe in JS after both return
+                const dynamicPromise = fetchDynamicSuggestions(suggestionBaseText, false);
+                const popupPromise = (practiceMode === 'learning' && previousAIPrompt)
+                    ? fetchPopupSuggestions(sanitizeCoachDisplayText(previousAIPrompt) || previousAIPrompt, [])
+                    : Promise.resolve([]);
+
+                const [dynamicResult, popupResultRaw] = await Promise.all([dynamicPromise, popupPromise]);
+                responseHints = dynamicResult || [];
 
                 if (practiceMode === 'learning' && previousAIPrompt) {
-                    // Step 2: Fetch popup suggestions EXCLUDING inline ones (must be DIFFERENT)
-                    const popupQuestionText = sanitizeCoachDisplayText(previousAIPrompt) || previousAIPrompt;
-                    const popupResult = await fetchPopupSuggestions(popupQuestionText, responseHints);
+                    // Dedupe popup against inline (was previously done server-side via exclude)
+                    const inlineSet = new Set(responseHints.map(s => String(s.en || '').trim().toLowerCase()).filter(Boolean));
+                    const popupResult = (popupResultRaw || []).filter(r => !inlineSet.has(String(r.en || '').trim().toLowerCase()));
                     popupHints = popupResult.length
                         ? popupResult.slice(0, 3)
                         : getLearningPopupReplyOptions(context, previousAIPrompt, 3);
@@ -3266,6 +3350,21 @@
         const chunks = splitTtsText(ttsText, 480);
         let firstBlobPromise = chunks.length > 0 ? fetchTTSSafe(chunks[0]) : null;
 
+        // If dual-TTS is enabled (beginner default), prefetch the PT translation
+        // audio in parallel so there's no extra delay after the EN finishes.
+        const shouldSpeakPt = !!(window.speakPtTranslation && translation && translation.trim());
+        let ptBlobPromise = null;
+        if (shouldSpeakPt) {
+            const ptText = cleanTextForTts(translation);
+            if (ptText && ptText.trim()) {
+                ptBlobPromise = apiClient.getTTS(ptText, 1.0, 'pt', getActiveVoice())
+                    .catch(err => {
+                        console.warn('[Dual TTS] PT translation fetch failed:', err);
+                        return null;
+                    });
+            }
+        }
+
         // Keep the last asked question cached for learning hints/popups.
         rememberAIQuestionPrompt(text);
 
@@ -3295,6 +3394,20 @@
                 if (ttsCancelled) break;
                 if (blob && blob.size > 0) {
                     await playAudioBlob(blob);
+                }
+            }
+
+            // Dual-TTS: after the EN audio finishes, play the PT translation
+            // so beginners can anchor on their language. Uses pt-BR-Chirp3-HD
+            // (same neural voice family, so it sounds like "the same speaker").
+            if (shouldSpeakPt && ptBlobPromise && !ttsCancelled) {
+                try {
+                    const ptBlob = await ptBlobPromise;
+                    if (ptBlob && ptBlob.size > 0 && !ttsCancelled) {
+                        await playAudioBlob(ptBlob);
+                    }
+                } catch (err) {
+                    console.warn('[Dual TTS] PT playback failed:', err);
                 }
             }
 
@@ -3371,7 +3484,8 @@
         showLoadingIndicator();
 
         try {
-            const data = await apiClient.generateReport(conversationLog, context);
+            const currentMode = window.getSelectedMode ? window.getSelectedMode() : 'learning';
+            const data = await apiClient.generateReport(conversationLog, context, currentMode);
             hideLoadingIndicator();
 
             // Save report data for export

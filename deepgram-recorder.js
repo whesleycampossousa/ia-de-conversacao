@@ -12,43 +12,16 @@ class DeepgramRecorder {
         this.actualMimeType = 'audio/webm'; // track real format for backend
     }
 
-    /** Check if this browser supports audio recording */
-    static isSupported() {
-        return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && typeof MediaRecorder !== 'undefined');
-    }
-
     async start() {
         try {
-            // Check MediaRecorder support (missing on iOS < 14.3)
-            if (typeof MediaRecorder === 'undefined') {
-                console.error('[Recorder] MediaRecorder not supported in this browser');
-                return {
-                    success: false,
-                    error: 'Seu navegador nao suporta gravacao de audio. Use Chrome, Safari 14.3+ ou Edge.'
-                };
-            }
-
-            // Request microphone access — try without sampleRate first on mobile
-            // Some mobile browsers reject the sampleRate constraint
-            let stream = null;
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({
-                    audio: {
-                        echoCancellation: true,
-                        noiseSuppression: true,
-                        sampleRate: 16000
-                    }
-                });
-            } catch (constraintError) {
-                console.warn('[Recorder] getUserMedia failed with sampleRate constraint, retrying without it:', constraintError.name);
-                stream = await navigator.mediaDevices.getUserMedia({
-                    audio: {
-                        echoCancellation: true,
-                        noiseSuppression: true
-                    }
-                });
-            }
-            this.stream = stream;
+            // Request microphone access
+            this.stream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    sampleRate: 16000
+                }
+            });
 
             // Try WebM first (Chrome, Firefox, Edge), then mp4 (Safari/iOS)
             let mimeType = 'audio/webm';
@@ -80,22 +53,9 @@ class DeepgramRecorder {
 
         } catch (error) {
             console.error('[Recorder] Microphone access error:', error);
-            // Provide a better error message for common mobile issues
-            let errorMsg = 'Nao foi possivel acessar o microfone. Verifique as permissoes.';
-            if (error.name === 'NotAllowedError') {
-                errorMsg = 'Permissao do microfone negada. Permita o acesso nas configuracoes do navegador.';
-            } else if (error.name === 'NotFoundError') {
-                errorMsg = 'Nenhum microfone encontrado neste dispositivo.';
-            } else if (error.name === 'NotReadableError') {
-                errorMsg = 'O microfone esta sendo usado por outro aplicativo.';
-            } else if (error.name === 'OverconstrainedError') {
-                errorMsg = 'Configuracao de audio nao suportada pelo seu dispositivo.';
-            } else if (window.location.protocol === 'http:' && window.location.hostname !== 'localhost') {
-                errorMsg = 'O microfone requer conexao HTTPS. Acesse via https:// no celular.';
-            }
             return {
                 success: false,
-                error: errorMsg
+                error: 'Could not access microphone. Please check permissions.'
             };
         }
     }

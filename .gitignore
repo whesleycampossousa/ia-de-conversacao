@@ -20,14 +20,12 @@ nul
 
 # Local runtime artifacts
 weekly_activity_store.json
-authorized_emails.json
 voice_samples/
 Ativos 6 fevereiro.xlsx
 monitor_success.log
 monitor_warnings.log
 monitor_errors.log
 .aider*
-.claude/worktrees/
 
 # Local Netlify folder
 .netlify

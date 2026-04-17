@@ -30,11 +30,15 @@
                 <div class="player-context">
                     <span id="player-scenario-title">BASIC STRUCTURES TRAINING</span>
                     <span class="divider">|</span>
-                    <span id="player-mode-badge">Mode: Learning</span>
+                    <span id="player-mode-badge" data-i18n-en="Mode: Learning" data-i18n-pt="Modo: Aprender">Modo: Aprender</span>
                 </div>
 
-                <!-- Subtitle Toggle Button -->
+                <!-- Subtitle Toggle Button + Interface Language Toggle -->
                 <button id="subtitle-toggle-btn" class="subtitle-toggle-btn" onclick="toggleSubtitles()">Ativar legendas</button>
+                <button id="interface-lang-toggle" class="subtitle-toggle-btn"
+                    onclick="setInterfaceLang(getInterfaceLang() === 'pt' ? 'en' : 'pt')"
+                    title="Mudar idioma da interface"
+                    style="margin-left: 6px; min-width: 40px;">EN</button>
             </div>
 
             <!-- Objective removed -->
@@ -49,14 +53,14 @@
                     <div style="display: flex; gap: 0.5rem; justify-content: center;">
                         <div style="flex: 1; background: rgba(30,30,30,0.95); border-radius: 12px; padding: 0.7rem; border: 1px solid rgba(255,255,255,0.1);">
                             <div style="font-size: 1.3rem; margin-bottom: 0.2rem;">📚</div>
-                            <div style="font-size: 0.75rem; font-weight: 700; color: white; margin-bottom: 0.15rem;">Learning</div>
+                            <div style="font-size: 0.75rem; font-weight: 700; color: white; margin-bottom: 0.15rem;" data-i18n-en="Learning" data-i18n-pt="Aprender">Aprender</div>
                             <div style="font-size: 0.62rem; color: rgba(255,255,255,0.55); line-height: 1.3;">
                                 Siga licoes estruturadas passo a passo. Perfeito para construir vocabulario.
                             </div>
                         </div>
                         <div style="flex: 1; background: rgba(30,30,30,0.95); border-radius: 12px; padding: 0.7rem; border: 1px solid rgba(255,255,255,0.1);">
                             <div style="font-size: 1.3rem; margin-bottom: 0.2rem;">🎭</div>
-                            <div style="font-size: 0.75rem; font-weight: 700; color: white; margin-bottom: 0.15rem;">Simulator</div>
+                            <div style="font-size: 0.75rem; font-weight: 700; color: white; margin-bottom: 0.15rem;" data-i18n-en="Simulator" data-i18n-pt="Simulador">Simulador</div>
                             <div style="font-size: 0.62rem; color: rgba(255,255,255,0.55); line-height: 1.3;">
                                 Pratique conversas reais. A IA interpreta um personagem em cenarios do dia a dia.
                             </div>
@@ -74,13 +78,13 @@
                         <div class="pmode-card" data-mode="learning" id="mode-learning"
                             style="width: 140px; padding: 0.5rem 0.4rem; background: rgba(30,30,30,0.95); border: 2px solid rgba(255,255,255,0.1); border-radius: 12px; cursor: pointer; text-align: center;">
                             <div style="font-size: 1.3rem; margin-bottom: 0.1rem;">📚</div>
-                            <div style="font-size: 0.8rem; font-weight: 700; color: white;">Learning</div>
+                            <div style="font-size: 0.8rem; font-weight: 700; color: white;" data-i18n-en="Learning" data-i18n-pt="Aprender">Aprender</div>
                             <div style="font-size: 0.58rem; color: rgba(255,255,255,0.45); line-height: 1.3; margin-top: 0.15rem;">Licoes passo a passo</div>
                         </div>
                         <div class="pmode-card" data-mode="simulator" id="mode-simulator"
                             style="width: 140px; padding: 0.5rem 0.4rem; background: rgba(30,30,30,0.95); border: 2px solid rgba(255,255,255,0.1); border-radius: 12px; cursor: pointer; text-align: center;">
                             <div style="font-size: 1.3rem; margin-bottom: 0.1rem;">🎭</div>
-                            <div style="font-size: 0.8rem; font-weight: 700; color: white;">Simulator</div>
+                            <div style="font-size: 0.8rem; font-weight: 700; color: white;" data-i18n-en="Simulator" data-i18n-pt="Simulador">Simulador</div>
                             <div style="font-size: 0.58rem; color: rgba(255,255,255,0.45); line-height: 1.3; margin-top: 0.15rem;">Conversas reais com IA</div>
                         </div>
                     </div>
@@ -110,8 +114,9 @@
 
                 <!-- Play button (always visible) -->
                 <button id="start-btn" class="primary-btn pulse-animation"
-                    style="padding: 0.9rem 2rem; font-size: 1.1rem; margin-top: 1rem;">
-                    ▶ Play
+                    style="padding: 0.9rem 2rem; font-size: 1.1rem; margin-top: 1rem;"
+                    data-i18n-en="▶ Play" data-i18n-pt="▶ Começar">
+                    ▶ Começar
                 </button>
                 <div id="start-message" class="start-message" style="font-size: 0.75rem; color: rgba(255,255,255,0.35); margin-top: 0.3rem;">Selecione o modo e toque para iniciar</div>
             </div>
@@ -157,7 +162,7 @@
                 <input type="checkbox" id="auto-translate-toggle" style="display:none;">
 
                 <div class="input-row voice-only-row" id="input-row">
-                    <button id="record-btn" class="control-btn mic-btn" title="Start/Speak" disabled>
+                    <button id="record-btn" class="control-btn mic-btn" title="Clique para Falar" disabled>
                         <span id="mic-icon-inner">🎤</span>
                     </button>
                     <div id="record-text" style="display: none;"></div>
@@ -372,9 +377,47 @@
             return localStorage.getItem('preferred_voice') || 'female2';
         };
 
+        // ===== I18N ENGINE (interface language: pt/en) =====
+        // Elements opt in by adding data-i18n-pt and data-i18n-en attributes.
+        // Default is 'pt' because most of our users are Brazilian and beginners
+        // need Portuguese UI. Advanced learners can switch to 'en' for immersion.
+        window.getInterfaceLang = () => localStorage.getItem('interface_lang') || 'pt';
+        window.applyInterfaceLang = (lang) => {
+            const chosen = (lang === 'en') ? 'en' : 'pt';
+            document.querySelectorAll('[data-i18n-pt]').forEach(el => {
+                const pt = el.getAttribute('data-i18n-pt');
+                const en = el.getAttribute('data-i18n-en');
+                if (pt && en) el.textContent = (chosen === 'en') ? en : pt;
+            });
+            // Sync toggle button label: shows the OTHER language (what clicking does)
+            const btn = document.getElementById('interface-lang-toggle');
+            if (btn) btn.textContent = chosen === 'en' ? 'PT' : 'EN';
+        };
+        window.setInterfaceLang = (lang) => {
+            const chosen = (lang === 'en') ? 'en' : 'pt';
+            localStorage.setItem('interface_lang', chosen);
+            window.applyInterfaceLang(chosen);
+            // Keep toggle UI in sync (if present on page)
+            const btn = document.getElementById('interface-lang-toggle');
+            if (btn) btn.textContent = chosen === 'en' ? 'PT' : 'EN';
+        };
+        // Apply on load
+        window.applyInterfaceLang(window.getInterfaceLang());
+
         // Subtitle visibility state (default ON for better comprehension)
+        // Preset rule: if difficulty === 'beginner' AND user never manually set it,
+        // force subtitles ON. Beginners need the translation safety net.
         const savedSubtitlePref = localStorage.getItem('auto_translate');
-        let subtitlesEnabled = savedSubtitlePref === null ? true : savedSubtitlePref === 'true';
+        const subtitleUserOverride = localStorage.getItem('auto_translate_user_set') === 'true';
+        const currentDifficulty = localStorage.getItem('practice_difficulty') || 'intermediate';
+        let subtitlesEnabled;
+        if (currentDifficulty === 'beginner' && !subtitleUserOverride) {
+            subtitlesEnabled = true; // Preset: forced ON for beginners
+        } else if (savedSubtitlePref === null) {
+            subtitlesEnabled = true; // Default
+        } else {
+            subtitlesEnabled = savedSubtitlePref === 'true';
+        }
         window.subtitlesEnabled = subtitlesEnabled;
         const subtitleToggleBtn = document.getElementById('subtitle-toggle-btn');
         const autoTranslateCheckbox = document.getElementById('auto-translate-toggle');
@@ -433,6 +476,8 @@
         function toggleSubtitles() {
             window.subtitlesEnabled = !window.subtitlesEnabled;
             localStorage.setItem('auto_translate', window.subtitlesEnabled ? 'true' : 'false');
+            // Mark as user-overridden so preset-by-difficulty respects the manual choice.
+            localStorage.setItem('auto_translate_user_set', 'true');
 
             updateToggleUI();
             applySubtitleState();
@@ -440,6 +485,42 @@
 
         // Make toggleSubtitles available globally
         window.toggleSubtitles = toggleSubtitles;
+
+        // Apply preset based on difficulty (respects user's manual override per feature).
+        // Called when the user switches difficulty levels.
+        function applyDifficultyPreset(difficulty) {
+            // 1) Subtitles / auto-translate (respects auto_translate_user_set override)
+            const subUserOverride = localStorage.getItem('auto_translate_user_set') === 'true';
+            if (!subUserOverride) {
+                if (difficulty === 'beginner') {
+                    window.subtitlesEnabled = true;
+                    localStorage.setItem('auto_translate', 'true');
+                }
+                updateToggleUI();
+                applySubtitleState();
+            }
+
+            // 2) TTS speed (respects tts_speed_user_set override)
+            const speedUserOverride = localStorage.getItem('tts_speed_user_set') === 'true';
+            if (!speedUserOverride) {
+                if (difficulty === 'beginner') {
+                    window.ttsSpeed = 0.85;
+                    localStorage.setItem('tts_speed', '0.85');
+                } else {
+                    window.ttsSpeed = 1.0;
+                    localStorage.setItem('tts_speed', '1.0');
+                }
+            }
+
+            // 3) Dual TTS (speak PT after EN) — preset ON for beginner, OFF otherwise.
+            // Respects tts_speak_pt_user_set override.
+            const dualUserOverride = localStorage.getItem('tts_speak_pt_user_set') === 'true';
+            if (!dualUserOverride) {
+                window.speakPtTranslation = (difficulty === 'beginner');
+                localStorage.setItem('tts_speak_pt', window.speakPtTranslation ? 'true' : 'false');
+            }
+        }
+        window.applyDifficultyPreset = applyDifficultyPreset;
 
         // ===== MODE SELECTION LOGIC =====
         let selectedMode = localStorage.getItem('practice_mode') || 'learning';
@@ -528,6 +609,8 @@
                     pill.classList.add('selected');
                     selectedDifficulty = pill.dataset.difficulty;
                     localStorage.setItem('practice_difficulty', selectedDifficulty);
+                    // Apply difficulty preset: beginner -> subtitles ON (unless user overrode)
+                    applyDifficultyPreset(selectedDifficulty);
                 });
             });
 

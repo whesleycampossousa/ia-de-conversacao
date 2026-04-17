@@ -56,7 +56,6 @@ Copie o arquivo de exemplo e preencha com suas credenciais:
 
 ```bash
 cp .env.example .env
-cp authorized_emails.example.json authorized_emails.json
 ```
 
 Edite o arquivo `.env`:
@@ -73,17 +72,12 @@ ALLOWED_ORIGINS=http://localhost:8912,http://localhost:3000
 # Chave secreta para sessões (gere uma aleatória forte)
 SESSION_SECRET=sua_chave_secreta_aqui
 
-# Admin (somente este e-mail usa senha)
-ADMIN_EMAIL=admin@example.com
-ADMIN_PASSWORD=sua_senha_admin_aqui
-
 # Rate Limiting
 RATE_LIMIT_REQUESTS=30
 RATE_LIMIT_WINDOW=60
 ```
 
 **⚠️ IMPORTANTE:** Nunca commite o arquivo `.env` com suas chaves reais!
-O arquivo `authorized_emails.json` define quais alunos podem entrar. Alunos usam apenas o e-mail cadastrado; senha é exclusiva do admin.
 
 ### 4. Execute o servidor
 ```bash
@@ -99,7 +93,7 @@ Abra o navegador e acesse: `http://localhost:8912`
 
 ### Login
 1. Acesse a página inicial
-2. Alunos digitam apenas o e-mail cadastrado; o campo de senha é usado somente pelo admin
+2. Digite seu email (e senha, apenas para admin)
 3. Clique em "Entrar"
 
 ### Praticando Conversação
@@ -232,7 +226,7 @@ A aplicação já está configurada para deploy no Vercel via `vercel.json`.
 ## 🐛 Troubleshooting
 
 ### Problema: "AI service not configured"
-**Solução:** Verifique se `GOOGLE_API_KEY` (chat) e/ou `QWEN_API_KEY` (tts) estão definidas no `.env`
+**Solu��o:** Verifique se `GOOGLE_API_KEY` (chat) e/ou `QWEN_API_KEY` (tts) est�o definidas no `.env`
 
 ### Problema: "Session expired"
 **Solução:** Faça login novamente. Tokens expiram após 7 dias.

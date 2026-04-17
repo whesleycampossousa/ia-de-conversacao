@@ -10,19 +10,19 @@ class APIClient {
         const port = window.location.port;
         const protocol = window.location.protocol;
         
-        // If page is being served by the local app on port 8912, use relative paths
+        // If page is being served by Flask on port 4344, use relative paths
         // If page is opened directly (file://) or on different port, use full URL
         if (hostname === '' || protocol === 'file:') {
             // File opened directly - need full URL
-            this.baseURL = 'https://localhost:8912';
-        } else if (port === '8912' || (hostname === 'localhost' && port === '')) {
+            this.baseURL = 'http://localhost:4344';
+        } else if (port === '4344' || (hostname === 'localhost' && port === '')) {
             // Already being served by Flask - use relative paths
             this.baseURL = '';
         } else if (hostname === 'localhost' || hostname === '127.0.0.1') {
             // Local but different port - use full URL
-            this.baseURL = `${protocol}//${hostname}:8912`;
+            this.baseURL = 'http://localhost:4344';
         } else {
-            // Production/deployment or mobile accessing via LAN IP - use relative paths
+            // Production/deployment - use relative paths
             this.baseURL = '';
         }
         
@@ -183,11 +183,11 @@ class APIClient {
     /**
      * Generate report
      */
-    async generateReport(conversation, context) {
+    async generateReport(conversation, context, practiceMode = 'learning') {
         const response = await fetch(`${this.baseURL}/api/report`, {
             method: 'POST',
             headers: this.getHeaders(),
-            body: JSON.stringify({ conversation, context })
+            body: JSON.stringify({ conversation, context, practiceMode })
         });
 
         await this.handleResponse(response);
