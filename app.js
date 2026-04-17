@@ -3320,7 +3320,7 @@
         return _ttsAudioContext;
     }
 
-    function playAudioBlob(blob) {
+    function playAudioBlob(blob, opts = {}) {
         return new Promise((resolve) => {
             // Stop any previous audio to prevent overlap
             if (currentAudio) {
@@ -3335,6 +3335,21 @@
             const audioUrl = URL.createObjectURL(blob);
             const audio = new Audio(audioUrl);
             currentAudio = audio;
+
+            // Playback rate override (used to speed up PT audio since Qwen ignores
+            // the server-side `speed` param). preservesPitch keeps the voice tone
+            // natural at faster rates — no chipmunk effect.
+            const rate = Number(opts.playbackRate || 1.0);
+            if (rate > 0 && rate !== 1.0) {
+                try {
+                    audio.playbackRate = rate;
+                    if ('preservesPitch' in audio) audio.preservesPitch = true;
+                    else if ('webkitPreservesPitch' in audio) audio.webkitPreservesPitch = true;
+                    else if ('mozPreservesPitch' in audio) audio.mozPreservesPitch = true;
+                } catch (e) {
+                    console.warn('[TTS] playbackRate override failed:', e && e.message);
+                }
+            }
 
             // Volume boost via Web Audio API when the cloned voice is too quiet.
             // window.ttsVolumeBoost can be set by app code/localStorage (default 1.6 = +60%).
@@ -3440,13 +3455,15 @@
             if (chunks.length === 0) return;
             const skipBtn = showSkipAudioButton();
 
-            // Helper: play PT translation if dual-TTS enabled
+            // Helper: play PT translation if dual-TTS enabled.
+            // Portuguese always plays at 1.25x — native speakers don't need slow audio.
+            // Qwen ignores server-side speed param, so rate is applied here via <audio>.playbackRate.
             const playPtIfNeeded = async () => {
                 if (!shouldSpeakPt || !ptBlobPromise || ttsCancelled) return;
                 try {
                     const ptBlob = await ptBlobPromise;
                     if (ptBlob && ptBlob.size > 0 && !ttsCancelled) {
-                        await playAudioBlob(ptBlob);
+                        await playAudioBlob(ptBlob, { playbackRate: 1.25 });
                     }
                 } catch (err) {
                     console.warn('[Dual TTS] PT playback failed:', err);
@@ -3461,6 +3478,10 @@
                 // Play PT first so student understands meaning, then the target EN
                 await playPtIfNeeded();
             }
+
+            // If the main TTS text is Portuguese (grammar PT modes, etc.),
+            // speed it up too — native speakers want a natural-to-fast pace.
+            const mainPlaybackRate = (lessonLang === 'pt') ? 1.25 : 1.0;
 
             let nextBlobPromise = firstBlobPromise;
 
@@ -3477,7 +3498,7 @@
 
                 if (ttsCancelled) break;
                 if (blob && blob.size > 0) {
-                    await playAudioBlob(blob);
+                    await playAudioBlob(blob, { playbackRate: mainPlaybackRate });
                 }
             }
 
