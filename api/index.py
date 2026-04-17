@@ -890,6 +890,25 @@ TEMP_BYPASS_UNTIL_UTC_RAW = os.environ.get('TEMP_BYPASS_UNTIL_UTC', '').strip()
 if TEMP_BYPASS_EMAILS:
     print(f"[BYPASS] {len(TEMP_BYPASS_EMAILS)} email(s) can bypass maintenance for {TEMP_BYPASS_LIMIT_SECONDS}s")
 
+# --- Unlimited users ---
+# Comma-separated emails that have UNLIMITED usage time (no weekend cap, no
+# weekday block, no bypass window). Use sparingly for product owners, testers,
+# or VIP students. Env var: UNLIMITED_EMAILS="email1,email2,..."
+_raw_unlimited = os.environ.get('UNLIMITED_EMAILS', '').strip()
+UNLIMITED_EMAILS = {e.strip().lower() for e in _raw_unlimited.split(',') if e.strip() and '@' in e.strip()}
+
+if UNLIMITED_EMAILS:
+    print(f"[UNLIMITED] {len(UNLIMITED_EMAILS)} email(s) have unlimited usage")
+
+def _is_unlimited_email(email):
+    """Check if email is in the unlimited-usage list (always true, no time window)."""
+    if not UNLIMITED_EMAILS or not email:
+        return False
+    return str(email).strip().lower() in UNLIMITED_EMAILS
+
+# Sentinel used in the usage payload to indicate unlimited usage to the frontend.
+UNLIMITED_REMAINING_SENTINEL = 10 ** 9  # ~31 years; effectively infinite for display purposes
+
 def parse_utc_iso(value):
     """Parse ISO datetime to naive UTC datetime. Returns None on invalid input."""
     if not value:
@@ -951,28 +970,42 @@ def temporary_unlock_meta():
 
 def build_usage_payload(email, usage_data=None):
     """Single source of truth for usage payload across login/status endpoints."""
-    is_bypass = _is_bypass_email(str(email or '').strip().lower())
-    usage_data = usage_data or get_user_usage_data(email, force_active=is_bypass)
+    normalized = str(email or '').strip().lower()
+    is_unlimited = _is_unlimited_email(normalized)
+    is_bypass = _is_bypass_email(normalized)
+    usage_data = usage_data or get_user_usage_data(email, force_active=(is_bypass or is_unlimited))
     unlock = temporary_unlock_meta()
     exempt = is_usage_exempt_request()
     limit = _effective_limit(email)
-    if exempt:
+    if is_unlimited:
+        remaining = UNLIMITED_REMAINING_SENTINEL
+        blocked = False
+    elif exempt:
         remaining = limit
         blocked = False
     else:
         remaining = get_remaining_seconds(email)
         blocked = remaining <= 0
-    is_active = is_weekend() or is_bypass or unlock["temporary_unlock_active"]
+    is_active = is_unlimited or is_weekend() or is_bypass or unlock["temporary_unlock_active"]
+    if is_unlimited:
+        usage_mode = "unlimited"
+    elif is_bypass:
+        usage_mode = "temporary_bypass"
+    elif unlock["temporary_unlock_active"]:
+        usage_mode = "temporary_unlock"
+    else:
+        usage_mode = "normal_weekend"
     return {
         "remaining_seconds": remaining,
         "seconds_used": usage_data['seconds_used'],
         "weekend_limit_seconds": limit,
         "is_blocked": blocked,
         "is_weekend": is_active,
-        "temporary_unlock_active": unlock["temporary_unlock_active"] or is_bypass,
+        "is_unlimited": is_unlimited,
+        "temporary_unlock_active": unlock["temporary_unlock_active"] or is_bypass or is_unlimited,
         "temporary_unlock_until_utc": unlock["temporary_unlock_until_utc"],
         "temporary_unlock_until_brt": unlock["temporary_unlock_until_brt"],
-        "usage_mode": "temporary_bypass" if is_bypass else ("temporary_unlock" if unlock["temporary_unlock_active"] else "normal_weekend")
+        "usage_mode": usage_mode
     }
 
 def log_temporary_unlock_status():
@@ -1046,13 +1079,19 @@ def get_user_usage_data(email, force_active=False):
 
 def _effective_limit(email):
     """Return the usage limit in seconds for this email (bypass users get their own limit)."""
-    if _is_bypass_email(str(email or '').strip().lower()):
+    normalized = str(email or '').strip().lower()
+    if _is_unlimited_email(normalized):
+        return UNLIMITED_REMAINING_SENTINEL
+    if _is_bypass_email(normalized):
         return TEMP_BYPASS_LIMIT_SECONDS
     return WEEKEND_LIMIT_SECONDS
 
 def get_remaining_seconds(email):
     """Get remaining seconds for user this weekend (or bypass window)"""
-    is_bypass = _is_bypass_email(str(email or '').strip().lower())
+    normalized = str(email or '').strip().lower()
+    if _is_unlimited_email(normalized):
+        return UNLIMITED_REMAINING_SENTINEL
+    is_bypass = _is_bypass_email(normalized)
     if not is_bypass and not is_weekend():
         return 0
     usage_data = get_user_usage_data(email, force_active=is_bypass)
@@ -1063,7 +1102,11 @@ def get_remaining_seconds(email):
 
 def track_usage_time(email, seconds):
     """Add seconds to user's usage"""
-    is_bypass = _is_bypass_email(str(email or '').strip().lower())
+    normalized = str(email or '').strip().lower()
+    # Unlimited users: do not track (their counter never grows, never caps out)
+    if _is_unlimited_email(normalized):
+        return
+    is_bypass = _is_bypass_email(normalized)
     usage_data = get_user_usage_data(email, force_active=is_bypass)
     limit = _effective_limit(email)
     usage_data['seconds_used'] += seconds
@@ -1071,7 +1114,10 @@ def track_usage_time(email, seconds):
 
 def check_usage_limit(email):
     """Check if user is within usage limit"""
-    is_bypass = _is_bypass_email(str(email or '').strip().lower())
+    normalized = str(email or '').strip().lower()
+    if _is_unlimited_email(normalized):
+        return True
+    is_bypass = _is_bypass_email(normalized)
     if not is_bypass and not is_weekend():
         return False
     remaining = get_remaining_seconds(email)
@@ -1091,13 +1137,15 @@ def is_local_request():
         return False
 
 def is_usage_exempt_request():
-    """Admin/local requests and active temporary global unlock are exempt."""
+    """Admin/local requests, active temporary global unlock, and UNLIMITED_EMAILS are exempt."""
     try:
         if bool(getattr(request, 'is_admin', False)) or is_local_request():
             return True
+        user_email = getattr(request, 'user_email', '')
+        if _is_unlimited_email(user_email):
+            return True
         if is_temporary_global_unlock_active():
             endpoint = getattr(request, 'path', '')
-            user_email = getattr(request, 'user_email', '')
             print(f"[USAGE] request unlocked; reason=temporary_unlock; endpoint={endpoint}; email={user_email}")
             return True
         return False
