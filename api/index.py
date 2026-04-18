@@ -2163,14 +2163,16 @@ FOLLOW_UP_QUESTION_LOOKUP = {
     },
     'bank': {
         'en': [
-            "How can I help you today?",
-            "Do you want to deposit or withdraw?",
-            "Do you have your ID with you?"
+            # Removed "How can I help you today?" — too generic; replaced with
+            # questions offering 2-3 concrete options per product-owner guidance.
+            "Do you want to deposit, withdraw, or open an account?",
+            "Do you have your ID with you?",
+            "Is it a personal or business account?",
         ],
         'pt': [
-            "Como posso ajudar hoje?",
-            "Voce quer depositar ou sacar?",
-            "Voce esta com seu documento?"
+            "Voce quer depositar, sacar ou abrir uma conta?",
+            "Voce esta com seu documento?",
+            "E uma conta pessoal ou empresarial?",
         ],
     },
     'pharmacy': {
@@ -3959,6 +3961,18 @@ CRITICAL — YOU LEAD THE CONVERSATION (unless the student asks something):
   then optionally add one follow-up. Never redirect with a question that
   ignores theirs. Example: student "Do you have decaf?" → you "Yes, we have
   decaf. Would you like it hot or iced?" (NOT: "What would you like today?")
+- IF the student asks for a RECOMMENDATION ("What do you recommend?", "What
+  do you suggest?", "What should I try?"), the FIRST word of your reply MUST
+  be "I" — taking a personal stance. Recommend ONE specific item first, say
+  why in 1 clause. Don't list neutral options or hide behind "many people".
+  GOOD: "I recommend the pepperoni pizza — it's our most popular. Want to try?"
+  GOOD: "I'd suggest ibuprofen — works fast for a headache. Sound good?"
+  GOOD: "I always go with the lasagna on Fridays. Shall I bring one?"
+  BAD:  "Many people like the pepperoni pizza." ← hides behind crowd
+  BAD:  "We have a few excellent options."      ← no commitment
+  BAD:  "Some customers prefer X."              ← still indirect
+  If you can't recommend something specific (e.g. medical), say "I'd suggest
+  you ask the doctor about X" — still a direct suggestion.
 - Otherwise, your "en" should end with a SHORT question so the student isn't
   left silent.
 - PREFER questions that offer 2-3 CONCRETE OPTIONS so a shy beginner can answer:
@@ -3966,6 +3980,8 @@ CRITICAL — YOU LEAD THE CONVERSATION (unless the student asks something):
   GOOD: "Small, medium, or large?"
   BAD:  "What would you like?"         ← too open
   BAD:  "Anything else?"               ← too generic
+  BAD:  "How can I help you today?"    ← banned: no direction for beginner
+  BAD:  "How can I help you?"          ← banned
 - Even if student says "thank you"/"okay"/"yes" (no question), keep the scene
   alive: student "Thank you" → you "You're welcome! Would you like anything
   else — a pastry or water?"
@@ -4430,6 +4446,50 @@ Return JSON only: {{"en":"...","pt":"...","suggested_words":[],"must_retry":fals
                 "frase_natural": turn_feedback.get("suggested_text", ""),
                 "explicacao": turn_feedback.get("reason", "")
             }
+
+        # Generic-question rewriter: even when the student hasn't asked
+        # anything, the AI often closes with a formulaic "How can I help you
+        # today?" / "What can I help you with today?" — beginner-unfriendly.
+        # Replace the last sentence with the scenario's concrete option-based
+        # fallback if we detect that pattern.
+        GENERIC_PATTERNS = [
+            r"how\s+can\s+i\s+help\s+you(\s+today)?\??",
+            r"how\s+may\s+i\s+help\s+you(\s+today)?\??",
+            r"what\s+can\s+i\s+help\s+you\s+(with|find)(\s+today)?\??",
+            r"what\s+brings\s+you\s+here\s+today\??",
+            r"how\s+can\s+i\s+assist\s+you(\s+today)?\??",
+        ]
+        try:
+            generic_hit = False
+            for pat in GENERIC_PATTERNS:
+                if re.search(pat, ai_text or '', re.IGNORECASE):
+                    generic_hit = True
+                    break
+            if generic_hit:
+                primary_lang = 'pt' if (lesson_lang == 'pt' and is_grammar_topic) else 'en'
+                fallback = CONTEXTUAL_FALLBACK_QUESTIONS.get(
+                    (context_key or '').lower(),
+                    CONTEXTUAL_FALLBACK_QUESTIONS['__default__']
+                )
+                fb_en = fallback.get('en') or CONTEXTUAL_FALLBACK_QUESTIONS['__default__']['en']
+                fb_pt = fallback.get('pt') or CONTEXTUAL_FALLBACK_QUESTIONS['__default__']['pt']
+                # Replace the generic trailing question with the concrete one
+                for pat in GENERIC_PATTERNS:
+                    ai_text = re.sub(pat, fb_en if primary_lang == 'en' else fb_pt,
+                                     ai_text or '', flags=re.IGNORECASE).strip()
+                if primary_lang == 'en' and ai_trans:
+                    for pat in GENERIC_PATTERNS:
+                        ai_trans = re.sub(
+                            r"como\s+(posso\s+ajudar|te\s+ajudo)(\s+hoje)?\??",
+                            fb_pt, ai_trans or '', flags=re.IGNORECASE
+                        ).strip()
+                    # Also rewrite the PT equivalent
+                    ai_trans = re.sub(
+                        r"(?:como|o\s+que)\s+(posso|poderia)\s+ajudar(\s+hoje)?\??",
+                        fb_pt, ai_trans or '', flags=re.IGNORECASE
+                    ).strip()
+        except Exception:
+            pass
 
         # Safety-net: ensure the student has something to respond to, so they
         # never stare at a silent screen. BUT don't append a question if:
