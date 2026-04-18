@@ -442,6 +442,49 @@ MAX_OUTPUT_TOKENS_REPORT = max(600, _int_env('MAX_OUTPUT_TOKENS_REPORT', 1800))
 
 # Difficulty profile for chat responses. The student can pick beginner / intermediate / advanced;
 # previously this parameter was extracted but never used (all responses were hardcoded to "1-2 sentences, max 30 words").
+# Context-aware fallback questions used by the "IA must lead" safety-net.
+# Each question offers 2-3 CONCRETE options so a beginner can answer fast
+# without having to think of what to say on their own. Kept short (<=12 words
+# EN) and uses the vocabulary a first-turn student already heard.
+CONTEXTUAL_FALLBACK_QUESTIONS = {
+    'coffee_shop':    {'en': 'What would you like — coffee, tea, or juice?',                 'pt': 'O que voce gostaria — cafe, cha ou suco?'},
+    'restaurant':     {'en': 'Would you like pizza, pasta, or a salad today?',               'pt': 'Voce gostaria de pizza, massa ou uma salada hoje?'},
+    'bakery':         {'en': 'Would you like bread, a cake, or a sweet snack?',              'pt': 'Voce quer pao, um bolo ou um docinho?'},
+    'pizza_delivery': {'en': 'Which pizza — cheese, pepperoni, or vegetable?',               'pt': 'Qual pizza — queijo, pepperoni ou vegetais?'},
+    'supermarket':    {'en': 'Did you find the fruit, bread, and drinks you needed?',        'pt': 'Voce encontrou as frutas, pao e bebidas que precisava?'},
+    'airport':        {'en': 'Do you have your passport and ticket ready?',                  'pt': 'Voce tem passaporte e passagem em maos?'},
+    'hotel':          {'en': 'Are you checking in or checking out today?',                   'pt': 'Voce esta fazendo check-in ou check-out hoje?'},
+    'pharmacy':       {'en': 'Do you have a prescription, or is this over the counter?',     'pt': 'Voce tem receita, ou e remedio comum?'},
+    'doctor':         {'en': 'Can you tell me where it hurts, and for how long?',            'pt': 'Voce pode me dizer onde doi, e por quanto tempo?'},
+    'bank':           {'en': 'Do you want to deposit, withdraw, or open an account?',        'pt': 'Voce quer depositar, sacar ou abrir uma conta?'},
+    'post_office':    {'en': 'Is it a letter, a package, or something special?',             'pt': 'E uma carta, um pacote ou algo especial?'},
+    'gym':            {'en': 'Do you want to try weights, cardio, or a class?',              'pt': 'Voce quer tentar pesos, cardio ou uma aula?'},
+    'hair_salon':     {'en': 'Do you want a haircut, coloring, or a simple trim?',           'pt': 'Voce quer corte, coloracao ou so aparar?'},
+    'clothing_store': {'en': 'Are you looking for a shirt, pants, or a jacket?',             'pt': 'Voce procura camisa, calca ou jaqueta?'},
+    'pet_shop':       {'en': 'Is this for a dog, a cat, or another pet?',                    'pt': 'E para cachorro, gato ou outro pet?'},
+    'flower_shop':    {'en': 'Are the flowers for a gift, a party, or home?',                'pt': 'As flores sao para presente, festa ou sua casa?'},
+    'dental_clinic':  {'en': 'Is it a check-up, pain, or a cleaning today?',                 'pt': 'E consulta de rotina, dor ou limpeza hoje?'},
+    'cinema':         {'en': 'Which movie — the new one, a comedy, or action?',              'pt': 'Qual filme — o novo, uma comedia ou acao?'},
+    'library':        {'en': 'Do you want to borrow a book, study, or use the computer?',    'pt': 'Voce quer pegar um livro, estudar ou usar o computador?'},
+    'gas_station':    {'en': 'Regular gas, premium, or do you need air and water?',          'pt': 'Gasolina comum, aditivada ou precisa de ar e agua?'},
+    'bus_stop':       {'en': 'Which bus are you waiting for — do you know the number?',      'pt': 'Qual onibus voce espera — sabe o numero?'},
+    'train_station':  {'en': 'Are you buying a ticket, or asking about a platform?',         'pt': 'Voce esta comprando passagem ou perguntando sobre a plataforma?'},
+    'renting_car':    {'en': 'For how many days, and do you want a small or big car?',       'pt': 'Por quantos dias, e voce quer um carro pequeno ou grande?'},
+    'tech_support':   {'en': "What's the issue — a phone, a computer, or internet?",         'pt': 'Qual o problema — celular, computador ou internet?'},
+    'lost_found':     {'en': 'What did you lose — a bag, a phone, or something else?',       'pt': 'O que voce perdeu — uma bolsa, celular ou outra coisa?'},
+    'street':         {'en': 'Where are you going — a store, a park, or a restaurant?',      'pt': 'Onde voce vai — uma loja, um parque ou um restaurante?'},
+    'museum':         {'en': 'Which part do you want to see first — art, history, or science?', 'pt': 'Qual parte voce quer ver primeiro — arte, historia ou ciencia?'},
+    'park':           {'en': 'Do you want to walk, sit, or play something?',                 'pt': 'Voce quer andar, sentar ou jogar algo?'},
+    'school':         {'en': 'Which subject do you like more — math, languages, or sports?', 'pt': 'Qual materia voce gosta mais — matematica, idiomas ou esportes?'},
+    'parents_house':  {'en': 'Do you want to help with dinner, rest, or chat first?',        'pt': 'Voce quer ajudar com o jantar, descansar ou conversar primeiro?'},
+    'neighbor':       {'en': "How's everything going — work, family, the house?",           'pt': 'Como vao as coisas — trabalho, familia, a casa?'},
+    'first_date':     {'en': 'What sounds good — dinner, a movie, or a walk?',               'pt': 'O que acha — jantar, um filme ou uma caminhada?'},
+    'free_conversation': {'en': 'What do you want to talk about — your day, hobbies, or travel?', 'pt': 'Sobre o que voce quer falar — seu dia, hobbies ou viagens?'},
+    'basic_structures':  {'en': 'Would you like to try asking for help, or for directions?', 'pt': 'Voce quer tentar pedir ajuda, ou pedir informacao?'},
+    '__default__':    {'en': 'What would you like to talk about next?',                      'pt': 'Sobre o que voce gostaria de falar agora?'},
+}
+
+
 DIFFICULTY_PROFILES = {
     'beginner': {
         'sentences_label': '1 short sentence',
@@ -3742,10 +3785,16 @@ All corrections go ONLY in the JSON "correction" field.
 CRITICAL — YOU LEAD THE CONVERSATION:
 - Your "en" MUST ALWAYS end with a SHORT, SIMPLE question (no exceptions).
 - The question drives the student to speak next — never leave them without a prompt.
-- Even if the student says "thank you" or "okay" or "yes", you still ask something
-  that keeps the scene alive: "You're welcome! Can I get you anything else?"
-- Keep the question under 8 words and reuse vocabulary from this conversation
-  so the student can answer confidently.
+- PREFER questions that offer 2-3 CONCRETE OPTIONS so a shy beginner can answer fast:
+  GOOD: "Would you like coffee, tea, or juice?"
+  GOOD: "Small, medium, or large?"
+  BAD:  "What would you like?"         ← too open
+  BAD:  "Anything else?"               ← too generic
+  BAD:  "Is there anything I can do?"  ← no direction
+- Even if student says "thank you"/"okay"/"yes", KEEP THE SCENE ALIVE:
+  e.g. student "Thank you" → you "You're welcome! Would you like a coffee or something to eat?"
+- Only skip options when the scenario demands open input (e.g. describing a lost item).
+- Keep the question under 12 words. Reuse vocabulary the student already heard.
 
 Error rules: words like "goed/buyed/chole/wants→want" are real errors. "I have been" is correct — do not flag.
 When there IS a real grammar error: correction.wrong=student's phrase, correction.right=FULL corrected sentence, suggested_words=3-4 helpful words, must_retry=true.
@@ -4161,17 +4210,23 @@ Return JSON: {{"en": "...", "pt": "...", "suggested_words": [], "must_retry": fa
             }
 
         # Safety-net: the AI must ALWAYS lead with a follow-up question so the
-        # student is never left staring at a silent screen. If the main reply
-        # ended without a '?', append a gentle, generic hand-off. Applied right
-        # before the response so nothing downstream can strip it.
+        # student is never left staring at a silent screen. Uses a context-aware
+        # fallback with concrete options — generic "anything else?" is useless
+        # for a beginner. Applied right before the response.
         if ai_text and '?' not in ai_text and '¿' not in ai_text:
             primary_lang = 'pt' if (lesson_lang == 'pt' and is_grammar_topic) else 'en'
+            fallback = CONTEXTUAL_FALLBACK_QUESTIONS.get(
+                (context_key or '').lower(),
+                CONTEXTUAL_FALLBACK_QUESTIONS['__default__']
+            )
+            fb_en = fallback.get('en') or CONTEXTUAL_FALLBACK_QUESTIONS['__default__']['en']
+            fb_pt = fallback.get('pt') or CONTEXTUAL_FALLBACK_QUESTIONS['__default__']['pt']
             if primary_lang == 'pt':
-                ai_text = ai_text.rstrip() + ' Tem mais alguma coisa que eu possa te ajudar?'
+                ai_text = ai_text.rstrip() + ' ' + fb_pt
             else:
-                ai_text = ai_text.rstrip() + ' Is there anything else I can help you with?'
+                ai_text = ai_text.rstrip() + ' ' + fb_en
                 if ai_trans is not None:
-                    ai_trans = (ai_trans or '').rstrip() + ' Tem mais alguma coisa que eu possa te ajudar?'
+                    ai_trans = (ai_trans or '').rstrip() + ' ' + fb_pt
 
         return jsonify({
             "text": ai_text,
