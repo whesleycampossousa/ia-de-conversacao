@@ -3800,6 +3800,14 @@ Error rules: words like "goed/buyed/chole/wants→want" are real errors. "I have
 When there IS a real grammar error: correction.wrong=student's phrase, correction.right=FULL corrected sentence, suggested_words=3-4 helpful words, must_retry=true.
 Otherwise: correction=null, suggested_words=[], must_retry=false.
 
+STYLE/POLITENESS — be GENEROUS, not nitpicky:
+- Do NOT flag a sentence as "could be more natural/polite" unless it's actually rude
+  or very awkward. "I want to deposit money" is PERFECTLY fine — do NOT suggest
+  "I'd like to deposit some money please" as an upgrade.
+- Only suggest style when the student says something abrupt like "Give me X" or
+  uses a very unnatural construction.
+- Being overly picky makes the student feel they can never get it right.
+
 Return valid JSON only:
 {{"en":"...","pt":"...","suggested_words":[],"must_retry":false,"correction":null}}"""
                 else:
@@ -4692,6 +4700,32 @@ MUITO IMPORTANTE: Estas respostas JA FORAM mostradas ao aluno: {exclude_items}.
 Voce DEVE gerar respostas COMPLETAMENTE DIFERENTES. Use estruturas diferentes, vocabulario diferente, e abordagens criativas. NAO repita nenhuma das respostas acima.
 """
     else:
+        # Service-context scenarios where polite request forms are the norm.
+        # In these, suggestions MUST use "I'd like..., please" / "Could you..." etc.
+        # instead of "I want..." so we don't teach the student a form that the chat
+        # prompt will later flag as "could be more natural".
+        SERVICE_CONTEXTS = {
+            'coffee_shop','restaurant','bakery','pizza_delivery','supermarket',
+            'pharmacy','doctor','bank','post_office','hotel','airport',
+            'hair_salon','clothing_store','pet_shop','flower_shop','dental_clinic',
+            'gas_station','renting_car','tech_support','lost_found','cinema','gym'
+        }
+        is_service = (context_key or '').lower() in SERVICE_CONTEXTS
+        politeness_block = ""
+        if is_service:
+            politeness_block = """
+POLITENESS (CRITICAL for this scenario — it's a customer/service interaction):
+- ALWAYS use polite request forms when the student is asking/ordering/requesting:
+    GOOD: "I'd like to deposit some money, please."
+    GOOD: "Could I have a coffee, please?"
+    GOOD: "Can I see a menu, please?"
+    BAD:  "I want to deposit money."   ← the chat prompt will flag this as "could be more natural"
+    BAD:  "Give me a coffee."          ← rude
+- End requests with "please" whenever natural.
+- Use "I'd like / Could I / Can I" over bare "I want" for requests.
+- For answers that are NOT requests (yes/no confirmations, descriptions), politeness
+  still matters but polite indicators like "thank you" are welcome.
+"""
         prompt = f"""You are generating VALID RESPONSE OPTIONS for an English learner.
 
 Topic being practiced: {context_info}
@@ -4704,10 +4738,13 @@ Generate 4 short response options (max 10 words each) the student could say in E
 - Keep sentences short and clear
 - Avoid slang, idioms, and rare words
 - Be natural and conversational
-- Do NOT extract words from the question as proper names (e.g., "Do you have...?" → "Do" is NOT a name, it is a question word)
+- CRITICAL: the suggestions you generate are SHOWN TO THE STUDENT as model answers.
+  They must already be in the BEST / most natural form — do NOT offer a form that
+  you would later flag as "could be more polite/natural". Teach by example.
+- Do NOT extract words from the question as proper names (e.g., "Do you have...?" → "Do" is NOT a name)
 - If the student already provided their name, use it in suggestions instead of generic names
 - Format: JSON with "suggestions" array, each item has "en" (English) and "pt" (Portuguese translation)
-
+{politeness_block}
 Example if AI said "My day was busy. How is your day?":
 {{"suggestions": [
   {{"en": "My day is good, thanks.", "pt": "Meu dia esta bom, obrigado."}},
