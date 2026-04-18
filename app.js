@@ -22,7 +22,25 @@
     // Check for audio-only mode URL param
     const urlParams = new URLSearchParams(window.location.search);
     const mode = urlParams.get('mode');
-    const context = urlParams.get('context') || 'coffee_shop';
+    // Resolve the current scenario context with a defensive chain:
+    //   1. URL param (authoritative when arriving from scenario catalog)
+    //   2. localStorage 'current_context' (survives soft reloads / back nav)
+    //   3. localStorage 'last_context' (last thing the student practiced)
+    //   4. 'free_conversation' as a SAFE fallback — picking coffee_shop as default
+    //      silently contaminated chat/suggestions/reports when the URL was lost.
+    function resolveScenarioContext() {
+        const fromUrl = urlParams.get('context');
+        if (fromUrl && fromUrl.trim()) return fromUrl.trim();
+        try {
+            const fromStorage = localStorage.getItem('current_context');
+            if (fromStorage && fromStorage.trim()) return fromStorage.trim();
+            const fromLast = localStorage.getItem('last_context');
+            if (fromLast && fromLast.trim()) return fromLast.trim();
+        } catch (_) {}
+        return 'free_conversation';
+    }
+    const context = resolveScenarioContext();
+    try { localStorage.setItem('current_context', context); } catch (_) {}
     const contextName = urlParams.get('title') || 'Practice';
     const lessonLang = urlParams.get('lessonLang') || 'en'; // 'en' or 'pt' for bilingual
     const isGrammarMode = urlParams.get('type') === 'grammar';
@@ -34,33 +52,43 @@
     let studentLevel = '';
 
 
+    const MODE_LABELS_PT = {
+        learning: 'Aprender',
+        simulator: 'Simulador'
+    };
+    const MODE_LABELS_EN = {
+        learning: 'Learning',
+        simulator: 'Simulator'
+    };
     const MODE_LABELS = {
         learning: 'Learning',
         simulator: 'Simulator'
     };
 
+    // Objetivo mostrado ao aluno (PT, simples, evita jargão como
+    // "reservation/amenities/check-in details" que confunde A1-A2).
     const COMMUNICATIVE_OBJECTIVES = {
-        coffee_shop: 'Objective: order a drink and confirm options.',
-        restaurant: 'Objective: order food, sides, and drinks politely.',
-        airport: 'Objective: check in, confirm flight details, and baggage.',
-        hotel: 'Objective: check in and resolve stay details.',
-        supermarket: 'Objective: ask for items and handle checkout.',
-        doctor: 'Objective: explain symptoms and understand advice.',
-        bank: 'Objective: handle a basic transaction clearly.',
-        pharmacy: 'Objective: describe symptoms and request medicine.',
-        gym: 'Objective: discuss goals and choose a workout.',
-        job_interview: 'Objective: present experience and answer key questions.',
-        tech_support: 'Objective: describe a problem and follow steps.',
-        hair_salon: 'Objective: request a style and confirm details.',
-        clothing_store: 'Objective: ask about size, color, and try-on.',
-        train_station: 'Objective: buy a ticket and confirm schedule.',
-        bus_stop: 'Objective: ask about routes and tickets.',
-        renting_car: 'Objective: choose a car and rental terms.',
-        pizza_delivery: 'Objective: place an order and confirm delivery.',
-        bakery: 'Objective: order items and quantities.',
-        library: 'Objective: ask for materials and rules.',
-        cinema: 'Objective: buy tickets and choose seats.',
-        lost_found: 'Objective: report a lost item with details.'
+        coffee_shop: 'Objetivo: pedir uma bebida e escolher opções (tamanho, açúcar).',
+        restaurant: 'Objetivo: pedir comida e bebida de forma educada.',
+        airport: 'Objetivo: apresentar passaporte e passagem, falar da bagagem.',
+        hotel: 'Objetivo: dizer seu nome e fazer check-in.',
+        supermarket: 'Objetivo: perguntar onde ficam os itens e pagar.',
+        doctor: 'Objetivo: dizer onde dói e há quanto tempo.',
+        bank: 'Objetivo: fazer uma operação simples (depósito, saque).',
+        pharmacy: 'Objetivo: pedir um remédio para um sintoma.',
+        gym: 'Objetivo: falar do seu objetivo e escolher um treino.',
+        job_interview: 'Objetivo: falar de você e sua experiência.',
+        tech_support: 'Objetivo: descrever um problema e seguir instruções.',
+        hair_salon: 'Objetivo: pedir o corte que você quer.',
+        clothing_store: 'Objetivo: perguntar tamanho, cor e experimentar.',
+        train_station: 'Objetivo: comprar uma passagem e confirmar horário.',
+        bus_stop: 'Objetivo: perguntar qual ônibus pegar.',
+        renting_car: 'Objetivo: alugar um carro por alguns dias.',
+        pizza_delivery: 'Objetivo: fazer um pedido e confirmar o endereço.',
+        bakery: 'Objetivo: pedir pães e doces.',
+        library: 'Objetivo: pegar um livro emprestado.',
+        cinema: 'Objetivo: comprar ingresso e escolher a poltrona.',
+        lost_found: 'Objetivo: descrever o que você perdeu.'
     };
 
     let recentCorrections = [];
@@ -137,6 +165,33 @@
     const reportBtn = document.getElementById('report-btn');
     const reportBarBtn = document.getElementById('report-bar-btn');
     const micHint = document.getElementById('mic-hint');
+
+    // Update the mic hint text + color based on the mic button's current state.
+    // Uses a MutationObserver so every existing call site (setMicReadyState,
+    // recordBtn.classList.add('recording'), etc.) updates the hint for free.
+    function syncMicHint() {
+        if (!micHint || !recordBtn) return;
+        const cls = recordBtn.classList;
+        micHint.classList.remove('recording', 'processing');
+        if (cls.contains('recording')) {
+            micHint.textContent = '🔴 Gravando... fale agora';
+            micHint.classList.add('recording');
+        } else if (cls.contains('listening')) {
+            micHint.textContent = '⏳ Processando sua fala...';
+            micHint.classList.add('processing');
+        } else if (recordBtn.disabled) {
+            micHint.textContent = '⏳ Aguarde...';
+            micHint.classList.add('processing');
+        } else {
+            micHint.textContent = 'Clique no microfone para responder';
+        }
+    }
+    if (recordBtn && typeof MutationObserver !== 'undefined') {
+        const micObserver = new MutationObserver(syncMicHint);
+        micObserver.observe(recordBtn, { attributes: true, attributeFilter: ['class', 'disabled'] });
+        // Initial sync
+        setTimeout(syncMicHint, 0);
+    }
     const chatWindow = document.getElementById('chat-window');
     const subtitleToggleBtn = document.getElementById('subtitle-toggle-btn');
     const statusIndicator = document.getElementById('status-indicator');
@@ -324,13 +379,58 @@
     };
 
     // TTS Speed Logic
+    // Priority: URL param > user's manual setting > difficulty preset > grammar mode > 1.0
     let ttsSpeed = 1.0;
     const urlSpeed = parseFloat(urlParams.get('speed'));
+    const ttsSpeedUserOverride = localStorage.getItem('tts_speed_user_set') === 'true';
+    const savedTtsSpeed = parseFloat(localStorage.getItem('tts_speed'));
+    const currentDifficultyForTts = localStorage.getItem('practice_difficulty') || 'intermediate';
+
     if (urlSpeed && !isNaN(urlSpeed)) {
         ttsSpeed = urlSpeed;
+    } else if (ttsSpeedUserOverride && !isNaN(savedTtsSpeed) && savedTtsSpeed > 0) {
+        ttsSpeed = savedTtsSpeed; // Respect user's manual override
+    } else if (currentDifficultyForTts === 'beginner') {
+        ttsSpeed = 0.85; // Preset: slow down for beginners so they can follow
     } else if (urlParams.get('type') === 'grammar') {
         ttsSpeed = 0.7;
     }
+    window.ttsSpeed = ttsSpeed;
+
+    // Dual TTS (speak PT translation after EN) — helps beginners feel comfortable
+    // while still hearing the real English audio first. Opt-in.
+    // RULES:
+    //  - Default ON  for beginner in LEARNING mode (confidence scaffolding)
+    //  - Default OFF in SIMULATOR mode regardless of level (simulator = real
+    //    conversation, dual playback breaks immersion AND doubles the delay
+    //    between turns — main complaint from product owner)
+    //  - User's manual override always wins
+    const dualTtsUserOverride = localStorage.getItem('tts_speak_pt_user_set') === 'true';
+    const savedDualTts = localStorage.getItem('tts_speak_pt');
+    const currentPracticeMode = localStorage.getItem('practice_mode') || 'learning';
+    let speakPtTranslation;
+    if (dualTtsUserOverride) {
+        speakPtTranslation = savedDualTts === 'true';
+    } else if (currentPracticeMode === 'simulator') {
+        speakPtTranslation = false; // simulator stays fast by default
+    } else {
+        speakPtTranslation = currentDifficultyForTts === 'beginner';
+    }
+    window.speakPtTranslation = speakPtTranslation;
+
+    // PT-first mode — play the Portuguese translation BEFORE the English audio.
+    // Useful for true super-beginners (A1 just starting out) who need to know the
+    // meaning before their ear engages with the English. Opt-in.
+    // localStorage 'tts_pt_first' = 'true' | 'false'
+    window.ptFirst = localStorage.getItem('tts_pt_first') === 'true';
+
+    // Volume boost multiplier for TTS playback (via Web Audio API GainNode).
+    // The cloned PT voice came back quiet — 1.6 = +60% compensates for that without
+    // distortion on typical voice samples. User can override via localStorage.
+    const savedVolumeBoost = parseFloat(localStorage.getItem('tts_volume_boost'));
+    window.ttsVolumeBoost = (Number.isFinite(savedVolumeBoost) && savedVolumeBoost > 0)
+        ? savedVolumeBoost
+        : 1.6;
 
     // Suggestions for Learning Mode (Grammar)
     const suggestionSets = {
@@ -1055,14 +1155,69 @@
         return `${objective}${goalNote}`;
     }
 
+    // Friendly emoji + label per scenario context. Falls back to a generic one.
+    // Used to replace "BASIC STRUCTURES TRAINING" etc with "📗 Estruturas básicas" etc.
+    const FRIENDLY_TITLES = {
+        'coffee_shop': '☕ Cafeteria',
+        'restaurant': '🍽 Restaurante',
+        'airport': '✈ Aeroporto',
+        'hotel': '🏨 Hotel',
+        'supermarket': '🛒 Supermercado',
+        'pharmacy': '💊 Farmácia',
+        'doctor': '🩺 Médico',
+        'bank': '🏦 Banco',
+        'gym': '💪 Academia',
+        'cinema': '🎬 Cinema',
+        'library': '📚 Biblioteca',
+        'bakery': '🥖 Padaria',
+        'post_office': '📮 Correio',
+        'train_station': '🚉 Estação de trem',
+        'bus_stop': '🚏 Ponto de ônibus',
+        'gas_station': '⛽ Posto',
+        'hair_salon': '💇 Salão',
+        'clothing_store': '👕 Loja de roupas',
+        'pet_shop': '🐾 Pet Shop',
+        'flower_shop': '💐 Floricultura',
+        'dental_clinic': '🦷 Dentista',
+        'tech_support': '💻 Suporte técnico',
+        'pizza_delivery': '🍕 Entrega de pizza',
+        'renting_car': '🚗 Alugar carro',
+        'lost_found': '🧳 Achados e perdidos',
+        'neighbor': '🏘 Vizinhança',
+        'first_date': '💞 Primeiro encontro',
+        'wedding': '💍 Casamento',
+        'graduation': '🎓 Formatura',
+        'school': '🏫 Escola',
+        'street': '🚶 Na rua',
+        'parents_house': '👨‍👩‍👧 Casa dos pais',
+        'museum': '🖼 Museu',
+        'park': '🌳 Parque',
+        'free_conversation': '💬 Conversa livre',
+        'basic_structures': '📗 Estruturas básicas'
+    };
+    function friendlyScenarioTitle(ctxKey, fallback) {
+        const friendly = FRIENDLY_TITLES[String(ctxKey || '').toLowerCase()];
+        if (friendly) return friendly;
+        // Fallback: title-case the raw string, remove "Training" suffix
+        const raw = String(fallback || '').replace(/\bTraining\b/i, '').trim();
+        if (!raw) return '💬 Prática';
+        const niced = raw.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+        return `📝 ${niced}`;
+    }
+
     function updateHeaderInfo() {
         const modeBadge = document.getElementById('player-mode-badge');
         const levelBadge = document.getElementById('player-level-badge');
         const objectiveEl = document.getElementById('player-objective');
         const scenarioTitle = document.getElementById('player-scenario-title');
         const selectedMode = window.getSelectedMode ? window.getSelectedMode() : 'learning';
-        if (scenarioTitle && contextName) scenarioTitle.textContent = contextName;
-        if (modeBadge) modeBadge.textContent = `Mode: ${MODE_LABELS[selectedMode] || selectedMode}`;
+        if (scenarioTitle && contextName) scenarioTitle.textContent = friendlyScenarioTitle(context, contextName);
+        if (modeBadge) {
+            const lang = (window.getInterfaceLang && window.getInterfaceLang()) || 'pt';
+            const labelMap = (lang === 'en') ? MODE_LABELS_EN : MODE_LABELS_PT;
+            const modeLabel = labelMap[selectedMode] || selectedMode;
+            modeBadge.textContent = (lang === 'en' ? `Mode: ${modeLabel}` : `Modo: ${modeLabel}`);
+        }
         if (levelBadge) levelBadge.textContent = `Nivel: ${studentLevel || '--'}`;
         if (objectiveEl) objectiveEl.textContent = getObjectiveText();
         if (typeof sessionGoalTurns !== 'undefined') {
@@ -2405,6 +2560,15 @@
         if (window.__tipsModalShownThisSession) return;
         if (tipsModalPromise) return tipsModalPromise;
 
+        // Only show on first practice session ever (per browser).
+        // The tips were appearing on every session and adding to UI clutter.
+        try {
+            if (localStorage.getItem('practice_tips_seen') === '1') {
+                window.__tipsModalShownThisSession = true;
+                return;
+            }
+        } catch (_) {}
+
         const tipsModal = document.getElementById('tips-modal');
         if (!tipsModal) {
             window.__tipsModalShownThisSession = true;
@@ -2417,6 +2581,7 @@
             if (!okBtn) {
                 tipsModal.style.display = 'none';
                 window.__tipsModalShownThisSession = true;
+                try { localStorage.setItem('practice_tips_seen', '1'); } catch (_) {}
                 resolve();
                 return;
             }
@@ -2424,6 +2589,7 @@
             okBtn.addEventListener('click', () => {
                 tipsModal.style.display = 'none';
                 window.__tipsModalShownThisSession = true;
+                try { localStorage.setItem('practice_tips_seen', '1'); } catch (_) {}
                 resolve();
             }, { once: true });
         });
@@ -2634,10 +2800,54 @@
                 }
             };
 
-            const contextGreeting = contextGreetings[context];
+            // BEGINNER overrides: shorter greetings, A1-A2 vocabulary,
+            // simple present, max ~8 words. Keeps the scenario role but
+            // removes complex structures ("May I see...", "What can I get started...").
+            const beginnerContextGreetings = {
+                'coffee_shop': {
+                    en: "Hi! Welcome. What would you like to drink?",
+                    pt: "Oi! Bem-vindo. O que você gostaria de beber?"
+                },
+                'restaurant': {
+                    en: "Hello! Welcome. How many people?",
+                    pt: "Olá! Bem-vindo. Quantas pessoas?"
+                },
+                'airport': {
+                    en: "Hello! Your passport, please?",
+                    pt: "Olá! Seu passaporte, por favor?"
+                },
+                'supermarket': {
+                    en: "Hi! Did you find everything?",
+                    pt: "Oi! Você encontrou tudo?"
+                },
+                'doctor': {
+                    en: "Hi! Please sit down. How can I help you?",
+                    pt: "Oi! Por favor, sente-se. Como posso ajudar?"
+                },
+                'hotel': {
+                    en: "Hi! Are you checking in? What's your name?",
+                    pt: "Oi! Você está fazendo check-in? Qual é o seu nome?"
+                },
+                'free_conversation': {
+                    en: "Hi! Let's talk. What did you do today?",
+                    pt: "Oi! Vamos conversar. O que você fez hoje?"
+                }
+            };
+
+            const selectedDifficulty = window.getSelectedDifficulty ? window.getSelectedDifficulty() : 'intermediate';
+            const isBeginner = selectedDifficulty === 'beginner';
+
+            const contextGreeting = (isBeginner && beginnerContextGreetings[context])
+                ? beginnerContextGreetings[context]
+                : contextGreetings[context];
+
             if (contextGreeting) {
                 greeting = contextGreeting.en;
                 translation = contextGreeting.pt;
+            } else if (isBeginner) {
+                // Generic fallback for beginner on scenarios without a specific override
+                greeting = "Hi! How are you today?";
+                translation = "Oi! Como você está hoje?";
             } else {
                 // Generic fallback for other scenarios
                 greeting = "Hello! How are you doing today?";
@@ -2974,13 +3184,20 @@
             let responseHints = [];
             if (!lessonState.active) {
                 const suggestionBaseText = sanitizeCoachDisplayText(responseText) || responseText;
-                // Step 1: Fetch inline suggestions (shown below chat)
-                responseHints = await fetchDynamicSuggestions(suggestionBaseText, false);
+                // Run both suggestion fetches in PARALLEL (was sequential, ~2x slower)
+                // popup no longer waits for dynamic; we dedupe in JS after both return
+                const dynamicPromise = fetchDynamicSuggestions(suggestionBaseText, false);
+                const popupPromise = (practiceMode === 'learning' && previousAIPrompt)
+                    ? fetchPopupSuggestions(sanitizeCoachDisplayText(previousAIPrompt) || previousAIPrompt, [])
+                    : Promise.resolve([]);
+
+                const [dynamicResult, popupResultRaw] = await Promise.all([dynamicPromise, popupPromise]);
+                responseHints = dynamicResult || [];
 
                 if (practiceMode === 'learning' && previousAIPrompt) {
-                    // Step 2: Fetch popup suggestions EXCLUDING inline ones (must be DIFFERENT)
-                    const popupQuestionText = sanitizeCoachDisplayText(previousAIPrompt) || previousAIPrompt;
-                    const popupResult = await fetchPopupSuggestions(popupQuestionText, responseHints);
+                    // Dedupe popup against inline (was previously done server-side via exclude)
+                    const inlineSet = new Set(responseHints.map(s => String(s.en || '').trim().toLowerCase()).filter(Boolean));
+                    const popupResult = (popupResultRaw || []).filter(r => !inlineSet.has(String(r.en || '').trim().toLowerCase()));
                     popupHints = popupResult.length
                         ? popupResult.slice(0, 3)
                         : getLearningPopupReplyOptions(context, previousAIPrompt, 3);
@@ -3040,7 +3257,9 @@
             console.error(err);
             hideLoadingIndicator();
 
-            let errorMessage = "Connection error. Please check your internet and try again.";
+            // Mensagens friendly em PT — aluno A1 nao deve ler jargao tecnico
+            // ("Connection error", "UNAVAILABLE", "AbortError") e achar que ele errou.
+            let errorMessage = "Desculpe, não consegui ouvir direito. Pode tentar de novo?";
             const errMessage = String(err?.message || '');
             const backendError = extractBackendErrorPayload(err);
             if (err?.status === 429 && isWeekendLimitError(backendError || {})) {
@@ -3048,9 +3267,9 @@
                 showUsageExceededModal(backendError || {});
             }
             if (err?.status === 503 || errMessage.includes('UNAVAILABLE') || errMessage.includes('high demand')) {
-                errorMessage = "The AI model is temporarily overloaded. Please try again in a few seconds.";
+                errorMessage = "A IA está um pouco ocupada agora. Tenta de novo em alguns segundos?";
             } else if (err.name === 'AbortError') {
-                errorMessage = "The server took too long to respond. Please try again.";
+                errorMessage = "Demorou muito pra responder. Vamos tentar de novo?";
             } else if (errMessage.includes('Session expired')) {
                 errorMessage = "Your session has expired. Redirecting to login...";
             } else if (errMessage.includes('Text too long')) {
@@ -3193,7 +3412,23 @@
         return chunks;
     }
 
-    function playAudioBlob(blob) {
+    // Lazy-init AudioContext for volume boost (Web Audio API).
+    // Required because HTML5 <audio> volume is capped at 1.0 — we need gain > 1
+    // to make the cloned voice (recorded quietly) comfortable to hear.
+    let _ttsAudioContext = null;
+    function getTtsAudioContext() {
+        if (!_ttsAudioContext) {
+            const AC = window.AudioContext || window.webkitAudioContext;
+            if (!AC) return null;
+            _ttsAudioContext = new AC();
+        }
+        if (_ttsAudioContext.state === 'suspended') {
+            _ttsAudioContext.resume().catch(() => {});
+        }
+        return _ttsAudioContext;
+    }
+
+    function playAudioBlob(blob, opts = {}) {
         return new Promise((resolve) => {
             // Stop any previous audio to prevent overlap
             if (currentAudio) {
@@ -3208,6 +3443,40 @@
             const audioUrl = URL.createObjectURL(blob);
             const audio = new Audio(audioUrl);
             currentAudio = audio;
+
+            // Playback rate override (used to speed up PT audio since Qwen ignores
+            // the server-side `speed` param). preservesPitch keeps the voice tone
+            // natural at faster rates — no chipmunk effect.
+            const rate = Number(opts.playbackRate || 1.0);
+            if (rate > 0 && rate !== 1.0) {
+                try {
+                    audio.playbackRate = rate;
+                    if ('preservesPitch' in audio) audio.preservesPitch = true;
+                    else if ('webkitPreservesPitch' in audio) audio.webkitPreservesPitch = true;
+                    else if ('mozPreservesPitch' in audio) audio.mozPreservesPitch = true;
+                } catch (e) {
+                    console.warn('[TTS] playbackRate override failed:', e && e.message);
+                }
+            }
+
+            // Volume boost via Web Audio API when the cloned voice is too quiet.
+            // window.ttsVolumeBoost can be set by app code/localStorage (default 1.6 = +60%).
+            const boost = Number(window.ttsVolumeBoost || 1.0);
+            if (boost > 1.01) {
+                try {
+                    const ctx = getTtsAudioContext();
+                    if (ctx) {
+                        const source = ctx.createMediaElementSource(audio);
+                        const gainNode = ctx.createGain();
+                        gainNode.gain.value = boost;
+                        source.connect(gainNode);
+                        gainNode.connect(ctx.destination);
+                    }
+                } catch (e) {
+                    // If gain setup fails (e.g. CORS, already-used element), fall back silently to normal playback
+                    console.warn('[TTS] Volume boost unavailable, playing at default volume:', e && e.message);
+                }
+            }
             let cleaned = false;
             const cleanup = () => {
                 if (cleaned) return;
@@ -3266,6 +3535,21 @@
         const chunks = splitTtsText(ttsText, 480);
         let firstBlobPromise = chunks.length > 0 ? fetchTTSSafe(chunks[0]) : null;
 
+        // If dual-TTS is enabled (beginner default), prefetch the PT translation
+        // audio in parallel so there's no extra delay after the EN finishes.
+        const shouldSpeakPt = !!(window.speakPtTranslation && translation && translation.trim());
+        let ptBlobPromise = null;
+        if (shouldSpeakPt) {
+            const ptText = cleanTextForTts(translation);
+            if (ptText && ptText.trim()) {
+                ptBlobPromise = apiClient.getTTS(ptText, 1.0, 'pt', getActiveVoice())
+                    .catch(err => {
+                        console.warn('[Dual TTS] PT translation fetch failed:', err);
+                        return null;
+                    });
+            }
+        }
+
         // Keep the last asked question cached for learning hints/popups.
         rememberAIQuestionPrompt(text);
 
@@ -3278,6 +3562,34 @@
             ttsCancelled = false;
             if (chunks.length === 0) return;
             const skipBtn = showSkipAudioButton();
+
+            // Helper: play PT translation if dual-TTS enabled.
+            // Portuguese always plays at 1.25x — native speakers don't need slow audio.
+            // Qwen ignores server-side speed param, so rate is applied here via <audio>.playbackRate.
+            const playPtIfNeeded = async () => {
+                if (!shouldSpeakPt || !ptBlobPromise || ttsCancelled) return;
+                try {
+                    const ptBlob = await ptBlobPromise;
+                    if (ptBlob && ptBlob.size > 0 && !ttsCancelled) {
+                        await playAudioBlob(ptBlob, { playbackRate: 1.25 });
+                    }
+                } catch (err) {
+                    console.warn('[Dual TTS] PT playback failed:', err);
+                }
+            };
+
+            // Order controlled by window.ptFirst (localStorage 'tts_pt_first'):
+            //  - false (default): EN first, then PT (intermediate anchoring)
+            //  - true:            PT first, then EN (super-beginner needs meaning first)
+            const ptFirst = !!window.ptFirst;
+            if (ptFirst) {
+                // Play PT first so student understands meaning, then the target EN
+                await playPtIfNeeded();
+            }
+
+            // If the main TTS text is Portuguese (grammar PT modes, etc.),
+            // speed it up too — native speakers want a natural-to-fast pace.
+            const mainPlaybackRate = (lessonLang === 'pt') ? 1.25 : 1.0;
 
             let nextBlobPromise = firstBlobPromise;
 
@@ -3294,8 +3606,13 @@
 
                 if (ttsCancelled) break;
                 if (blob && blob.size > 0) {
-                    await playAudioBlob(blob);
+                    await playAudioBlob(blob, { playbackRate: mainPlaybackRate });
                 }
+            }
+
+            if (!ptFirst) {
+                // Default: PT comes after the EN
+                await playPtIfNeeded();
             }
 
             finalizePlayback(skipBtn);
@@ -3371,7 +3688,9 @@
         showLoadingIndicator();
 
         try {
-            const data = await apiClient.generateReport(conversationLog, context);
+            const currentMode = window.getSelectedMode ? window.getSelectedMode() : 'learning';
+            const currentDifficultyForReport = (window.getSelectedDifficulty ? window.getSelectedDifficulty() : (localStorage.getItem('practice_difficulty') || 'intermediate'));
+            const data = await apiClient.generateReport(conversationLog, context, currentMode, currentDifficultyForReport);
             hideLoadingIndicator();
 
             // Save report data for export
@@ -5862,10 +6181,29 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
     }
 
     function updateReportButton() {
+        // Always visible so the student knows the feature exists. Disabled
+        // until they have enough turns (≥2) for a meaningful report; shows a
+        // countdown hint so they know what to do next.
+        const MIN_TURNS_FOR_REPORT = 2;
         const reportBar = document.getElementById('report-bar');
-        if (reportBtn) reportBtn.disabled = false;
+        const ready = userMessageCount >= MIN_TURNS_FOR_REPORT;
+        const turnsLeft = Math.max(0, MIN_TURNS_FOR_REPORT - userMessageCount);
+
+        const label = ready
+            ? '📊 Gerar relatório da conversa'
+            : `📊 Relatório  (fale mais ${turnsLeft} ${turnsLeft === 1 ? 'vez' : 'vezes'})`;
+
         if (reportBar) reportBar.style.display = 'block';
-        if (reportBarBtn) reportBarBtn.disabled = false;
+        if (reportBtn) {
+            reportBtn.disabled = !ready;
+            if (reportBtn.innerText !== label) reportBtn.innerText = label;
+        }
+        if (reportBarBtn) {
+            reportBarBtn.disabled = !ready;
+            if (reportBarBtn.innerText !== label) reportBarBtn.innerText = label;
+            reportBarBtn.style.opacity = ready ? '1' : '0.6';
+            reportBarBtn.style.cursor = ready ? 'pointer' : 'not-allowed';
+        }
     }
 
     function showSkipAudioButton() {
