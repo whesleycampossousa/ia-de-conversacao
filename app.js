@@ -6181,15 +6181,29 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
     }
 
     function updateReportButton() {
-        // Only show the report button once the student has had enough turns
-        // for a meaningful report (≥3 user messages). Before that, it was
-        // competing visually with the mic as the biggest red CTA on screen.
-        const MIN_TURNS_FOR_REPORT = 3;
+        // Always visible so the student knows the feature exists. Disabled
+        // until they have enough turns (≥2) for a meaningful report; shows a
+        // countdown hint so they know what to do next.
+        const MIN_TURNS_FOR_REPORT = 2;
         const reportBar = document.getElementById('report-bar');
-        const shouldShow = userMessageCount >= MIN_TURNS_FOR_REPORT;
-        if (reportBtn) reportBtn.disabled = !shouldShow;
-        if (reportBar) reportBar.style.display = shouldShow ? 'block' : 'none';
-        if (reportBarBtn) reportBarBtn.disabled = !shouldShow;
+        const ready = userMessageCount >= MIN_TURNS_FOR_REPORT;
+        const turnsLeft = Math.max(0, MIN_TURNS_FOR_REPORT - userMessageCount);
+
+        const label = ready
+            ? '📊 Gerar relatório da conversa'
+            : `📊 Relatório  (fale mais ${turnsLeft} ${turnsLeft === 1 ? 'vez' : 'vezes'})`;
+
+        if (reportBar) reportBar.style.display = 'block';
+        if (reportBtn) {
+            reportBtn.disabled = !ready;
+            if (reportBtn.innerText !== label) reportBtn.innerText = label;
+        }
+        if (reportBarBtn) {
+            reportBarBtn.disabled = !ready;
+            if (reportBarBtn.innerText !== label) reportBarBtn.innerText = label;
+            reportBarBtn.style.opacity = ready ? '1' : '0.6';
+            reportBarBtn.style.cursor = ready ? 'pointer' : 'not-allowed';
+        }
     }
 
     function showSkipAudioButton() {
