@@ -1768,8 +1768,13 @@ def _looks_real_grammar_error(fragment):
     return any(re.search(pattern, text) for pattern in patterns)
 
 
-def _classify_turn_feedback(user_text, ai_text, practice_mode, must_retry=False, suggested_words=None, structured_correction=None):
-    """Classify turn feedback into real error correction vs style suggestion."""
+def _classify_turn_feedback(user_text, ai_text, practice_mode, must_retry=False, suggested_words=None, structured_correction=None, difficulty='intermediate'):
+    """Classify turn feedback into real error correction vs style suggestion.
+
+    For BEGINNER students, retries are avoided unless the error is severe —
+    being forced to repeat small mistakes kills motivation for A1-A2 learners
+    who are already anxious about speaking.
+    """
     if not LEARNING_CORRECTION_KIND_ENABLED:
         return None
     if practice_mode != 'learning':
@@ -1781,6 +1786,7 @@ def _classify_turn_feedback(user_text, ai_text, practice_mode, must_retry=False,
             "retry_required": False
         }
 
+    is_beginner = str(difficulty or '').strip().lower() == 'beginner'
     student = str(user_text or '').strip()
 
     # Priority: use structured correction field from JSON if available
@@ -1801,6 +1807,14 @@ def _classify_turn_feedback(user_text, ai_text, practice_mode, must_retry=False,
                 "opcional", "dica opcional", "mais educado", "mais natural",
                 "mais polido", "opcional:", "style", "upgrade"
             ])
+            # A "severe" error breaks intelligibility — real verb-form errors
+            # ("goed"/"buyed") or invented words. Small subject-verb issues
+            # ("I wants") are NOT severe enough to force beginner retries.
+            severe_markers = [
+                "verbo irregular", "tempo verbal errado", "palavra inexistente",
+                "nao existe em ingles", "forma incorreta do verbo", "invented word"
+            ]
+            is_severe = any(marker in explanation.lower() for marker in severe_markers)
             if is_style and not must_retry:
                 return {
                     "kind": "style_upgrade",
@@ -1810,12 +1824,18 @@ def _classify_turn_feedback(user_text, ai_text, practice_mode, must_retry=False,
                     "retry_required": False
                 }
             else:
+                # For beginners: only REQUIRE retry on severe errors. Small
+                # agreement/tense slips become soft corrections they can
+                # acknowledge and keep going — no forced re-attempt.
+                require_retry = bool(must_retry)
+                if is_beginner and not is_severe:
+                    require_retry = False
                 return {
                     "kind": "error_correction",
                     "user_text": student,
                     "suggested_text": right,
                     "reason": explanation or "Correcao de erro gramatical/estrutura para esta resposta.",
-                    "retry_required": True
+                    "retry_required": require_retry
                 }
 
     source = str(ai_text or '').strip()
@@ -2413,6 +2433,17 @@ def _neutral_follow_up_pair(context_key, memory_snapshot=None):
     key = (context_key or '').lower()
     memory_snapshot = memory_snapshot or {}
     recent_questions = set(memory_snapshot.get('recent_questions') or [])
+
+    # PRIORITY: the contextual fallback (from CONTEXTUAL_FALLBACK_QUESTIONS) is
+    # written to include 2-3 concrete options — ideal for a shy beginner who
+    # needs a clear menu of answers. Try it first; fall through to the bank
+    # of rotating follow-ups only if that specific question was just asked.
+    contextual = CONTEXTUAL_FALLBACK_QUESTIONS.get(key)
+    if contextual:
+        en_q = contextual.get('en', '')
+        pt_q = contextual.get('pt', '')
+        if en_q and _normalize_question_text(en_q) not in recent_questions:
+            return en_q, pt_q
 
     options = NEUTRAL_FOLLOW_UP_LOOKUP.get(key)
     if options:
@@ -4160,7 +4191,8 @@ Return JSON: {{"en": "...", "pt": "...", "suggested_words": [], "must_retry": fa
             practice_mode,
             must_retry=must_retry,
             suggested_words=suggested_words,
-            structured_correction=locals().get('structured_correction', None)
+            structured_correction=locals().get('structured_correction', None),
+            difficulty=difficulty
         )
 
         if practice_mode == 'learning':
@@ -5338,6 +5370,9 @@ def report():
     conversation = data.get('conversation', [])
     context_key = data.get('context', 'coffee_shop')
     practice_mode = _normalize_practice_mode(data.get('practiceMode', 'learning'))
+    difficulty = str(data.get('difficulty') or 'intermediate').strip().lower()
+    if difficulty not in ('beginner', 'intermediate', 'advanced'):
+        difficulty = 'intermediate'
 
     if not conversation:
         return jsonify({"error": "No conversation provided"}), 400
@@ -5445,6 +5480,11 @@ Você é um professor de inglês MUITO ENCORAJADOR analisando a performance de u
 
 {mode_framing}
 
+Nível declarado do aluno: {difficulty.upper()} (A1-A2=beginner, B1-B2=intermediate, C1+=advanced).
+IMPORTANTE: adapte o tom e a nota ao nível. Para BEGINNER, use "nota_geral": null e
+enfatize "badges" qualitativos — iniciante não precisa de nota numérica, precisa de
+marcos de conquista.
+
 Contexto da conversa: {context_key}
 System prompt do cenário: {system_prompt}
 
@@ -5469,11 +5509,16 @@ REGRAS DE QUALIDADE (OBRIGATÓRIAS - relatórios vazios são INACEITÁVEIS):
 - Se NÃO houver erros gramaticais, "correcoes" pode ficar vazio MAS "analise_frases" deve compensar com sugestões de versões mais naturais para cada fala.
 - Evite elogios genéricos: cite evidências concretas do que o aluno fez bem (ex: "Você usou 'I'd like to' que é a forma educada perfeita").
 
-Gere um relatório em português e retorne APENAS um JSON válido seguindo EXATAMENTE este formato:
+Gere um relatório em português e retorne APENAS um JSON válido seguindo EXATAMENTE este formato.
+IMPORTANTE: a ORDEM dos campos reflete a ORDEM em que o aluno lê. Elogios vêm
+ANTES de correções (motivação primeiro — aluno tímido precisa se sentir visto
+pelo que fez bem antes de ouvir o que melhorar):
 {{
   "titulo": "Frase MUITO MOTIVADORA e positiva sobre o progresso (ex: 'Você está indo muito bem!', 'Ótimo progresso!')",
   "emoji": "emoji positivo (🎉, ✨, 🌟, 👏, 👍)",
   "tom": "positivo e encorajador",
+  "elogios": ["elogio específico 1", "elogio específico 2", "elogio específico 3", "elogio específico 4"],
+  "badges": ["✓ Cumprimentos naturais", "✓ Vocabulário variado", "⚠ Pratique plurais"],
   "correcoes": [
     {{
       "fraseOriginal": "frase EXATA como o aluno falou",
@@ -5493,14 +5538,20 @@ Gere um relatório em português e retorne APENAS um JSON válido seguindo EXATA
       "explicacao": "breve explicação de por que a versão natural é melhor"
     }}
   ],
-  "elogios": ["elogio específico 1", "elogio específico 2", "elogio específico 3", "elogio específico 4"],
   "dicas": ["dica construtiva 1", "dica construtiva 2"],
   "frase_pratica": "próxima frase em inglês para o aluno treinar neste contexto",
   "erros_recorrentes": ["erro recorrente 1", "erro recorrente 2"],
   "plano_estudo": ["pratique X por 10 min", "repita Y com exemplos", "grave 3 frases usando Z"],
-  "nota_geral": 75,
+  "nota_geral": null,
   "resumo_gramatical": ["ponto gramatical coberto 1", "ponto de vocabulário coberto 2"]
 }}
+
+NOTA NUMÉRICA vs BADGES (muito importante):
+- Se o aluno é BEGINNER (A1-A2): defina "nota_geral" como null e preencha "badges"
+  com 3-5 marcadores qualitativos. Nota numérica desmotiva iniciante.
+  Exemplos de badges: "✓ Saudações naturais", "✓ Vocabulário variado",
+  "⚠ Pratique plurais", "⚠ Revise verbo 'to be'".
+- Se é intermediate/advanced: pode usar "nota_geral" de 0-100 E preencher "badges".
 
 ANÁLISE FRASE A FRASE (use em "analise_frases"):
 - Analise TODAS as falas do aluno, não apenas as com erro

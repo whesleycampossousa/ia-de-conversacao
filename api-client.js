@@ -183,11 +183,11 @@ class APIClient {
     /**
      * Generate report
      */
-    async generateReport(conversation, context, practiceMode = 'learning') {
+    async generateReport(conversation, context, practiceMode = 'learning', difficulty = 'intermediate') {
         const response = await fetch(`${this.baseURL}/api/report`, {
             method: 'POST',
             headers: this.getHeaders(),
-            body: JSON.stringify({ conversation, context, practiceMode })
+            body: JSON.stringify({ conversation, context, practiceMode, difficulty })
         });
 
         await this.handleResponse(response);

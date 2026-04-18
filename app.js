@@ -3658,7 +3658,8 @@
 
         try {
             const currentMode = window.getSelectedMode ? window.getSelectedMode() : 'learning';
-            const data = await apiClient.generateReport(conversationLog, context, currentMode);
+            const currentDifficultyForReport = (window.getSelectedDifficulty ? window.getSelectedDifficulty() : (localStorage.getItem('practice_difficulty') || 'intermediate'));
+            const data = await apiClient.generateReport(conversationLog, context, currentMode, currentDifficultyForReport);
             hideLoadingIndicator();
 
             // Save report data for export
