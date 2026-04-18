@@ -266,10 +266,11 @@
             <div class="player-controls footer-bar" id="footer-bar">
                 <input type="checkbox" id="auto-translate-toggle" style="display:none;">
 
-                <div class="input-row voice-only-row" id="input-row">
+                <div class="input-row voice-only-row" id="input-row" style="flex-direction: column; align-items: center; gap: 0;">
                     <button id="record-btn" class="control-btn mic-btn" title="Clique para Falar" disabled>
                         <span id="mic-icon-inner">🎤</span>
                     </button>
+                    <div id="mic-hint" class="mic-hint-under">Clique no microfone para responder</div>
                     <div id="record-text" style="display: none;"></div>
                 </div>
 

@@ -145,6 +145,33 @@
     const reportBtn = document.getElementById('report-btn');
     const reportBarBtn = document.getElementById('report-bar-btn');
     const micHint = document.getElementById('mic-hint');
+
+    // Update the mic hint text + color based on the mic button's current state.
+    // Uses a MutationObserver so every existing call site (setMicReadyState,
+    // recordBtn.classList.add('recording'), etc.) updates the hint for free.
+    function syncMicHint() {
+        if (!micHint || !recordBtn) return;
+        const cls = recordBtn.classList;
+        micHint.classList.remove('recording', 'processing');
+        if (cls.contains('recording')) {
+            micHint.textContent = '🔴 Gravando... fale agora';
+            micHint.classList.add('recording');
+        } else if (cls.contains('listening')) {
+            micHint.textContent = '⏳ Processando sua fala...';
+            micHint.classList.add('processing');
+        } else if (recordBtn.disabled) {
+            micHint.textContent = '⏳ Aguarde...';
+            micHint.classList.add('processing');
+        } else {
+            micHint.textContent = 'Clique no microfone para responder';
+        }
+    }
+    if (recordBtn && typeof MutationObserver !== 'undefined') {
+        const micObserver = new MutationObserver(syncMicHint);
+        micObserver.observe(recordBtn, { attributes: true, attributeFilter: ['class', 'disabled'] });
+        // Initial sync
+        setTimeout(syncMicHint, 0);
+    }
     const chatWindow = document.getElementById('chat-window');
     const subtitleToggleBtn = document.getElementById('subtitle-toggle-btn');
     const statusIndicator = document.getElementById('status-indicator');
@@ -1099,13 +1126,63 @@
         return `${objective}${goalNote}`;
     }
 
+    // Friendly emoji + label per scenario context. Falls back to a generic one.
+    // Used to replace "BASIC STRUCTURES TRAINING" etc with "📗 Estruturas básicas" etc.
+    const FRIENDLY_TITLES = {
+        'coffee_shop': '☕ Cafeteria',
+        'restaurant': '🍽 Restaurante',
+        'airport': '✈ Aeroporto',
+        'hotel': '🏨 Hotel',
+        'supermarket': '🛒 Supermercado',
+        'pharmacy': '💊 Farmácia',
+        'doctor': '🩺 Médico',
+        'bank': '🏦 Banco',
+        'gym': '💪 Academia',
+        'cinema': '🎬 Cinema',
+        'library': '📚 Biblioteca',
+        'bakery': '🥖 Padaria',
+        'post_office': '📮 Correio',
+        'train_station': '🚉 Estação de trem',
+        'bus_stop': '🚏 Ponto de ônibus',
+        'gas_station': '⛽ Posto',
+        'hair_salon': '💇 Salão',
+        'clothing_store': '👕 Loja de roupas',
+        'pet_shop': '🐾 Pet Shop',
+        'flower_shop': '💐 Floricultura',
+        'dental_clinic': '🦷 Dentista',
+        'tech_support': '💻 Suporte técnico',
+        'pizza_delivery': '🍕 Entrega de pizza',
+        'renting_car': '🚗 Alugar carro',
+        'lost_found': '🧳 Achados e perdidos',
+        'neighbor': '🏘 Vizinhança',
+        'first_date': '💞 Primeiro encontro',
+        'wedding': '💍 Casamento',
+        'graduation': '🎓 Formatura',
+        'school': '🏫 Escola',
+        'street': '🚶 Na rua',
+        'parents_house': '👨‍👩‍👧 Casa dos pais',
+        'museum': '🖼 Museu',
+        'park': '🌳 Parque',
+        'free_conversation': '💬 Conversa livre',
+        'basic_structures': '📗 Estruturas básicas'
+    };
+    function friendlyScenarioTitle(ctxKey, fallback) {
+        const friendly = FRIENDLY_TITLES[String(ctxKey || '').toLowerCase()];
+        if (friendly) return friendly;
+        // Fallback: title-case the raw string, remove "Training" suffix
+        const raw = String(fallback || '').replace(/\bTraining\b/i, '').trim();
+        if (!raw) return '💬 Prática';
+        const niced = raw.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+        return `📝 ${niced}`;
+    }
+
     function updateHeaderInfo() {
         const modeBadge = document.getElementById('player-mode-badge');
         const levelBadge = document.getElementById('player-level-badge');
         const objectiveEl = document.getElementById('player-objective');
         const scenarioTitle = document.getElementById('player-scenario-title');
         const selectedMode = window.getSelectedMode ? window.getSelectedMode() : 'learning';
-        if (scenarioTitle && contextName) scenarioTitle.textContent = contextName;
+        if (scenarioTitle && contextName) scenarioTitle.textContent = friendlyScenarioTitle(context, contextName);
         if (modeBadge) {
             const lang = (window.getInterfaceLang && window.getInterfaceLang()) || 'pt';
             const labelMap = (lang === 'en') ? MODE_LABELS_EN : MODE_LABELS_PT;
@@ -6072,10 +6149,15 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
     }
 
     function updateReportButton() {
+        // Only show the report button once the student has had enough turns
+        // for a meaningful report (≥3 user messages). Before that, it was
+        // competing visually with the mic as the biggest red CTA on screen.
+        const MIN_TURNS_FOR_REPORT = 3;
         const reportBar = document.getElementById('report-bar');
-        if (reportBtn) reportBtn.disabled = false;
-        if (reportBar) reportBar.style.display = 'block';
-        if (reportBarBtn) reportBarBtn.disabled = false;
+        const shouldShow = userMessageCount >= MIN_TURNS_FOR_REPORT;
+        if (reportBtn) reportBtn.disabled = !shouldShow;
+        if (reportBar) reportBar.style.display = shouldShow ? 'block' : 'none';
+        if (reportBarBtn) reportBarBtn.disabled = !shouldShow;
     }
 
     function showSkipAudioButton() {
