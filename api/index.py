@@ -1326,27 +1326,27 @@ SIMULATOR_PROMPTS = {}  # Simulator mode prompts for realistic roleplay
 LESSONS_DB = {}  # Structured lessons for Learning mode
 
 COMMUNICATIVE_OBJECTIVES = {
-    'coffee_shop': 'Order a drink and confirm options politely.',
-    'restaurant': 'Order food, sides, and drinks politely.',
-    'airport': 'Check in, confirm flight details, and baggage.',
-    'hotel': 'Check in and resolve stay details.',
-    'supermarket': 'Ask for items and handle checkout.',
-    'doctor': 'Explain symptoms and understand advice.',
-    'bank': 'Handle a basic transaction clearly.',
-    'pharmacy': 'Describe symptoms and request medicine.',
-    'gym': 'Discuss goals and choose a workout.',
-    'job_interview': 'Present experience and answer key questions.',
-    'tech_support': 'Describe a problem and follow troubleshooting steps.',
-    'hair_salon': 'Request a style and confirm details.',
-    'clothing_store': 'Ask about size, color, and try-on.',
-    'train_station': 'Buy a ticket and confirm schedule.',
-    'bus_stop': 'Ask about routes and tickets.',
-    'renting_car': 'Choose a car and rental terms.',
-    'pizza_delivery': 'Place an order and confirm delivery.',
-    'bakery': 'Order items and quantities.',
-    'library': 'Ask for materials and rules.',
-    'cinema': 'Buy tickets and choose seats.',
-    'lost_found': 'Report a lost item with details.'
+    'coffee_shop': 'Order a drink and answer simple options (size, sugar).',
+    'restaurant': 'Order food and drinks politely.',
+    'airport': 'Show passport/ticket and answer baggage questions.',
+    'hotel': 'Say your name and check in.',
+    'supermarket': 'Ask where items are and pay.',
+    'doctor': 'Say what hurts and for how long.',
+    'bank': 'Do one simple operation (deposit or withdraw).',
+    'pharmacy': 'Describe one symptom and ask for medicine.',
+    'gym': 'Say a goal and pick a simple workout.',
+    'job_interview': 'Introduce yourself and mention past experience.',
+    'tech_support': 'Describe one problem and follow a step.',
+    'hair_salon': 'Ask for a haircut (short/trim/color).',
+    'clothing_store': 'Ask about size and color; try on an item.',
+    'train_station': 'Buy one ticket and confirm the time.',
+    'bus_stop': 'Ask which bus to take.',
+    'renting_car': 'Rent a car for a few days.',
+    'pizza_delivery': 'Order a pizza and confirm the address.',
+    'bakery': 'Order a few breads or sweets.',
+    'library': 'Borrow a book or ask for a quiet room.',
+    'cinema': 'Buy one ticket and pick a seat.',
+    'lost_found': 'Describe a lost item (color, shape, when).'
 }
 
 LEARNING_STUDENT_ROLE_BY_CONTEXT = {
@@ -3962,6 +3962,13 @@ STYLE/POLITENESS — be GENEROUS, not nitpicky:
   uses a very unnatural construction.
 - Being overly picky makes the student feel they can never get it right.
 
+PORTUGUESE RESCUE: if the student writes in Portuguese (e.g. "nao sei",
+"nao entendi", "como se diz X"), they're panicking. Reply in-character with a
+SHORT bilingual message: acknowledge briefly, then offer a 3-5 word English
+starter they can repeat. Example student "nao sei" -> en: "No problem! You
+could say: 'I'd like a coffee.' Want to try?" pt: "Sem problema! Pode dizer:
+'I'd like a coffee.' Quer tentar?" — keep correction=null, must_retry=false.
+
 Return valid JSON only:
 {{"en":"...","pt":"...","suggested_words":[],"must_retry":false,"correction":null}}"""
                 else:
@@ -3980,6 +3987,13 @@ CRITICAL RULES:
 5. Only correct REAL GRAMMAR ERRORS. Do NOT "fix" valid alternatives.
 6. Keep 1-3 short sentences (roughly 20-45 words total).
 7. Keep language EASY: common daily words, short sentences, no slang/idioms/rare words.
+8. PORTUGUESE RESCUE: if the student writes in Portuguese (e.g. "nao sei",
+   "nao entendi", "como se diz X"), they're stuck and panicking. Respond kindly
+   with a SHORT bilingual message: acknowledge in PT + offer a simple English
+   starter they can echo. Example:
+   student: "nao sei" -> en: "No problem! You can just say: 'I don't know yet.'
+   Want to try again?" pt: "Sem problema! Voce pode dizer: 'I don't know yet.'
+   Quer tentar de novo?"
 suggested_words: ONLY for real grammar errors; otherwise [].
 must_retry: true ONLY if suggested_words not empty; else false.
 Return JSON: {{"en": "...", "pt": "...", "suggested_words": [], "must_retry": false}}."""
@@ -4902,11 +4916,18 @@ Generate 4 short response options (max 10 words each) the student could say in E
 {politeness_block}
 Example if AI said "My day was busy. How is your day?":
 {{"suggestions": [
-  {{"en": "My day is good, thanks.", "pt": "Meu dia esta bom, obrigado."}},
+  {{"en": "My day is good, thank you.", "pt": "Meu dia esta bom, obrigado."}},
   {{"en": "It was busy for me too.", "pt": "Tambem foi corrido para mim."}},
   {{"en": "I am fine. And you?", "pt": "Estou bem. E voce?"}},
   {{"en": "Can you tell me more?", "pt": "Pode me contar mais?"}}
 ]}}
+
+PREFER FULL FORMS for beginners (no contractions in suggestions):
+- "thank you" not "thanks"
+- "I am" not "I'm"
+- "I would like" not "I'd like"  (except as a polite request model — then fine)
+- "do not" not "don't"
+Reason: contractions add cognitive load for A1-A2 who are still mapping the words.
 
 CRITICAL: Responses MUST be valid answers to the AI's statement/question. Return ONLY the JSON.
 """
@@ -5631,8 +5652,8 @@ IMPORTANTE: a ORDEM dos campos reflete a ORDEM em que o aluno lê. Elogios vêm
 ANTES de correções (motivação primeiro — aluno tímido precisa se sentir visto
 pelo que fez bem antes de ouvir o que melhorar):
 {{
-  "titulo": "Frase MUITO MOTIVADORA e positiva sobre o progresso (ex: 'Você está indo muito bem!', 'Ótimo progresso!')",
-  "emoji": "emoji positivo (🎉, ✨, 🌟, 👏, 👍)",
+  "titulo": "Frase MUITO MOTIVADORA sobre o progresso (ex: 'Você está indo bem!', 'Bom começo!')",
+  "emoji": "emoji que REFLITA a performance (nao inflacione):\n          🌱 = iniciante em evolução / primeiros passos\n          💡 = bons acertos com pontos a aprimorar\n          🎉 = performance clara e consistente\n          👏 = esforço perceptivel\n          ⭐ = domínio evidente do conteudo",
   "tom": "positivo e encorajador",
   "elogios": ["elogio específico 1", "elogio específico 2", "elogio específico 3", "elogio específico 4"],
   "badges": ["✓ Cumprimentos naturais", "✓ Vocabulário variado", "⚠ Pratique plurais"],

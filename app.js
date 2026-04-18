@@ -47,28 +47,30 @@
         simulator: 'Simulator'
     };
 
+    // Objetivo mostrado ao aluno (PT, simples, evita jargão como
+    // "reservation/amenities/check-in details" que confunde A1-A2).
     const COMMUNICATIVE_OBJECTIVES = {
-        coffee_shop: 'Objective: order a drink and confirm options.',
-        restaurant: 'Objective: order food, sides, and drinks politely.',
-        airport: 'Objective: check in, confirm flight details, and baggage.',
-        hotel: 'Objective: check in and resolve stay details.',
-        supermarket: 'Objective: ask for items and handle checkout.',
-        doctor: 'Objective: explain symptoms and understand advice.',
-        bank: 'Objective: handle a basic transaction clearly.',
-        pharmacy: 'Objective: describe symptoms and request medicine.',
-        gym: 'Objective: discuss goals and choose a workout.',
-        job_interview: 'Objective: present experience and answer key questions.',
-        tech_support: 'Objective: describe a problem and follow steps.',
-        hair_salon: 'Objective: request a style and confirm details.',
-        clothing_store: 'Objective: ask about size, color, and try-on.',
-        train_station: 'Objective: buy a ticket and confirm schedule.',
-        bus_stop: 'Objective: ask about routes and tickets.',
-        renting_car: 'Objective: choose a car and rental terms.',
-        pizza_delivery: 'Objective: place an order and confirm delivery.',
-        bakery: 'Objective: order items and quantities.',
-        library: 'Objective: ask for materials and rules.',
-        cinema: 'Objective: buy tickets and choose seats.',
-        lost_found: 'Objective: report a lost item with details.'
+        coffee_shop: 'Objetivo: pedir uma bebida e escolher opções (tamanho, açúcar).',
+        restaurant: 'Objetivo: pedir comida e bebida de forma educada.',
+        airport: 'Objetivo: apresentar passaporte e passagem, falar da bagagem.',
+        hotel: 'Objetivo: dizer seu nome e fazer check-in.',
+        supermarket: 'Objetivo: perguntar onde ficam os itens e pagar.',
+        doctor: 'Objetivo: dizer onde dói e há quanto tempo.',
+        bank: 'Objetivo: fazer uma operação simples (depósito, saque).',
+        pharmacy: 'Objetivo: pedir um remédio para um sintoma.',
+        gym: 'Objetivo: falar do seu objetivo e escolher um treino.',
+        job_interview: 'Objetivo: falar de você e sua experiência.',
+        tech_support: 'Objetivo: descrever um problema e seguir instruções.',
+        hair_salon: 'Objetivo: pedir o corte que você quer.',
+        clothing_store: 'Objetivo: perguntar tamanho, cor e experimentar.',
+        train_station: 'Objetivo: comprar uma passagem e confirmar horário.',
+        bus_stop: 'Objetivo: perguntar qual ônibus pegar.',
+        renting_car: 'Objetivo: alugar um carro por alguns dias.',
+        pizza_delivery: 'Objetivo: fazer um pedido e confirmar o endereço.',
+        bakery: 'Objetivo: pedir pães e doces.',
+        library: 'Objetivo: pegar um livro emprestado.',
+        cinema: 'Objetivo: comprar ingresso e escolher a poltrona.',
+        lost_found: 'Objetivo: descrever o que você perdeu.'
     };
 
     let recentCorrections = [];
@@ -3228,7 +3230,9 @@
             console.error(err);
             hideLoadingIndicator();
 
-            let errorMessage = "Connection error. Please check your internet and try again.";
+            // Mensagens friendly em PT — aluno A1 nao deve ler jargao tecnico
+            // ("Connection error", "UNAVAILABLE", "AbortError") e achar que ele errou.
+            let errorMessage = "Desculpe, não consegui ouvir direito. Pode tentar de novo?";
             const errMessage = String(err?.message || '');
             const backendError = extractBackendErrorPayload(err);
             if (err?.status === 429 && isWeekendLimitError(backendError || {})) {
@@ -3236,9 +3240,9 @@
                 showUsageExceededModal(backendError || {});
             }
             if (err?.status === 503 || errMessage.includes('UNAVAILABLE') || errMessage.includes('high demand')) {
-                errorMessage = "The AI model is temporarily overloaded. Please try again in a few seconds.";
+                errorMessage = "A IA está um pouco ocupada agora. Tenta de novo em alguns segundos?";
             } else if (err.name === 'AbortError') {
-                errorMessage = "The server took too long to respond. Please try again.";
+                errorMessage = "Demorou muito pra responder. Vamos tentar de novo?";
             } else if (errMessage.includes('Session expired')) {
                 errorMessage = "Your session has expired. Redirecting to login...";
             } else if (errMessage.includes('Text too long')) {
