@@ -22,7 +22,25 @@
     // Check for audio-only mode URL param
     const urlParams = new URLSearchParams(window.location.search);
     const mode = urlParams.get('mode');
-    const context = urlParams.get('context') || 'coffee_shop';
+    // Resolve the current scenario context with a defensive chain:
+    //   1. URL param (authoritative when arriving from scenario catalog)
+    //   2. localStorage 'current_context' (survives soft reloads / back nav)
+    //   3. localStorage 'last_context' (last thing the student practiced)
+    //   4. 'free_conversation' as a SAFE fallback — picking coffee_shop as default
+    //      silently contaminated chat/suggestions/reports when the URL was lost.
+    function resolveScenarioContext() {
+        const fromUrl = urlParams.get('context');
+        if (fromUrl && fromUrl.trim()) return fromUrl.trim();
+        try {
+            const fromStorage = localStorage.getItem('current_context');
+            if (fromStorage && fromStorage.trim()) return fromStorage.trim();
+            const fromLast = localStorage.getItem('last_context');
+            if (fromLast && fromLast.trim()) return fromLast.trim();
+        } catch (_) {}
+        return 'free_conversation';
+    }
+    const context = resolveScenarioContext();
+    try { localStorage.setItem('current_context', context); } catch (_) {}
     const contextName = urlParams.get('title') || 'Practice';
     const lessonLang = urlParams.get('lessonLang') || 'en'; // 'en' or 'pt' for bilingual
     const isGrammarMode = urlParams.get('type') === 'grammar';

@@ -1468,6 +1468,22 @@ def looks_portuguese(text):
     return hits >= max(2, int(len(tokens) * 0.3))
 
 
+def _resolve_context_key(payload, endpoint_name=''):
+    """Resolve scenario context from request payload with explicit logging.
+
+    If the caller didn't send a context, we fall back to 'free_conversation'
+    (not 'coffee_shop') so we don't silently pollute chat/suggestions/reports
+    with coffee shop copy for a student who was practicing at the bank.
+    Every fallback is logged so we can see when the frontend forgot to pass it.
+    """
+    raw = (payload or {}).get('context') if isinstance(payload, dict) else None
+    ctx = str(raw or '').strip().lower()
+    if ctx:
+        return ctx
+    print(f"[CTX] {endpoint_name or 'unknown'} received no context; using 'free_conversation' safe fallback")
+    return 'free_conversation'
+
+
 def _normalize_practice_mode(raw_mode):
     mode = str(raw_mode or 'learning').strip().lower()
     if mode not in ('learning', 'simulator'):
@@ -1720,7 +1736,7 @@ CRITICAL RULES:
 
 def _resolve_chat_system_prompt(context_key, practice_mode, is_grammar_topic, objective_text='', difficulty_length_rule=''):
     """Pick system prompt and mode label for chat generation."""
-    fallback_prompt = CONTEXT_PROMPTS.get(context_key, CONTEXT_PROMPTS.get('coffee_shop', ''))
+    fallback_prompt = CONTEXT_PROMPTS.get(context_key, CONTEXT_PROMPTS.get('free_conversation', CONTEXT_PROMPTS.get('coffee_shop', '')))
     if practice_mode == 'simulator':
         sim_prompt = SIMULATOR_PROMPTS.get(context_key)
         if sim_prompt:
@@ -3243,7 +3259,7 @@ def chat():
 
     data = request.json or {}
     user_text = data.get('text')
-    context_key = data.get('context', 'coffee_shop')
+    context_key = _resolve_context_key(data, '/api/chat')
     lesson_lang = data.get('lessonLang', 'en')  # 'en' or 'pt'
     practice_mode = _normalize_practice_mode(data.get('practiceMode', 'learning'))  # 'learning' or 'simulator'
     student_level = (data.get('studentLevel') or '').strip()
@@ -4817,7 +4833,7 @@ def get_suggestions():
     
     data = request.json
     ai_last_message = data.get('aiMessage', '')
-    context_key = data.get('context', 'coffee_shop')
+    context_key = _resolve_context_key(data, '/api/suggestions')
     lesson_lang = data.get('lessonLang', 'en')
     exclude_list = data.get('exclude', [])  # Suggestions already shown to user
 
@@ -5255,7 +5271,7 @@ def lesson():
         return jsonify({"error": "AI service not configured"}), 500
 
     data = request.json or {}
-    context = data.get('context', 'coffee_shop')
+    context = _resolve_context_key(data, '/api/lesson')
     action = data.get('action', 'start')
     current_layer = data.get('layer', 0)
     selected_option = data.get('option')
@@ -5497,7 +5513,7 @@ def report():
 
     data = request.json or {}
     conversation = data.get('conversation', [])
-    context_key = data.get('context', 'coffee_shop')
+    context_key = _resolve_context_key(data, '/api/report')
     practice_mode = _normalize_practice_mode(data.get('practiceMode', 'learning'))
     difficulty = str(data.get('difficulty') or 'intermediate').strip().lower()
     if difficulty not in ('beginner', 'intermediate', 'advanced'):
@@ -5506,7 +5522,7 @@ def report():
     if not conversation:
         return jsonify({"error": "No conversation provided"}), 400
 
-    system_prompt = CONTEXT_PROMPTS.get(context_key, CONTEXT_PROMPTS.get('coffee_shop', ''))
+    system_prompt = CONTEXT_PROMPTS.get(context_key, CONTEXT_PROMPTS.get('free_conversation', CONTEXT_PROMPTS.get('coffee_shop', '')))
 
     # Normalize sender labels so Gemini doesn't get confused by usernames like
     # "Everydayconversation1991" - it may not realize that's the student.
