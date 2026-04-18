@@ -485,6 +485,109 @@ CONTEXTUAL_FALLBACK_QUESTIONS = {
 }
 
 
+# Per-scenario fallback suggestions — used when Gemini fails to generate
+# relevant response options. Generic "I agree / I understand" would be
+# nonsensical in a coffee shop or bank. Each pool has 5-6 polite, scenario-
+# appropriate phrases so the student always sees something useful.
+CONTEXTUAL_SUGGESTION_FALLBACKS = {
+    'coffee_shop': [
+        {"en": "I'd like a coffee, please.",        "pt": "Eu gostaria de um cafe, por favor."},
+        {"en": "Can I have a tea, please?",         "pt": "Posso pedir um cha, por favor?"},
+        {"en": "I'll take a cappuccino, please.",   "pt": "Vou querer um cappuccino, por favor."},
+        {"en": "Could I see the menu, please?",     "pt": "Posso ver o cardapio, por favor?"},
+        {"en": "That's all for now, thank you.",    "pt": "E so por enquanto, obrigado."},
+        {"en": "For here, please.",                 "pt": "Para comer aqui, por favor."},
+    ],
+    'restaurant': [
+        {"en": "I'd like to see the menu, please.", "pt": "Gostaria de ver o cardapio, por favor."},
+        {"en": "A table for two, please.",          "pt": "Uma mesa para dois, por favor."},
+        {"en": "I'll have the pasta, please.",      "pt": "Vou querer a massa, por favor."},
+        {"en": "Could I have water, please?",       "pt": "Posso pedir agua, por favor?"},
+        {"en": "Yes, I have a reservation.",        "pt": "Sim, eu tenho reserva."},
+        {"en": "No, not yet, thank you.",           "pt": "Nao, ainda nao, obrigado."},
+    ],
+    'bakery': [
+        {"en": "I'd like a loaf of bread, please.",  "pt": "Gostaria de um pao, por favor."},
+        {"en": "Can I have two croissants, please?", "pt": "Posso levar dois croissants, por favor?"},
+        {"en": "One chocolate cake, please.",        "pt": "Um bolo de chocolate, por favor."},
+        {"en": "Do you have any fresh pastries?",    "pt": "Voces tem doces frescos?"},
+        {"en": "That's everything, thank you.",      "pt": "E so isso, obrigado."},
+    ],
+    'pizza_delivery': [
+        {"en": "I'd like to order a pizza, please.", "pt": "Gostaria de pedir uma pizza, por favor."},
+        {"en": "One cheese pizza, large.",           "pt": "Uma pizza de queijo, grande."},
+        {"en": "Could I add extra cheese?",          "pt": "Posso colocar queijo extra?"},
+        {"en": "How long will it take?",             "pt": "Quanto tempo vai demorar?"},
+        {"en": "Yes, that's the correct address.",   "pt": "Sim, esse e o endereco certo."},
+    ],
+    'supermarket': [
+        {"en": "Where can I find the milk, please?", "pt": "Onde fica o leite, por favor?"},
+        {"en": "Do you have any fresh fruit?",       "pt": "Voces tem fruta fresca?"},
+        {"en": "Is this on sale?",                   "pt": "Isso esta em promocao?"},
+        {"en": "Can I pay with card?",               "pt": "Posso pagar com cartao?"},
+        {"en": "I'd like a bag, please.",            "pt": "Quero uma sacola, por favor."},
+    ],
+    'pharmacy': [
+        {"en": "I have a headache. What do you recommend?", "pt": "Estou com dor de cabeca. O que voce recomenda?"},
+        {"en": "Do you have something for a cold?",         "pt": "Voce tem algo para resfriado?"},
+        {"en": "Yes, I have a prescription.",               "pt": "Sim, tenho receita."},
+        {"en": "Could you explain how to take it?",         "pt": "Pode explicar como tomar?"},
+        {"en": "How much does it cost?",                    "pt": "Quanto custa?"},
+    ],
+    'doctor': [
+        {"en": "I have a pain in my stomach.",    "pt": "Estou com dor na barriga."},
+        {"en": "It started two days ago.",        "pt": "Comecou ha dois dias."},
+        {"en": "I feel very tired.",              "pt": "Estou me sentindo muito cansado."},
+        {"en": "Could you repeat that, please?",  "pt": "Pode repetir, por favor?"},
+        {"en": "Do I need to take medicine?",     "pt": "Preciso tomar algum remedio?"},
+    ],
+    'bank': [
+        {"en": "I'd like to deposit some money, please.",  "pt": "Gostaria de depositar dinheiro, por favor."},
+        {"en": "I need to withdraw, please.",              "pt": "Preciso sacar, por favor."},
+        {"en": "Could you help me open an account?",       "pt": "Pode me ajudar a abrir uma conta?"},
+        {"en": "Yes, I have my ID with me.",               "pt": "Sim, estou com meu documento."},
+        {"en": "Could you explain the fees, please?",      "pt": "Pode explicar as taxas, por favor?"},
+    ],
+    'hotel': [
+        {"en": "I have a reservation under my name.",    "pt": "Tenho uma reserva no meu nome."},
+        {"en": "I'd like to check in, please.",          "pt": "Gostaria de fazer check-in, por favor."},
+        {"en": "How many nights? Three, please.",        "pt": "Quantas noites? Tres, por favor."},
+        {"en": "What time is breakfast?",                "pt": "Que horas e o cafe da manha?"},
+        {"en": "Could I get the Wi-Fi password?",        "pt": "Pode me dar a senha do Wi-Fi?"},
+    ],
+    'airport': [
+        {"en": "Here is my passport and ticket.",        "pt": "Aqui estao meu passaporte e passagem."},
+        {"en": "I have one suitcase to check.",          "pt": "Tenho uma mala para despachar."},
+        {"en": "Could I have a window seat, please?",    "pt": "Posso pegar uma poltrona na janela, por favor?"},
+        {"en": "Where is gate 12, please?",              "pt": "Onde fica o portao 12, por favor?"},
+        {"en": "No, only carry-on luggage.",             "pt": "Nao, so bagagem de mao."},
+    ],
+    'tech_support': [
+        {"en": "My phone is not turning on.",           "pt": "Meu celular nao liga."},
+        {"en": "The internet is very slow.",            "pt": "A internet esta muito lenta."},
+        {"en": "Yes, I have tried restarting it.",      "pt": "Sim, ja tentei reiniciar."},
+        {"en": "Could you walk me through it, please?", "pt": "Pode me guiar passo a passo, por favor?"},
+        {"en": "Thank you, that worked!",               "pt": "Obrigado, funcionou!"},
+    ],
+    'free_conversation': [
+        {"en": "Let me tell you about my day.",      "pt": "Deixa eu te contar sobre o meu dia."},
+        {"en": "I enjoy reading and walking.",       "pt": "Eu gosto de ler e de caminhar."},
+        {"en": "Tell me more about that.",           "pt": "Me conte mais sobre isso."},
+        {"en": "That sounds really interesting.",    "pt": "Isso parece bem interessante."},
+        {"en": "Could you say that more slowly?",    "pt": "Pode falar mais devagar, por favor?"},
+        {"en": "I'm still learning, please be patient.", "pt": "Ainda estou aprendendo, por favor seja paciente."},
+    ],
+    '__default__': [
+        {"en": "Could you say that again, please?",  "pt": "Pode falar de novo, por favor?"},
+        {"en": "Tell me more, please.",              "pt": "Me conte mais, por favor."},
+        {"en": "Thank you.",                          "pt": "Obrigado."},
+        {"en": "Yes, that sounds good.",             "pt": "Sim, parece bom."},
+        {"en": "I'm not sure. Can you help me?",     "pt": "Nao tenho certeza. Pode me ajudar?"},
+        {"en": "Let me think for a moment.",         "pt": "Deixa eu pensar um momento."},
+    ],
+}
+
+
 DIFFICULTY_PROFILES = {
     'beginner': {
         'sentences_label': '1 short sentence',
@@ -1573,6 +1676,26 @@ def _build_learning_system_prompt(context_key, base_prompt, objective_text='', d
     # Fallback when caller did not provide a difficulty rule (keeps backward compat).
     if not difficulty_length_rule:
         difficulty_length_rule = "Keep responses short and clear (1-3 sentences)."
+
+    # Basic Structures Training is INTENTIONALLY a tutor-style lesson, NOT a
+    # role-play scenario. Overlaying "you are the scenario character — never a
+    # teacher" on top of it contradicts its own prompt and confuses the student.
+    # Keep the base prompt untouched here; only append objective + difficulty.
+    if (context_key or '').lower() == 'basic_structures':
+        return f"""{base}
+
+{objective_line}
+
+RESPONSE LENGTH: {difficulty_length_rule}
+
+STYLE POLICY (tutor mode):
+- Do NOT flag the student's answer as "could be more polite/natural" unless
+  it's actually rude. This lesson explicitly teaches multiple valid ways to
+  express the same idea — penalizing any of them is contradictory.
+- Only correct real grammar errors (wrong verb form, invented words). Accept
+  any communicatively effective answer as correct.
+"""
+
     return f"""{base}
 
 LEARNING MODE (STRICT):
@@ -4854,19 +4977,13 @@ You MUST generate COMPLETELY DIFFERENT alternatives. Use different sentence stru
                 normalized.append({"en": text[:120], "pt": ""})
 
         # Ensure 4 suggestions for better UI consistency.
+        # Fallback pool is now CONTEXT-AWARE — generic "I agree/I understand"
+        # makes no sense in a coffee shop or bank scenario. Per-scenario pools
+        # offer polite, relevant phrases the student would actually want to say.
         import random
-        fallback_pool = [
-            {"en": "I understand.", "pt": "Eu entendi."},
-            {"en": "I agree.", "pt": "Eu concordo."},
-            {"en": "That is true for me too.", "pt": "Isso e verdade para mim tambem."},
-            {"en": "Can you say that again?", "pt": "Pode falar isso de novo?"},
-            {"en": "Can you give one example?", "pt": "Pode dar um exemplo?"},
-            {"en": "That happened to me too.", "pt": "Isso aconteceu comigo tambem."},
-            {"en": "I like that idea.", "pt": "Eu gostei dessa ideia."},
-            {"en": "I am not sure. Can you explain?", "pt": "Nao tenho certeza. Pode explicar?"},
-            {"en": "Good point.", "pt": "Bom ponto."},
-            {"en": "I think so too.", "pt": "Eu tambem acho."}
-        ]
+        ctx_key = (context_key or '').lower()
+        pool = CONTEXTUAL_SUGGESTION_FALLBACKS.get(ctx_key) or CONTEXTUAL_SUGGESTION_FALLBACKS['__default__']
+        fallback_pool = list(pool)
         random.shuffle(fallback_pool)
         existing = {item.get("en", "").strip().lower() for item in normalized}
         for item in fallback_pool:
@@ -4883,22 +5000,13 @@ You MUST generate COMPLETELY DIFFERENT alternatives. Use different sentence stru
         raise ValueError("No valid suggestions parsed from model response")
     except Exception as e:
         print(f"[SUGGESTIONS] Error: {e}")
-        # Fallback to generic but contextual suggestions
+        # Fallback: use the same per-scenario pool so the UI still shows
+        # relevant options even when Gemini failed completely.
         import random
-        generic_pool = [
-            {"en": "That is interesting.", "pt": "Isso e interessante."},
-            {"en": "I agree with you.", "pt": "Eu concordo com voce."},
-            {"en": "Tell me more.", "pt": "Me conte mais."},
-            {"en": "I think so too.", "pt": "Eu tambem acho."},
-            {"en": "Can you give one example?", "pt": "Voce pode dar um exemplo?"},
-            {"en": "I understand your point.", "pt": "Eu entendi seu ponto."},
-            {"en": "That is a good way.", "pt": "Essa e uma boa forma."},
-            {"en": "Can you explain a bit more?", "pt": "Pode explicar um pouco mais?"}
-        ]
-        fallback_choices = random.sample(generic_pool, 4)
-        return jsonify({
-            "suggestions": fallback_choices
-        })
+        ctx_key = (context_key or '').lower()
+        pool = CONTEXTUAL_SUGGESTION_FALLBACKS.get(ctx_key) or CONTEXTUAL_SUGGESTION_FALLBACKS['__default__']
+        fallback_choices = random.sample(pool, min(4, len(pool)))
+        return jsonify({"suggestions": fallback_choices})
 
 
 # Structured lesson phrase memory to avoid immediate repetition.
@@ -5497,6 +5605,15 @@ Analise CUIDADOSAMENTE cada fala do usuário seguindo estas prioridades:
 1. PRIMEIRO: Identifique pelo menos 3 PONTOS POSITIVOS específicos (o que o aluno fez bem - cite a fala)
 2. Depois: Para CADA fala "ALUNO:" da transcrição, gere uma entrada em "analise_frases"
 3. Dicas práticas e construtivas para evoluir
+4. FOQUE EM PROGRESSO, não em erros já corrigidos no chat:
+   - Se o aluno errou "I wants" no turno 1 e disse "I want" correto no turno 3,
+     ELOGIE esse progresso ("Você já aplicou a correção sozinho: de 'I wants'
+     para 'I want'. Excelente!").
+   - NÃO repita correções que já aconteceram inline durante a conversa a menos
+     que o aluno continue errando. Relatório é pra celebrar evolução, não
+     remoer erro.
+   - Padrões RECORRENTES (aluno erra a mesma coisa 2+ vezes) valem listar em
+     "erros_recorrentes". Erro único que ele já corrigiu → elogio.
 
 REGRAS DE QUALIDADE (OBRIGATÓRIAS - relatórios vazios são INACEITÁVEIS):
 - Use SOMENTE frases reais da transcrição (não invente falas).
