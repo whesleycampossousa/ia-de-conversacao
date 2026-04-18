@@ -189,7 +189,23 @@ except Exception as e:
         def limit(self, *args, **kwargs):
             def decorator(f): return f
             return decorator
+        def request_filter(self, fn): return fn
     limiter = LimiterDummy()
+
+# Localhost requests are exempt from rate limits — needed for automated
+# audits (30x12 turns) and for local dev testing. Registered OUTSIDE the
+# try/except so it applies even after a successful Limiter init.
+if hasattr(limiter, 'request_filter'):
+    @limiter.request_filter
+    def _rate_limit_exempt_localhost():
+        try:
+            addr = (request.remote_addr or '').lower()
+            if addr in ('127.0.0.1', '::1', 'localhost'):
+                return True
+        except Exception:
+            pass
+        return False
+    print("[OK] Rate limiter: localhost requests are exempt")
 
 # Configure Gemini with Caching Support
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "").strip()
@@ -3958,6 +3974,16 @@ CRITICAL — YOU LEAD THE CONVERSATION (unless the student asks something):
 Error rules: words like "goed/buyed/chole/wants→want" are real errors. "I have been" is correct — do not flag.
 When there IS a real grammar error: correction.wrong=student's phrase, correction.right=FULL corrected sentence, suggested_words=3-4 helpful words, must_retry=true.
 Otherwise: correction=null, suggested_words=[], must_retry=false.
+
+CORRECTION MUST PRESERVE MEANING (CRITICAL):
+Any correction.right you suggest MUST keep the student's original intent. Only
+fix grammar/word-choice, never swap for a different idea.
+ - Student: "I was settling a lot of different steps"  (meant: managing tasks)
+   GOOD: "I was handling a lot of different steps" or "I was managing many tasks"
+   BAD:  "I was solving a lot of different problems"  ← different meaning!
+ - If you cannot tell what the student meant, DO NOT invent a new meaning.
+   Either leave correction=null, or ask gently for clarification IN your "en"
+   response (e.g. "What do you mean by settling? Different tasks or issues?").
 
 STYLE/POLITENESS — be GENEROUS, not nitpicky:
 - Do NOT flag a sentence as "could be more natural/polite" unless it's actually rude
