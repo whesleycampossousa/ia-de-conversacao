@@ -620,37 +620,37 @@
         </div>
     </header>
 
-    <!-- Hero Section -->
-    <section class="hero" id="hero-section">
-        <div class="hero-content">
-            <h1 class="hero-title" id="hero-title">Job Interview</h1>
-            <p class="hero-description" id="hero-description">Prepare for your dream career. Master the art of
-                professional dialogue, answer tough questions with confidence, and leave a lasting impression.</p>
-            <div class="hero-buttons">
-                <button class="btn-play" id="hero-play-btn" data-i18n-en="▶ Play" data-i18n-pt="▶ Começar">
-                    <span>&#9658;</span> Começar
-                </button>
-                <button class="btn-info" id="hero-info-btn" data-i18n-en="ⓘ More Info" data-i18n-pt="ⓘ Mais Informações">
-                    <span>&#9432;</span> Mais Informações
-                </button>
-            </div>
+    <!-- v2.0: hero antigo (foto gigante com Job Interview) REMOVIDO.
+         Em seu lugar, um cabeçalho curto e humano, sem competição visual. -->
+    <section id="hero-section" style="padding: 2.5rem 1.5rem 1.2rem; text-align:center; background: transparent;">
+        <div style="max-width:640px; margin:0 auto;">
+            <div style="font-size:2.2rem; margin-bottom:0.4rem;">🗣️</div>
+            <h1 style="font-family:'Plus Jakarta Sans', sans-serif; font-size:1.7rem; font-weight:800; color:#F5F7FA; margin:0 0 0.3rem;">O que você quer praticar hoje?</h1>
+            <p style="color:#A8B5C0; font-size:0.95rem; margin:0;">Escolha um cenário ou comece uma conversa livre.</p>
         </div>
+        <!-- Hidden DOM stubs — antigo JS (setHero) ainda referencia esses IDs -->
+        <span id="hero-title" style="display:none;">Prática</span>
+        <span id="hero-description" style="display:none;"></span>
+        <button id="hero-play-btn" style="display:none;"></button>
+        <button id="hero-info-btn" style="display:none;"></button>
     </section>
 
-    <!-- Start Here Section -->
-    <section class="start-here">
-        <h2 class="section-title" data-i18n-en="🎯 Start Here" data-i18n-pt="🎯 Comece Aqui"><span style="color: #7FB069;">&#127919;</span> Comece Aqui</h2>
-        <div class="start-here-card" onclick="goToPractice('free_conversation', 'Free Conversation')">
-            <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=300&fit=crop"
-                alt="Free Conversation" class="start-here-image">
-            <div class="start-here-content">
-                <span class="badge-new">&#9679; NOVO</span>
-                <h3 class="start-here-title">Conversacao Livre</h3>
-                <p class="start-here-subtitle">Free Conversation</p>
-                <p class="start-here-description">Escolha o tema que quiser! A IA vai perguntar sobre o que voce quer
-                    conversar.</p>
-                <button class="btn-start">&#9658; Comecar Agora</button>
+    <!-- Start Here: card pill em vez de placard horizontal -->
+    <section class="start-here" style="padding: 0.5rem 1.5rem 1rem;">
+        <h2 class="section-title" data-i18n-en="🎯 Start Here" data-i18n-pt="🎯 Comece Aqui" style="font-size:1.1rem; margin-bottom: 0.7rem;">
+            <span style="color: #E76F51;">🎯</span> Comece Aqui
+        </h2>
+        <div onclick="goToPractice('free_conversation', 'Free Conversation')"
+             style="display:flex; align-items:center; gap:14px; background: linear-gradient(135deg, rgba(231,111,81,0.14), rgba(127,176,105,0.10)); border:1px solid rgba(231,111,81,0.35); border-radius:16px; padding:14px 18px; cursor:pointer; max-width:640px; transition:transform 0.15s;"
+             onmouseover="this.style.transform='translateY(-2px)'"
+             onmouseout="this.style.transform='none'">
+            <div style="width:44px; height:44px; border-radius:50%; background:rgba(231,111,81,0.3); display:flex; align-items:center; justify-content:center; font-size:1.3rem; flex-shrink:0;">💬</div>
+            <div style="flex:1;">
+                <div style="display:inline-block; background:#E76F51; color:white; padding:2px 8px; border-radius:6px; font-size:0.62rem; font-weight:700; letter-spacing:0.5px; margin-bottom:4px;">NOVO</div>
+                <div style="font-weight:700; color:#F5F7FA; font-size:0.98rem;">Conversação Livre</div>
+                <div style="color:#A8B5C0; font-size:0.78rem; line-height:1.35;">Escolha seu tema — a IA pergunta sobre o que você quer conversar.</div>
             </div>
+            <div style="color:#E76F51; font-size:1.3rem;">→</div>
         </div>
     </section>
 

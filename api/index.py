@@ -490,100 +490,86 @@ CONTEXTUAL_FALLBACK_QUESTIONS = {
 # nonsensical in a coffee shop or bank. Each pool has 5-6 polite, scenario-
 # appropriate phrases so the student always sees something useful.
 CONTEXTUAL_SUGGESTION_FALLBACKS = {
+    # All suggestions are STARTERS ending with "because ..." / "and ..." / "to ..."
+    # so the student is nudged to continue the sentence in English themselves.
     'coffee_shop': [
-        {"en": "I'd like a coffee, please.",        "pt": "Eu gostaria de um cafe, por favor."},
-        {"en": "Can I have a tea, please?",         "pt": "Posso pedir um cha, por favor?"},
-        {"en": "I'll take a cappuccino, please.",   "pt": "Vou querer um cappuccino, por favor."},
-        {"en": "Could I see the menu, please?",     "pt": "Posso ver o cardapio, por favor?"},
-        {"en": "That's all for now, thank you.",    "pt": "E so por enquanto, obrigado."},
-        {"en": "For here, please.",                 "pt": "Para comer aqui, por favor."},
+        {"en": "I'd like a coffee because...",      "pt": "Gostaria de um cafe porque..."},
+        {"en": "A tea would be great and...",       "pt": "Um cha seria otimo e..."},
+        {"en": "I'll take a cappuccino because...", "pt": "Vou querer um cappuccino porque..."},
+        {"en": "Could I see the menu to...",        "pt": "Posso ver o cardapio para..."},
+        {"en": "For here because I want to...",     "pt": "Para comer aqui porque quero..."},
     ],
     'restaurant': [
-        {"en": "I'd like to see the menu, please.", "pt": "Gostaria de ver o cardapio, por favor."},
-        {"en": "A table for two, please.",          "pt": "Uma mesa para dois, por favor."},
-        {"en": "I'll have the pasta, please.",      "pt": "Vou querer a massa, por favor."},
-        {"en": "Could I have water, please?",       "pt": "Posso pedir agua, por favor?"},
-        {"en": "Yes, I have a reservation.",        "pt": "Sim, eu tenho reserva."},
-        {"en": "No, not yet, thank you.",           "pt": "Nao, ainda nao, obrigado."},
+        {"en": "I'd like to see the menu to...",        "pt": "Gostaria de ver o cardapio para..."},
+        {"en": "A table for two because...",            "pt": "Uma mesa para dois porque..."},
+        {"en": "I'll have the pasta because...",        "pt": "Vou querer a massa porque..."},
+        {"en": "Could I have water and...",             "pt": "Posso pedir agua e..."},
+        {"en": "Yes, I have a reservation because...",  "pt": "Sim, tenho reserva porque..."},
     ],
     'bakery': [
-        {"en": "I'd like a loaf of bread, please.",  "pt": "Gostaria de um pao, por favor."},
-        {"en": "Can I have two croissants, please?", "pt": "Posso levar dois croissants, por favor?"},
-        {"en": "One chocolate cake, please.",        "pt": "Um bolo de chocolate, por favor."},
-        {"en": "Do you have any fresh pastries?",    "pt": "Voces tem doces frescos?"},
-        {"en": "That's everything, thank you.",      "pt": "E so isso, obrigado."},
+        {"en": "I'd like a loaf of bread because...",   "pt": "Gostaria de um pao porque..."},
+        {"en": "Can I have two croissants because...",  "pt": "Posso levar dois croissants porque..."},
+        {"en": "A chocolate cake because...",           "pt": "Um bolo de chocolate porque..."},
+        {"en": "Do you have fresh pastries because...", "pt": "Voces tem doces frescos porque..."},
     ],
     'pizza_delivery': [
-        {"en": "I'd like to order a pizza, please.", "pt": "Gostaria de pedir uma pizza, por favor."},
-        {"en": "One cheese pizza, large.",           "pt": "Uma pizza de queijo, grande."},
-        {"en": "Could I add extra cheese?",          "pt": "Posso colocar queijo extra?"},
-        {"en": "How long will it take?",             "pt": "Quanto tempo vai demorar?"},
-        {"en": "Yes, that's the correct address.",   "pt": "Sim, esse e o endereco certo."},
+        {"en": "I'd like to order a pizza because...",  "pt": "Gostaria de pedir uma pizza porque..."},
+        {"en": "One cheese pizza large because...",     "pt": "Uma pizza de queijo grande porque..."},
+        {"en": "Could I add extra cheese because...",   "pt": "Posso colocar queijo extra porque..."},
+        {"en": "Please deliver by 7 because...",        "pt": "Por favor entregue ate 7 porque..."},
     ],
     'supermarket': [
-        {"en": "Where can I find the milk, please?", "pt": "Onde fica o leite, por favor?"},
-        {"en": "Do you have any fresh fruit?",       "pt": "Voces tem fruta fresca?"},
-        {"en": "Is this on sale?",                   "pt": "Isso esta em promocao?"},
-        {"en": "Can I pay with card?",               "pt": "Posso pagar com cartao?"},
-        {"en": "I'd like a bag, please.",            "pt": "Quero uma sacola, por favor."},
+        {"en": "Where is the milk because...",          "pt": "Onde fica o leite porque..."},
+        {"en": "Do you have fresh fruit because...",    "pt": "Voces tem fruta fresca porque..."},
+        {"en": "Is this on sale because...",            "pt": "Isso esta em promocao porque..."},
+        {"en": "I'd like a bag to...",                  "pt": "Quero uma sacola para..."},
     ],
     'pharmacy': [
-        {"en": "I have a headache. What do you recommend?", "pt": "Estou com dor de cabeca. O que voce recomenda?"},
-        {"en": "Do you have something for a cold?",         "pt": "Voce tem algo para resfriado?"},
-        {"en": "Yes, I have a prescription.",               "pt": "Sim, tenho receita."},
-        {"en": "Could you explain how to take it?",         "pt": "Pode explicar como tomar?"},
-        {"en": "How much does it cost?",                    "pt": "Quanto custa?"},
+        {"en": "I have a headache because...",          "pt": "Estou com dor de cabeca porque..."},
+        {"en": "Do you have cold medicine because...",  "pt": "Voce tem remedio de resfriado porque..."},
+        {"en": "Yes, I have a prescription because...", "pt": "Sim, tenho receita porque..."},
+        {"en": "Could you explain how to take it to...", "pt": "Pode explicar como tomar para..."},
     ],
     'doctor': [
-        {"en": "I have a pain in my stomach.",    "pt": "Estou com dor na barriga."},
-        {"en": "It started two days ago.",        "pt": "Comecou ha dois dias."},
-        {"en": "I feel very tired.",              "pt": "Estou me sentindo muito cansado."},
-        {"en": "Could you repeat that, please?",  "pt": "Pode repetir, por favor?"},
-        {"en": "Do I need to take medicine?",     "pt": "Preciso tomar algum remedio?"},
+        {"en": "I have a stomach pain because...",      "pt": "Estou com dor na barriga porque..."},
+        {"en": "It started two days ago and...",        "pt": "Comecou ha dois dias e..."},
+        {"en": "I feel very tired because...",          "pt": "Estou cansado porque..."},
+        {"en": "I take one medicine to...",             "pt": "Eu tomo um remedio para..."},
     ],
     'bank': [
-        {"en": "I'd like to deposit some money, please.",  "pt": "Gostaria de depositar dinheiro, por favor."},
-        {"en": "I need to withdraw, please.",              "pt": "Preciso sacar, por favor."},
-        {"en": "Could you help me open an account?",       "pt": "Pode me ajudar a abrir uma conta?"},
-        {"en": "Yes, I have my ID with me.",               "pt": "Sim, estou com meu documento."},
-        {"en": "Could you explain the fees, please?",      "pt": "Pode explicar as taxas, por favor?"},
+        {"en": "I'd like to deposit some money because...",  "pt": "Gostaria de depositar dinheiro porque..."},
+        {"en": "I need to withdraw because...",              "pt": "Preciso sacar porque..."},
+        {"en": "Could you help me open an account to...",    "pt": "Pode me ajudar a abrir uma conta para..."},
+        {"en": "Yes, I have my ID because...",               "pt": "Sim, tenho meu documento porque..."},
     ],
     'hotel': [
-        {"en": "I have a reservation under my name.",    "pt": "Tenho uma reserva no meu nome."},
-        {"en": "I'd like to check in, please.",          "pt": "Gostaria de fazer check-in, por favor."},
-        {"en": "How many nights? Three, please.",        "pt": "Quantas noites? Tres, por favor."},
-        {"en": "What time is breakfast?",                "pt": "Que horas e o cafe da manha?"},
-        {"en": "Could I get the Wi-Fi password?",        "pt": "Pode me dar a senha do Wi-Fi?"},
+        {"en": "I have a reservation because...",        "pt": "Tenho uma reserva porque..."},
+        {"en": "I'd like to check in to...",             "pt": "Gostaria de fazer check-in para..."},
+        {"en": "Three nights please because...",         "pt": "Tres noites por favor porque..."},
+        {"en": "I'd like a room with breakfast because...", "pt": "Quero um quarto com cafe porque..."},
     ],
     'airport': [
-        {"en": "Here is my passport and ticket.",        "pt": "Aqui estao meu passaporte e passagem."},
-        {"en": "I have one suitcase to check.",          "pt": "Tenho uma mala para despachar."},
-        {"en": "Could I have a window seat, please?",    "pt": "Posso pegar uma poltrona na janela, por favor?"},
-        {"en": "Where is gate 12, please?",              "pt": "Onde fica o portao 12, por favor?"},
-        {"en": "No, only carry-on luggage.",             "pt": "Nao, so bagagem de mao."},
+        {"en": "Here is my passport and...",             "pt": "Aqui esta meu passaporte e..."},
+        {"en": "One suitcase to check because...",       "pt": "Uma mala para despachar porque..."},
+        {"en": "Could I have a window seat because...",  "pt": "Posso pegar janela porque..."},
+        {"en": "No, only carry-on because...",           "pt": "Nao, so bagagem de mao porque..."},
     ],
     'tech_support': [
-        {"en": "My phone is not turning on.",           "pt": "Meu celular nao liga."},
-        {"en": "The internet is very slow.",            "pt": "A internet esta muito lenta."},
-        {"en": "Yes, I have tried restarting it.",      "pt": "Sim, ja tentei reiniciar."},
-        {"en": "Could you walk me through it, please?", "pt": "Pode me guiar passo a passo, por favor?"},
-        {"en": "Thank you, that worked!",               "pt": "Obrigado, funcionou!"},
+        {"en": "My phone is not turning on because...",  "pt": "Meu celular nao liga porque..."},
+        {"en": "The internet is slow because...",        "pt": "A internet esta lenta porque..."},
+        {"en": "Yes, I tried restarting and...",         "pt": "Sim, tentei reiniciar e..."},
     ],
     'free_conversation': [
-        {"en": "Let me tell you about my day.",      "pt": "Deixa eu te contar sobre o meu dia."},
-        {"en": "I enjoy reading and walking.",       "pt": "Eu gosto de ler e de caminhar."},
-        {"en": "Tell me more about that.",           "pt": "Me conte mais sobre isso."},
-        {"en": "That sounds really interesting.",    "pt": "Isso parece bem interessante."},
-        {"en": "Could you say that more slowly?",    "pt": "Pode falar mais devagar, por favor?"},
-        {"en": "I'm still learning, please be patient.", "pt": "Ainda estou aprendendo, por favor seja paciente."},
+        {"en": "Let me tell you about my day because...", "pt": "Deixa eu te contar do meu dia porque..."},
+        {"en": "I enjoy reading because...",              "pt": "Eu gosto de ler porque..."},
+        {"en": "I want to travel because...",             "pt": "Eu quero viajar porque..."},
+        {"en": "I like my job because...",                "pt": "Eu gosto do meu trabalho porque..."},
     ],
     '__default__': [
-        {"en": "Could you say that again, please?",  "pt": "Pode falar de novo, por favor?"},
-        {"en": "Tell me more, please.",              "pt": "Me conte mais, por favor."},
-        {"en": "Thank you.",                          "pt": "Obrigado."},
-        {"en": "Yes, that sounds good.",             "pt": "Sim, parece bom."},
-        {"en": "I'm not sure. Can you help me?",     "pt": "Nao tenho certeza. Pode me ajudar?"},
-        {"en": "Let me think for a moment.",         "pt": "Deixa eu pensar um momento."},
+        {"en": "I think that...",                     "pt": "Eu acho que..."},
+        {"en": "Yes, because...",                     "pt": "Sim, porque..."},
+        {"en": "I want to tell you about...",         "pt": "Quero te contar sobre..."},
+        {"en": "In my opinion...",                    "pt": "Na minha opiniao..."},
     ],
 }
 
@@ -4906,31 +4892,51 @@ POLITENESS (CRITICAL for this scenario — it's a customer/service interaction):
 - For answers that are NOT requests (yes/no confirmations, descriptions), politeness
   still matters but polite indicators like "thank you" are welcome.
 """
-        prompt = f"""You are generating VALID RESPONSE OPTIONS for an English learner.
+        prompt = f"""You are generating VALID RESPONSE STARTERS for an English learner.
 
 Topic being practiced: {context_info}
 The AI just said: "{ai_last_message}"
 
-Generate 4 short response options (max 10 words each) the student could say in ENGLISH.
-- Responses MUST make sense as replies to the AI's message
+Generate 4 OPEN-ENDED response STARTERS (not complete answers) in ENGLISH.
+
+CRITICAL NEW RULE — SUGGESTIONS ARE STARTERS, NOT FINISHED REPLIES:
+- Each suggestion must END with a CONNECTOR that invites the student to keep
+  talking on their own. Preferred: "because ..." (when it fits). Alternatives
+  that sound natural when "because" doesn't: "and ...", "so ...", "to ...".
+- ALWAYS append the connector + "..." at the end (three dots). Never a period.
+- This way the student is NUDGED to finish the thought in English — that's
+  where real speaking practice happens.
+- Keep the starter itself short (4-10 words), easy vocabulary (A1-A2).
+- "pt" translation follows the same format: ends with "porque..." / "e..." /
+  "entao..." / "para..." open-ended.
+
+GOOD (starters that invite continuation):
+  EN "I'd like to deposit some money because..."
+     PT "Eu gostaria de depositar dinheiro porque..."
+  EN "I want to try a window seat because..."
+     PT "Quero um assento na janela porque..."
+  EN "The reservation is for three nights because..."
+     PT "A reserva e para tres noites porque..."
+
+BAD (closed/finished — don't generate these):
+  "I want to deposit some money."   ← closed
+  "Three nights, please."           ← closed
+  "Yes, I agree."                    ← closed
+
+OTHER RULES:
 - Use appropriate structures from the topic when possible
 - Keep vocabulary EASY and everyday (A1/A2 words)
-- Keep sentences short and clear
 - Avoid slang, idioms, and rare words
-- Be natural and conversational
-- CRITICAL: the suggestions you generate are SHOWN TO THE STUDENT as model answers.
-  They must already be in the BEST / most natural form — do NOT offer a form that
-  you would later flag as "could be more polite/natural". Teach by example.
 - Do NOT extract words from the question as proper names (e.g., "Do you have...?" → "Do" is NOT a name)
-- If the student already provided their name, use it in suggestions instead of generic names
-- Format: JSON with "suggestions" array, each item has "en" (English) and "pt" (Portuguese translation)
+- If the student already provided their name, use it
+- Format: JSON with "suggestions" array, each item has "en" and "pt"
 {politeness_block}
 Example if AI said "My day was busy. How is your day?":
 {{"suggestions": [
-  {{"en": "My day is good, thank you.", "pt": "Meu dia esta bom, obrigado."}},
-  {{"en": "It was busy for me too.", "pt": "Tambem foi corrido para mim."}},
-  {{"en": "I am fine. And you?", "pt": "Estou bem. E voce?"}},
-  {{"en": "Can you tell me more?", "pt": "Pode me contar mais?"}}
+  {{"en": "My day is good because...", "pt": "Meu dia esta bom porque..."}},
+  {{"en": "It was busy for me too because...", "pt": "Tambem foi corrido para mim porque..."}},
+  {{"en": "I am fine, and I think that...", "pt": "Estou bem, e eu acho que..."}},
+  {{"en": "I want to tell you about...", "pt": "Quero te contar sobre..."}}
 ]}}
 
 PREFER FULL FORMS for beginners (no contractions in suggestions):
