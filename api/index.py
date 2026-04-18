@@ -3739,6 +3739,14 @@ Respond naturally in-character. Do NOT teach, explain grammar, praise skills, or
 If student has a grammar error, use RECAST (reply using the correct form naturally) — never "Instead of X say Y".
 All corrections go ONLY in the JSON "correction" field.
 
+CRITICAL — YOU LEAD THE CONVERSATION:
+- Your "en" MUST ALWAYS end with a SHORT, SIMPLE question (no exceptions).
+- The question drives the student to speak next — never leave them without a prompt.
+- Even if the student says "thank you" or "okay" or "yes", you still ask something
+  that keeps the scene alive: "You're welcome! Can I get you anything else?"
+- Keep the question under 8 words and reuse vocabulary from this conversation
+  so the student can answer confidently.
+
 Error rules: words like "goed/buyed/chole/wants→want" are real errors. "I have been" is correct — do not flag.
 When there IS a real grammar error: correction.wrong=student's phrase, correction.right=FULL corrected sentence, suggested_words=3-4 helpful words, must_retry=true.
 Otherwise: correction=null, suggested_words=[], must_retry=false.
@@ -3746,7 +3754,7 @@ Otherwise: correction=null, suggested_words=[], must_retry=false.
 Return valid JSON only:
 {{"en":"...","pt":"...","suggested_words":[],"must_retry":false,"correction":null}}"""
                 else:
-                    # FREE CONVERSATION MODE: Casual conversation partner
+                    # FREE CONVERSATION / SIMULATOR MODE: Casual conversation partner
                     minimal_prompt = f"""{conversation_history}
 {common_notes}
 User just said: "{user_text}"
@@ -3754,12 +3762,13 @@ User just said: "{user_text}"
 CRITICAL RULES:
 1. If user asks a QUESTION, answer it first! Never ignore questions.
 2. Be a friendly conversation partner with MEMORY of the conversation above.
-3. Only correct REAL GRAMMAR ERRORS. Do NOT "fix" valid alternatives.
-4. Keep 1-3 short sentences (roughly 20-45 words total).
-5. Keep the flow natural: ask follow-up questions often, but direct complete answers are allowed.
-6. Avoid generic closers like "What about you?" - ask a specific follow-up related to the user's message.
-7. Keep language EASY: use common daily words and short clear sentences.
-8. Avoid slang, idioms, and rare words whenever possible.
+3. YOU LEAD: your "en" MUST end with a specific follow-up question. No exceptions —
+   even after "thanks"/"okay", invite more with a gentle question ("Want to keep
+   chatting?" / "Anything else you'd like to tell me?").
+4. Question should be short (<=10 words) and specific — avoid generic "What about you?".
+5. Only correct REAL GRAMMAR ERRORS. Do NOT "fix" valid alternatives.
+6. Keep 1-3 short sentences (roughly 20-45 words total).
+7. Keep language EASY: common daily words, short sentences, no slang/idioms/rare words.
 suggested_words: ONLY for real grammar errors; otherwise [].
 must_retry: true ONLY if suggested_words not empty; else false.
 Return JSON: {{"en": "...", "pt": "...", "suggested_words": [], "must_retry": false}}."""
@@ -3843,6 +3852,7 @@ Return JSON: {{"en": "...", "pt": "...", "suggested_words": [], "must_retry": fa
             if ai_trans:
                 ai_trans = ai_trans.replace('*', '').replace('_', '').replace('~', '').replace('`', '')
                 ai_trans = _clean_learning_output_artifacts(ai_trans)
+
 
             # Normalize suggested_words
             if isinstance(suggested_words, str):
@@ -4149,6 +4159,19 @@ Return JSON: {{"en": "...", "pt": "...", "suggested_words": [], "must_retry": fa
                 "frase_natural": turn_feedback.get("suggested_text", ""),
                 "explicacao": turn_feedback.get("reason", "")
             }
+
+        # Safety-net: the AI must ALWAYS lead with a follow-up question so the
+        # student is never left staring at a silent screen. If the main reply
+        # ended without a '?', append a gentle, generic hand-off. Applied right
+        # before the response so nothing downstream can strip it.
+        if ai_text and '?' not in ai_text and '¿' not in ai_text:
+            primary_lang = 'pt' if (lesson_lang == 'pt' and is_grammar_topic) else 'en'
+            if primary_lang == 'pt':
+                ai_text = ai_text.rstrip() + ' Tem mais alguma coisa que eu possa te ajudar?'
+            else:
+                ai_text = ai_text.rstrip() + ' Is there anything else I can help you with?'
+                if ai_trans is not None:
+                    ai_trans = (ai_trans or '').rstrip() + ' Tem mais alguma coisa que eu possa te ajudar?'
 
         return jsonify({
             "text": ai_text,
