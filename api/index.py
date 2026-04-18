@@ -3938,18 +3938,21 @@ Respond naturally in-character. Do NOT teach, explain grammar, praise skills, or
 If student has a grammar error, use RECAST (reply using the correct form naturally) — never "Instead of X say Y".
 All corrections go ONLY in the JSON "correction" field.
 
-CRITICAL — YOU LEAD THE CONVERSATION:
-- Your "en" MUST ALWAYS end with a SHORT, SIMPLE question (no exceptions).
-- The question drives the student to speak next — never leave them without a prompt.
-- PREFER questions that offer 2-3 CONCRETE OPTIONS so a shy beginner can answer fast:
+CRITICAL — YOU LEAD THE CONVERSATION (unless the student asks something):
+- If the student ended with "?" → ANSWER IT FIRST as the scenario character,
+  then optionally add one follow-up. Never redirect with a question that
+  ignores theirs. Example: student "Do you have decaf?" → you "Yes, we have
+  decaf. Would you like it hot or iced?" (NOT: "What would you like today?")
+- Otherwise, your "en" should end with a SHORT question so the student isn't
+  left silent.
+- PREFER questions that offer 2-3 CONCRETE OPTIONS so a shy beginner can answer:
   GOOD: "Would you like coffee, tea, or juice?"
   GOOD: "Small, medium, or large?"
   BAD:  "What would you like?"         ← too open
   BAD:  "Anything else?"               ← too generic
-  BAD:  "Is there anything I can do?"  ← no direction
-- Even if student says "thank you"/"okay"/"yes", KEEP THE SCENE ALIVE:
-  e.g. student "Thank you" → you "You're welcome! Would you like a coffee or something to eat?"
-- Only skip options when the scenario demands open input (e.g. describing a lost item).
+- Even if student says "thank you"/"okay"/"yes" (no question), keep the scene
+  alive: student "Thank you" → you "You're welcome! Would you like anything
+  else — a pastry or water?"
 - Keep the question under 12 words. Reuse vocabulary the student already heard.
 
 Error rules: words like "goed/buyed/chole/wants→want" are real errors. "I have been" is correct — do not flag.
@@ -3974,18 +3977,37 @@ could say: 'I'd like a coffee.' Want to try?" pt: "Sem problema! Pode dizer:
 Return valid JSON only:
 {{"en":"...","pt":"...","suggested_words":[],"must_retry":false,"correction":null}}"""
                 else:
-                    # FREE CONVERSATION / SIMULATOR MODE: compact prompt — less
-                    # input tokens = faster first-token latency (simulator should
-                    # feel like real-time conversation, not structured lesson).
+                    # FREE CONVERSATION / SIMULATOR MODE — SYMMETRICAL conversation.
+                    # Unlike Learning mode where the AI always leads, here it's a
+                    # two-way chat: when the student asks something, the AI MUST
+                    # actually answer it (give an opinion, a yes/no, a story).
                     minimal_prompt = f"""{conversation_history}
 {common_notes}
 User said: "{user_text}"
 
-Friendly conversation partner (with memory of the dialog above). {difficulty_length_rule}
-Answer user questions first, then end with a SHORT specific follow-up question
-(avoid generic "What about you?"). Only correct real grammar errors — not style.
-If user writes in Portuguese (panic): reply bilingual with a short English starter
-they can echo; correction=null.
+You are a warm CONVERSATION PARTNER — not a teacher, not an interviewer.
+Talk like a real friend with memory of the dialog above. {difficulty_length_rule}
+
+CRITICAL — #1 RULE: ANSWER THE STUDENT'S QUESTION FIRST.
+If the student's message ends with "?" OR asks your opinion OR asks if you know/
+watched/read/liked something, you MUST answer it as a character with a real
+opinion. Then optionally add a short follow-up question. Never redirect with
+a question that ignores theirs.
+
+EXAMPLES:
+  Student: "Have you watched Prison Break?"
+  BAD (ignores):  "How do you like Prison Break?"
+  GOOD:           "Yes! I watched two seasons. The tension was amazing. Which season did you like most?"
+
+  Student: "What do you think of jazz music?"
+  BAD:  "What do you like about it?"
+  GOOD: "I love jazz, especially piano trios. It feels calm. Do you play an instrument?"
+
+When the student DID NOT ask a question, you can lead with a follow-up.
+But never drop their question just to ask your own.
+
+Only correct REAL grammar errors (not style). If student writes in Portuguese
+(panic), reply bilingual with a short English starter they can echo.
 
 suggested_words: only real grammar errors; else [].
 must_retry: true only if suggested_words not empty.
@@ -4383,11 +4405,21 @@ Return JSON only: {{"en":"...","pt":"...","suggested_words":[],"must_retry":fals
                 "explicacao": turn_feedback.get("reason", "")
             }
 
-        # Safety-net: the AI must ALWAYS lead with a follow-up question so the
-        # student is never left staring at a silent screen. Uses a context-aware
-        # fallback with concrete options — generic "anything else?" is useless
-        # for a beginner. Applied right before the response.
-        if ai_text and '?' not in ai_text and '¿' not in ai_text:
+        # Safety-net: ensure the student has something to respond to, so they
+        # never stare at a silent screen. BUT don't append a question if:
+        #  - The student just asked a question (their turn to get an answer;
+        #    forcing another question turns AI into an interviewer)
+        #  - This is simulator mode (conversation should be symmetrical, not
+        #    always AI-led)
+        # Only inject fallback when it's a true conversational dead-end.
+        student_asked_question = '?' in (user_text or '') or '¿' in (user_text or '')
+        ai_ends_with_q = '?' in (ai_text or '') or '¿' in (ai_text or '')
+        should_inject = (
+            ai_text and not ai_ends_with_q
+            and not student_asked_question
+            and practice_mode != 'simulator'
+        )
+        if should_inject:
             primary_lang = 'pt' if (lesson_lang == 'pt' and is_grammar_topic) else 'en'
             fallback = CONTEXTUAL_FALLBACK_QUESTIONS.get(
                 (context_key or '').lower(),
