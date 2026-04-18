@@ -224,7 +224,7 @@ except Exception:
 DEFAULT_GEN_CONFIG = {"temperature": 0.8}
 if GEMINI_THINKING_BUDGET >= 0:
     DEFAULT_GEN_CONFIG["thinking_config"] = {"thinking_budget": GEMINI_THINKING_BUDGET}
-GEMINI_MODEL_NAME = os.environ.get("GEMINI_MODEL_NAME", os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")).strip() or "gemini-2.0-flash"
+GEMINI_MODEL_NAME = os.environ.get("GEMINI_MODEL_NAME", os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")).strip() or "gemini-2.5-flash"
 LEARNING_CORRECTION_KIND_ENABLED = os.environ.get("LEARNING_CORRECTION_KIND_ENABLED", "true").strip().lower() in ("1", "true", "yes", "on")
 model = None
 genai_client = None
@@ -294,7 +294,7 @@ class GeminiModelAdapter:
 
         # Retry with exponential backoff for 503/UNAVAILABLE errors
         max_retries = 3
-        fallback_model = os.environ.get("GEMINI_FALLBACK_MODEL", "gemini-2.0-flash").strip()
+        fallback_model = os.environ.get("GEMINI_FALLBACK_MODEL", "gemini-2.5-flash").strip()
         last_error = None
 
         for attempt in range(max_retries):
@@ -444,22 +444,22 @@ MAX_OUTPUT_TOKENS_REPORT = max(600, _int_env('MAX_OUTPUT_TOKENS_REPORT', 1800))
 # previously this parameter was extracted but never used (all responses were hardcoded to "1-2 sentences, max 30 words").
 DIFFICULTY_PROFILES = {
     'beginner': {
-        'sentences_label': '1-2 sentences',
-        'max_words': 25,
+        'sentences_label': '1 short sentence',
+        'max_words': 18,
         'vocab': 'very simple A1-A2 vocabulary, common everyday words, no idioms',
-        'max_tokens': 160,
+        'max_tokens': 110,
     },
     'intermediate': {
-        'sentences_label': '2-3 sentences',
-        'max_words': 55,
+        'sentences_label': '1-2 sentences',
+        'max_words': 40,
         'vocab': 'B1-B2 vocabulary, some natural connectors, occasional common idioms',
-        'max_tokens': 260,
+        'max_tokens': 180,
     },
     'advanced': {
-        'sentences_label': '3-5 sentences',
-        'max_words': 90,
+        'sentences_label': '2-3 sentences',
+        'max_words': 70,
         'vocab': 'C1 vocabulary, idioms and richer phrasing welcome, natural variation',
-        'max_tokens': 420,
+        'max_tokens': 300,
     },
 }
 
@@ -3727,41 +3727,24 @@ Return only JSON: {{"en": "...", "suggested_words": ["...","...","...","..."], "
 """
             else:
                 if practice_mode == 'learning':
-                    # LEARNING MODE: Natural character with structured corrections in JSON
+                    # LEARNING MODE: Natural character with structured corrections in JSON.
+                    # Compact prompt — less input tokens = faster generation.
                     minimal_prompt = f"""{conversation_history}
 {common_notes}
 {slowdown_note}
 Student said: "{user_text}"
 
-You are the SCENARIO CHARACTER (barista, receptionist, waiter, etc) — NOT a teacher.
-Respond naturally as this character. {difficulty_length_rule}
+You are the SCENARIO CHARACTER (barista, waiter, etc) — NEVER a teacher. {difficulty_length_rule}
+Respond naturally in-character. Do NOT teach, explain grammar, praise skills, or model phrases.
+If student has a grammar error, use RECAST (reply using the correct form naturally) — never "Instead of X say Y".
+All corrections go ONLY in the JSON "correction" field.
 
-ABSOLUTE PROHIBITIONS in the "en" field:
-- "Instead of X, say Y" or grammar explanations
-- "Useful phrase:" or teaching language
-- "In English, we..." or coaching directives
-- Modeling phrases for the student
-- "Good job!" or praise for language skills
+Error rules: words like "goed/buyed/chole/wants→want" are real errors. "I have been" is correct — do not flag.
+When there IS a real grammar error: correction.wrong=student's phrase, correction.right=FULL corrected sentence, suggested_words=3-4 helpful words, must_retry=true.
+Otherwise: correction=null, suggested_words=[], must_retry=false.
 
-RECAST RULE: If student has grammar error, respond using the correct form naturally.
-Example: Student: "I wants coffee" → You: "Sure, I can get that coffee for you. Hot or iced?"
-
-All corrections go ONLY in the "correction" JSON field.
-
-GRAMMAR ERROR DETECTION (CRITICAL):
-- If the student uses WORDS THAT DO NOT EXIST in English (e.g., "chole", "buyed", "goed", "maked"), this is ALWAYS an error
-- If the student's sentence has a CLEAR grammar error (wrong verb form, wrong tense), you MUST:
-  1. Set "correction" with wrong/right/explanation_pt — "right" MUST be the COMPLETE corrected sentence (NOT just the corrected word)
-  2. Set "suggested_words" to 3-4 helpful words
-  3. Set "must_retry" to true
-- Examples of CLEAR errors: "He have" (has), "She don't" (doesn't), "They was" (were), "I goed" (went), "chole" (not a word)
-- ONLY mark as correct if ALL words are real English words AND grammar is correct
-- Do NOT flag correct sentences as errors. "I have been here since morning" is CORRECT — do NOT correct it.
-- Only set must_retry to true for REAL grammar mistakes, never for style preferences.
-
-Return JSON: {{"en": "natural response as character", "pt": "traducao", "suggested_words": [], "must_retry": false, "correction": null}}
-If there IS an error: {{"en": "natural response with recast", "pt": "traducao", "suggested_words": ["w1","w2","w3"], "must_retry": true, "correction": {{"wrong": "I wants a coffee", "right": "I want a coffee, please.", "explanation_pt": "explicacao em portugues"}}}}
-For style suggestion (no retry): {{"en": "...", "pt": "...", "suggested_words": [], "must_retry": false, "correction": {{"wrong": "Give me coffee", "right": "Can I have a coffee, please?", "explanation_pt": "dica opcional..."}}}}"""
+Return valid JSON only:
+{{"en":"...","pt":"...","suggested_words":[],"must_retry":false,"correction":null}}"""
                 else:
                     # FREE CONVERSATION MODE: Casual conversation partner
                     minimal_prompt = f"""{conversation_history}
@@ -3781,20 +3764,26 @@ suggested_words: ONLY for real grammar errors; otherwise [].
 must_retry: true ONLY if suggested_words not empty; else false.
 Return JSON: {{"en": "...", "pt": "...", "suggested_words": [], "must_retry": false}}."""
             # Token limit: use the difficulty profile as the source of truth.
-            # Previously a max() call let the global LEARNING/SIMULATOR ceilings
-            # override beginner's 160-token cap, so beginners still got 320-520 tokens.
-            # Now the profile value is respected, with a small mode buffer:
-            #   - simulator: +60 tokens for role-play flexibility
-            #   - learning:  +40 tokens for JSON + suggestions payload
+            # Smaller profile = faster generation. A lower temperature also makes
+            # the model converge faster and be less verbose (tighter, more on-brief
+            # answers) — big latency win for conversational turn-taking.
             mode_buffer = 60 if practice_mode == 'simulator' else 40
             mode_max_tokens = difficulty_profile["max_tokens"] + mode_buffer
-            mode_gen_config = {"max_output_tokens": mode_max_tokens}
+            mode_gen_config = {
+                "max_output_tokens": mode_max_tokens,
+                "temperature": 0.6,  # was default (~0.9-1.0) — too chatty, too slow
+                "top_p": 0.9,
+            }
             response = context_model.generate_content(minimal_prompt, generation_config=mode_gen_config)
         else:
             # Fallback to basic model with full prompt
             mode_buffer = 60 if practice_mode == 'simulator' else 40
             mode_max_tokens = difficulty_profile["max_tokens"] + mode_buffer
-            mode_gen_config = {"max_output_tokens": mode_max_tokens}
+            mode_gen_config = {
+                "max_output_tokens": mode_max_tokens,
+                "temperature": 0.6,
+                "top_p": 0.9,
+            }
             response = model.generate_content(full_prompt, generation_config=mode_gen_config)
         
         user_preview = _console_safe_preview(user_text, 50)
