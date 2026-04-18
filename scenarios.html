@@ -7,7 +7,7 @@
     <title>Everyday Conversation - Practice English</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
         * {
@@ -35,7 +35,7 @@
         }
 
         .netflix-logo {
-            color: #e50914;
+            color: #7FB069;
             font-size: 1.5rem;
             font-weight: 800;
             letter-spacing: -0.5px;
@@ -171,7 +171,7 @@
         }
 
         .badge-new {
-            background: #e50914;
+            background: #7FB069;
             color: white;
             font-size: 0.7rem;
             font-weight: 700;
@@ -470,7 +470,7 @@
         .blocked-modal .btn-back {
             margin-top: 1.5rem;
             padding: 12px 32px;
-            background: #e50914;
+            background: #7FB069;
             color: white;
             border: none;
             border-radius: 8px;
@@ -569,11 +569,11 @@
         }
 
         .tour-dot.active {
-            background: #e50914;
+            background: #7FB069;
         }
 
         .tour-btn {
-            background: #e50914;
+            background: #7FB069;
             color: #fff;
             border: none;
             border-radius: 8px;
@@ -601,7 +601,10 @@
 <body>
     <!-- Header -->
     <header class="netflix-header" style="display: flex; justify-content: space-between; align-items: center;">
-        <div class="netflix-logo">Everyday Conversation</div>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <div class="netflix-logo" style="color:#7FB069;">Everyday Conversation</div>
+            <span style="background:rgba(127,176,105,0.18); border:1px solid rgba(127,176,105,0.45); color:#B8DAA7; padding:3px 8px; border-radius:999px; font-size:0.65rem; font-weight:700; letter-spacing:0.4px;">v2.0</span>
+        </div>
         <div style="display: flex; align-items: center; gap: 12px;">
             <div id="usage-timer-banner" class="usage-timer-banner">
                 <span id="timer-icon">⏱</span>
@@ -613,7 +616,7 @@
                 onclick="setInterfaceLang(getInterfaceLang() === 'pt' ? 'en' : 'pt')"
                 title="Mudar idioma da interface"
                 style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #ccc; padding: 8px 12px; border-radius: 20px; cursor: pointer; font-size: 0.8rem; font-family: inherit; min-width: 40px;">EN</button>
-            <button onclick="logoutUser()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #ccc; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; font-family: inherit; transition: all 0.2s;" onmouseover="this.style.background='#e50914'; this.style.color='#fff'; this.style.borderColor='#e50914'" onmouseout="this.style.background='rgba(255,255,255,0.1)'; this.style.color='#ccc'; this.style.borderColor='rgba(255,255,255,0.2)'">Sair</button>
+            <button onclick="logoutUser()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #ccc; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; font-family: inherit; transition: all 0.2s;" onmouseover="this.style.background='#7FB069'; this.style.color='#fff'; this.style.borderColor='#7FB069'" onmouseout="this.style.background='rgba(255,255,255,0.1)'; this.style.color='#ccc'; this.style.borderColor='rgba(255,255,255,0.2)'">Sair</button>
         </div>
     </header>
 
@@ -636,7 +639,7 @@
 
     <!-- Start Here Section -->
     <section class="start-here">
-        <h2 class="section-title" data-i18n-en="🎯 Start Here" data-i18n-pt="🎯 Comece Aqui"><span style="color: #e50914;">&#127919;</span> Comece Aqui</h2>
+        <h2 class="section-title" data-i18n-en="🎯 Start Here" data-i18n-pt="🎯 Comece Aqui"><span style="color: #7FB069;">&#127919;</span> Comece Aqui</h2>
         <div class="start-here-card" onclick="goToPractice('free_conversation', 'Free Conversation')">
             <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=300&fit=crop"
                 alt="Free Conversation" class="start-here-image">
@@ -1251,7 +1254,7 @@
                 rows.forEach(rowId => {
                     const row = document.getElementById(rowId);
                     if (row) {
-                        row.innerHTML = `<div style="color: #e50914; padding: 20px;">
+                        row.innerHTML = `<div style="color: #7FB069; padding: 20px;">
                             ⚠️ Erro ao carregar tópicos.<br>
                             <small style="color: #666;">${err.message}</small>
                         </div>`;

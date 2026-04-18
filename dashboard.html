@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - IA de Conversação</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
     <style>
         .lang-toggle {
             position: absolute;
@@ -92,7 +92,7 @@
         }
 
         .stat-value.accent {
-            color: #e50914;
+            color: #7FB069;
         }
 
         .stat-value.green {
@@ -468,7 +468,7 @@
         .tip-btn {
             margin-top: 22px;
             padding: 12px 36px;
-            background: linear-gradient(135deg, #e50914, #c2070f);
+            background: linear-gradient(135deg, #7FB069, #5E8A4D);
             color: white;
             border: none;
             border-radius: 12px;
@@ -504,6 +504,70 @@
 </head>
 
 <body class="dashboard-body">
+    <!-- v2.0 Welcome: "O que mudou" — aparece uma vez por usuario.
+         Sinaliza claramente que o app foi reformulado, pra alunos antigos
+         darem uma segunda chance. -->
+    <div id="v2-welcome-overlay" style="display:none; position:fixed; inset:0; background:rgba(10,14,20,0.92); z-index:1000; overflow-y:auto; padding:20px;">
+        <div style="max-width:620px; margin:40px auto; background:#243140; border:1px solid rgba(127,176,105,0.3); border-radius:18px; padding:2rem; box-shadow: 0 20px 60px rgba(0,0,0,0.5); font-family: 'Plus Jakarta Sans', sans-serif;">
+            <div style="text-align:center; margin-bottom:1.2rem;">
+                <div style="display:inline-flex; align-items:center; gap:8px; background:rgba(127,176,105,0.18); border:1px solid rgba(127,176,105,0.4); color:#B8DAA7; padding:6px 14px; border-radius:999px; font-size:0.78rem; font-weight:700; letter-spacing:0.5px;">
+                    ✨ VERSÃO 2.0 · REFORMULADO
+                </div>
+            </div>
+            <h1 style="font-size:1.6rem; font-weight:800; color:#F5F7FA; text-align:center; margin-bottom:0.4rem; line-height:1.2;">Voltamos melhores.</h1>
+            <p style="text-align:center; color:#A8B5C0; margin-bottom:1.8rem; font-size:0.95rem; line-height:1.5;">
+                Se você experimentou a IA de Conversação antes e se frustrou,<br>
+                <strong style="color:#7FB069;">muita coisa mudou nas últimas semanas.</strong>
+                Dá mais uma chance?
+            </p>
+
+            <div style="display:grid; gap:12px; margin-bottom:1.5rem;">
+                <div style="display:flex; gap:12px; padding:14px; background:rgba(127,176,105,0.08); border:1px solid rgba(127,176,105,0.2); border-radius:12px;">
+                    <div style="font-size:1.4rem;">🎙️</div>
+                    <div style="flex:1;">
+                        <div style="font-weight:700; color:#F5F7FA; font-size:0.92rem; margin-bottom:2px;">Voz clonada, natural e clara</div>
+                        <div style="color:#A8B5C0; font-size:0.82rem; line-height:1.4;">Trocamos a voz robótica por uma voz de verdade — em inglês e português.</div>
+                    </div>
+                </div>
+                <div style="display:flex; gap:12px; padding:14px; background:rgba(127,176,105,0.08); border:1px solid rgba(127,176,105,0.2); border-radius:12px;">
+                    <div style="font-size:1.4rem;">💬</div>
+                    <div style="flex:1;">
+                        <div style="font-weight:700; color:#F5F7FA; font-size:0.92rem; margin-bottom:2px;">A IA lidera a conversa</div>
+                        <div style="color:#A8B5C0; font-size:0.82rem; line-height:1.4;">Nunca mais fica você sem saber o que dizer — ela sempre te oferece 2-3 opções concretas.</div>
+                    </div>
+                </div>
+                <div style="display:flex; gap:12px; padding:14px; background:rgba(127,176,105,0.08); border:1px solid rgba(127,176,105,0.2); border-radius:12px;">
+                    <div style="font-size:1.4rem;">⚙️</div>
+                    <div style="flex:1;">
+                        <div style="font-weight:700; color:#F5F7FA; font-size:0.92rem; margin-bottom:2px;">Configurações em 1 lugar</div>
+                        <div style="color:#A8B5C0; font-size:0.82rem; line-height:1.4;">Mude nível, idioma, voz e velocidade a qualquer momento — um botão só.</div>
+                    </div>
+                </div>
+                <div style="display:flex; gap:12px; padding:14px; background:rgba(127,176,105,0.08); border:1px solid rgba(127,176,105,0.2); border-radius:12px;">
+                    <div style="font-size:1.4rem;">🌱</div>
+                    <div style="flex:1;">
+                        <div style="font-weight:700; color:#F5F7FA; font-size:0.92rem; margin-bottom:2px;">Sem notas que desmotivam</div>
+                        <div style="color:#A8B5C0; font-size:0.82rem; line-height:1.4;">Iniciantes agora recebem <em>badges</em> de progresso — não uma nota fria.</div>
+                    </div>
+                </div>
+                <div style="display:flex; gap:12px; padding:14px; background:rgba(231,111,81,0.08); border:1px solid rgba(231,111,81,0.25); border-radius:12px;">
+                    <div style="font-size:1.4rem;">🇧🇷</div>
+                    <div style="flex:1;">
+                        <div style="font-weight:700; color:#F5F7FA; font-size:0.92rem; margin-bottom:2px;">Travou? Fale em português.</div>
+                        <div style="color:#A8B5C0; font-size:0.82rem; line-height:1.4;">A IA entende o português e te dá uma frase simples em inglês pra você tentar.</div>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="closeV2Welcome()" style="width:100%; padding:14px; background:#7FB069; border:none; border-radius:10px; color:white; font-weight:700; font-size:1rem; cursor:pointer; font-family:inherit; box-shadow: 0 4px 14px rgba(127,176,105,0.4); transition: all 0.15s;">
+                Vamos praticar →
+            </button>
+            <button onclick="closeV2Welcome()" style="width:100%; margin-top:8px; padding:8px; background:transparent; border:none; color:#A8B5C0; font-size:0.78rem; cursor:pointer; font-family:inherit;">
+                ou siga direto para a prática
+            </button>
+        </div>
+    </div>
+
     <!-- Mobile Tip Popup -->
     <div class="tip-overlay" id="tip-overlay" style="display: none;">
         <div class="tip-modal">
@@ -523,6 +587,16 @@
         </div>
 
         <header class="dashboard-header">
+            <!-- v2.0 badge — sinaliza persistentemente que o app foi reformulado.
+                 Clique abre novamente o welcome "O que mudou". -->
+            <div style="text-align:center; margin-bottom:10px;">
+                <button
+                    onclick="localStorage.removeItem('v2_welcome_seen'); document.getElementById('v2-welcome-overlay').style.display='block';"
+                    style="display:inline-flex; align-items:center; gap:6px; background:rgba(127,176,105,0.18); border:1px solid rgba(127,176,105,0.45); color:#B8DAA7; padding:5px 12px; border-radius:999px; font-size:0.72rem; font-weight:700; letter-spacing:0.4px; cursor:pointer; font-family:inherit;"
+                    title="Clique para ver o que mudou">
+                    ✨ VERSÃO 2.0 · Reformulado em 2026
+                </button>
+            </div>
             <h1 id="welcome-msg">Bem-vindo!</h1>
             <p id="subtitle-msg">Comece sua prática de conversação.</p>
             <button id="admin-panel-btn" class="action-btn"
@@ -598,7 +672,29 @@
             }
         }
 
-        setTimeout(showTipPopup, 600);
+        // v2.0 Welcome: mostra UMA vez por navegador. Mesmo que usuario limpe
+        // o localStorage, mostra de novo (ok — serve como lembrete de novidade).
+        function showV2WelcomeIfNeeded() {
+            try {
+                if (localStorage.getItem('v2_welcome_seen') === 'true') return;
+                const overlay = document.getElementById('v2-welcome-overlay');
+                if (overlay) overlay.style.display = 'block';
+            } catch (_) {}
+        }
+        function closeV2Welcome() {
+            const overlay = document.getElementById('v2-welcome-overlay');
+            if (overlay) overlay.style.display = 'none';
+            try { localStorage.setItem('v2_welcome_seen', 'true'); } catch (_) {}
+        }
+        window.closeV2Welcome = closeV2Welcome;
+
+        setTimeout(() => {
+            showV2WelcomeIfNeeded();
+            // So mostra tip-mobile se welcome 2.0 ja foi visto (evita empilhamento)
+            if (localStorage.getItem('v2_welcome_seen') === 'true') {
+                showTipPopup();
+            }
+        }, 400);
 
         // Auth check (apiClient is declared in api-client.js)
         if (!localStorage.getItem('auth_token')) {

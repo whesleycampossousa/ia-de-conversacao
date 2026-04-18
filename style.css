@@ -1,27 +1,46 @@
-/* --- NETFLIX-STYLE CINEMATIC THEME --- */
+/* --- v2.0 "Acolhedor & Confiavel" — relancamento abril/2026 --- */
+/* Paleta nova: verde-salvia acolhedor + coral quente + azul-profundo + creme.
+   Foge do Netflix dark frio — sensacao de tutor simpatico, nao entretenimento. */
 
 :root {
-    /* Palette - Netflix Dark */
-    --bg-color: #141414;
-    --surface-color: #181818;
-    --surface-hover: #2f2f2f;
-    --text-primary: #ffffff;
-    --text-secondary: #b3b3b3;
-    --brand-red: #E50914;
-    --brand-red-hover: #F40612;
-    --border-color: #333333;
-    --glass-border: rgba(255, 255, 255, 0.18);
+    /* --- v2.0 Brand palette --- */
+    --v2-sage: #7FB069;           /* verde-sálvia — principal acolhedor */
+    --v2-sage-dark: #5E8A4D;
+    --v2-sage-soft: rgba(127, 176, 105, 0.14);
+    --v2-coral: #E76F51;          /* coral — calor, destaque sutil */
+    --v2-coral-dark: #C94E32;
+    --v2-deep: #264653;           /* azul-profundo — confianca */
+    --v2-deep-light: #2F5260;
+    --v2-cream: #FAF7F2;          /* creme — fundo claro opcional */
+
+    /* --- v2.0 Aplicado (mantem mesmo nome de variavel para zero breakage) --- */
+    --bg-color: #1A2330;          /* era #141414 — agora azul-escuro nao preto puro */
+    --surface-color: #243140;     /* era #181818 — surface com tom do --v2-deep */
+    --surface-hover: #2F4050;
+    --text-primary: #F5F7FA;      /* era #ffffff — off-white mais suave */
+    --text-secondary: #A8B5C0;    /* era #b3b3b3 */
+
+    /* CTA principal migra de vermelho Netflix para verde-sálvia */
+    --brand-red: #7FB069;          /* mantido o nome, agora é sage */
+    --brand-red-hover: #8EC27A;
+    --v2-cta-accent: #E76F51;      /* coral como secondary accent */
+
+    --border-color: #34475A;
+    --glass-border: rgba(127, 176, 105, 0.22);
     --footer-height: 96px;
-    --ai-en-bg: rgba(56, 189, 248, 0.12);
-    --ai-en-border: rgba(56, 189, 248, 0.28);
-    --ai-pt-bg: rgba(34, 197, 94, 0.1);
-    --ai-pt-border: rgba(74, 222, 128, 0.26);
+
+    /* AI message bubbles — mais coerentes com a paleta nova */
+    --ai-en-bg: rgba(127, 176, 105, 0.14);   /* sage soft */
+    --ai-en-border: rgba(127, 176, 105, 0.42);
+    --ai-pt-bg: rgba(231, 111, 81, 0.10);    /* coral soft */
+    --ai-pt-border: rgba(231, 111, 81, 0.32);
 
     /* Gradients & overlays */
-    --hero-gradient: linear-gradient(to top, #141414, transparent 150%);
-    --card-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+    --hero-gradient: linear-gradient(to top, #1A2330, transparent 150%);
+    --card-shadow: 0 6px 18px rgba(16, 24, 35, 0.45);
 
-    /* Typography */
+    /* Typography — Plus Jakarta Sans (titulos) + Inter (corpo) */
+    --font-display: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     --font-main: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
@@ -38,6 +57,12 @@ body {
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
+}
+
+/* v2.0: titulos usam a Plus Jakarta Sans — tom acolhedor e didatico */
+h1, h2, h3, .player-scenario-title, .hero-title, .section-title {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
 }
 
 .hidden {
@@ -207,7 +232,7 @@ body {
 }
 
 .primary-btn {
-    background: linear-gradient(135deg, #E50914, #F40612);
+    background: linear-gradient(135deg, #7FB069, #8EC27A);
     color: #fff;
     padding: 0.95rem 1.8rem;
     border-radius: 12px;
@@ -455,7 +480,7 @@ body {
 
 .featured-badge {
     display: inline-block;
-    background: linear-gradient(135deg, #E50914, #F40612);
+    background: linear-gradient(135deg, #7FB069, #8EC27A);
     color: white;
     padding: 4px 10px;
     border-radius: 4px;
@@ -1099,7 +1124,7 @@ body {
 
 /* Recording state: red glow pulse to make it obvious when mic is live */
 .player-controls.footer-bar .control-btn.mic-btn.recording {
-    background: #e50914;
+    background: #7FB069;
     animation: micRecordingPulse 1.3s ease-in-out infinite;
 }
 
@@ -1299,7 +1324,7 @@ body {
 .free-session-chip:hover,
 .free-session-chip.selected {
     background: rgba(229, 9, 20, 0.2);
-    border-color: #e50914;
+    border-color: #7FB069;
     color: #fff;
 }
 
@@ -1323,7 +1348,7 @@ body {
 }
 .topic-chip:hover, .topic-chip.selected {
     background: rgba(229, 9, 20, 0.18);
-    border-color: #e50914;
+    border-color: #7FB069;
     color: #fff;
 }
 
@@ -2486,7 +2511,7 @@ body {
 
 .voice-option.selected {
     background: linear-gradient(135deg, rgba(229, 9, 20, 0.2), rgba(229, 9, 20, 0.4));
-    border-color: #E50914;
+    border-color: #7FB069;
     box-shadow: 0 4px 12px rgba(229, 9, 20, 0.3);
 }
 
@@ -2504,7 +2529,7 @@ body {
 
 .voice-option.selected .voice-avatar {
     border-color: #fff;
-    background: #E50914;
+    background: #7FB069;
 }
 
 .voice-name {
@@ -3113,7 +3138,7 @@ body {
     padding: 10px 22px;
     border: none;
     border-radius: 999px;
-    background: #e50914;
+    background: #7FB069;
     color: #fff;
     font-weight: 700;
     cursor: pointer;
@@ -3338,7 +3363,7 @@ body {
 }
 
 .report-modal-body .report-btn-pdf {
-    background: linear-gradient(135deg, #E50914, #B20710);
+    background: linear-gradient(135deg, #7FB069, #5E8A4D);
     color: #fff;
     box-shadow: 0 2px 12px rgba(229, 9, 20, 0.3);
 }
