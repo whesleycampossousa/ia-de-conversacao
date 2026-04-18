@@ -398,12 +398,21 @@
     window.ttsSpeed = ttsSpeed;
 
     // Dual TTS (speak PT translation after EN) — helps beginners feel comfortable
-    // while still hearing the real English audio first. Opt-in; default ON for beginner.
+    // while still hearing the real English audio first. Opt-in.
+    // RULES:
+    //  - Default ON  for beginner in LEARNING mode (confidence scaffolding)
+    //  - Default OFF in SIMULATOR mode regardless of level (simulator = real
+    //    conversation, dual playback breaks immersion AND doubles the delay
+    //    between turns — main complaint from product owner)
+    //  - User's manual override always wins
     const dualTtsUserOverride = localStorage.getItem('tts_speak_pt_user_set') === 'true';
     const savedDualTts = localStorage.getItem('tts_speak_pt');
+    const currentPracticeMode = localStorage.getItem('practice_mode') || 'learning';
     let speakPtTranslation;
     if (dualTtsUserOverride) {
         speakPtTranslation = savedDualTts === 'true';
+    } else if (currentPracticeMode === 'simulator') {
+        speakPtTranslation = false; // simulator stays fast by default
     } else {
         speakPtTranslation = currentDifficultyForTts === 'beginner';
     }

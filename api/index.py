@@ -3988,36 +3988,29 @@ could say: 'I'd like a coffee.' Want to try?" pt: "Sem problema! Pode dizer:
 Return valid JSON only:
 {{"en":"...","pt":"...","suggested_words":[],"must_retry":false,"correction":null}}"""
                 else:
-                    # FREE CONVERSATION / SIMULATOR MODE: Casual conversation partner
+                    # FREE CONVERSATION / SIMULATOR MODE: compact prompt — less
+                    # input tokens = faster first-token latency (simulator should
+                    # feel like real-time conversation, not structured lesson).
                     minimal_prompt = f"""{conversation_history}
 {common_notes}
-User just said: "{user_text}"
+User said: "{user_text}"
 
-CRITICAL RULES:
-1. If user asks a QUESTION, answer it first! Never ignore questions.
-2. Be a friendly conversation partner with MEMORY of the conversation above.
-3. YOU LEAD: your "en" MUST end with a specific follow-up question. No exceptions —
-   even after "thanks"/"okay", invite more with a gentle question ("Want to keep
-   chatting?" / "Anything else you'd like to tell me?").
-4. Question should be short (<=10 words) and specific — avoid generic "What about you?".
-5. Only correct REAL GRAMMAR ERRORS. Do NOT "fix" valid alternatives.
-6. Keep 1-3 short sentences (roughly 20-45 words total).
-7. Keep language EASY: common daily words, short sentences, no slang/idioms/rare words.
-8. PORTUGUESE RESCUE: if the student writes in Portuguese (e.g. "nao sei",
-   "nao entendi", "como se diz X"), they're stuck and panicking. Respond kindly
-   with a SHORT bilingual message: acknowledge in PT + offer a simple English
-   starter they can echo. Example:
-   student: "nao sei" -> en: "No problem! You can just say: 'I don't know yet.'
-   Want to try again?" pt: "Sem problema! Voce pode dizer: 'I don't know yet.'
-   Quer tentar de novo?"
-suggested_words: ONLY for real grammar errors; otherwise [].
-must_retry: true ONLY if suggested_words not empty; else false.
-Return JSON: {{"en": "...", "pt": "...", "suggested_words": [], "must_retry": false}}."""
+Friendly conversation partner (with memory of the dialog above). {difficulty_length_rule}
+Answer user questions first, then end with a SHORT specific follow-up question
+(avoid generic "What about you?"). Only correct real grammar errors — not style.
+If user writes in Portuguese (panic): reply bilingual with a short English starter
+they can echo; correction=null.
+
+suggested_words: only real grammar errors; else [].
+must_retry: true only if suggested_words not empty.
+Return JSON only: {{"en":"...","pt":"...","suggested_words":[],"must_retry":false}}"""
             # Token limit: use the difficulty profile as the source of truth.
             # Smaller profile = faster generation. A lower temperature also makes
             # the model converge faster and be less verbose (tighter, more on-brief
             # answers) — big latency win for conversational turn-taking.
-            mode_buffer = 60 if practice_mode == 'simulator' else 40
+            # Simulator buffer was +60 — too generous, produced long replies
+            # that slowed turn-taking. Reduced to +30 for faster conversation.
+            mode_buffer = 30 if practice_mode == 'simulator' else 40
             mode_max_tokens = difficulty_profile["max_tokens"] + mode_buffer
             mode_gen_config = {
                 "max_output_tokens": mode_max_tokens,
@@ -4027,7 +4020,9 @@ Return JSON: {{"en": "...", "pt": "...", "suggested_words": [], "must_retry": fa
             response = context_model.generate_content(minimal_prompt, generation_config=mode_gen_config)
         else:
             # Fallback to basic model with full prompt
-            mode_buffer = 60 if practice_mode == 'simulator' else 40
+            # Simulator buffer was +60 — too generous, produced long replies
+            # that slowed turn-taking. Reduced to +30 for faster conversation.
+            mode_buffer = 30 if practice_mode == 'simulator' else 40
             mode_max_tokens = difficulty_profile["max_tokens"] + mode_buffer
             mode_gen_config = {
                 "max_output_tokens": mode_max_tokens,
