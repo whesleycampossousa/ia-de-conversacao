@@ -736,6 +736,18 @@
                 window.ptFirst = ptf.checked;
                 const mainCheckbox = document.getElementById('pt-first-checkbox');
                 if (mainCheckbox) mainCheckbox.checked = ptf.checked;
+
+                // Auto-enable dual TTS when user turns on "PT primeiro" — otherwise
+                // the PT wouldn't play at all (shouldSpeakPt requires speakPtTranslation).
+                if (ptf.checked) {
+                    const dualCb = document.getElementById('settings-dual-tts');
+                    if (dualCb && !dualCb.checked) {
+                        dualCb.checked = true;
+                        localStorage.setItem('tts_speak_pt', 'true');
+                        localStorage.setItem('tts_speak_pt_user_set', 'true');
+                        window.speakPtTranslation = true;
+                    }
+                }
             });
             const conf = document.getElementById('settings-confirm-transcription');
             if (conf) conf.addEventListener('change', () => {
