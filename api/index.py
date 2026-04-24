@@ -155,7 +155,7 @@ ALLOWED_ORIGINS = os.environ.get('ALLOWED_ORIGINS', '')
 # Handle empty or malformed ALLOWED_ORIGINS
 if ALLOWED_ORIGINS and ALLOWED_ORIGINS.strip():
     origins_list = [o.strip() for o in ALLOWED_ORIGINS.split(',') if o.strip()]
-else:
+else:
     # If no specific origins, allow all (for Vercel)
     origins_list = '*'
 
@@ -192,7 +192,9 @@ except Exception as e:
     limiter = LimiterDummy()
 
 # Configure Gemini with Caching Support
-GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "").strip()
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "").strip()
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "").strip()
+OPENAI_MODEL_NAME = os.environ.get("OPENAI_MODEL_NAME", os.environ.get("OPENAI_MODEL", "gpt-4o-mini")).strip() or "gpt-4o-mini"
 QWEN_API_KEY = (os.environ.get("QWEN_API_KEY", "") or os.environ.get("DASHSCOPE_API_KEY", "")).strip()
 QWEN_TTS_ENDPOINT = os.environ.get(
     "QWEN_TTS_ENDPOINT",
@@ -222,8 +224,9 @@ if GEMINI_THINKING_BUDGET >= 0:
     DEFAULT_GEN_CONFIG["thinking_config"] = {"thinking_budget": GEMINI_THINKING_BUDGET}
 GEMINI_MODEL_NAME = os.environ.get("GEMINI_MODEL_NAME", os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")).strip() or "gemini-2.0-flash"
 LEARNING_CORRECTION_KIND_ENABLED = os.environ.get("LEARNING_CORRECTION_KIND_ENABLED", "true").strip().lower() in ("1", "true", "yes", "on")
-model = None
-genai_client = None
+model = None
+genai_client = None
+openai_fallback_adapter = None
 cached_models = {}  # Store cached models by context
 
 def _extract_text_from_genai_response(response):
@@ -255,14 +258,266 @@ def _is_model_not_found_error(error_text):
         "unknown model",
     ])
 
-class GeminiModelAdapter:
+class OpenAIModelAdapter:
+
+
+
+    """Compatibility adapter with a generate_content() interface."""
+
+
+
+    def __init__(self, api_key, model_name, system_instruction="", default_generation_config=None):
+
+
+
+        self.api_key = (api_key or "").strip()
+
+
+
+        self.model_name = (model_name or "gpt-4o-mini").strip() or "gpt-4o-mini"
+
+
+
+        self.system_instruction = (system_instruction or "").strip()
+
+
+
+        self.default_generation_config = default_generation_config or {}
+
+
+
+    def _compose_prompt(self, prompt):
+
+
+
+        user_prompt = prompt or ""
+
+
+
+        if not self.system_instruction:
+
+
+
+            return user_prompt
+
+
+
+        return f"{self.system_instruction}\n\n{user_prompt}"
+
+
+
+    def _compose_config(self, generation_config=None):
+
+
+
+        config = dict(self.default_generation_config)
+
+
+
+        if isinstance(generation_config, dict):
+
+
+
+            for key, value in generation_config.items():
+
+
+
+                if value is not None:
+
+
+
+                    config[key] = value
+
+
+
+        return config or None
+
+
+
+    def generate_content(self, prompt, generation_config=None):
+
+
+
+        if not self.api_key:
+
+
+
+            raise RuntimeError("OPENAI_API_KEY not configured")
+
+
+
+        if not REQUESTS_AVAILABLE:
+
+
+
+            raise RuntimeError("requests library not available for OpenAI fallback")
+
+
+
+        combined_prompt = self._compose_prompt(prompt)
+
+
+
+        config = self._compose_config(generation_config)
+
+
+
+        temperature = 0.8
+
+
+
+        max_tokens = 2048
+
+
+
+        if isinstance(config, dict):
+
+
+
+            if "temperature" in config:
+
+
+
+                temperature = config.get("temperature")
+
+
+
+            if "max_output_tokens" in config:
+
+
+
+                max_tokens = config.get("max_output_tokens")
+
+
+
+            elif "maxOutputTokens" in config:
+
+
+
+                max_tokens = config.get("maxOutputTokens")
+
+
+
+        timeout_sec = int(os.environ.get("OPENAI_TIMEOUT_SEC", "25"))
+
+
+
+        response = requests.post(
+
+
+
+            "https://api.openai.com/v1/chat/completions",
+
+
+
+            headers={
+
+
+
+                "Authorization": f"Bearer {self.api_key}",
+
+
+
+                "Content-Type": "application/json",
+
+
+
+            },
+
+
+
+            json={
+
+
+
+                "model": self.model_name,
+
+
+
+                "temperature": temperature,
+
+
+
+                "max_tokens": max_tokens,
+
+
+
+                "messages": [
+
+
+
+                    {"role": "user", "content": combined_prompt}
+
+
+
+                ],
+
+
+
+            },
+
+
+
+            timeout=timeout_sec,
+
+
+
+        )
+
+
+
+        if response.status_code >= 400:
+
+
+
+            raise RuntimeError(f"OpenAI HTTP {response.status_code}: {response.text}")
+
+
+
+        data = response.json()
+
+
+
+        content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+
+
+
+        if isinstance(content, list):
+
+
+
+            content = "".join(
+
+
+
+                part.get("text", "") if isinstance(part, dict) else str(part)
+
+
+
+                for part in content
+
+
+
+            )
+
+
+
+        return SimpleNamespace(text=(content or "").strip())
+
+
+
+class GeminiModelAdapter:
     """Compatibility adapter with a generate_content() interface."""
 
-    def __init__(self, client, model_name, system_instruction="", default_generation_config=None):
+    def __init__(self, client, model_name, system_instruction="", default_generation_config=None, fallback_adapter=None):
         self.client = client
         self.model_name = model_name
         self.system_instruction = (system_instruction or "").strip()
-        self.default_generation_config = default_generation_config or {}
+        self.default_generation_config = default_generation_config or {}
+
+
+
+        self.fallback_adapter = fallback_adapter
 
     def _compose_prompt(self, prompt):
         user_prompt = prompt or ""
@@ -328,18 +583,102 @@ class GeminiModelAdapter:
             except Exception as fallback_err:
                 print(f"[GEMINI] Fallback model also failed: {fallback_err}")
 
-        # Everything failed — raise the original error
+        if self.fallback_adapter:
+
+
+
+            try:
+
+
+
+                print("[GEMINI] Trying OpenAI fallback adapter...")
+
+
+
+                return self.fallback_adapter.generate_content(prompt, generation_config=generation_config)
+
+
+
+            except Exception as fallback_adapter_err:
+
+
+
+                print(f"[OPENAI] Fallback adapter failed: {fallback_adapter_err}")
+
+
+
+        # Everything failed — raise the original error
         raise last_error
 
-if GOOGLE_API_KEY and GENAI_AVAILABLE:
+if OPENAI_API_KEY and REQUESTS_AVAILABLE:
+
+
+
+    try:
+
+
+
+        openai_fallback_adapter = OpenAIModelAdapter(
+
+
+
+            OPENAI_API_KEY,
+
+
+
+            OPENAI_MODEL_NAME,
+
+
+
+            default_generation_config=DEFAULT_GEN_CONFIG,
+
+
+
+            fallback_adapter=openai_fallback_adapter
+
+
+
+        )
+
+
+
+        print(f"[OK] OpenAI fallback adapter initialized successfully ({OPENAI_MODEL_NAME})")
+
+
+
+    except Exception as openai_init_err:
+
+
+
+        print(f"OpenAI Init Error: {openai_init_err}")
+
+
+
+if GOOGLE_API_KEY and GENAI_AVAILABLE:
     try:
         genai_client = genai.Client(api_key=GOOGLE_API_KEY)
         # Base model (without context-specific system instruction)
-        model = GeminiModelAdapter(
-            genai_client,
-            GEMINI_MODEL_NAME,
-            default_generation_config=DEFAULT_GEN_CONFIG
-        )
+        model = GeminiModelAdapter(
+
+
+
+            genai_client,
+
+
+
+            GEMINI_MODEL_NAME,
+
+
+
+            default_generation_config=DEFAULT_GEN_CONFIG,
+
+
+
+            fallback_adapter=openai_fallback_adapter
+
+
+
+        )
         print(f"[OK] Gemini model initialized successfully ({GENAI_PROVIDER}, {GEMINI_MODEL_NAME})")
         print("[OK] Prompt adapter cache enabled - context prompts are reused per context/mode")
     except Exception as e:
@@ -347,7 +686,19 @@ if GOOGLE_API_KEY and GENAI_AVAILABLE:
 elif not GENAI_AVAILABLE:
     print(f"WARNING: Google GenAI not available: {globals().get('GENAI_ERROR')}")
 else:
-    print("WARNING: GOOGLE_API_KEY not set!")
+    print("WARNING: GOOGLE_API_KEY not set!")
+
+
+
+if not model and openai_fallback_adapter:
+
+
+
+    model = openai_fallback_adapter
+
+
+
+    print(f"[OK] Using OpenAI fallback adapter as active model ({OPENAI_MODEL_NAME})")
 
 # Configure Groq Whisper for speech-to-text
 # Configure Groq Whisper for speech-to-text
@@ -2563,12 +2914,31 @@ def get_cached_model_for_context(context_key, system_prompt, mode_key='learning'
         return cached_models[cache_key]
     
     try:
-        cached_model = GeminiModelAdapter(
-            genai_client,
-            GEMINI_MODEL_NAME,
-            system_instruction=system_prompt,
-            default_generation_config=DEFAULT_GEN_CONFIG
-        )
+        cached_model = GeminiModelAdapter(
+
+
+
+            genai_client,
+
+
+
+            GEMINI_MODEL_NAME,
+
+
+
+            system_instruction=system_prompt,
+
+
+
+            default_generation_config=DEFAULT_GEN_CONFIG,
+
+
+
+            fallback_adapter=openai_fallback_adapter
+
+
+
+        )
         cached_models[cache_key] = cached_model
         print(f"[CACHE] Created cached model for context: {context_key} ({mode_key})")
         return cached_model
@@ -7065,3 +7435,4 @@ if __name__ == '__main__':
 
 
 
+
