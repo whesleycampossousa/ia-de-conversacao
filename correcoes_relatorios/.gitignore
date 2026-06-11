@@ -1,0 +1,25 @@
+__pycache__/
+*.pyc
+
+# Daily generated reports and audio caches stay local.
+relatorio_*_clone16_audio/
+relatorio_correcao_*_com_audio_clone16.html
+data_*_corrections.jsonl
+cards_*.json
+audit_*.py
+
+# Raw WhatsApp/student media should not be committed.
+*.ogg
+*.mp3
+*.wav
+*.m4a
+*.webm
+*.opus
+*.png
+*.jpg
+*.jpeg
+
+# Keep the shared visual assets.
+!assets_relatorios/
+!assets_relatorios/logo_everyday_conversation.png
+!assets_relatorios/hero_books_plant_chat.png

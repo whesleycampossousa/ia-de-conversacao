@@ -1,0 +1,7 @@
+numpy
+soundfile
+torch
+pillow
+pytesseract
+faster-whisper
+qwen-tts
