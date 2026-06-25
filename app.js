@@ -533,6 +533,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const savedPtFirst = localStorage.getItem('tts_pt_first');
     window.ptFirst = savedPtFirst === 'true' || (savedPtFirst === null && currentDifficultyForTts === 'zero');
 
+    // ===== Modo Daniela: a real interview is ENGLISH ONLY, at a NORMAL pace =====
+    // Force these for THIS session only (no PT translation spoken/shown, normal TTS
+    // speed). We do not touch the student's saved global settings, so other scenarios
+    // keep their own preferences.
+    if (danielaProfile) {
+        ttsSpeed = 1.0;
+        window.ttsSpeed = 1.0;
+        speakPtTranslation = false;
+        window.speakPtTranslation = false;
+        window.ptFirst = false;
+        window.subtitlesEnabled = true;   // keep English captions...
+        window.subtitlesEnOnly = true;    // ...but hide the Portuguese translation
+        try { document.body.classList.add('subtitles-en-only'); } catch (_) {}
+    }
+
     // Volume boost multiplier for TTS playback (via Web Audio API GainNode).
     // The cloned PT voice came back quiet  1.6 = +60% compensates for that without
     // distortion on typical voice samples. User can override via localStorage.
@@ -4671,7 +4686,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let responseText = data.text || '';
             let responseTranslation = data.translation || '';
-            if (practiceMode === 'learning') {
+            // Modo Daniela: keep the recruiter's FULL natural reply. The simplifier
+            // strips responses down to one statement + one question, which is what
+            // makes the interview feel guided/robotic. Skip it for Daniela.
+            if (practiceMode === 'learning' && !danielaProfile) {
                 const simplified = simplifyLearningScenarioResponse(responseText, responseTranslation);
                 responseText = simplified.text || responseText;
                 responseTranslation = simplified.translation || responseTranslation;
