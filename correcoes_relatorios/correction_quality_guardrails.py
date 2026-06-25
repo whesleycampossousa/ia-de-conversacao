@@ -30,6 +30,10 @@ NO_NORMALIZE_PAIRS = [
     ("big", "large", "big -> large"),
     ("fine", "nice", "fine -> nice"),
     ("so good", "very good", "so good -> very good"),
+    ("make me relax", "help me relax", "make me relax -> help me relax"),
+    ("makes me relax", "helps me relax", "makes me relax -> helps me relax"),
+    ("many clothes", "a lot of clothes", "many clothes -> a lot of clothes"),
+    ("all my family", "my whole family", "all my family -> my whole family"),
     ("french bread", "french roll", "French bread -> French roll"),
     ("clear", "bright", "clear -> bright"),
     ("see", "look at", "see -> look at"),
@@ -62,6 +66,27 @@ TENSE_PHRASE_CHANGES = [
     ("when i slept", "when i sleep", ("slept", "sleep")),
     ("when i went", "when i go", ("went", "go")),
 ]
+LIGHT_WORDS = {
+    "a",
+    "an",
+    "the",
+    "to",
+    "of",
+    "in",
+    "on",
+    "at",
+    "for",
+    "and",
+    "or",
+    "but",
+    "i",
+    "it",
+    "is",
+    "am",
+    "are",
+    "was",
+    "were",
+}
 
 
 def normalize_text(text: str) -> str:
@@ -90,6 +115,18 @@ def changed_terms(original: str, corrected: str, terms: set[str]) -> set[str]:
     old_words = word_bag(original)
     new_words = word_bag(corrected)
     return {term for term in terms if old_words.get(term, 0) != new_words.get(term, 0)}
+
+
+def meaningful_change_count(original: str, corrected: str) -> int:
+    old_words = word_bag(original)
+    new_words = word_bag(corrected)
+    words = set(old_words) | set(new_words)
+    total = 0
+    for word in words:
+        if len(word) <= 2 or word in LIGHT_WORDS:
+            continue
+        total += abs(old_words.get(word, 0) - new_words.get(word, 0))
+    return total
 
 
 def undocumented_terms(changed: set[str], observation: str, why: str = "") -> set[str]:
@@ -144,6 +181,16 @@ def validate_correction_quality(items: Iterable[Any], *, min_unique_ratio: float
             continue
 
         observations.append(observation)
+        explanation_len = len((observation or "").strip()) + len((why or "").strip())
+        content_changes = meaningful_change_count(original, corrected)
+        if status == "fix" and content_changes >= 2 and explanation_len < 260:
+            problems.append(
+                f"#{index}: explicacao curta demais para uma correcao com varias mudancas ({explanation_len} chars)"
+            )
+        if status == "note" and content_changes >= 2 and explanation_len < 190:
+            problems.append(
+                f"#{index}: explicacao curta demais para ajuste leve com varias mudancas ({explanation_len} chars)"
+            )
         first_word = re.match(r"\S+", observation.strip())
         if first_word:
             starts[first_word.group(0)] += 1

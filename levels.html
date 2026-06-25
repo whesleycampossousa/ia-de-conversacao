@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Selecione seu Nível - IA de Conversação</title>
+    <title>Selecione seu Nivel - IA de Conversacao</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -221,7 +221,7 @@
         }
 
         .level-speed::before {
-            content: '⚡';
+            content: '';
             font-size: 1rem;
         }
 
@@ -270,7 +270,7 @@
             }
         }
 
-        /* Animação de entrada */
+        /* Animacao de entrada */
         @keyframes fadeInUp {
             from {
                 opacity: 0;
@@ -316,8 +316,9 @@
                 Voltar
             </a>
             <button onclick="localStorage.removeItem('auth_token'); localStorage.removeItem('conversation_token'); localStorage.removeItem('conversation_user'); localStorage.removeItem('usage_data'); localStorage.removeItem('conversation_backup'); localStorage.removeItem('last_context'); localStorage.removeItem('practice_mode'); window.location.href='index.html';" style="position: absolute; top: 1rem; right: 1rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #ccc; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; font-family: inherit;">Sair</button>
-            <h1>Qual é o seu nível?</h1>
-            <p>Escolha a velocidade ideal para sua prática.</p>
+            <img src="logo.png" alt="Everyday Conversation" style="width: 70px; height: 70px; border-radius: 50%; margin: 0 auto 12px; display: block; object-fit: cover; box-shadow: 0 4px 16px rgba(220,38,62,0.4); border: 2px solid rgba(255,255,255,0.15);">
+            <h1>Qual e o seu nivel?</h1>
+            <p>Escolha a velocidade ideal para sua pratica.</p>
         </header>
 
         <div class="levels-container">
@@ -330,11 +331,11 @@
                     </svg>
                 </div>
                 <div class="level-title">Iniciante</div>
-                <div class="level-desc">Falas lentas e pausadas para facilitar a compreensão.</div>
+                <div class="level-desc">Falas lentas e pausadas para facilitar a compreensao.</div>
                 <div class="level-speed">Velocidade: 0.6x</div>
             </a>
 
-            <!-- Pré Intermediário: Speed 0.8 -->
+            <!-- Pre Intermediario: Speed 0.8 -->
             <a href="javascript:selectLevel(0.8, 'A2')" class="level-card pre-intermediate">
                 <div class="level-icon-wrapper">
                     <svg class="level-icon-svg" viewBox="0 0 24 24" fill="none">
@@ -343,32 +344,32 @@
                         <path d="M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </div>
-                <div class="level-title">Pré Intermediário</div>
-                <div class="level-desc">Velocidade moderada, ideal para quem já tem base.</div>
+                <div class="level-title">Pre Intermediario</div>
+                <div class="level-desc">Velocidade moderada, ideal para quem ja tem base.</div>
                 <div class="level-speed">Velocidade: 0.8x</div>
             </a>
 
-            <!-- Intermediário: Speed 1.0 -->
+            <!-- Intermediario: Speed 1.0 -->
             <a href="javascript:selectLevel(1.0, 'B1')" class="level-card intermediate">
                 <div class="level-icon-wrapper">
                     <svg class="level-icon-svg" viewBox="0 0 24 24" fill="none">
                         <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </div>
-                <div class="level-title">Intermediário</div>
-                <div class="level-desc">Conversação em velocidade natural do dia a dia.</div>
+                <div class="level-title">Intermediario</div>
+                <div class="level-desc">Conversacao em velocidade natural do dia a dia.</div>
                 <div class="level-speed">Velocidade: Normal</div>
             </a>
 
-            <!-- Avançado: Speed 1.0 -->
+            <!-- Avancado: Speed 1.0 -->
             <a href="javascript:selectLevel(1.0, 'B2')" class="level-card advanced">
                 <div class="level-icon-wrapper">
                     <svg class="level-icon-svg" viewBox="0 0 24 24" fill="none">
                         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </div>
-                <div class="level-title">Avançado</div>
-                <div class="level-desc">Desafios de vocabulário e expressões complexas.</div>
+                <div class="level-title">Avancado</div>
+                <div class="level-desc">Desafios de vocabulario e expressoes complexas.</div>
                 <div class="level-speed">Velocidade: Normal</div>
             </a>
         </div>

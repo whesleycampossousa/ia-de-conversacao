@@ -1,4 +1,369 @@
 {
+  "bdr_interview_drills": {
+    "id": "bdr_interview_drills",
+    "title": "Interview Prep — BDR Phrase Drills",
+    "icon": "BDR",
+    "welcome": {
+      "en": "Let's warm up. You'll hear a key interview phrase, then repeat it out loud, clearly and confidently.",
+      "pt": "Vamos aquecer. Você vai ouvir uma frase-chave de entrevista e repetir em voz alta, com clareza e confiança."
+    },
+    "layers": [
+      {
+        "id": 1,
+        "title": "Abertura ao telefone",
+        "interaction": "repeat",
+        "instruction": {
+          "en": "Repeat this confident phone opener.",
+          "pt": "Repita esta abertura de telefone com confiança."
+        },
+        "options": [
+          { "en": "Hi, do you have a quick minute? I promise to be brief.", "pt": "Oi, você tem um minutinho? Prometo ser breve." },
+          { "en": "I know I'm calling out of the blue, so I'll keep this short.", "pt": "Sei que estou ligando do nada, então vou ser rápida." }
+        ],
+        "practice_prompt": { "en": "Say it out loud, calm and friendly.", "pt": "Diga em voz alta, com calma e simpatia." },
+        "feedback": {
+          "success": { "en": "Great. You sounded confident and clear.", "pt": "Ótimo. Você soou confiante e clara." },
+          "retry": { "en": "Almost. Try again a bit slower.", "pt": "Quase. Tente de novo um pouco mais devagar." },
+          "redirect": { "en": "Repeat one of the phrases above.", "pt": "Repita uma das frases acima." }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Sua experiência outbound",
+        "interaction": "repeat",
+        "instruction": {
+          "en": "State your outbound experience.",
+          "pt": "Declare sua experiência outbound."
+        },
+        "options": [
+          { "en": "I have over five years focused on outbound sales and lead generation.", "pt": "Tenho mais de cinco anos focada em vendas outbound e geração de leads." },
+          { "en": "I make more than four hundred cold calls every week.", "pt": "Eu faço mais de quatrocentas ligações frias por semana." }
+        ],
+        "practice_prompt": { "en": "Own your numbers. Say it with pride.", "pt": "Assuma seus números. Diga com orgulho." },
+        "feedback": {
+          "success": { "en": "Perfect. That's a strong, specific answer.", "pt": "Perfeito. É uma resposta forte e específica." },
+          "retry": { "en": "Good. Try again, a little clearer.", "pt": "Bom. Tente de novo, um pouco mais claro." },
+          "redirect": { "en": "Repeat one of the phrases above.", "pt": "Repita uma das frases acima." }
+        }
+      },
+      {
+        "id": 3,
+        "title": "Resultados e meta",
+        "interaction": "repeat",
+        "instruction": {
+          "en": "Show your results.",
+          "pt": "Mostre seus resultados."
+        },
+        "options": [
+          { "en": "I consistently book twelve qualified meetings every month.", "pt": "Eu marco consistentemente doze reuniões qualificadas por mês." },
+          { "en": "About one in three real conversations turns into a booked meeting.", "pt": "Cerca de uma em cada três conversas reais vira uma reunião marcada." }
+        ],
+        "practice_prompt": { "en": "Say the numbers slowly and clearly.", "pt": "Diga os números devagar e com clareza." },
+        "feedback": {
+          "success": { "en": "Excellent. Numbers make you memorable.", "pt": "Excelente. Números te tornam memorável." },
+          "retry": { "en": "Almost there. One more time.", "pt": "Quase lá. Mais uma vez." },
+          "redirect": { "en": "Repeat one of the phrases above.", "pt": "Repita uma das frases acima." }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Seu processo (conta fria)",
+        "interaction": "repeat",
+        "instruction": {
+          "en": "Explain how you break into a cold account.",
+          "pt": "Explique como você entra em uma conta fria."
+        },
+        "options": [
+          { "en": "My process starts with research, not dialing.", "pt": "Meu processo começa com pesquisa, não com a ligação." },
+          { "en": "I map the account and find the two or three real decision-makers.", "pt": "Eu mapeio a conta e encontro os dois ou três decisores reais." }
+        ],
+        "practice_prompt": { "en": "Sound like you do this every day.", "pt": "Soe como quem faz isso todo dia." },
+        "feedback": {
+          "success": { "en": "Great. That shows a real process.", "pt": "Ótimo. Isso mostra um processo de verdade." },
+          "retry": { "en": "Good. Try again, a bit slower.", "pt": "Bom. Tente de novo, um pouco mais devagar." },
+          "redirect": { "en": "Repeat one of the phrases above.", "pt": "Repita uma das frases acima." }
+        }
+      },
+      {
+        "id": 5,
+        "title": "IA e personalização",
+        "interaction": "repeat",
+        "instruction": {
+          "en": "Show you use AI the smart way.",
+          "pt": "Mostre que você usa IA do jeito inteligente."
+        },
+        "options": [
+          { "en": "I use AI to research accounts and personalize my outreach.", "pt": "Eu uso IA para pesquisar contas e personalizar minha abordagem." },
+          { "en": "I treat AI as a research multiplier, not a shortcut.", "pt": "Eu trato a IA como um multiplicador de pesquisa, não um atalho." }
+        ],
+        "practice_prompt": { "en": "This line matters a lot for this role.", "pt": "Essa frase importa muito para essa vaga." },
+        "feedback": {
+          "success": { "en": "Perfect. That's exactly what they want to hear.", "pt": "Perfeito. É exatamente o que eles querem ouvir." },
+          "retry": { "en": "Almost. One more clear try.", "pt": "Quase. Mais uma tentativa clara." },
+          "redirect": { "en": "Repeat one of the phrases above.", "pt": "Repita uma das frases acima." }
+        }
+      },
+      {
+        "id": 6,
+        "title": "Lidando com objeção",
+        "interaction": "repeat",
+        "instruction": {
+          "en": "Handle an objection with calm curiosity.",
+          "pt": "Lide com uma objeção com calma e curiosidade."
+        },
+        "options": [
+          { "en": "I hear you. Can I ask what's driving that concern?", "pt": "Entendo. Posso perguntar o que está por trás dessa preocupação?" },
+          { "en": "That's exactly why a quick fifteen-minute call could help.", "pt": "É exatamente por isso que uma ligação rápida de quinze minutos poderia ajudar." }
+        ],
+        "practice_prompt": { "en": "Stay warm, never defensive.", "pt": "Continue acolhedora, nunca defensiva." },
+        "feedback": {
+          "success": { "en": "Great. Calm and confident — perfect.", "pt": "Ótimo. Calma e confiante — perfeito." },
+          "retry": { "en": "Good. Try again, softer tone.", "pt": "Bom. Tente de novo, tom mais suave." },
+          "redirect": { "en": "Repeat one of the phrases above.", "pt": "Repita uma das frases acima." }
+        }
+      },
+      {
+        "id": 7,
+        "title": "Ponte de ferramentas + CRM",
+        "interaction": "repeat",
+        "instruction": {
+          "en": "Bridge your tools to their stack.",
+          "pt": "Faça a ponte das suas ferramentas para o stack deles."
+        },
+        "options": [
+          { "en": "Salesloft is my daily engagement tool, so I'd ramp on Gong fast.", "pt": "Salesloft é minha ferramenta diária, então eu me adaptaria ao Gong rápido." },
+          { "en": "I'm comfortable living in the CRM and keeping the data clean.", "pt": "Eu me sinto à vontade vivendo no CRM e mantendo os dados limpos." }
+        ],
+        "practice_prompt": { "en": "Confidence here removes their biggest doubt.", "pt": "Confiança aqui tira a maior dúvida deles." },
+        "feedback": {
+          "success": { "en": "Excellent. You just closed the tools gap.", "pt": "Excelente. Você acabou de fechar a lacuna das ferramentas." },
+          "retry": { "en": "Almost. One more time, steady pace.", "pt": "Quase. Mais uma vez, ritmo firme." },
+          "redirect": { "en": "Repeat one of the phrases above.", "pt": "Repita uma das frases acima." }
+        }
+      }
+    ]
+  },
+  "iniciantes_fluxo": {
+    "id": "iniciantes_fluxo",
+    "title": "Fluxo recomendado para iniciantes",
+    "icon": "A0",
+    "welcome": {
+      "en": "Welcome. We will go slowly: listen, choose, repeat, and build short sentences.",
+      "pt": "Bem-vindo. Vamos devagar: ouvir, escolher, repetir e montar frases curtas."
+    },
+    "composite_template": "I am {feeling}.",
+    "composite_layers": [
+      4
+    ],
+    "layers": [
+      {
+        "id": 1,
+        "title": "Ouça e entenda",
+        "interaction": "listen",
+        "auto_accept": true,
+        "instruction": {
+          "en": "Listen: I am happy. It means: Eu estou feliz.",
+          "pt": "Ouça: I am happy. Significa: Eu estou feliz."
+        },
+        "options": [
+          {
+            "en": "I am happy",
+            "pt": "Eu estou feliz"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Good. You heard the first sentence.",
+          "pt": "Muito bem. Voce ouviu a primeira frase."
+        },
+        "feedback": {
+          "success": {
+            "en": "Great. Let's continue.",
+            "pt": "Otimo. Vamos continuar."
+          },
+          "retry": {
+            "en": "Listen again and choose the button.",
+            "pt": "Ouça novamente e toque no botao."
+          },
+          "redirect": {
+            "en": "Touch the option to continue.",
+            "pt": "Toque na opcao para continuar."
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Escolha a resposta",
+        "interaction": "choose",
+        "auto_accept": true,
+        "instruction": {
+          "en": "How do you feel? Choose one answer.",
+          "pt": "Como voce se sente? Escolha uma resposta."
+        },
+        "options": [
+          {
+            "en": "I am happy",
+            "pt": "Eu estou feliz"
+          },
+          {
+            "en": "I am tired",
+            "pt": "Eu estou cansado"
+          },
+          {
+            "en": "I am hungry",
+            "pt": "Eu estou com fome"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Nice choice.",
+          "pt": "Boa escolha."
+        },
+        "feedback": {
+          "success": {
+            "en": "Good. You chose a full sentence.",
+            "pt": "Bom. Voce escolheu uma frase completa."
+          },
+          "retry": {
+            "en": "Choose one short answer.",
+            "pt": "Escolha uma resposta curta."
+          },
+          "redirect": {
+            "en": "Touch one option.",
+            "pt": "Toque em uma opcao."
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "Repita com apoio",
+        "interaction": "repeat",
+        "instruction": {
+          "en": "Now repeat this sentence with your voice.",
+          "pt": "Agora repita esta frase com sua voz."
+        },
+        "options": [
+          {
+            "en": "I am happy",
+            "pt": "Eu estou feliz"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Say: I am happy.",
+          "pt": "Diga: I am happy."
+        },
+        "feedback": {
+          "success": {
+            "en": "Great repetition. You said the main words.",
+            "pt": "Otima repeticao. Voce disse as palavras principais."
+          },
+          "retry": {
+            "en": "Almost. Try again slowly: I am happy.",
+            "pt": "Quase. Tente de novo devagar: I am happy."
+          },
+          "redirect": {
+            "en": "Try only these words: I am happy.",
+            "pt": "Tente apenas estas palavras: I am happy."
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Complete a frase",
+        "interaction": "complete",
+        "auto_accept": true,
+        "instruction": {
+          "en": "Complete the sentence: I am ___.",
+          "pt": "Complete a frase: I am ___."
+        },
+        "options": [
+          {
+            "en": "happy",
+            "pt": "feliz",
+            "slots": {
+              "feeling": "happy"
+            }
+          },
+          {
+            "en": "tired",
+            "pt": "cansado",
+            "slots": {
+              "feeling": "tired"
+            }
+          },
+          {
+            "en": "hungry",
+            "pt": "com fome",
+            "slots": {
+              "feeling": "hungry"
+            }
+          }
+        ],
+        "practice_prompt": {
+          "en": "You built a sentence.",
+          "pt": "Voce montou uma frase."
+        },
+        "feedback": {
+          "success": {
+            "en": "Perfect. You built the sentence.",
+            "pt": "Perfeito. Voce montou a frase."
+          },
+          "retry": {
+            "en": "Choose one word.",
+            "pt": "Escolha uma palavra."
+          },
+          "redirect": {
+            "en": "Touch happy, tired, or hungry.",
+            "pt": "Toque em happy, tired ou hungry."
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "Mini conversa guiada",
+        "interaction": "choose",
+        "auto_accept": true,
+        "instruction": {
+          "en": "Mini conversation. Answer with one short sentence.",
+          "pt": "Mini conversa. Responda com uma frase curta."
+        },
+        "options": [
+          {
+            "en": "I am happy",
+            "pt": "Eu estou feliz"
+          },
+          {
+            "en": "I am tired",
+            "pt": "Eu estou cansado"
+          },
+          {
+            "en": "I am hungry",
+            "pt": "Eu estou com fome"
+          }
+        ],
+        "practice_prompt": {
+          "en": "Nice. This is a tiny conversation.",
+          "pt": "Legal. Isso ja e uma mini conversa."
+        },
+        "feedback": {
+          "success": {
+            "en": "Great. You answered a real question.",
+            "pt": "Muito bom. Voce respondeu uma pergunta real."
+          },
+          "retry": {
+            "en": "Choose one answer.",
+            "pt": "Escolha uma resposta."
+          },
+          "redirect": {
+            "en": "Touch one option.",
+            "pt": "Toque em uma opcao."
+          }
+        }
+      }
+    ],
+    "conclusion": {
+      "en": "Excellent. You finished your first guided English steps. You can continue with tiny answers now.",
+      "pt": "Excelente. Voce terminou seus primeiros passos guiados em ingles. Agora pode continuar com respostas curtinhas."
+    }
+  },
   "coffee_shop": {
     "id": "coffee_shop",
     "title": "Ordering at a Coffee Shop",

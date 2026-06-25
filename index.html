@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - IA de Conversação</title>
+    <title>Login - IA de Conversacao</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -273,9 +273,11 @@
     <div class="login-container">
         <div class="login-box">
             <header class="login-header">
-                <div class="logo-netflix">EVERYDAY</div>
-                <h1>Bem-vindo de volta</h1>
-                <p>Alunos entram apenas com o e-mail cadastrado</p>
+                <img src="logo.png" alt="Everyday Conversation"
+                    style="width: 120px; height: 120px; border-radius: 50%; margin: 0 auto 16px; display: block; object-fit: cover; box-shadow: 0 8px 32px rgba(220,38,62,0.45); border: 3px solid rgba(255,255,255,0.15);">
+                <div class="logo-netflix">EVERYDAY CONVERSATION</div>
+                <h1>Bem vindo de volta</h1>
+                <p>Complemento a metodologia</p>
             </header>
 
             <div class="error-message" id="error-message"></div>
@@ -296,7 +298,7 @@
 
             <div class="login-footer">
                 <p>
-                    Não tem acesso? <a href="mailto:everydayconversation1991@gmail.com">Entre em contato</a>
+                    <span>Complemento a metodologia</span>
                 </p>
                 <p>
                     <a href="#" id="admin-toggle" class="admin-toggle-link">Acesso Admin</a>
@@ -305,7 +307,7 @@
         </div>
     </div>
 
-    <script src="api-client.js"></script>
+    <script src="api-client.js?v=fix-20260610"></script>
     <script>
         // Error handling function (used by app.js handleLogin)
         window.showLoginError = function(message) {
@@ -332,7 +334,7 @@
             }
         };
     </script>
-    <script src="app.js"></script>
+    <script src="app.js?v=chatfix-20260619"></script>
     <script>
         // Enhance handleLogin from app.js with better error display
         document.addEventListener('DOMContentLoaded', () => {

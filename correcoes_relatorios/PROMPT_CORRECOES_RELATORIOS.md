@@ -20,6 +20,9 @@ Corrigir como professor humano: preservar a intencao do aluno, explicar o erro r
    - fine -> nice
    - so good -> very good
    - good -> positive
+   - make me relax -> help me relax
+   - many clothes -> a lot of clothes
+   - all my family -> my whole family
    - began -> started
    - French bread -> French roll
    - clear -> bright
@@ -104,11 +107,29 @@ Corrigir como professor humano: preservar a intencao do aluno, explicar o erro r
    Se a palavra original estava correta e voce decidiu sugerir outra por estilo, a observacao deve dizer que a original tambem funciona.
    Se nao houver uma razao pedagogica clara, preserve a palavra do aluno e nao gere destaque.
 
+12. Explicacao curta demais nao e aceitavel quando houve mudanca real.
+   O aluno precisa entender a logica da correcao, nao apenas ver uma lista de trocas.
+   Para cada palavra, expressao ou trecho destacado/removido, explique:
+   - o que o aluno tentou dizer;
+   - por que a forma original nao encaixa, ou se ela encaixa parcialmente;
+   - por que a recomendada resolve o problema;
+   - qual regra ou padrao ele pode reutilizar em novas frases;
+   - quando existir, uma alternativa correta mais proxima da tentativa do aluno.
+   Exemplo ruim:
+   "Corrigi 'go to study' para 'studying' e 'phisics' para 'physical'."
+   Exemplo melhor:
+   "Voce escreveu um bom habito novo, mas 'go to study' mistura movimento fisico com o nome do habito. Para nomear o habito, usamos 'studying more English'. Ja 'more practice exercise phisics' nao forma uma expressao natural; a ideia e 'doing more physical exercise'."
+   A caixa "O que mudou" deve explicar as mudancas concretas.
+   A caixa "Por que ajuda" deve explicar a regra, a logica ou como reaplicar o padrao.
+   Nao escreva explicacoes longas por enfeite; escreva explicacoes suficientes para o aluno nao pensar: "mas por que isso mudou?"
+
 ## Checklist antes de publicar
 
 - Nao ha fine -> nice sem explicacao.
 - Nao ha kid -> child sem dizer que kid tambem estava correto, ou melhor, sem preservar kid.
 - Nao ha love -> enjoy quando isso reduz a intensidade do aluno.
+- Nao ha make me relax -> help me relax quando "make me relax" ja esta correto.
+- Nao ha many clothes -> a lot of clothes nem all my family -> my whole family sem explicar que a forma original tambem funciona.
 - Nao ha so good -> very good sem explicacao.
 - Nao ha palavra correta destacada como se fosse erro.
 - Nao ha would/could/should trocado sem explicacao.
@@ -123,3 +144,5 @@ Corrigir como professor humano: preservar a intencao do aluno, explicar o erro r
 - Cards fix nao sao apenas diferenca de pontuacao/capitalizacao.
 - Toda troca de conteudo importante aparece na observacao.
 - Observacoes reconhecem tentativas plausiveis e mostram alternativas corretas quando existirem.
+- Em cards com mudanca real, a explicacao cobre cada destaque importante da Recomendada e cada palavra removida/alterada relevante.
+- A explicacao responde "por que mudou?", nao apenas "o que mudou".

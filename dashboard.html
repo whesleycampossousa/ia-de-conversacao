@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - IA de Conversação</title>
+    <title>Dashboard - IA de Conversacao</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
     <style>
         .lang-toggle {
             position: absolute;
@@ -39,6 +39,71 @@
 
         .dashboard-header {
             position: relative;
+        }
+
+        .zero-beginner-card {
+            max-width: 760px;
+            margin: 0 auto 18px;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 18px;
+            align-items: center;
+            background: linear-gradient(135deg, rgba(20, 184, 166, 0.16), rgba(127, 176, 105, 0.08));
+            border: 1px solid rgba(45, 212, 191, 0.34);
+            border-radius: 18px;
+            box-shadow: 0 16px 40px rgba(20, 184, 166, 0.12);
+        }
+
+        .zero-beginner-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 18px;
+            display: grid;
+            place-items: center;
+            background: linear-gradient(135deg, #14b8a6, #7fb069);
+            color: #ffffff;
+            font: 800 1.05rem 'Plus Jakarta Sans', sans-serif;
+            box-shadow: 0 10px 24px rgba(20, 184, 166, 0.28);
+        }
+
+        .zero-beginner-card h2 {
+            margin: 0 0 4px;
+            color: #f5f7fa;
+            font: 800 1.2rem 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .zero-beginner-card p {
+            margin: 0;
+            color: #b9c7d3;
+            line-height: 1.45;
+            font-size: 0.92rem;
+        }
+
+        .zero-beginner-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 44px;
+            padding: 0 18px;
+            border-radius: 999px;
+            color: #06211f;
+            background: #b8daa7;
+            font: 800 0.9rem 'Plus Jakarta Sans', sans-serif;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 640px) {
+            .zero-beginner-card {
+                grid-template-columns: 1fr;
+                text-align: center;
+                margin-left: 14px;
+                margin-right: 14px;
+            }
+            .zero-beginner-icon {
+                margin: 0 auto;
+            }
         }
 
         /* Icon styling */
@@ -92,7 +157,7 @@
         }
 
         .stat-value.accent {
-            color: #e50914;
+            color: #7FB069;
         }
 
         .stat-value.green {
@@ -468,7 +533,7 @@
         .tip-btn {
             margin-top: 22px;
             padding: 12px 36px;
-            background: linear-gradient(135deg, #e50914, #c2070f);
+            background: linear-gradient(135deg, #7FB069, #5E8A4D);
             color: white;
             border: none;
             border-radius: 12px;
@@ -504,14 +569,78 @@
 </head>
 
 <body class="dashboard-body">
+    <!-- v2.0 Welcome: "O que mudou"  aparece uma vez por usuario.
+         Sinaliza claramente que o app foi reformulado, pra alunos antigos
+         darem uma segunda chance. -->
+    <div id="v2-welcome-overlay" style="display:none; position:fixed; inset:0; background:rgba(10,14,20,0.92); z-index:1000; overflow-y:auto; padding:20px;">
+        <div style="max-width:620px; margin:40px auto; background:#243140; border:1px solid rgba(127,176,105,0.3); border-radius:18px; padding:2rem; box-shadow: 0 20px 60px rgba(0,0,0,0.5); font-family: 'Plus Jakarta Sans', sans-serif;">
+            <div style="text-align:center; margin-bottom:1.2rem;">
+                <div style="display:inline-flex; align-items:center; gap:8px; background:rgba(127,176,105,0.18); border:1px solid rgba(127,176,105,0.4); color:#B8DAA7; padding:6px 14px; border-radius:999px; font-size:0.78rem; font-weight:700; letter-spacing:0.5px;">
+                     VERSAO 2.0  REFORMULADO
+                </div>
+            </div>
+            <h1 style="font-size:1.6rem; font-weight:800; color:#F5F7FA; text-align:center; margin-bottom:0.4rem; line-height:1.2;">Voltamos melhores.</h1>
+            <p style="text-align:center; color:#A8B5C0; margin-bottom:1.8rem; font-size:0.95rem; line-height:1.5;">
+                Se você experimentou a IA de Conversacao antes e se frustrou,<br>
+                <strong style="color:#7FB069;">muita coisa mudou nas ultimas semanas.</strong>
+                Da mais uma chance?
+            </p>
+
+            <div style="display:grid; gap:12px; margin-bottom:1.5rem;">
+                <div style="display:flex; gap:12px; padding:14px; background:rgba(127,176,105,0.08); border:1px solid rgba(127,176,105,0.2); border-radius:12px;">
+                    <div style="font-size:1.4rem;"></div>
+                    <div style="flex:1;">
+                        <div style="font-weight:700; color:#F5F7FA; font-size:0.92rem; margin-bottom:2px;">Voz clonada, natural e clara</div>
+                        <div style="color:#A8B5C0; font-size:0.82rem; line-height:1.4;">Trocamos a voz robotica por uma voz de verdade  em inglês e português.</div>
+                    </div>
+                </div>
+                <div style="display:flex; gap:12px; padding:14px; background:rgba(127,176,105,0.08); border:1px solid rgba(127,176,105,0.2); border-radius:12px;">
+                    <div style="font-size:1.4rem;"></div>
+                    <div style="flex:1;">
+                        <div style="font-weight:700; color:#F5F7FA; font-size:0.92rem; margin-bottom:2px;">A IA lidera a conversa</div>
+                        <div style="color:#A8B5C0; font-size:0.82rem; line-height:1.4;">Nunca mais fica você sem saber o que dizer  ela sempre te oferece 2-3 opcoes concretas.</div>
+                    </div>
+                </div>
+                <div style="display:flex; gap:12px; padding:14px; background:rgba(127,176,105,0.08); border:1px solid rgba(127,176,105,0.2); border-radius:12px;">
+                    <div style="font-size:1.4rem;"></div>
+                    <div style="flex:1;">
+                        <div style="font-weight:700; color:#F5F7FA; font-size:0.92rem; margin-bottom:2px;">Configurações em 1 lugar</div>
+                        <div style="color:#A8B5C0; font-size:0.82rem; line-height:1.4;">Mude nivel, idioma, voz e velocidade a qualquer momento  um botão so.</div>
+                    </div>
+                </div>
+                <div style="display:flex; gap:12px; padding:14px; background:rgba(127,176,105,0.08); border:1px solid rgba(127,176,105,0.2); border-radius:12px;">
+                    <div style="font-size:1.4rem;"></div>
+                    <div style="flex:1;">
+                        <div style="font-weight:700; color:#F5F7FA; font-size:0.92rem; margin-bottom:2px;">Sem notas que desmotivam</div>
+                        <div style="color:#A8B5C0; font-size:0.82rem; line-height:1.4;">Iniciantes agora recebem <em>badges</em> de progresso  nao uma nota fria.</div>
+                    </div>
+                </div>
+                <div style="display:flex; gap:12px; padding:14px; background:rgba(231,111,81,0.08); border:1px solid rgba(231,111,81,0.25); border-radius:12px;">
+                    <div style="font-size:1.4rem;"></div>
+                    <div style="flex:1;">
+                        <div style="font-weight:700; color:#F5F7FA; font-size:0.92rem; margin-bottom:2px;">Travou? Fale em português.</div>
+                        <div style="color:#A8B5C0; font-size:0.82rem; line-height:1.4;">A IA entende o português e te da uma frase simples em inglês pra você tentar.</div>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="closeV2Welcome()" style="width:100%; padding:14px; background:#7FB069; border:none; border-radius:10px; color:white; font-weight:700; font-size:1rem; cursor:pointer; font-family:inherit; box-shadow: 0 4px 14px rgba(127,176,105,0.4); transition: all 0.15s;">
+                Vamos praticar 
+            </button>
+            <button onclick="closeV2Welcome()" style="width:100%; margin-top:8px; padding:8px; background:transparent; border:none; color:#A8B5C0; font-size:0.78rem; cursor:pointer; font-family:inherit;">
+                ou siga direto para a prática
+            </button>
+        </div>
+    </div>
+
     <!-- Mobile Tip Popup -->
     <div class="tip-overlay" id="tip-overlay" style="display: none;">
         <div class="tip-modal">
-            <div class="tip-icon">📱</div>
-            <h2>Dica para uma melhor experiência</h2>
-            <p>Para esta atividade, se possível, dê preferência para realizá-la no <span class="tip-highlight">celular</span>, pois a captação do microfone costuma ser de <span class="tip-highlight">maior qualidade</span>.</p>
+            <div class="tip-icon"></div>
+            <h2>Dica para uma melhor experiencia</h2>
+            <p>Para esta atividade, se possivel, de preferencia para realiza-la no <span class="tip-highlight">celular</span>, pois a captacao do microfone costuma ser de <span class="tip-highlight">maior qualidade</span>.</p>
             <button class="tip-btn" onclick="closeTipPopup()">Entendi!</button>
-            <button class="tip-dismiss" onclick="closeTipPopup(true)">Não mostrar novamente</button>
+            <button class="tip-dismiss" onclick="closeTipPopup(true)">Nao mostrar novamente</button>
         </div>
     </div>
 
@@ -523,8 +652,23 @@
         </div>
 
         <header class="dashboard-header">
-            <h1 id="welcome-msg">Bem-vindo!</h1>
-            <p id="subtitle-msg">Comece sua prática de conversação.</p>
+            <!-- v2.0 badge  sinaliza persistentemente que o app foi reformulado.
+                 Clique abre novamente o welcome "O que mudou". -->
+            <div style="text-align:center; margin-bottom:10px;">
+                <button
+                    onclick="localStorage.removeItem('v2_welcome_seen'); document.getElementById('v2-welcome-overlay').style.display='block';"
+                    style="display:inline-flex; align-items:center; gap:6px; background:rgba(127,176,105,0.18); border:1px solid rgba(127,176,105,0.45); color:#B8DAA7; padding:5px 12px; border-radius:999px; font-size:0.72rem; font-weight:700; letter-spacing:0.4px; cursor:pointer; font-family:inherit;"
+                    title="Clique para ver o que mudou">
+                     VERSAO 2.0  Reformulado em 2026
+                </button>
+            </div>
+            <!-- v2.0 radical: hero acolhedor com logo + copy mais humano -->
+            <div style="text-align:center; padding: 2rem 1rem 1rem;">
+                <img src="logo.png" alt="Everyday Conversation"
+                    style="width: 90px; height: 90px; border-radius: 50%; margin: 0 auto 12px; display: block; object-fit: cover; box-shadow: 0 6px 20px rgba(220,38,62,0.4); border: 3px solid rgba(255,255,255,0.12);">
+                <h1 id="welcome-msg" style="font-family:'Plus Jakarta Sans', sans-serif; font-size:1.9rem; font-weight:800; margin-bottom:0.3rem; color:#F5F7FA;">Bem vindo(a) de volta</h1>
+                <p id="subtitle-msg" style="color:#A8B5C0; font-size:1rem; margin-bottom:0;">Complemento a metodologia</p>
+            </div>
             <button id="admin-panel-btn" class="action-btn"
                 style="display: none; margin: 1rem auto 0; padding: 0.5rem 1rem; font-size: 0.9rem; background: #475569;"
                 onclick="window.location.href='admin.html'">
@@ -532,20 +676,48 @@
             </button>
         </header>
 
-        <div class="mode-cards">
-            <!-- Conversation Mode -->
-            <a href="levels.html" class="mode-card conversation-mode">
-                <svg class="icon-svg" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 0 1-.825-.242m9.345-8.334a2.126 2.126 0 0 0-.476-2.281l-9.8-9.8a2.126 2.126 0 0 0-2.281-.476 8.005 8.005 0 0 1-7.148 7.148 2.126 2.126 0 0 0-.476 2.281l9.8 9.8a2.126 2.126 0 0 0 2.281.476 8.005 8.005 0 0 1 7.148-7.148ZM2.25 19.5v-13.5m19.5 0V19.5" />
-                </svg>
-                <div class="card-content">
-                    <h2 id="conv-title">Conversação</h2>
-                    <p id="conv-desc">Pratique situações reais do dia a dia. Melhore sua fluência com conversas
-                        interativas.</p>
-                    <span class="btn-primary" id="conv-btn">Praticar agora</span>
-                </div>
+        <section class="zero-beginner-card" aria-label="Fluxo recomendado para iniciantes">
+            <div class="zero-beginner-icon">A0</div>
+            <div>
+                <h2>Fluxo recomendado para iniciantes</h2>
+                <p>Para alunos que ainda nao conseguem se comunicar em inglês: ouvir, escolher, repetir e montar frases curtas.</p>
+            </div>
+            <a class="zero-beginner-btn" href="practice.html?context=iniciantes_fluxo&title=Fluxo%20recomendado%20para%20iniciantes&mode=áudio-only&lessonLang=pt&structured=true&difficulty=zero&speed=0.65">Começar por aqui</a>
+        </section>
+
+        <!-- v2.0 CTA principal: pill grande verde em vez de card preto gigante -->
+        <div style="display:flex; justify-content:center; padding: 0 1rem 1rem;">
+            <a href="scenarios.html" style="display:inline-flex; align-items:center; gap:12px; background:linear-gradient(135deg, #7FB069, #5E8A4D); color:white; text-decoration:none; padding:18px 36px; border-radius:999px; font-family:'Plus Jakarta Sans', sans-serif; font-weight:700; font-size:1.1rem; box-shadow: 0 10px 30px rgba(127, 176, 105, 0.4); transition: transform 0.15s;"
+               onmouseover="this.style.transform='translateY(-2px)'"
+               onmouseout="this.style.transform='none'">
+                <span style="font-size:1.4rem;"></span>
+                <span>Praticar inglês agora</span>
+                <span style="font-size:1.1rem;"></span>
             </a>
+        </div>
+
+        <!-- Tipos antigos mantidos no DOM, escondidos para nao sugerir escolha de modo. -->
+        <div style="display:none !important; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; padding: 0 1rem 1rem; max-width: 720px; margin: 0 auto;" aria-hidden="true">
+            <div style="background:rgba(127,176,105,0.08); border:1px solid rgba(127,176,105,0.25); border-radius:14px; padding:14px;">
+                <div style="font-size:1.3rem; margin-bottom:4px;"></div>
+                <div style="font-weight:700; color:#F5F7FA; font-size:0.9rem; margin-bottom:2px;">Aprender</div>
+                <div style="color:#A8B5C0; font-size:0.78rem; line-height:1.35;">Com correcoes gentis e dicas</div>
+            </div>
+            <div style="background:rgba(231,111,81,0.08); border:1px solid rgba(231,111,81,0.25); border-radius:14px; padding:14px;">
+                <div style="font-size:1.3rem; margin-bottom:4px;"></div>
+                <div style="font-weight:700; color:#F5F7FA; font-size:0.9rem; margin-bottom:2px;">Simulador</div>
+                <div style="color:#A8B5C0; font-size:0.78rem; line-height:1.35;">Conversa real, fluxo natural</div>
+            </div>
+            <div style="background:rgba(38,70,83,0.45); border:1px solid rgba(127,176,105,0.2); border-radius:14px; padding:14px;">
+                <div style="font-size:1.3rem; margin-bottom:4px;"></div>
+                <div style="font-weight:700; color:#F5F7FA; font-size:0.9rem; margin-bottom:2px;">Conversa livre</div>
+                <div style="color:#A8B5C0; font-size:0.78rem; line-height:1.35;">Você escolhe o tema</div>
+            </div>
+        </div>
+
+        <!-- ANTIGO mode-cards escondido (mantido no DOM pra nao quebrar JS) -->
+        <div class="mode-cards" style="display:none;">
+            <a href="scenarios.html" class="mode-card conversation-mode"></a>
 
             <!-- Learning Mode - HIDDEN -->
             <a href="learning.html" class="mode-card learning-mode" style="display: none;">
@@ -555,7 +727,7 @@
                 </svg>
                 <div class="card-content">
                     <h2 id="learn-title">Aprendizado</h2>
-                    <p id="learn-desc">Aulas estruturadas de gramática e vocabulário. Do zero ao avançado.</p>
+                    <p id="learn-desc">Aulas estruturadas de gramatica e vocabulário. Do zero ao avancado.</p>
                     <span class="btn-secondary" id="learn-btn">Começar aulas</span>
                 </div>
             </a>
@@ -579,7 +751,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
-    <script src="api-client.js"></script>
+    <script src="api-client.js?v=fix-20260610"></script>
     <script>
         // Mobile tip popup
         function showTipPopup() {
@@ -596,7 +768,29 @@
             }
         }
 
-        setTimeout(showTipPopup, 600);
+        // v2.0 Welcome: mostra UMA vez por navegador. Mesmo que usuario limpe
+        // o localStorage, mostra de novo (ok  serve como lembrete de novidade).
+        function showV2WelcomeIfNeeded() {
+            try {
+                if (localStorage.getItem('v2_welcome_seen') === 'true') return;
+                const overlay = document.getElementById('v2-welcome-overlay');
+                if (overlay) overlay.style.display = 'block';
+            } catch (_) {}
+        }
+        function closeV2Welcome() {
+            const overlay = document.getElementById('v2-welcome-overlay');
+            if (overlay) overlay.style.display = 'none';
+            try { localStorage.setItem('v2_welcome_seen', 'true'); } catch (_) {}
+        }
+        window.closeV2Welcome = closeV2Welcome;
+
+        setTimeout(() => {
+            showV2WelcomeIfNeeded();
+            // So mostra tip-mobile se welcome 2.0 ja foi visto (evita empilhamento)
+            if (localStorage.getItem('v2_welcome_seen') === 'true') {
+                showTipPopup();
+            }
+        }, 400);
 
         // Auth check (apiClient is declared in api-client.js)
         if (!localStorage.getItem('auth_token')) {
@@ -608,6 +802,27 @@
                 if (adminBtn) adminBtn.style.display = 'inline-block';
             }
         }
+
+        function appendDailyTrialParams(url) {
+            const user = apiClient.getUser() || {};
+            const target = new URL(url, window.location.href);
+            const now = new Date();
+            const localDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            target.searchParams.set('source', 'portal');
+            target.searchParams.set('trial', 'daily-10-min');
+            target.searchParams.set('limitMinutes', '10');
+            target.searchParams.set('trialDate', localDate);
+            if (user.email) target.searchParams.set('email', user.email);
+            if (user.name) target.searchParams.set('name', user.name);
+            return `${target.pathname.replace(/^\//, '')}${target.search}`;
+        }
+
+        document.querySelectorAll('a[href]').forEach(link => {
+            const href = link.getAttribute('href') || '';
+            if (/^(scenarios|practice|learning|levels)\.html/i.test(href)) {
+                link.setAttribute('href', appendDailyTrialParams(href));
+            }
+        });
 
         function logout() {
             apiClient.logout();
@@ -645,8 +860,8 @@
             if (!data || data.totalSessions === 0) {
                 container.innerHTML = `
                     <div class="progress-empty">
-                        <div class="empty-icon">📊</div>
-                        <p id="empty-progress-msg">Complete sua primeira sessão para ver seu progresso aqui!</p>
+                        <div class="empty-icon"></div>
+                        <p id="empty-progress-msg">Complete sua primeira sessao para ver seu progresso aqui!</p>
                     </div>`;
                 return;
             }
@@ -667,7 +882,7 @@
                 </div>
                 <div class="stat-card">
                     <div class="stat-value green">${avgScore}</div>
-                    <div class="stat-label" data-i18n="stat-avg-score">Nota Média</div>
+                    <div class="stat-label" data-i18n="stat-avg-score">Nota Media</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value orange">${data.scenarios.length}</div>
@@ -680,7 +895,7 @@
                 const recent = data.scores.slice(-8);
                 const maxScore = 100;
                 html += `<div class="score-history">
-                    <h4 data-i18n="score-evolution">Evolução das Notas</h4>
+                    <h4 data-i18n="score-evolution">Evolucao das Notas</h4>
                     <div class="score-bars">`;
                 recent.forEach((s, i) => {
                     const height = Math.max(4, (s.score / maxScore) * 56);
@@ -715,7 +930,7 @@
                     <h4 data-i18n="top-errors">Erros Mais Frequentes</h4>
                     <div>`;
                 topErrors.forEach(e => {
-                    html += `<span class="error-tag">"${e.wrong}" → "${e.right}"</span>`;
+                    html += `<span class="error-tag">"${e.wrong}"  "${e.right}"</span>`;
                 });
                 html += `</div>
                     <a href="review.html" class="review-errors-btn" id="review-errors-btn" data-i18n-text="review-btn">
@@ -729,16 +944,16 @@
 
         // ====== BADGES DEFINITION ======
         const BADGES = [
-            { id: 'first_session', icon: '🎯', name: 'Primeira Sessão', nameEn: 'First Session', desc: 'Complete 1 sessão', descEn: 'Complete 1 session', check: d => d.totalSessions >= 1 },
-            { id: 'five_sessions', icon: '⭐', name: '5 Sessões', nameEn: '5 Sessions', desc: 'Complete 5 sessões', descEn: 'Complete 5 sessions', check: d => d.totalSessions >= 5 },
-            { id: 'ten_sessions', icon: '🏆', name: '10 Sessões', nameEn: '10 Sessions', desc: 'Complete 10 sessões', descEn: 'Complete 10 sessions', check: d => d.totalSessions >= 10 },
-            { id: 'score_80', icon: '💎', name: 'Nota 80+', nameEn: 'Score 80+', desc: 'Tire nota 80 ou mais', descEn: 'Get a score of 80+', check: d => d.scores.some(s => s.score >= 80) },
-            { id: 'score_95', icon: '👑', name: 'Quase Perfeito', nameEn: 'Near Perfect', desc: 'Tire nota 95 ou mais', descEn: 'Get a score of 95+', check: d => d.scores.some(s => s.score >= 95) },
-            { id: 'five_scenarios', icon: '🗺️', name: 'Explorador', nameEn: 'Explorer', desc: 'Pratique 5 cenários', descEn: 'Practice 5 scenarios', check: d => d.scenarios.length >= 5 },
-            { id: 'ten_scenarios', icon: '🌍', name: 'Viajante', nameEn: 'World Traveler', desc: 'Pratique 10 cenários', descEn: 'Practice 10 scenarios', check: d => d.scenarios.length >= 10 },
-            { id: 'streak_3', icon: '🔥', name: '3 Semanas', nameEn: '3-Week Streak', desc: 'Pratique 3 semanas seguidas', descEn: 'Practice 3 weeks in a row', check: d => d.streakWeeks >= 3 },
-            { id: 'thirty_min', icon: '⏱️', name: 'Maratonista', nameEn: 'Marathoner', desc: '30 min em uma sessão', descEn: '30 min in one session', check: d => d.scores.some(s => (s.minutes || 0) >= 30) },
-            { id: 'hundred_min', icon: '📚', name: '100 Minutos', nameEn: '100 Minutes', desc: 'Acumule 100 min totais', descEn: 'Accumulate 100 min total', check: d => d.totalMinutes >= 100 },
+            { id: 'first_session', icon: '', name: 'Primeira Sessão', nameEn: 'First Session', desc: 'Complete 1 sessao', descEn: 'Complete 1 session', check: d => d.totalSessions >= 1 },
+            { id: 'five_sessions', icon: '', name: '5 Sessões', nameEn: '5 Sessions', desc: 'Complete 5 sessões', descEn: 'Complete 5 sessions', check: d => d.totalSessions >= 5 },
+            { id: 'ten_sessions', icon: '', name: '10 Sessões', nameEn: '10 Sessions', desc: 'Complete 10 sessões', descEn: 'Complete 10 sessions', check: d => d.totalSessions >= 10 },
+            { id: 'score_80', icon: '', name: 'Nota 80+', nameEn: 'Score 80+', desc: 'Tire nota 80 ou mais', descEn: 'Get a score of 80+', check: d => d.scores.some(s => s.score >= 80) },
+            { id: 'score_95', icon: '', name: 'Quase Perfeito', nameEn: 'Near Perfect', desc: 'Tire nota 95 ou mais', descEn: 'Get a score of 95+', check: d => d.scores.some(s => s.score >= 95) },
+            { id: 'five_scenarios', icon: '', name: 'Explorador', nameEn: 'Explorer', desc: 'Pratique 5 cenarios', descEn: 'Practice 5 scenarios', check: d => d.scenarios.length >= 5 },
+            { id: 'ten_scenarios', icon: '', name: 'Viajante', nameEn: 'World Traveler', desc: 'Pratique 10 cenarios', descEn: 'Practice 10 scenarios', check: d => d.scenarios.length >= 10 },
+            { id: 'streak_3', icon: '', name: '3 Semanas', nameEn: '3-Week Streak', desc: 'Pratique 3 semanas seguidas', descEn: 'Practice 3 weeks in a row', check: d => d.streakWeeks >= 3 },
+            { id: 'thirty_min', icon: '', name: 'Maratonista', nameEn: 'Marathoner', desc: '30 min em uma sessao', descEn: '30 min in one session', check: d => d.scores.some(s => (s.minutes || 0) >= 30) },
+            { id: 'hundred_min', icon: '', name: '100 Minutos', nameEn: '100 Minutes', desc: 'Acumule 100 min totais', descEn: 'Accumulate 100 min total', check: d => d.totalMinutes >= 100 },
         ];
 
         // ====== RENDER ACHIEVEMENTS ======
@@ -752,7 +967,7 @@
 
             // Streak banner
             html += `<div class="streak-banner">
-                <div class="streak-flame">${data.streakWeeks > 0 ? '🔥' : '❄️'}</div>
+                <div class="streak-flame">${data.streakWeeks > 0 ? '' : ''}</div>
                 <div class="streak-info">
                     <div class="streak-count">${data.streakWeeks} ${lang === 'pt' ? (data.streakWeeks === 1 ? 'semana' : 'semanas') : (data.streakWeeks === 1 ? 'week' : 'weeks')}</div>
                     <div class="streak-label" data-i18n="streak-label">${lang === 'pt' ? 'Sequência de prática' : 'Practice streak'}</div>
@@ -766,7 +981,7 @@
             const goalPct = Math.min(100, Math.round((dailyMin / goalMin) * 100));
             html += `<div class="daily-goal">
                 <h4>
-                    <span data-i18n="daily-goal">${lang === 'pt' ? 'Meta Diária' : 'Daily Goal'}</span>
+                    <span data-i18n="daily-goal">${lang === 'pt' ? 'Meta Diaria' : 'Daily Goal'}</span>
                     <span style="color: ${goalPct >= 100 ? '#22c55e' : '#fff'}; font-size: 0.8rem;">${dailyMin}/${goalMin} min</span>
                 </h4>
                 <div class="goal-bar-container">
@@ -920,21 +1135,39 @@
             }
         });
 
+        function getReturningWelcome(user = {}) {
+            const rawName = String(user.name || user.first_name || '').trim();
+            const firstName = rawName ? rawName.split(/\s+/)[0] : '';
+            const gender = String(user.gender || user.genero || user.sexo || '').toLowerCase();
+            const prefix = /^(f|female|feminino|mulher)$/.test(gender)
+                ? 'Bem vinda de volta'
+                : (/^(m|male|masculino|homem)$/.test(gender) ? 'Bem vindo de volta' : 'Bem vindo(a) de volta');
+            return firstName ? `${prefix}, ${firstName}` : prefix;
+        }
+
+        function applyReturningHeader() {
+            const user = apiClient.getUser() || {};
+            const welcomeEl = document.getElementById('welcome-msg');
+            const subtitleEl = document.getElementById('subtitle-msg');
+            if (welcomeEl) welcomeEl.innerText = getReturningWelcome(user);
+            if (subtitleEl) subtitleEl.innerText = 'Complemento a metodologia';
+        }
+
         // ====== LANGUAGE ======
         const translations = {
             'pt': {
-                welcome: 'Bem-vindo!',
-                subtitle: 'Comece sua prática de conversação.',
-                convTitle: 'Conversação',
-                convDesc: 'Pratique situações reais do dia a dia. Melhore sua fluência com conversas interativas.',
+                welcome: 'Bem vindo(a) de volta',
+                subtitle: 'Complemento a metodologia',
+                convTitle: 'Conversacao',
+                convDesc: 'Pratique situacoes reais do dia a dia. Melhore sua fluencia com conversas interativas.',
                 convBtn: 'Praticar agora',
                 learnTitle: 'Aprendizado',
-                learnDesc: 'Aulas estruturadas de gramática e vocabulário. Do zero ao avançado.',
+                learnDesc: 'Aulas estruturadas de gramatica e vocabulário. Do zero ao avancado.',
                 learnBtn: 'Começar aulas',
                 logout: 'Sair',
                 progressTitle: 'Meu Progresso',
                 achievementsTitle: 'Conquistas',
-                emptyProgress: 'Complete sua primeira sessão para ver seu progresso aqui!'
+                emptyProgress: 'Complete sua primeira sessao para ver seu progresso aqui!'
             },
             'en': {
                 welcome: 'Welcome!',
@@ -954,20 +1187,25 @@
 
         function setLanguage(lang) {
             const t = translations[lang];
-            document.getElementById('welcome-msg').innerText = t.welcome;
-            document.getElementById('subtitle-msg').innerText = t.subtitle;
-            document.getElementById('conv-title').innerText = t.convTitle;
-            document.getElementById('conv-desc').innerText = t.convDesc;
-            document.getElementById('conv-btn').innerText = t.convBtn;
-            document.getElementById('logout-btn').innerText = t.logout;
-            document.getElementById('progress-title').innerText = t.progressTitle;
-            document.getElementById('achievements-title').innerText = t.achievementsTitle;
+            const setTextIfExists = (id, text) => {
+                const el = document.getElementById(id);
+                if (el) el.innerText = text;
+            };
+            applyReturningHeader();
+            setTextIfExists('conv-title', t.convTitle);
+            setTextIfExists('conv-desc', t.convDesc);
+            setTextIfExists('conv-btn', t.convBtn);
+            setTextIfExists('logout-btn', t.logout);
+            setTextIfExists('progress-title', t.progressTitle);
+            setTextIfExists('achievements-title', t.achievementsTitle);
 
             const emptyMsg = document.getElementById('empty-progress-msg');
             if (emptyMsg) emptyMsg.innerText = t.emptyProgress;
 
-            document.getElementById('btn-pt').className = lang === 'pt' ? 'lang-btn active' : 'lang-btn';
-            document.getElementById('btn-en').className = lang === 'en' ? 'lang-btn active' : 'lang-btn';
+            const btnPt = document.getElementById('btn-pt');
+            const btnEn = document.getElementById('btn-en');
+            if (btnPt) btnPt.className = lang === 'pt' ? 'lang-btn active' : 'lang-btn';
+            if (btnEn) btnEn.className = lang === 'en' ? 'lang-btn active' : 'lang-btn';
             localStorage.setItem('interface_lang', lang);
 
             // Re-render with new language

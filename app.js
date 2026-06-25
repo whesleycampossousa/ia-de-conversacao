@@ -1,4 +1,4 @@
-﻿document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
     // 1. Auth Check with JWT
     const isLoginPage = document.body.classList.contains('login-page') || window.location.href.includes('login.html') || window.location.href.includes('index.html') || window.location.pathname === '/' || window.location.pathname === '';
 
@@ -19,48 +19,125 @@
     }
 
     // 2. Main App Logic
-    // Check for audio-only mode URL param
+    // Check for áudio-only mode URL param
     const urlParams = new URLSearchParams(window.location.search);
     const mode = urlParams.get('mode');
-    const context = urlParams.get('context') || 'coffee_shop';
+    // Resolve the current scenario context with a defensive chain:
+    //   1. URL param (authoritative when arriving from scenario catalog)
+    //   2. localStorage 'current_context' (survives soft reloads / back nav)
+    //   3. localStorage 'last_context' (last thing the student practiced)
+    //   4. 'free_conversation' as a SAFE fallback  picking coffee_shop as default
+    //      silently contaminated chat/suggestions/reports when the URL was lost.
+    function resolveScenarioContext() {
+        const fromUrl = urlParams.get('context');
+        if (fromUrl && fromUrl.trim()) return fromUrl.trim();
+        try {
+            const fromStorage = localStorage.getItem('current_context');
+            if (fromStorage && fromStorage.trim()) return fromStorage.trim();
+            const fromLast = localStorage.getItem('last_context');
+            if (fromLast && fromLast.trim()) return fromLast.trim();
+        } catch (_) {}
+        return 'free_conversation';
+    }
+    const context = resolveScenarioContext();
+    try { localStorage.setItem('current_context', context); } catch (_) {}
     const contextName = urlParams.get('title') || 'Practice';
     const lessonLang = urlParams.get('lessonLang') || 'en'; // 'en' or 'pt' for bilingual
     const isGrammarMode = urlParams.get('type') === 'grammar';
     const isFreeConversation = context === 'free_conversation';
+    const isZeroBeginnerContext = context === 'iniciantes_fluxo';
     const structuredModeParam = (urlParams.get('structured') || '').toLowerCase();
+    // Secret "Modo Daniela": scoped to the dedicated interview contexts. The secret
+    // settings toggle launches practice with ?profile=daniela, which we forward to the
+    // backend so it injects the BDR recruiter+coach persona. Never hijacks normal scenarios.
+    const danielaProfile = (urlParams.get('profile') || '').toLowerCase() === 'daniela';
     const user = apiClient.isAuthenticated() ? apiClient.getUser() : { name: 'Visitante', is_admin: false };
+    const PORTAL_TRIAL_DEFAULT_MINUTES = 10;
+
+    function getLocalDateKey() {
+        const d = new Date();
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function getPortalTrialStorageKey(trial) {
+        return `portal_daily_trial_usage_${trial.email || 'guest'}_${trial.dateKey || getLocalDateKey()}`;
+    }
+
+    function readPortalDailyTrial() {
+        const limitParam = Number.parseInt(urlParams.get('limitMinutes') || urlParams.get('limit') || '', 10);
+        const emailParam = (urlParams.get('email') || user?.email || '').trim();
+        const nameParam = (urlParams.get('name') || '').trim();
+        const dateParam = (urlParams.get('trialDate') || urlParams.get('date') || '').trim();
+        const enabled = true;
+
+        const limitMinutes = Number.isFinite(limitParam) && limitParam > 0 ? limitParam : PORTAL_TRIAL_DEFAULT_MINUTES;
+        const dateKey = dateParam || getLocalDateKey();
+        return {
+            enabled: true,
+            email: emailParam || user?.email || 'visitante@portal.local',
+            name: nameParam || user?.name || 'Visitante',
+            dateKey,
+            limitSeconds: limitMinutes * 60
+        };
+    }
+
+    const portalDailyTrial = readPortalDailyTrial();
+    window.portalDailyTrial = portalDailyTrial;
+
+    const INCIDENT_USAGE_RESET_DATE = '2026-06-09';
+    const INCIDENT_USAGE_RESET_MARKER = `usage_reset_applied_${INCIDENT_USAGE_RESET_DATE}`;
+    try {
+        if (getLocalDateKey() === INCIDENT_USAGE_RESET_DATE && localStorage.getItem(INCIDENT_USAGE_RESET_MARKER) !== 'true') {
+            localStorage.removeItem('usage_data');
+            localStorage.removeItem(getPortalTrialStorageKey(portalDailyTrial));
+            localStorage.setItem(INCIDENT_USAGE_RESET_MARKER, 'true');
+        }
+    } catch (_) {}
 
     // studentLevel is derived from the difficulty selector when practice starts
     let studentLevel = '';
 
 
+    const MODE_LABELS_PT = {
+        learning: 'Aprender',
+        simulator: 'Simulador'
+    };
+    const MODE_LABELS_EN = {
+        learning: 'Learning',
+        simulator: 'Simulator'
+    };
     const MODE_LABELS = {
         learning: 'Learning',
         simulator: 'Simulator'
     };
 
+    // Objetivo mostrado ao aluno (PT, simples, evita jargao como
+    // "reservation/amenities/check-in details" que confunde A1-A2).
     const COMMUNICATIVE_OBJECTIVES = {
-        coffee_shop: 'Objective: order a drink and confirm options.',
-        restaurant: 'Objective: order food, sides, and drinks politely.',
-        airport: 'Objective: check in, confirm flight details, and baggage.',
-        hotel: 'Objective: check in and resolve stay details.',
-        supermarket: 'Objective: ask for items and handle checkout.',
-        doctor: 'Objective: explain symptoms and understand advice.',
-        bank: 'Objective: handle a basic transaction clearly.',
-        pharmacy: 'Objective: describe symptoms and request medicine.',
-        gym: 'Objective: discuss goals and choose a workout.',
-        job_interview: 'Objective: present experience and answer key questions.',
-        tech_support: 'Objective: describe a problem and follow steps.',
-        hair_salon: 'Objective: request a style and confirm details.',
-        clothing_store: 'Objective: ask about size, color, and try-on.',
-        train_station: 'Objective: buy a ticket and confirm schedule.',
-        bus_stop: 'Objective: ask about routes and tickets.',
-        renting_car: 'Objective: choose a car and rental terms.',
-        pizza_delivery: 'Objective: place an order and confirm delivery.',
-        bakery: 'Objective: order items and quantities.',
-        library: 'Objective: ask for materials and rules.',
-        cinema: 'Objective: buy tickets and choose seats.',
-        lost_found: 'Objective: report a lost item with details.'
+        coffee_shop: 'Objetivo: pedir uma bebida e escolher opcoes (tamanho, acucar).',
+        restaurant: 'Objetivo: pedir comida e bebida de forma educada.',
+        airport: 'Objetivo: apresentar passaporte e passagem, falar da bagagem.',
+        hotel: 'Objetivo: dizer seu nome e fazer check-in.',
+        supermarket: 'Objetivo: perguntar onde ficam os itens e pagar.',
+        doctor: 'Objetivo: dizer onde doi e ha quanto tempo.',
+        bank: 'Objetivo: fazer uma operacao simples (deposito, saque).',
+        pharmacy: 'Objetivo: pedir um remedio para um sintoma.',
+        gym: 'Objetivo: falar do seu objetivo e escolher um treino.',
+        job_interview: 'Objetivo: falar de você e sua experiencia.',
+        tech_support: 'Objetivo: descrever um problema e seguir instrucoes.',
+        hair_salon: 'Objetivo: pedir o corte que você quer.',
+        clothing_store: 'Objetivo: perguntar tamanho, cor e experimentar.',
+        train_station: 'Objetivo: comprar uma passagem e confirmar horario.',
+        bus_stop: 'Objetivo: perguntar qual onibus pegar.',
+        renting_car: 'Objetivo: alugar um carro por alguns dias.',
+        pizza_delivery: 'Objetivo: fazer um pedido e confirmar o endereco.',
+        bakery: 'Objetivo: pedir paes e doces.',
+        library: 'Objetivo: pegar um livro emprestado.',
+        cinema: 'Objetivo: comprar ingresso e escolher a poltrona.',
+        lost_found: 'Objetivo: descrever o que você perdeu.'
     };
 
     let recentCorrections = [];
@@ -81,16 +158,18 @@
         compositeLayers: null,   // Which layers participate in composite (e.g. [1,2,3,4,5])
         phraseSlots: {},         // Accumulated slots from selections (e.g. {verb: "I'd like a", drink: "coffee"})
         compositePhrase: null,   // The built composite phrase for current practice
-        currentOptions: []       // Available options for voice matching
+        currentOptions: [],      // Available options for voice matching
+        currentInteraction: 'repeat',
+        autoAccept: false
     };
 
     // Default: Audio-First (Subtitles OFF)
     // We do NOT add 'subtitles-on' class by default.
     // User must click CC to see text.
 
-    if (mode === 'audio-only') {
-        document.body.classList.add('audio-only-mode');
-        // In strict audio-only, we might want to also hide the CC button? 
+    if (mode === 'áudio-only') {
+        document.body.classList.add('áudio-only-mode');
+        // In strict áudio-only, we might want to also hide the CC button? 
         // Or just let it be strictly off initially.
         // Let's keep it consistent: user can always toggle CC if they get stuck.
     }
@@ -116,9 +195,9 @@
 
     const setStatusText = (text) => {
         const friendlyStatus = {
-            'Listening...': '🎤 Escutando... fale agora.',
-            'Thinking...': '⏳ Pensando... preparando resposta.',
-            'Speaking...': '🔊 Falando... escute e responda.',
+            'Listening...': ' Escutando... fale agora.',
+            'Thinking...': ' Pensando... preparando resposta.',
+            'Speaking...': ' Falando... escute e responda.',
             'Choose a question': 'Escolha uma pergunta para continuar.'
         };
         if (statusIndicator) {
@@ -137,6 +216,87 @@
     const reportBtn = document.getElementById('report-btn');
     const reportBarBtn = document.getElementById('report-bar-btn');
     const micHint = document.getElementById('mic-hint');
+    let micSupportStatus = { supported: true, code: 'ok', reason: '' };
+
+    // Update the mic hint text + color based on the mic button's current state.
+    // Uses a MutationObserver so every existing call site (setMicReadyState,
+    // recordBtn.classList.add('recording'), etc.) updates the hint for free.
+    function syncMicHint() {
+        if (!micHint || !recordBtn) return;
+        const cls = recordBtn.classList;
+        micHint.classList.remove('recording', 'processing', 'warning');
+        if (recordBtn.dataset.micUnavailable === 'true') {
+            micHint.textContent = recordBtn.dataset.micUnavailableReason || 'Microfone indisponivel neste navegador.';
+            micHint.classList.add('warning');
+            return;
+        }
+        if (cls.contains('recording')) {
+            micHint.textContent = ' Gravando... fale agora';
+            micHint.classList.add('recording');
+        } else if (cls.contains('transcribing')) {
+            micHint.textContent = ' Transcrevendo sua fala...';
+            micHint.classList.add('processing');
+        } else if (cls.contains('listening')) {
+            micHint.textContent = ' Processando sua fala...';
+            micHint.classList.add('processing');
+        } else if (recordBtn.disabled) {
+            micHint.textContent = ' Aguarde...';
+            micHint.classList.add('processing');
+        } else {
+            micHint.textContent = 'Clique no microfone para responder';
+        }
+    }
+
+    function emphasizeKeyboardFallback() {
+        const fallbackBtn = document.getElementById('keyboard-fallback-toggle');
+        if (!fallbackBtn) return;
+        fallbackBtn.classList.add('mic-fallback-emphasis');
+        fallbackBtn.style.display = '';
+    }
+
+    function showMicProblem(message, options = {}) {
+        const reason = message || 'Nao consegui acessar o microfone. Use "Prefere digitar?" ou tente outro navegador.';
+        if (micHint) {
+            micHint.textContent = reason;
+            micHint.classList.remove('recording', 'processing');
+            micHint.classList.add('warning');
+        }
+        emphasizeKeyboardFallback();
+        if (recordBtn && options.disableMic) {
+            recordBtn.dataset.micUnavailable = 'true';
+            recordBtn.dataset.micUnavailableReason = reason;
+            recordBtn.disabled = true;
+            recordBtn.classList.add('mic-unavailable');
+            recordBtn.title = reason;
+            syncMicHint();
+        }
+    }
+
+    function clearMicProblem() {
+        if (recordBtn) {
+            recordBtn.classList.remove('mic-unavailable');
+            delete recordBtn.dataset.micUnavailable;
+            delete recordBtn.dataset.micUnavailableReason;
+            recordBtn.title = 'Clique para Falar';
+        }
+        if (micHint) {
+            micHint.classList.remove('warning');
+        }
+    }
+
+    function setMicUnavailable(reason) {
+        showMicProblem(reason, { disableMic: true });
+    }
+
+    function isPermanentMicSupportError(code) {
+        return ['insecure_context', 'get_user_media_missing', 'media_recorder_missing'].includes(String(code || ''));
+    }
+    if (recordBtn && typeof MutationObserver !== 'undefined') {
+        const micObserver = new MutationObserver(syncMicHint);
+        micObserver.observe(recordBtn, { attributes: true, attributeFilter: ['class', 'disabled'] });
+        // Initial sync
+        setTimeout(syncMicHint, 0);
+    }
     const chatWindow = document.getElementById('chat-window');
     const subtitleToggleBtn = document.getElementById('subtitle-toggle-btn');
     const statusIndicator = document.getElementById('status-indicator');
@@ -148,7 +308,7 @@
     const freeMissionPreview = document.getElementById('free-mission-preview');
     const freeTopicInput = document.getElementById('free-topic-input');
     const freeTopicChipsWrap = document.getElementById('topic-chips');
-    // Barra de relatório agora é gerenciada por updateReportButton()
+    // Barra de relatorio agora e gerenciada por updateReportButton()
     const suggestionsToggleBtn = document.getElementById('suggestions-toggle-btn');
     const suggestionsPanel = document.getElementById('suggestions-panel');
     const suggestionsList = document.getElementById('suggestions-list');
@@ -227,16 +387,16 @@
         historyToggleBtn.disabled = !hasHistory && !historyExpanded;
 
         if (historyExpanded) {
-            historyToggleBtn.textContent = '▴ Ocultar histórico';
+            historyToggleBtn.textContent = ' Ocultar histórico';
             historyToggleBtn.title = 'Fechar histórico e voltar ao modo limpo';
             return;
         }
 
         if (hiddenCount > 0) {
-            historyToggleBtn.textContent = `▾ Ver histórico (${hiddenCount})`;
-            historyToggleBtn.title = 'Abrir histórico de interações anteriores';
+            historyToggleBtn.textContent = ` Ver histórico (${hiddenCount})`;
+            historyToggleBtn.title = 'Abrir histórico de interacoes anteriores';
         } else {
-            historyToggleBtn.textContent = '▾ Ver histórico';
+            historyToggleBtn.textContent = ' Ver histórico';
             historyToggleBtn.title = 'Sem histórico ainda';
         }
     }
@@ -303,7 +463,7 @@
     ensureHistoryControls();
 
     // --- VOICE: Single voice (Chirp3-HD-Achernar) for all interactions ---
-    // In structured lessons, pre-generated audio is served from cache.
+    // In structured lessons, pre-generated áudio is served from cache.
     // In free conversation, TTS API generates with Achernar voice.
     const lessonVoice = isFreeConversation ? null : 'lesson';
     function getActiveVoice() {
@@ -318,19 +478,68 @@
 
 
 
-    // Função global para ofuscar texto com pontos (legendas ocultas por padrão)
+    // Funcao global para ofuscar texto com pontos (legendas ocultas por padrão)
     window.obfuscateText = function () {
         return '(... ...)';
     };
 
     // TTS Speed Logic
+    // Priority: URL param > user's manual setting > difficulty preset > grammar mode > 1.0
     let ttsSpeed = 1.0;
     const urlSpeed = parseFloat(urlParams.get('speed'));
+    const ttsSpeedUserOverride = localStorage.getItem('tts_speed_user_set') === 'true';
+    const savedTtsSpeed = parseFloat(localStorage.getItem('tts_speed'));
+    const urlDifficultyForTts = (urlParams.get('difficulty') || '').toLowerCase();
+    const currentDifficultyForTts = urlDifficultyForTts || localStorage.getItem('practice_difficulty') || (isZeroBeginnerContext ? 'zero' : 'intermediate');
+
     if (urlSpeed && !isNaN(urlSpeed)) {
         ttsSpeed = urlSpeed;
+    } else if (ttsSpeedUserOverride && !isNaN(savedTtsSpeed) && savedTtsSpeed > 0) {
+        ttsSpeed = savedTtsSpeed; // Respect user's manual override
+    } else if (currentDifficultyForTts === 'zero') {
+        ttsSpeed = 0.65; // Zero absoluto: áudio bem lento e claro
+    } else if (currentDifficultyForTts === 'beginner') {
+        ttsSpeed = 0.85; // Preset: slow down for beginners so they can follow
     } else if (urlParams.get('type') === 'grammar') {
         ttsSpeed = 0.7;
     }
+    window.ttsSpeed = ttsSpeed;
+
+    // Dual TTS (speak PT translation after EN)  helps beginners feel comfortable
+    // while still hearing the real English áudio first. Opt-in.
+    // RULES:
+    //  - Default ON  for beginner in LEARNING mode (confidence scaffolding)
+    //  - Default OFF in SIMULATOR mode regardless of level (simulator = real
+    //    conversation, dual playback breaks immersion AND doubles the delay
+    //    between turns  main complaint from product owner)
+    //  - User's manual override always wins
+    const dualTtsUserOverride = localStorage.getItem('tts_speak_pt_user_set') === 'true';
+    const savedDualTts = localStorage.getItem('tts_speak_pt');
+    const currentPracticeMode = localStorage.getItem('practice_mode') || 'learning';
+    let speakPtTranslation;
+    if (dualTtsUserOverride) {
+        speakPtTranslation = savedDualTts === 'true';
+    } else if (currentPracticeMode === 'simulator') {
+        speakPtTranslation = false; // simulator stays fast by default
+    } else {
+        speakPtTranslation = currentDifficultyForTts === 'zero' || currentDifficultyForTts === 'beginner';
+    }
+    window.speakPtTranslation = speakPtTranslation;
+
+    // PT-first mode  play the Portuguese translation BEFORE the English áudio.
+    // Useful for true super-beginners (A1 just starting out) who need to know the
+    // meaning before their ear engages with the English. Opt-in.
+    // localStorage 'tts_pt_first' = 'true' | 'false'
+    const savedPtFirst = localStorage.getItem('tts_pt_first');
+    window.ptFirst = savedPtFirst === 'true' || (savedPtFirst === null && currentDifficultyForTts === 'zero');
+
+    // Volume boost multiplier for TTS playback (via Web Audio API GainNode).
+    // The cloned PT voice came back quiet  1.6 = +60% compensates for that without
+    // distortion on typical voice samples. User can override via localStorage.
+    const savedVolumeBoost = parseFloat(localStorage.getItem('tts_volume_boost'));
+    window.ttsVolumeBoost = (Number.isFinite(savedVolumeBoost) && savedVolumeBoost > 0)
+        ? savedVolumeBoost
+        : 1.6;
 
     // Suggestions for Learning Mode (Grammar)
     const suggestionSets = {
@@ -342,14 +551,14 @@
         ],
         'greetings': [
             { en: 'Hi, my name is Ana.', pt: 'Oi, meu nome e Ana.' },
-            { en: 'Nice to meet you.', pt: 'Prazer em conhecer voce.' },
-            { en: 'How are you today?', pt: 'Como voce esta hoje?' },
+            { en: 'Nice to meet you.', pt: 'Prazer em conhecer você.' },
+            { en: 'How are you today?', pt: 'Como você esta hoje?' },
             { en: 'I am from Brazil.', pt: 'Eu sou do Brasil.' }
         ],
         'greetings_intros': [
             { en: 'Hi, my name is Ana.', pt: 'Oi, meu nome e Ana.' },
-            { en: 'Nice to meet you.', pt: 'Prazer em conhecer voce.' },
-            { en: 'How are you today?', pt: 'Como voce esta hoje?' },
+            { en: 'Nice to meet you.', pt: 'Prazer em conhecer você.' },
+            { en: 'How are you today?', pt: 'Como você esta hoje?' },
             { en: 'I am from Brazil.', pt: 'Eu sou do Brasil.' }
         ],
         'articles': [
@@ -386,7 +595,7 @@
             { en: 'I live in Sao Paulo.', pt: 'Eu moro em Sao Paulo.' },
             { en: 'She likes music.', pt: 'Ela gosta de musica.' },
             { en: 'They are at home.', pt: 'Eles estao em casa.' },
-            { en: 'We study English.', pt: 'Nos estudamos ingles.' }
+            { en: 'We study English.', pt: 'Nos estudamos inglês.' }
         ],
         'possessives': [
             { en: 'My phone is new.', pt: 'Meu celular e novo.' },
@@ -428,7 +637,7 @@
             { en: 'I am studying now.', pt: 'Eu estou estudando agora.' },
             { en: 'She is cooking.', pt: 'Ela esta cozinhando.' },
             { en: 'They are working.', pt: 'Eles estao trabalhando.' },
-            { en: 'We are learning English.', pt: 'Nos estamos aprendendo ingles.' }
+            { en: 'We are learning English.', pt: 'Nos estamos aprendendo inglês.' }
         ],
         'there_is_there_are': [
             { en: 'There is a cafe nearby.', pt: 'Ha um cafe perto.' },
@@ -438,9 +647,9 @@
         ],
         'basic_questions': [
             { en: 'What is your name?', pt: 'Qual e o seu nome?' },
-            { en: 'Where do you live?', pt: 'Onde voce mora?' },
-            { en: 'When do you study?', pt: 'Quando voce estuda?' },
-            { en: 'Why are you here?', pt: 'Por que voce esta aqui?' }
+            { en: 'Where do you live?', pt: 'Onde você mora?' },
+            { en: 'When do you study?', pt: 'Quando você estuda?' },
+            { en: 'Why are you here?', pt: 'Por que você esta aqui?' }
         ],
         'countable_uncountable': [
             { en: 'I have some water.', pt: 'Eu tenho um pouco de agua.' },
@@ -449,7 +658,7 @@
             { en: 'I have three books.', pt: 'Eu tenho tres livros.' }
         ],
         'some_any_no': [
-            { en: 'Do you have any questions?', pt: 'Voce tem alguma pergunta?' },
+            { en: 'Do you have any questions?', pt: 'Você tem alguma pergunta?' },
             { en: 'I have some time.', pt: 'Eu tenho algum tempo.' },
             { en: 'I have no money.', pt: 'Eu nao tenho dinheiro.' },
             { en: 'There are no seats.', pt: 'Nao ha lugares.' }
@@ -541,30 +750,30 @@
         'present_perfect_basics': [
             { en: 'I have visited Mexico.', pt: 'Eu ja visitei o Mexico.' },
             { en: 'She has lived here for five years.', pt: 'Ela mora aqui ha cinco anos.' },
-            { en: 'Have you ever eaten sushi?', pt: 'Voce ja comeu sushi?' },
+            { en: 'Have you ever eaten sushi?', pt: 'Você ja comeu sushi?' },
             { en: 'I have just finished work.', pt: 'Eu acabei de terminar o trabalho.' }
         ],
         'present_perfect_continuous': [
             { en: 'I have been working all day.', pt: 'Eu tenho trabalhado o dia todo.' },
             { en: 'She has been studying a lot.', pt: 'Ela tem estudado muito.' },
             { en: 'We have been waiting here.', pt: 'Nos temos esperado aqui.' },
-            { en: 'Have you been sleeping well?', pt: 'Voce tem dormido bem?' }
+            { en: 'Have you been sleeping well?', pt: 'Você tem dormido bem?' }
         ],
         'past_simple': [
             { en: 'I watched a movie yesterday.', pt: 'Eu assisti a um filme ontem.' },
             { en: 'She went to the store.', pt: 'Ela foi a loja.' },
             { en: 'We played soccer.', pt: 'Nos jogamos futebol.' },
-            { en: 'Did you call me?', pt: 'Voce me ligou?' }
+            { en: 'Did you call me?', pt: 'Você me ligou?' }
         ],
         'past_continuous': [
-            { en: 'I was cooking when you called.', pt: 'Eu estava cozinhando quando voce ligou.' },
+            { en: 'I was cooking when you called.', pt: 'Eu estava cozinhando quando você ligou.' },
             { en: 'She was sleeping at 10.', pt: 'Ela estava dormindo as 10.' },
             { en: 'We were watching TV.', pt: 'Nos estavamos vendo TV.' },
             { en: 'They were working at 8.', pt: 'Eles estavam trabalhando as 8.' }
         ],
         'past_perfect': [
             { en: 'I had finished before 8.', pt: 'Eu tinha terminado antes das 8.' },
-            { en: 'She had left when I arrived.', pt: 'Ela tinha saído quando eu cheguei.' },
+            { en: 'She had left when I arrived.', pt: 'Ela tinha saido quando eu cheguei.' },
             { en: 'We had already eaten.', pt: 'Nos ja tinhamos comido.' },
             { en: 'They had never seen it.', pt: 'Eles nunca tinham visto isso.' }
         ],
@@ -572,29 +781,29 @@
             { en: 'I used to live in Rio.', pt: 'Eu morava no Rio.' },
             { en: 'She used to play piano.', pt: 'Ela tocava piano.' },
             { en: 'We would go to the beach.', pt: 'Nos iamos a praia.' },
-            { en: 'Did you use to study English?', pt: 'Voce estudava ingles antes?' }
+            { en: 'Did you use to study English?', pt: 'Você estudava inglês antes?' }
         ],
         'conditionals_zero_first': [
             { en: 'If I eat too much, I feel sick.', pt: 'Se eu como muito, eu passo mal.' },
             { en: 'If it rains, I will stay home.', pt: 'Se chover, eu fico em casa.' },
-            { en: 'If you study, you will pass.', pt: 'Se voce estudar, voce passa.' },
+            { en: 'If you study, you will pass.', pt: 'Se você estudar, você passa.' },
             { en: 'When I finish, I will call you.', pt: 'Quando eu terminar, eu te ligo.' }
         ],
         'conditionals_second': [
             { en: 'If I had more time, I would travel.', pt: 'Se eu tivesse mais tempo, eu viajaria.' },
             { en: 'If I were rich, I would buy a house.', pt: 'Se eu fosse rico, eu compraria uma casa.' },
             { en: 'She would help if she could.', pt: 'Ela ajudaria se pudesse.' },
-            { en: 'What would you do?', pt: 'O que voce faria?' }
+            { en: 'What would you do?', pt: 'O que você faria?' }
         ],
         'conditionals_third': [
             { en: 'If I had studied, I would have passed.', pt: 'Se eu tivesse estudado, eu teria passado.' },
-            { en: 'If we had left early, we would have arrived.', pt: 'Se tivessemos saído cedo, teriamos chegado.' },
+            { en: 'If we had left early, we would have arrived.', pt: 'Se tivessemos saido cedo, teriamos chegado.' },
             { en: 'She would have called if she had known.', pt: 'Ela teria ligado se soubesse.' },
-            { en: 'Would you have gone?', pt: 'Voce teria ido?' }
+            { en: 'Would you have gone?', pt: 'Você teria ido?' }
         ],
         'gerunds_infinitives': [
             { en: 'I enjoy reading.', pt: 'Eu gosto de ler.' },
-            { en: 'I want to learn English.', pt: 'Eu quero aprender ingles.' },
+            { en: 'I want to learn English.', pt: 'Eu quero aprender inglês.' },
             { en: 'She decided to stay.', pt: 'Ela decidiu ficar.' },
             { en: 'We finished cleaning.', pt: 'Nos terminamos de limpar.' }
         ],
@@ -617,10 +826,10 @@
             { en: 'I asked if he was ok.', pt: 'Eu perguntei se ele estava bem.' }
         ],
         'question_tags': [
-            { en: 'You are tired, aren\'t you?', pt: 'Voce esta cansado, nao esta?' },
+            { en: 'You are tired, aren\'t you?', pt: 'Você esta cansado, nao esta?' },
             { en: 'He likes coffee, doesn\'t he?', pt: 'Ele gosta de cafe, nao gosta?' },
             { en: 'She is here, isn\'t she?', pt: 'Ela esta aqui, nao esta?' },
-            { en: 'We can start, can\'t we?', pt: 'Podemos comecar, nao podemos?' }
+            { en: 'We can start, can\'t we?', pt: 'Podemos começar, nao podemos?' }
         ],
         'relative_clauses': [
             { en: 'The man who lives next door is nice.', pt: 'O homem que mora ao lado e legal.' },
@@ -635,10 +844,10 @@
             { en: 'They will be waiting here.', pt: 'Eles estarao esperando aqui.' }
         ],
         'future_perfect': [
-            { en: 'I will have finished by 6.', pt: 'Eu terei terminado ate as 6.' },
-            { en: 'She will have arrived by noon.', pt: 'Ela tera chegado ate o meio-dia.' },
+            { en: 'I will have finished by 6.', pt: 'Eu terei terminado até as 6.' },
+            { en: 'She will have arrived by noon.', pt: 'Ela tera chegado até o meio-dia.' },
             { en: 'We will have completed the task.', pt: 'Nos teremos completado a tarefa.' },
-            { en: 'They will have left by then.', pt: 'Eles terao saido ate la.' }
+            { en: 'They will have left by then.', pt: 'Eles terao saido até la.' }
         ],
         'present_perfect_vs_past_simple': [
             { en: 'I have been to Rio.', pt: 'Eu ja fui ao Rio.' },
@@ -650,7 +859,7 @@
             { en: 'I wish I had more time.', pt: 'Eu queria ter mais tempo.' },
             { en: 'If only I could travel.', pt: 'Se ao menos eu pudesse viajar.' },
             { en: 'I wish I were there.', pt: 'Eu queria estar la.' },
-            { en: 'If only it were easier.', pt: 'Se ao menos fosse mais facil.' }
+            { en: 'If only it were easier.', pt: 'Se ao menos fosse mais fácil.' }
         ],
         'zero_article': [
             { en: 'I love coffee.', pt: 'Eu amo cafe.' },
@@ -661,23 +870,23 @@
         'modals_ability_permission': [
             { en: 'I can swim.', pt: 'Eu sei nadar.' },
             { en: 'Can I sit here?', pt: 'Posso sentar aqui?' },
-            { en: 'She can help you.', pt: 'Ela pode ajudar voce.' },
+            { en: 'She can help you.', pt: 'Ela pode ajudar você.' },
             { en: 'We could try later.', pt: 'Nos poderiamos tentar depois.' }
         ],
         'modals_obligation': [
             { en: 'I have to work today.', pt: 'Eu tenho que trabalhar hoje.' },
-            { en: 'You must wear a seatbelt.', pt: 'Voce deve usar cinto.' },
+            { en: 'You must wear a seatbelt.', pt: 'Você deve usar cinto.' },
             { en: 'She needs to study.', pt: 'Ela precisa estudar.' },
             { en: 'We have to leave now.', pt: 'Nos temos que sair agora.' }
         ],
         'modals_advice': [
-            { en: 'You should rest.', pt: 'Voce deveria descansar.' },
-            { en: 'You should drink water.', pt: 'Voce deveria beber agua.' },
-            { en: 'You ought to try it.', pt: 'Voce deveria tentar.' },
-            { en: 'You should go early.', pt: 'Voce deveria ir cedo.' }
+            { en: 'You should rest.', pt: 'Você deveria descansar.' },
+            { en: 'You should drink water.', pt: 'Você deveria beber agua.' },
+            { en: 'You ought to try it.', pt: 'Você deveria tentar.' },
+            { en: 'You should go early.', pt: 'Você deveria ir cedo.' }
         ],
         'default': [
-            { en: 'I am learning English.', pt: 'Eu estou aprendendo ingles.' },
+            { en: 'I am learning English.', pt: 'Eu estou aprendendo inglês.' },
             { en: 'I like music.', pt: 'Eu gosto de musica.' },
             { en: 'My name is Carlos.', pt: 'Meu nome e Carlos.' },
             { en: 'I live in Brazil.', pt: 'Eu moro no Brasil.' }
@@ -696,12 +905,12 @@
         const source = normalizeIntentSource(text);
         if (!source) return 'general';
 
-        if (/(what would you like|what can i get|what can i get started|what do you want|o que voce gostaria|o que voce quer|o que posso preparar|como posso te ajudar|como posso ajudar|como posso ajudar voce)/i.test(source)) return 'order_request';
-        if (/(what kind of coffee|which coffee|kind of coffee|tipo de caf[eé]|que tipo de caf[eé])/i.test(source)) return 'coffee_kind';
+        if (/(what would you like|what can i get|what can i get started|what do you want|o que você gostaria|o que você quer|o que posso preparar|como posso te ajudar|como posso ajudar|como posso ajudar você)/i.test(source)) return 'order_request';
+        if (/(what kind of coffee|which coffee|kind of coffee|tipo de caf[ee]|que tipo de caf[ee])/i.test(source)) return 'coffee_kind';
         if (/(what size|which size|size would you like|qual tamanho|tamanho)/i.test(source)) return 'size';
         if (/(to go|for here|take away|takeaway|para levar|consumir aqui|consumir no local)/i.test(source)) return 'to_go_here';
         if (/(hot or iced|iced or hot|quente ou gelado|gelado ou quente)/i.test(source)) return 'hot_iced';
-        if (/(with sugar|with milk|sugar or milk|acucar|a[cç]ucar|leite)/i.test(source)) return 'milk_sugar';
+        if (/(with sugar|with milk|sugar or milk|acucar|a[cc]ucar|leite)/i.test(source)) return 'milk_sugar';
         if (/(anything else|something else|mais alguma coisa|mais algo)/i.test(source)) return 'anything_else';
         return 'general';
     }
@@ -715,37 +924,37 @@
         coffee_kind: [
             { en: 'A latte, please.', pt: 'Um latte, por favor.' },
             { en: 'A cappuccino, please.', pt: 'Um cappuccino, por favor.' },
-            { en: 'A small black coffee, please.', pt: 'Um café preto pequeno, por favor.' }
+            { en: 'A small black coffee, please.', pt: 'Um cafe preto pequeno, por favor.' }
         ],
         size: [
             { en: 'A small size, please.', pt: 'Um tamanho pequeno, por favor.' },
-            { en: 'Medium is fine, thank you.', pt: 'Médio está ótimo, obrigado.' },
+            { en: 'Medium is fine, thank you.', pt: 'Medio esta otimo, obrigado.' },
             { en: 'Large, please.', pt: 'Grande, por favor.' }
         ],
         to_go_here: [
             { en: 'For here, please.', pt: 'Para consumir aqui, por favor.' },
             { en: 'To go, please.', pt: 'Para viagem, por favor.' },
-            { en: 'For here is fine, thanks.', pt: 'Aqui está ótimo, obrigado.' }
+            { en: 'For here is fine, thanks.', pt: 'Aqui esta otimo, obrigado.' }
         ],
         hot_iced: [
             { en: 'Hot, please.', pt: 'Quente, por favor.' },
             { en: 'Iced, please.', pt: 'Gelado, por favor.' },
-            { en: 'Hot is better for me.', pt: 'Quente é melhor para mim.' }
+            { en: 'Hot is better for me.', pt: 'Quente e melhor para mim.' }
         ],
         milk_sugar: [
-            { en: 'No sugar, please.', pt: 'Sem açúcar, por favor.' },
+            { en: 'No sugar, please.', pt: 'Sem acucar, por favor.' },
             { en: 'With milk, please.', pt: 'Com leite, por favor.' },
-            { en: 'A little sugar, please.', pt: 'Um pouco de açúcar, por favor.' }
+            { en: 'A little sugar, please.', pt: 'Um pouco de acucar, por favor.' }
         ],
         anything_else: [
-            { en: 'That is all, thank you.', pt: 'Isso é tudo, obrigado.' },
-            { en: 'Yes, a cookie too, please.', pt: 'Sim, um cookie também, por favor.' },
-            { en: 'No, thanks. That is all.', pt: 'Não, obrigado. Isso é tudo.' }
+            { en: 'That is all, thank you.', pt: 'Isso e tudo, obrigado.' },
+            { en: 'Yes, a cookie too, please.', pt: 'Sim, um cookie tambem, por favor.' },
+            { en: 'No, thanks. That is all.', pt: 'Nao, obrigado. Isso e tudo.' }
         ],
         general: [
             { en: 'Sure, thank you.', pt: 'Claro, obrigado.' },
             { en: 'Yes, please.', pt: 'Sim, por favor.' },
-            { en: 'No, thank you.', pt: 'Não, obrigado.' }
+            { en: 'No, thank you.', pt: 'Nao, obrigado.' }
         ]
     };
 
@@ -909,10 +1118,10 @@
             // Priority: Gemini results FIRST, fallbacks ONLY if Gemini returned nothing
             let suggestions;
             if (rawSuggestions.length >= 3) {
-                // Gemini returned enough good suggestions — use them directly
+                // Gemini returned enough good suggestions  use them directly
                 suggestions = dedupeSuggestionItems(rawSuggestions).slice(0, 4);
             } else if (rawSuggestions.length > 0) {
-                // Gemini returned some — supplement with intent-specific fallbacks only
+                // Gemini returned some  supplement with intent-specific fallbacks only
                 const intent = detectQuestionIntent(intentSource);
                 const intentPool = questionReplyPools[intent] || [];
                 suggestions = dedupeSuggestionItems([
@@ -920,7 +1129,7 @@
                     ...intentPool
                 ]).slice(0, 4);
             } else {
-                // Gemini returned nothing — use intent-specific fallback, then context
+                // Gemini returned nothing  use intent-specific fallback, then context
                 const intentFallback = getQuestionSpecificFallbackReplies(intentSource);
                 const isGrammarContext = suggestionSets.hasOwnProperty(context);
                 const contextFallback = isGrammarContext ? getSuggestionsForContext(context, intentSource) : [];
@@ -993,7 +1202,7 @@
     }
 
     // Fetch suggestions for popup only (no DOM rendering), based on the question being answered
-    // excludeSuggestions: array of {en, pt} already shown inline — popup must show DIFFERENT ones
+    // excludeSuggestions: array of {en, pt} already shown inline  popup must show DIFFERENT ones
     async function fetchPopupSuggestions(questionText, excludeSuggestions = []) {
         if (!questionText) return [];
         try {
@@ -1046,7 +1255,7 @@
     window.updateSuggestionsVisibility = updateSuggestionsVisibility;
 
     function getObjectiveText() {
-        const goalNote = (typeof sessionGoalTurns !== 'undefined') ? ` Meta da sessão: ${sessionGoalTurns} turnos.` : '';
+        const goalNote = (typeof sessionGoalTurns !== 'undefined') ? ` Meta da sessao: ${sessionGoalTurns} turnos.` : '';
         if (isGrammarMode) {
             const topic = contextName || context;
             return `Objetivo: praticar ${topic.toLowerCase()}.${goalNote}`;
@@ -1055,14 +1264,69 @@
         return `${objective}${goalNote}`;
     }
 
+    // Friendly emoji + label per scenario context. Falls back to a generic one.
+    // Used to replace "BASIC STRUCTURES TRAINING" etc with " Estruturas basicas" etc.
+    const FRIENDLY_TITLES = {
+        'coffee_shop': ' Cafeteria',
+        'restaurant': ' Restaurante',
+        'airport': ' Aeroporto',
+        'hotel': ' Hotel',
+        'supermarket': ' Supermercado',
+        'pharmacy': ' Farmacia',
+        'doctor': ' Medico',
+        'bank': ' Banco',
+        'gym': ' Academia',
+        'cinema': ' Cinema',
+        'library': ' Biblioteca',
+        'bakery': ' Padaria',
+        'post_office': ' Correio',
+        'train_station': ' Estacao de trem',
+        'bus_stop': ' Ponto de onibus',
+        'gas_station': ' Posto',
+        'hair_salon': ' Salao',
+        'clothing_store': ' Loja de roupas',
+        'pet_shop': ' Pet Shop',
+        'flower_shop': ' Floricultura',
+        'dental_clinic': ' Dentista',
+        'tech_support': ' Suporte tecnico',
+        'pizza_delivery': ' Entrega de pizza',
+        'renting_car': ' Alugar carro',
+        'lost_found': ' Achados e perdidos',
+        'neighbor': ' Vizinhanca',
+        'first_date': ' Primeiro encontro',
+        'wedding': ' Casamento',
+        'graduation': ' Formatura',
+        'school': ' Escola',
+        'street': ' Na rua',
+        'parents_house': ' Casa dos pais',
+        'museum': ' Museu',
+        'park': ' Parque',
+        'free_conversation': ' Conversa livre',
+        'basic_structures': ' Estruturas basicas'
+    };
+    function friendlyScenarioTitle(ctxKey, fallback) {
+        const friendly = FRIENDLY_TITLES[String(ctxKey || '').toLowerCase()];
+        if (friendly) return friendly;
+        // Fallback: title-case the raw string, remove "Training" suffix
+        const raw = String(fallback || '').replace(/\bTraining\b/i, '').trim();
+        if (!raw) return ' Pratica';
+        const niced = raw.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+        return ` ${niced}`;
+    }
+
     function updateHeaderInfo() {
         const modeBadge = document.getElementById('player-mode-badge');
         const levelBadge = document.getElementById('player-level-badge');
         const objectiveEl = document.getElementById('player-objective');
         const scenarioTitle = document.getElementById('player-scenario-title');
         const selectedMode = window.getSelectedMode ? window.getSelectedMode() : 'learning';
-        if (scenarioTitle && contextName) scenarioTitle.textContent = contextName;
-        if (modeBadge) modeBadge.textContent = `Mode: ${MODE_LABELS[selectedMode] || selectedMode}`;
+        if (scenarioTitle && contextName) scenarioTitle.textContent = friendlyScenarioTitle(context, contextName);
+        if (modeBadge) {
+            const lang = (window.getInterfaceLang && window.getInterfaceLang()) || 'pt';
+            const labelMap = (lang === 'en') ? MODE_LABELS_EN : MODE_LABELS_PT;
+            const modeLabel = labelMap[selectedMode] || selectedMode;
+            modeBadge.textContent = (lang === 'en' ? `Mode: ${modeLabel}` : `Modo: ${modeLabel}`);
+        }
         if (levelBadge) levelBadge.textContent = `Nivel: ${studentLevel || '--'}`;
         if (objectiveEl) objectiveEl.textContent = getObjectiveText();
         if (typeof sessionGoalTurns !== 'undefined') {
@@ -1073,6 +1337,7 @@
 
     function resolveSessionGoalByLevel() {
         if (isFreeConversation) return 14;
+        if (studentLevel === 'zero') return 5;
         if (studentLevel === 'A1') return 8;
         if (studentLevel === 'A2') return 10;
         if (studentLevel === 'B1') return 12;
@@ -1156,10 +1421,456 @@
     const autoTranslateToggle = document.getElementById('auto-translate-toggle');
 
     let isRecording = false;
+
+    // ============================================================
+    // RESPONSE TIMER  cronometro pro aluno durante gravacao
+    // ============================================================
+    // Objetivo: incentivar respostas de ~30s (tempo ideal pra prática).
+    // Cores por faixa:
+    //   0-10s:  vermelho (muito curto)
+    //   10-20s: amarelo (chegando la)
+    //   20-30s: azul (quase na meta)
+    //   30-40s: verde (ideal / zona perfeita)
+    //   40s+:   branco (pode encerrar)
+    // Pisca a cada segundo pra atrair atencao.
+    let _responseTimerInterval = null;
+    let _responseTimerElapsed = 0;
+    let _responseTimerBlinkState = false;
+
+    function ensureResponseTimerUI() {
+        let el = document.getElementById('response-timer-overlay');
+        if (el) return el;
+        el = document.createElement('div');
+        el.id = 'response-timer-overlay';
+        el.style.cssText = `
+            position: fixed;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 17, 21, 0.92);
+            border: 2px solid rgba(255,255,255,0.15);
+            border-radius: 14px;
+            padding: 10px 18px;
+            color: white;
+            font-family: 'Plus Jakarta Sans', Inter, Arial, sans-serif;
+            z-index: 200;
+            text-align: center;
+            min-width: 220px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            backdrop-filter: blur(8px);
+            display: none;
+            transition: border-color 0.2s;
+        `;
+        el.innerHTML = `
+            <div style="font-size: 0.68rem; color: rgba(255,255,255,0.55); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 2px;">
+                Tempo recomendado: 30s
+            </div>
+            <div id="response-timer-value" style="font-size: 1.8rem; font-weight: 700; line-height: 1; transition: color 0.2s, opacity 0.15s;">
+                0s
+            </div>
+            <div id="response-timer-hint" style="font-size: 0.62rem; color: rgba(255,255,255,0.5); margin-top: 2px; line-height: 1.25;">
+                Tente responder com pelo menos 30 segundos  quanto mais, melhor!
+            </div>
+        `;
+        document.body.appendChild(el);
+        return el;
+    }
+
+    function getResponseTimerColor(sec) {
+        if (sec < 10) return '#ef4444';   // vermelho
+        if (sec < 20) return '#fbbf24';   // amarelo
+        if (sec < 30) return '#3b82f6';   // azul
+        if (sec < 40) return '#22c55e';   // verde (zona ideal)
+        return '#ffffff';                  // branco (+40s)
+    }
+
+    /** Toca um beep curto e fino (Web Audio API, sem precisar de arquivo). */
+    function playTimerChime() {
+        try {
+            const AC = window.AudioContext || window.webkitAudioContext;
+            if (!AC) return;
+            const ctx = new AC();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, ctx.currentTime);  // A5  fino mas audivel
+            gain.gain.setValueAtTime(0, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.25, ctx.currentTime + 0.02);  // attack
+            gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.35);     // decay
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.4);
+        } catch (e) {
+            console.warn('[TimerChime] failed:', e);
+        }
+    }
+
+    function startResponseTimer() {
+        const el = ensureResponseTimerUI();
+        _responseTimerElapsed = 0;
+        _responseTimerBlinkState = false;
+        el.style.display = 'block';
+        const valEl = document.getElementById('response-timer-value');
+        if (valEl) {
+            valEl.textContent = '0s';
+            valEl.style.color = getResponseTimerColor(0);
+        }
+        el.style.borderColor = getResponseTimerColor(0);
+
+        if (_responseTimerInterval) clearInterval(_responseTimerInterval);
+        _responseTimerInterval = setInterval(() => {
+            _responseTimerElapsed += 1;
+            _responseTimerBlinkState = !_responseTimerBlinkState;
+            const color = getResponseTimerColor(_responseTimerElapsed);
+            if (valEl) {
+                valEl.textContent = `${_responseTimerElapsed}s`;
+                valEl.style.color = color;
+                valEl.style.opacity = _responseTimerBlinkState ? '0.55' : '1';
+            }
+            el.style.borderColor = color;
+            // Som fino curto quando atinge 30s (referencia ideal alcancada)
+            if (_responseTimerElapsed === 30) {
+                playTimerChime();
+            }
+        }, 1000);
+    }
+
+    function stopResponseTimer() {
+        if (_responseTimerInterval) {
+            clearInterval(_responseTimerInterval);
+            _responseTimerInterval = null;
+        }
+        const el = document.getElementById('response-timer-overlay');
+        if (el) el.style.display = 'none';
+        _responseTimerElapsed = 0;
+    }
+
+    // ============================================================
+    // ============================================================
+    // TUTORIAL INICIAL  explica cada botão antes da conversa começar
+    // ============================================================
+    // Tutorial SPOTLIGHT: destaca cada botão real na tela, deixa o
+    // resto escuro, e mostra tooltip explicando. Ao fim + botão ao começar.
+    const TUTORIAL_STEPS = [
+        {
+            selector: null,  // tela cheia de boas vindas
+            title: ' Vou te apresentar a tela',
+            text: 'Sou a Sofia, sua amiga que fala inglês. Vou te mostrar cada botão em poucos segundos. Pode pular se já conhece.'
+        },
+        {
+            selector: '#record-btn',
+            title: ' Microfone',
+            text: 'Clique aqui pra gravar sua resposta em inglês. Quando terminar de falar, clique de novo. A Sofia vai escutar e responder.'
+        },
+        {
+            selector: '#tell-me-more-btn',
+            title: '+ Pedir pra explicar mais',
+            text: 'Clique aqui caso deseje que ela desenvolva mais a ideia por aproximadamente 30s. Excelente pra praticar listening!'
+        },
+        {
+            selector: '#response-timer-overlay',
+            fallbackText: 'Durante sua gravacao, aparece um cronometro no topo da tela mostrando quanto tempo você ja falou.',
+            title: ' Cronometro de 30s',
+            text: 'Quando você grava, esse cronometro aparece no topo. Meta: pelo menos 30 segundos  quanto mais você falar, melhor! Um ding sonoro toca aos 30s.'
+        },
+        {
+            selector: '#subtitle-toggle-btn',
+            title: ' Desativar/Ativar legendas',
+            text: 'Por padrão, a tradução em português aparece abaixo da fala da Sofia. Clique aqui pra desativar e ouvir só em inglês  desafio maior!'
+        },
+        {
+            selector: '#progress-open-btn',
+            title: ' Seu Progresso',
+            text: 'Cada turno conta! Veja suas sessões, minutos totais, sequencia semanal e até 9 medalhas desbloqueaveis.'
+        },
+        {
+            selector: '#settings-open-btn',
+            title: ' Configurações',
+            text: 'Ajuste seu nivel de inglês (iniciante/intermediario/avancado), velocidade da voz, volume, e ligue/desligue as legendas em português.'
+        },
+        {
+            selector: '#report-bar-btn',
+            title: ' Relatório',
+            text: 'Apos praticar por um tempo, clique aqui pra ver analise detalhada de cada frase sua: o que foi bom, o que melhorar, como um nativo diria.'
+        },
+        {
+            selector: null,
+            title: ' Pronta pra começar!',
+            text: 'Clique em "Começar conversa" e depois no microfone quando quiser falar com a Sofia. Boa prática!'
+        }
+    ];
+
+    function showInitialTutorial() {
+        return new Promise(resolve => {
+            const existing = document.getElementById('tutorial-overlay');
+            if (existing) existing.remove();
+
+            // Mask so pra quando NAO ha botão destacado (boas vindas / fim).
+            // Quando ha botão, o proprio botão recebe box-shadow grande que
+            // escurece TUDO ao redor mas mantem o botão totalmente limpo.
+            const mask = document.createElement('div');
+            mask.id = 'tutorial-mask';
+            mask.style.cssText = `
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.82);
+                z-index: 9997;
+                transition: opacity 0.3s;
+            `;
+            document.body.appendChild(mask);
+
+            // Overlay principal (tooltip + navegacao)
+            const overlay = document.createElement('div');
+            overlay.id = 'tutorial-overlay';
+            overlay.style.cssText = `
+                position: fixed;
+                z-index: 9999;
+                transition: all 0.3s ease;
+                max-width: 340px;
+                width: 92%;
+            `;
+            document.body.appendChild(overlay);
+
+            // Setinha apontando pro botão
+            const arrow = document.createElement('div');
+            arrow.id = 'tutorial-arrow';
+            arrow.style.cssText = `
+                position: fixed;
+                z-index: 9998;
+                pointer-events: none;
+                font-size: 2rem;
+                transition: all 0.3s ease;
+                display: none;
+                text-shadow: 0 0 16px rgba(127, 176, 105, 0.8);
+                color: #7FB069;
+            `;
+            document.body.appendChild(arrow);
+
+            let idx = 0;
+            let previousHighlight = null;
+
+            function clearHighlight() {
+                if (previousHighlight) {
+                    previousHighlight.style.position = previousHighlight.__origPosition || '';
+                    previousHighlight.style.zIndex = previousHighlight.__origZIndex || '';
+                    previousHighlight.style.boxShadow = previousHighlight.__origBoxShadow || '';
+                    previousHighlight.style.borderRadius = previousHighlight.__origBorderRadius || '';
+                    previousHighlight.style.outline = previousHighlight.__origOutline || '';
+                    previousHighlight = null;
+                }
+                // Re-mostra mask global quando nao ha botão destacado
+                if (mask) mask.style.display = 'block';
+            }
+
+            function highlightElement(selector) {
+                clearHighlight();
+                if (!selector) return null;
+                const el = document.querySelector(selector);
+                if (!el) return null;
+
+                // Scroll pro botão aparecer
+                try { el.scrollIntoView({ block: 'center', behavior: 'instant' }); } catch (_) {}
+
+                // Salva estilos originais
+                el.__origPosition = el.style.position;
+                el.__origZIndex = el.style.zIndex;
+                el.__origBoxShadow = el.style.boxShadow;
+                el.__origBorderRadius = el.style.borderRadius;
+                el.__origOutline = el.style.outline;
+
+                const comp = window.getComputedStyle(el);
+                if (comp.position === 'static') el.style.position = 'relative';
+                el.style.zIndex = '9999';  // acima da mask (9997) e tooltip (9999)
+                // TRUQUE: box-shadow de spread gigante (9999px) escurece TUDO
+                // ao redor do botão, deixando ele TOTALMENTE limpo no centro.
+                // Isso substitui a mask escura na area do botão.
+                el.style.boxShadow = `
+                    0 0 0 4px #7FB069,
+                    0 0 40px rgba(127, 176, 105, 0.85),
+                    0 0 0 9999px rgba(0, 0, 0, 0.82)
+                `;
+                el.style.outline = 'none';
+
+                // Esconde a mask global  o box-shadow ja cobre tudo
+                if (mask) mask.style.display = 'none';
+
+                previousHighlight = el;
+                return el;
+            }
+
+            function positionTooltip(targetEl) {
+                if (!targetEl) {
+                    // Centraliza no meio
+                    overlay.style.top = '50%';
+                    overlay.style.left = '50%';
+                    overlay.style.transform = 'translate(-50%, -50%)';
+                    overlay.style.bottom = 'auto';
+                    overlay.style.right = 'auto';
+                    arrow.style.display = 'none';
+                    return;
+                }
+                const rect = targetEl.getBoundingClientRect();
+                const vh = window.innerHeight;
+                const vw = window.innerWidth;
+                const tooltipH = 240;
+                const gap = 20;
+
+                let top, arrowTop, arrowChar;
+                if (rect.top > vh / 2) {
+                    // Botao esta na metade de baixo  tooltip fica ACIMA
+                    top = Math.max(20, rect.top - tooltipH - gap - 30);
+                    arrowTop = rect.top - 40;
+                    arrowChar = '';
+                } else {
+                    // Botao esta em cima  tooltip fica ABAIXO
+                    top = Math.min(vh - tooltipH - 20, rect.bottom + gap + 30);
+                    arrowTop = rect.bottom + 6;
+                    arrowChar = '';
+                }
+
+                overlay.style.top = top + 'px';
+                overlay.style.left = '50%';
+                overlay.style.transform = 'translateX(-50%)';
+                overlay.style.bottom = 'auto';
+                overlay.style.right = 'auto';
+
+                const arrowLeft = rect.left + rect.width / 2 - 16;
+                arrow.style.top = arrowTop + 'px';
+                arrow.style.left = arrowLeft + 'px';
+                arrow.style.transform = 'none';
+                arrow.style.display = 'block';
+                arrow.textContent = arrowChar;
+            }
+
+            function render() {
+                const step = TUTORIAL_STEPS[idx];
+                const target = highlightElement(step.selector);
+
+                overlay.innerHTML = `
+                    <div style="background: linear-gradient(135deg, #1a2030, #0f1115); border: 2px solid rgba(127,176,105,0.55); border-radius: 16px; padding: 20px 22px 16px; color: white; box-shadow: 0 20px 60px rgba(127,176,105,0.35); text-align: left; position: relative;">
+                        <button id="tut-close" aria-label="Fechar" style="position: absolute; top: 8px; right: 10px; background: transparent; border: none; color: rgba(255,255,255,0.55); font-size: 1.4rem; cursor: pointer; padding: 0 6px; line-height: 1;">&times;</button>
+                        <h3 style="margin: 0 0 8px; font-size: 1.05rem; font-weight: 800; color: #F5F7FA; font-family: 'Plus Jakarta Sans', Inter, sans-serif;">${step.title}</h3>
+                        <p style="font-size: 0.88rem; line-height: 1.5; color: rgba(255,255,255,0.85); margin: 0 0 16px;">${step.text}</p>
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 4px; margin-bottom: 14px;">
+                            ${TUTORIAL_STEPS.map((_, i) => `<span style="width:6px;height:6px;border-radius:50%;background:${i === idx ? '#7FB069' : 'rgba(255,255,255,0.18)'};"></span>`).join('')}
+                        </div>
+                        <div style="display: flex; gap: 8px; justify-content: space-between; align-items: center;">
+                            ${idx > 0 ? `<button id="tut-prev" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18); color: white; padding: 8px 14px; border-radius: 999px; font-size: 0.82rem; cursor: pointer; font-family: inherit;"> Voltar</button>` : `<span></span>`}
+                            <button id="tut-next" style="background: linear-gradient(135deg, #7FB069, #5E8A4D); border: none; color: white; padding: 9px 20px; border-radius: 999px; font-size: 0.88rem; font-weight: 700; cursor: pointer; font-family: inherit; box-shadow: 0 3px 12px rgba(127,176,105,0.45);">${idx === TUTORIAL_STEPS.length - 1 ? 'Começar conversa ' : 'Próximo '}</button>
+                        </div>
+                        ${idx < TUTORIAL_STEPS.length - 1 ? `<div style="text-align: center; margin-top: 10px;"><button id="tut-skip" style="background: transparent; border: none; color: rgba(255,255,255,0.45); font-size: 0.68rem; cursor: pointer; text-decoration: underline; font-family: inherit;">Pular tutorial</button></div>` : ''}
+                    </div>
+                `;
+
+                // Reposiciona tooltip perto do target (ou centraliza)
+                setTimeout(() => positionTooltip(target), 30);
+
+                document.getElementById('tut-close').onclick = close;
+                const skipBtn = document.getElementById('tut-skip');
+                if (skipBtn) skipBtn.onclick = close;
+                const prevBtn = document.getElementById('tut-prev');
+                if (prevBtn) prevBtn.onclick = () => { idx = Math.max(0, idx - 1); render(); };
+                document.getElementById('tut-next').onclick = () => {
+                    if (idx === TUTORIAL_STEPS.length - 1) { close(); }
+                    else { idx += 1; render(); }
+                };
+            }
+
+            function close() {
+                clearHighlight();
+                [mask, overlay, arrow].forEach(el => {
+                    if (!el) return;
+                    el.style.transition = 'opacity 0.25s';
+                    el.style.opacity = '0';
+                });
+                setTimeout(() => {
+                    [mask, overlay, arrow].forEach(el => { if (el && el.remove) el.remove(); });
+                    resolve();
+                }, 250);
+            }
+
+            render();
+            // Reposiciona em resize
+            window.addEventListener('resize', () => {
+                const step = TUTORIAL_STEPS[idx];
+                const target = step && step.selector ? document.querySelector(step.selector) : null;
+                positionTooltip(target);
+            });
+        });
+    }
+
+    // ============================================================
+    // STARTUP COUNTDOWN  5s regressivo antes da saudacao
+    // ============================================================
+    // Mostra um contador 51 bonito no topo da tela enquanto Sofia
+    // esta preparando a saudacao (TTS fetch da voz clonada ~5s).
+    // Evita aluna pensar "deu erro, nao iniciou".
+    function showStartupCountdown(seconds = 5) {
+        return new Promise(resolve => {
+            let el = document.getElementById('startup-countdown-overlay');
+            if (el) el.remove();
+            el = document.createElement('div');
+            el.id = 'startup-countdown-overlay';
+            el.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: linear-gradient(135deg, rgba(127,176,105,0.15), rgba(231,111,81,0.12));
+                border: 2px solid rgba(127,176,105,0.5);
+                border-radius: 20px;
+                padding: 28px 40px;
+                color: white;
+                font-family: 'Plus Jakarta Sans', Inter, Arial, sans-serif;
+                z-index: 9999;
+                text-align: center;
+                min-width: 260px;
+                box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+                backdrop-filter: blur(12px);
+            `;
+            el.innerHTML = `
+                <div style="font-size: 0.75rem; color: rgba(255,255,255,0.7); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; font-weight: 600;">
+                    Sofia esta se preparando
+                </div>
+                <div id="startup-countdown-value" style="font-size: 5rem; font-weight: 800; line-height: 1; color: #7FB069; text-shadow: 0 4px 20px rgba(127,176,105,0.4); font-variant-numeric: tabular-nums; transition: transform 0.15s, color 0.15s;">
+                    ${seconds}
+                </div>
+                <div style="font-size: 0.78rem; color: rgba(255,255,255,0.65); margin-top: 6px;">
+                    Comecando em segundos...
+                </div>
+            `;
+            document.body.appendChild(el);
+
+            const valEl = document.getElementById('startup-countdown-value');
+            let remaining = seconds;
+            // Animacao "pulse" no numero a cada tick
+            const tick = () => {
+                if (remaining <= 0) {
+                    // Fade out + remove
+                    el.style.transition = 'opacity 0.3s';
+                    el.style.opacity = '0';
+                    setTimeout(() => { if (el) el.remove(); resolve(); }, 300);
+                    return;
+                }
+                if (valEl) {
+                    valEl.textContent = remaining;
+                    // Pulse effect
+                    valEl.style.transform = 'scale(1.25)';
+                    setTimeout(() => { if (valEl) valEl.style.transform = 'scale(1)'; }, 150);
+                    // Cor muda do verde ao laranja nos ultimos 2s
+                    if (remaining <= 2) valEl.style.color = '#E76F51';
+                }
+                remaining -= 1;
+                setTimeout(tick, 1000);
+            };
+            tick();
+        });
+    }
     let isProcessing = false;
     const conversationLog = [];
     let lastAIQuestionPrompt = '';
-    let currentAudio = null; // Track current audio for skip functionality
+    let currentAudio = null; // Track current áudio for skip functionality
     let ttsCancelled = false;
     let userMessageCount = 0; // Track user messages for report button
     let hasPracticeStarted = false;
@@ -1167,10 +1878,10 @@
     let sessionGoalTurns = resolveSessionGoalByLevel();
     const seenMilestones = new Set();
     const milestoneTips = {
-        2: "Bom ritmo. Tente respostas com pelo menos 6 palavras para acelerar sua fluência.",
-        5: "Excelente consistência. Agora varie conectores: because, but, so, then.",
-        8: "Ótimo avanço. Foque em uma resposta mais detalhada com exemplo pessoal.",
-        12: "Você está sustentando conversa real. Continue por mais alguns turnos para consolidar."
+        2: "Bom ritmo. Tente respostas com pelo menos 6 palavras para acelerar sua fluencia.",
+        5: "Excelente consistencia. Agora varie conectores: because, but, so, then.",
+        8: "Ótimo avanco. Foque em uma resposta mais detalhada com exemplo pessoal.",
+        12: "Você esta sustentando conversa real. Continue por mais alguns turnos para consolidar."
     };
 
     function updateSessionProgress(options = {}) {
@@ -1191,7 +1902,13 @@
 
     function setMicReadyState() {
         if (!recordBtn) return;
+        if (recordBtn.dataset.micUnavailable === 'true') {
+            recordBtn.disabled = true;
+            syncMicHint();
+            return;
+        }
         recordBtn.disabled = Boolean(isUsageLimitReached || isProcessing || learningFeedbackPending);
+        syncMicHint();
     }
 
     // --- Free Conversation (Guided Cycles) ---
@@ -1215,9 +1932,11 @@
         MISSION: 'mission',
         CHAT: 'chat'
     };
-    let selectedFreeSessionMode = localStorage.getItem('free_session_mode') || FREE_SESSION_MODES.MISSION;
+    // Default = CHAT (conversa fluida com Sofia). Mission e fluxo scriptado
+    // mais antigo e quebra a persona  so se o aluno explicitamente escolher.
+    let selectedFreeSessionMode = localStorage.getItem('free_session_mode') || FREE_SESSION_MODES.CHAT;
     if (![FREE_SESSION_MODES.MISSION, FREE_SESSION_MODES.CHAT].includes(selectedFreeSessionMode)) {
-        selectedFreeSessionMode = FREE_SESSION_MODES.MISSION;
+        selectedFreeSessionMode = FREE_SESSION_MODES.CHAT;
     }
 
     const EASY_MISSIONS = [
@@ -1464,11 +2183,16 @@
     }
 
     function pickFreeConversationIntro() {
+        // Sofia abre o chat como uma amiga, nao como entrevistadora.
+        // Compartilha algo pequeno de si mesma primeiro (baixa a barra) +
+        // faz uma pergunta concreta e pequena  "dia todo" assusta, "hoje de
+        // manha" e fácil de responder.
         const intros = [
-            "How are you today?",
-            "How's your day going so far?",
-            "How are you feeling right now?",
-            "How has your week been?"
+            "Hey! I just had the most random morning, honestly. How about you  what has your day been like so far?",
+            "Hi! Okay quick question: did you have coffee yet today, or are you one of those magical people who does not need it?",
+            "Oh hey! I am so glad you are here. How is today treating you  good, weird, somewhere in the middle?",
+            "Hey you! I just finished watching the silliest show and I cannot stop thinking about it. How are you doing today?",
+            "Hi! Real talk  how did you sleep last night? I am obsessed with asking people this lately."
         ];
         return pickNonRepeatingVariant('free_conversation_intro', intros) || intros[0];
     }
@@ -1544,7 +2268,7 @@
                 }
                 freeMissionPreview.style.display = '';
             } else {
-                freeMissionPreview.textContent = 'Conversa livre com tema escolhido por voce.';
+                freeMissionPreview.textContent = 'Conversa livre com tema escolhido por você.';
                 freeMissionPreview.style.display = '';
             }
         }
@@ -1580,6 +2304,418 @@
         return chosenTopic;
     }
 
+    // Pool grande de ABERTURAS completas da Sofia. Cada item e a pergunta
+    // ja formulada do jeito dela  natural, curiosa, concreta, apolitica.
+    // Escolhida aleatoriamente a cada entrada em Free Conversation (evita
+    // repetir as N ultimas via localStorage).
+    // Aberturas agora tem EN + PT (objeto com 2 campos). PT aparece como
+    // legenda abaixo do balão principal quando a aluna ativa "Mostrar
+    // legendas e tradução em PT" nas Configurações.
+    const SOFIA_OPENINGS = [
+        // Tema: rotinas e pequenos prazeres (26 originais)
+        { en: "Hey! Okay honestly, I need to know  what did you have for breakfast today? I am very invested in other people's breakfasts.", pt: "Oi! Olha, honestamente, preciso saber  o que você comeu no cafe da manha hoje? Eu sou muito curiosa sobre o cafe da manha das pessoas." },
+        { en: "Hi! Quick random question: what was the last song you had on repeat? Mine is embarrassing but I will share if you share.", pt: "Oi! Pergunta aleatoria rapida: qual foi a ultima musica que você ouviu no repeat? A minha e vergonhosa mas eu divido se você dividir." },
+        { en: "Hey you! I am obsessed with this question lately  how did you sleep last night, really?", pt: "Oi! Eu estou viciada nessa pergunta ultimamente  como foi sua noite de sono ontem, de verdade?" },
+        { en: "Hi! Okay tell me one small weird thing that happened to you this week. Does not have to be big, I love tiny stories.", pt: "Oi! Entao me conta uma coisa pequena e estranha que aconteceu com você essa semana. Nao precisa ser grande, eu amo historias pequenas." },
+        { en: "Hey! So I just finished watching a show and I cannot stop thinking about it. What are you watching right now, anything good?", pt: "Oi! Entao acabei de ver uma serie e nao consigo parar de pensar nela. O que você esta assistindo agora, alguma coisa boa?" },
+        { en: "Hi! Quick one  what is your go-to comfort food when you have had a long day? Mine is carbs, always carbs.", pt: "Oi! Pergunta rapida  qual e a sua comida preferida depois de um dia longo? A minha e carboidrato, sempre carboidrato." },
+        { en: "Hey! Okay be real with me: what is one thing you have been procrastinating on lately? No judgment I promise.", pt: "Oi! Fala serio comigo: qual e uma coisa que você esta adiando ultimamente? Sem julgamento, prometo." },
+        { en: "Hi! What is the wallpaper on your phone right now? I love when people have a story behind theirs.", pt: "Oi! Qual e o papel de parede do seu celular agora? Eu amo quando as pessoas tem uma historia por tras." },
+        { en: "Hey! Random but  what is the best thing you até this week? I need restaurant recommendations from strangers, basically.", pt: "Oi! Aleatoria mas  qual foi a melhor coisa que você comeu essa semana? Preciso de recomendacoes de estranhos, basicamente." },
+        { en: "Hi! Tell me about the last thing that made you genuinely laugh. Like actually laugh out loud, not just text-laugh.", pt: "Oi! Me conta da ultima coisa que te fez rir de verdade. Tipo rir alto mesmo, nao um 'kkk' de mensagem." },
+        { en: "Hey you! What do you usually do to unwind after a long day? I am always looking for new ideas.", pt: "Oi! O que você costuma fazer pra relaxar depois de um dia longo? Eu sempre procuro ideias novas." },
+        { en: "Hi! Okay tiny thing  what made you smile today, even if it was something stupid? I want to know.", pt: "Oi! Coisinha pequena  o que te fez sorrir hoje, mesmo que tenha sido bobagem? Eu quero saber." },
+        { en: "Hey! What was your last impulse purchase? I just bought a candle I did not need so I will not judge.", pt: "Oi! Qual foi sua ultima compra por impulso? Eu acabei de comprar uma vela que nao precisava entao nao vou julgar." },
+        { en: "Hi! Real question: are you a morning person or a night owl? And more importantly, WHY? Defend your stance.", pt: "Oi! Pergunta de verdade: você e pessoa da manha ou noturna? E mais importante, POR QUE? Defenda sua posicao." },
+        { en: "Hey! If you could eat one meal for the rest of your life, what would it be? I will answer first if you want: probably pasta.", pt: "Oi! Se você pudesse comer uma unica refeicao pelo resto da vida, qual seria? Eu respondo primeiro se quiser: provavelmente macarrao." },
+        { en: "Hi! What is one thing you always have in your fridge? Mine has suspicious amounts of cheese, honestly.", pt: "Oi! Qual e uma coisa que você sempre tem na geladeira? A minha tem quantidades suspeitas de queijo, sinceramente." },
+        { en: "Hey you! What show, movie, or book are you going to recommend to me right now, no hesitation?", pt: "Oi! Que serie, filme ou livro você vai me recomendar agora, sem pensar duas vezes?" },
+        { en: "Hi! What is the most random thing in your bag or backpack today? I love that stuff.", pt: "Oi! Qual e a coisa mais aleatoria na sua bolsa ou mochila hoje? Eu amo esse tipo de coisa." },
+        { en: "Hey! Tell me about your favorite chair in your house. I promise this question is more interesting than it sounds.", pt: "Oi! Me conta sobre sua cadeira favorita da sua casa. Prometo que essa pergunta e mais interessante do que parece." },
+        { en: "Hi! What is a small thing you did recently that you are low-key proud of? Does not have to be big.", pt: "Oi! Qual foi uma coisa pequena que você fez recentemente que te deixou meio orgulhosa? Nao precisa ser grande." },
+        { en: "Hey! What is the weather like where you are, and does it match your mood today?", pt: "Oi! Como esta o tempo ai onde você esta, e ele combina com seu humor hoje?" },
+        { en: "Hi! Okay quick one  do you prefer coffee, tea, or something else? And are you already caffeinated right now?", pt: "Oi! Pergunta rapida  você prefere cafe, cha, ou outra coisa? E você ja tomou cafeina agora?" },
+        { en: "Hey you! What is a snack or drink you are really into lately? Like obsessed with?", pt: "Oi! Qual e um lanche ou bebida que você esta muito a fim ultimamente? Tipo viciada?" },
+        { en: "Hi! What is one thing you are looking forward to this week, even if it is super small?", pt: "Oi! Qual e uma coisa que você esta esperando ansiosa essa semana, mesmo que seja pequena?" },
+        { en: "Hey! What was the last place you visited that made you go 'oh, I could come back here'? Could be anywhere  cafe, park, store, trip.", pt: "Oi! Qual foi o ultimo lugar que você foi que te fez pensar 'ai, eu voltaria aqui'? Pode ser qualquer lugar  cafe, parque, loja, viagem." },
+        { en: "Hi! Are you someone who plans their weekends or just lets them happen? I am genuinely curious which one works for you.", pt: "Oi! Você e do tipo que planeja os fins de semana ou deixa acontecer? Estou curiosa qual funciona pra você." },
+
+        // Novos 26: memorias, opinioes leves, rotinas ampliadas, hobbies, infancia
+        { en: "Hey! What is a food from your childhood that instantly transports you back when you eat it? I want the full nostalgia.", pt: "Oi! Qual e uma comida da sua infancia que te leva de volta no tempo quando você come? Quero toda a nostalgia." },
+        { en: "Hi! Tell me  are you a playlist person or a shuffle person? I have very strong opinions about this.", pt: "Oi! Me diz  você e pessoa de playlist ou de shuffle? Eu tenho opinioes bem fortes sobre isso." },
+        { en: "Hey you! What is one hobby or little obsession you had as a kid that you kind of miss now?", pt: "Oi! Qual e um hobby ou pequena obsessao que você tinha quando crianca e que sente falta agora?" },
+        { en: "Hi! Quick random  are you someone who reads before bed, or do you just scroll? No judgment either way.", pt: "Oi! Aleatoria rapida  você e do tipo que le antes de dormir, ou fica rolando o celular? Sem julgamento em nenhum dos dois." },
+        { en: "Hey! If someone gave you a completely free afternoon tomorrow, what would you actually do? Be honest, not the aspirational answer.", pt: "Oi! Se alguem te desse uma tarde totalmente livre amanha, o que você faria de verdade? Fala serio, nao a resposta ideal." },
+        { en: "Hi! What is one tiny ritual you do every day that keeps you sane? Mine is coffee in a specific mug.", pt: "Oi! Qual e um ritualzinho que você faz todo dia que te mantem com a cabeca no lugar? O meu e cafe numa caneca especifica." },
+        { en: "Hey! Okay  what is the last thing you saved or bookmarked on your phone? I love peeking into people's saved tabs.", pt: "Oi! Entao  qual foi a ultima coisa que você salvou ou favoritou no celular? Eu adoro espiar os favoritos das pessoas." },
+        { en: "Hi! Tell me about a friend who always makes you laugh. What is something weird or specific about them?", pt: "Oi! Me conta de um amigo ou amiga que sempre te faz rir. O que tem de estranho ou especifico nessa pessoa?" },
+        { en: "Hey you! What is your current go-to podcast, playlist, or background noise when you clean or commute?", pt: "Oi! Qual e seu podcast, playlist ou som de fundo favorito agora, pra quando você limpa ou se desloca?" },
+        { en: "Hi! Real question: coffee shop, home, or somewhere else  where do you do your best thinking?", pt: "Oi! Pergunta de verdade: cafeteria, casa, ou outro lugar  onde você pensa melhor?" },
+        { en: "Hey! What is one city or place you have never been but really want to visit? And what specifically would you do there?", pt: "Oi! Qual e uma cidade ou lugar que você nunca foi mas quer muito visitar? E o que especificamente você faria la?" },
+        { en: "Hi! Tell me a small thing you learned recently  could be anything, a fact, a cooking tip, a word in another language.", pt: "Oi! Me conta uma coisa pequena que você aprendeu recentemente  pode ser qualquer coisa, um fato, dica de cozinha, palavra em outra lingua." },
+        { en: "Hey! Okay quick one  do you wear the same outfit style every day, or mix it up completely? Team routine or team chaos?", pt: "Oi! Pergunta rapida  você usa o mesmo estilo de roupa todo dia, ou varia completamente? Time rotina ou time caos?" },
+        { en: "Hi! What is a movie you rewatch every time it pops up, no matter how many times you have seen it?", pt: "Oi! Qual e um filme que você re-assiste toda vez que aparece, nao importa quantas vezes ja tenha visto?" },
+        { en: "Hey you! If your week was a soundtrack so far, what one song fits? I know, dramatic, but I am curious.", pt: "Oi! Se sua semana até agora fosse uma trilha sonora, que musica encaixaria? Sei que e dramatico, mas to curiosa." },
+        { en: "Hi! What is the most random text you have sent or received this week? Context optional.", pt: "Oi! Qual foi a mensagem mais aleatoria que você mandou ou recebeu essa semana? Contexto opcional." },
+        { en: "Hey! Tell me about a childhood snack you used to beg for. Mine was anything with sprinkles.", pt: "Oi! Me conta de um lanche de infancia que você implorava. O meu era qualquer coisa com granulado." },
+        { en: "Hi! What is one thing people would be surprised to know about you? Even a tiny weird detail counts.", pt: "Oi! Qual e uma coisa que as pessoas se surpreenderiam em saber sobre você? Ate um detalhe pequeno e estranho vale." },
+        { en: "Hey! Quick one  what is your opinion on keeping fresh flowers at home? I recently started and I am hooked.", pt: "Oi! Rapida  qual sua opiniao sobre ter flores frescas em casa? Eu comecei faz pouco tempo e estou viciada." },
+        { en: "Hi! What app on your phone do you open without even thinking? Mine is embarrassingly not useful at all.", pt: "Oi! Qual app do seu celular você abre sem nem pensar? O meu e constrangedor de tao inutil." },
+        { en: "Hey you! If you could magically be really good at one skill overnight, which one? No money questions, just fun.", pt: "Oi! Se você pudesse ficar magicamente boa em uma habilidade de um dia pro outro, qual seria? Sem ser pra ganhar dinheiro, so por diversao." },
+        { en: "Hi! Tell me about a smell that immediately makes you feel safe or at home. I love that people have such specific answers.", pt: "Oi! Me conta de um cheiro que te faz sentir segura ou em casa na hora. Eu amo como as pessoas tem respostas tao especificas pra isso." },
+        { en: "Hey! What is your relationship with mornings  like, are you chatty or absolutely do-not-speak-to-me before coffee?", pt: "Oi! Qual sua relacao com a manha  você e faladora ou absolutamente nao-fale-comigo antes do cafe?" },
+        { en: "Hi! If you could design your dream breakfast spread with no calories counted, what is on the plate? Go big.", pt: "Oi! Se você pudesse montar o cafe da manha dos sonhos sem contar calorias, o que teria no prato? Sem limites." },
+        { en: "Hey! Okay real question: do you remember your dreams, or do they vanish the second you wake up?", pt: "Oi! Pergunta de verdade: você lembra dos seus sonhos, ou eles somem no segundo que você acorda?" },
+        { en: "Hi! What is one small thing you want to do more of in the next month? Doesn't have to be big  walks, reading, anything.", pt: "Oi! Qual e uma coisa pequena que você quer fazer mais no proximo mes? Nao precisa ser grande  caminhar, ler, qualquer coisa." }
+    ];
+
+    function pickSofiaOpening() {
+        // Evita repetir as 5 ultimas aberturas via localStorage (por texto EN).
+        let recent = [];
+        try {
+            const raw = localStorage.getItem('sofia_recent_openings');
+            if (raw) recent = JSON.parse(raw);
+        } catch (_) { recent = []; }
+
+        const filteredPool = SOFIA_OPENINGS.filter(o => !recent.includes(o.en));
+        const chosenPool = filteredPool.length > 0 ? filteredPool : SOFIA_OPENINGS;
+        const chosen = chosenPool[Math.floor(Math.random() * chosenPool.length)];
+
+        // Safety: fallback robusto com EN+PT preenchidos
+        const safeChoice = chosen || SOFIA_OPENINGS[0] || {
+            en: "Hey! So  what is one small thing that made you smile today? Even something tiny counts.",
+            pt: "Oi! Entao  qual foi uma coisinha pequena que te fez sorrir hoje? Ate algo bem pequeno vale."
+        };
+
+        try {
+            const nextRecent = [safeChoice.en, ...recent].slice(0, 5);
+            localStorage.setItem('sofia_recent_openings', JSON.stringify(nextRecent));
+        } catch (_) {}
+
+        return safeChoice;
+    }
+
+    // Pool legado mantido pra nao quebrar referencias antigas (picker desativado).
+    const SOFIA_FEATURED_TOPICS = [
+        { label: "Tua manha", topic: "My morning routine today" },
+        { label: "Melhor comida da semana", topic: "The best thing I até this week" }
+    ];
+
+    // ============================================================
+    // CONVERSATIONAL FILLERS (Sofia "pensando")
+    // ============================================================
+    // Fillers longos e pensativos gravados com a voz da Sofia.
+    // Estrategia:
+    //   1. Delay de 3s após user terminar de falar (pequeno vacuo inicial
+    //      e OK e até natural  Sofia esta "processando")
+    //   2. Se resposta real ficar pronta antes dos 3s  filler e cancelado
+    //      (zero atrito, zero áudio desnecessario)
+    //   3. Se demorar mais que 3s  filler toca, cobrindo o gap com "pensar"
+    //   4. Apos filler terminar, áudio real toca em seguida sem overlap
+    //
+    // Fillers variados em tom, comprimento, e estrutura pra NAO soar
+    // repetitivo/canned. Mistura: reativos surpreendidos, curiosos,
+    // afirmativos, pensativos, amusados, etc. Todos funcionam como
+    // reacao neutra a qualquer input do aluno.
+    const SOFIA_FILLERS = [
+        // Pensativos longos
+        "Hmm, let me think about that for a second.",
+        "Oh hmm, give me a moment here.",
+        "Okay okay, let me process this.",
+        "Mmm, let me see.",
+        // Reativos surpreendidos
+        "Oh wow, okay.",
+        "Wait really, hmm.",
+        "No way, okay.",
+        // Curiosos/interessados
+        "Ooh, interesting.",
+        "Ooh, I love that.",
+        "That's a good one, hmm.",
+        // Afirmativos/acolhedores
+        "Right, right, yeah.",
+        "Yeah, I hear you.",
+        "Mhm, okay.",
+        // Amusados/calorosos
+        "Haha, okay hmm.",
+        "Oh, that's fun.",
+        // Transicionais/coletando pensamento
+        "Alright, so, hmm.",
+        "Okay so, let me think.",
+        // Curtos puros
+        "Hmm.",
+        "Oh.",
+        "Mmm yeah."
+    ];
+
+    // Cache de blobs de áudio dos fillers. Populado sob demanda na
+    // primeira Free Conversation e persiste enquanto a aba estiver aberta.
+    const fillerAudioCache = new Map();  // filler text  Promise<Blob>
+    let fillerPreloadStarted = false;
+
+    // ============================================================
+    // OPENER CACHE  aberturas fixas da Sofia
+    // ============================================================
+    // Sofia e instruida via prompt a SEMPRE começar a resposta com um dos
+    // 20 openers abaixo. Pre-cacheamos o áudio deles assim ao detectarmos
+    // no response.text, tocamos INSTANTANEAMENTE (0ms, áudio em memoria)
+    // em vez de esperar o Qwen TTS (~10s). Enquanto toca o opener (1-2s),
+    // o TTS do conteudo restante e buscado em paralelo.
+    //
+    // Resultado: primeiro áudio em ~3s (transcribe + chat + cache hit)
+    // em vez de ~12s (transcribe + chat + TTS completo).
+    //
+    // Voz permanece clonada (Qwen cached). Variancia zero entre usos do
+    // mesmo opener (mesmo blob reusado). Pequena variancia entre opener
+    // e conteudo, mas mascarada pela natural pausa conversacional.
+    // Openers CURTOS (~1.5s áudio cada). Mais fácil pra Sofia cumprir
+    // no prompt + mais robusto pra detectar. O gap até content TTS ficar
+    // pronto e coberto por um FILLER DINAMICO que fira APOS opener se
+    // content nao estiver pronto.
+    const SOFIA_OPENERS = [
+        "Oh gosh",
+        "Hmm okay",
+        "Omg same",
+        "Oh honestly",
+        "Wait really",
+        "Mmm alright",
+        "Oh yeah",
+        "Right right",
+        "Haha okay",
+        "Oh no way",
+        "Ooh interesting",
+        "Oh fun",
+        "Yeah totally",
+        "Hmm yeah",
+        "Oh cute",
+        "Ugh same",
+        "Oh nice",
+        "Wait okay",
+        "Mhm okay",
+        "Oh wow"
+    ];
+    const openerAudioCache = new Map();  // opener text (normalized)  Promise<Blob>
+    let openerPreloadStarted = false;
+
+    // Fillers de transicao pro botão "Fale mais". Quando aluno clica,
+    // toca um deles INSTANTANEO enquanto Sofia prepara a resposta longa.
+    const SOFIA_TELL_MORE_FILLERS = [
+        "Oh totally, let me tell you a bit more about that.",
+        "Right, so continuing on that thought.",
+        "Okay so, here is more of my take.",
+        "Oh yeah, happy to go deeper on this.",
+        "Alright, let me dig into that a bit.",
+        "Sure, there is actually more to it.",
+        "Yeah so, to expand on what I said.",
+        "Okay let me unpack that a little more.",
+        "Oh absolutely, there is more to share."
+    ];
+    const tellMoreAudioCache = new Map();
+    let tellMorePreloadStarted = false;
+
+    async function preloadTellMoreFillers() {
+        if (tellMorePreloadStarted) return;
+        tellMorePreloadStarted = true;
+        console.log(`[TellMore] preloading ${SOFIA_TELL_MORE_FILLERS.length} transition fillers`);
+        // Serializado pra nao saturar Qwen
+        for (const filler of SOFIA_TELL_MORE_FILLERS) {
+            if (tellMoreAudioCache.has(filler)) continue;
+            const cleaned = cleanTextForTts(filler);
+            if (!cleaned) continue;
+            const p = fetchTTSSafe(cleaned);
+            tellMoreAudioCache.set(filler, p);
+            try { await p; } catch (_) {}
+        }
+        console.log('[TellMore] preload done');
+    }
+
+    /** Normaliza texto do opener pra lookup (case-insensitive, sem puncts). */
+    function normalizeOpenerKey(text) {
+        return String(text || '').toLowerCase().replace(/[^a-z ]/g, '').trim();
+    }
+
+    /**
+     * Pre-aquece todos os 20 openers em 4 batches de 5 paralelos.
+     * Compromisso: suficientemente paralelo pra cachear rapido (~10-15s)
+     * mas nao totalmente paralelo pra nao saturar fila Qwen. Batch < 6 =
+     * respeita limite de conexoes simultaneas do browser.
+     */
+    async function preloadOpeners() {
+        if (openerPreloadStarted) return;
+        openerPreloadStarted = true;
+        console.log(`[Openers] preloading ${SOFIA_OPENERS.length} openers (batch=5 parallel)`);
+        const BATCH_SIZE = 5;
+        for (let i = 0; i < SOFIA_OPENERS.length; i += BATCH_SIZE) {
+            const batch = SOFIA_OPENERS.slice(i, i + BATCH_SIZE);
+            const promises = batch.map(opener => {
+                const key = normalizeOpenerKey(opener);
+                if (openerAudioCache.has(key)) return null;
+                const cleaned = cleanTextForTts(opener);
+                if (!cleaned) return null;
+                const p = fetchTTSSafe(cleaned);
+                openerAudioCache.set(key, p);
+                return p.catch(() => null);
+            }).filter(Boolean);
+            await Promise.all(promises);
+        }
+        console.log('[Openers] preload done');
+    }
+
+    /**
+     * Tenta detectar um opener cacheado no inicio do texto da Sofia.
+     * Normaliza AMBOS (texto e opener) pra comparacao robusta 
+     * lowercase, sem puncts, so alfanum+espaco. Assim pegamos mesmo que
+     * Sofia varie um pouco a pontuacao.
+     */
+    function detectCachedOpener(responseText) {
+        if (!responseText) return null;
+        const trimmed = String(responseText).trim();
+        const normalizedText = normalizeOpenerKey(trimmed);  // lowercase, no puncts
+
+        for (const opener of SOFIA_OPENERS) {
+            const normalizedOpener = normalizeOpenerKey(opener);
+            if (normalizedText.startsWith(normalizedOpener)) {
+                // Achei match  agora descobre até onde no texto ORIGINAL
+                // chegou esse opener. Conto palavras e acho o fim no texto real.
+                const openerWordCount = normalizedOpener.split(/\s+/).length;
+                // Split por espaco no trimmed mas conta chars até N palavras
+                const words = trimmed.split(/(\s+)/);  // mantem espacos
+                let charCount = 0;
+                let wordsSeenContent = 0;
+                for (let i = 0; i < words.length; i++) {
+                    const w = words[i];
+                    charCount += w.length;
+                    if (w.trim()) wordsSeenContent++;
+                    if (wordsSeenContent === openerWordCount) break;
+                }
+                // Agora skip pontuacao depois do opener (comma, period, etc)
+                while (charCount < trimmed.length && /[,.!?;:\s]/.test(trimmed[charCount])) {
+                    charCount++;
+                }
+                const matchedText = trimmed.slice(0, charCount).trim();
+                const remaining = trimmed.slice(charCount).trim();
+                const key = normalizeOpenerKey(opener);
+                const blobPromise = openerAudioCache.get(key);
+                if (blobPromise) {
+                    return { opener: matchedText, blobPromise, remaining };
+                } else {
+                    console.log(`[Opener] matched text but blob not in cache yet: "${opener}"`);
+                }
+            }
+        }
+        // Debug: log primeiras palavras do texto pra entender o que Sofia falou
+        const firstWords = trimmed.slice(0, 50);
+        console.log(`[Opener] NO MATCH. Response starts with: "${firstWords}..."`);
+        return null;
+    }
+
+    /**
+     * Pre-aquece APENAS 3 fillers aleatorios em SERIE (nao paralelo).
+     * Razao: preload de 20 em paralelo saturava Qwen (13s de fila) e
+     * bloqueava a resposta real. Com 3 serializados:
+     *   - 3 requests sequenciais, ~3-6s no total em background
+     *   - Nenhuma competicao com o TTS da resposta principal
+     *   - Fillers restantes carregam LAZY (on-demand) conforme forem usados
+     *     Backend cacheia, entao a 2a vez de cada filler ja e instantaneo.
+     */
+    async function preloadFillers() {
+        if (fillerPreloadStarted) return;
+        fillerPreloadStarted = true;
+        // Pega 3 aleatorios do pool pra variar a "bootstrap"
+        const shuffled = SOFIA_FILLERS.slice().sort(() => Math.random() - 0.5);
+        const toPreload = shuffled.slice(0, 3);
+        console.log(`[Fillers] preloading ${toPreload.length} fillers (serialized)`);
+        for (const filler of toPreload) {
+            if (fillerAudioCache.has(filler)) continue;
+            const cleaned = cleanTextForTts(filler);
+            if (!cleaned) continue;
+            // Um por vez  evita saturar a fila de TTS
+            const p = fetchTTSSafe(cleaned);
+            fillerAudioCache.set(filler, p);
+            try { await p; } catch (_) {}
+        }
+        console.log('[Fillers] preload done');
+    }
+
+    /**
+     * Cria um controller de filler COM DELAY: so toca depois de `delayMs`
+     * se nao for cancelado antes. Retorna { promise, cancel, hasStarted }.
+     *
+     * - Se resposta real ficar pronta antes do delay  chamar cancel() 
+     *   filler nao toca, promise resolve imediatamente.
+     * - Se delay passar  filler comeca a tocar, cancel deixa de ter efeito
+     *   (áudio nao e interrompido no meio pra nao ficar estranho).
+     * - Promise sempre resolve; chamador pode `await` com seguranca.
+     */
+    function scheduleDelayedFiller(delayMs = 3000) {
+        const ctrl = { started: false, cancelled: false };
+        ctrl.promise = (async () => {
+            await new Promise(r => setTimeout(r, delayMs));
+            if (ctrl.cancelled) {
+                console.log('[Filler] cancelled (real áudio ready fast)');
+                return;
+            }
+            ctrl.started = true;
+            try {
+                const filler = SOFIA_FILLERS[Math.floor(Math.random() * SOFIA_FILLERS.length)];
+                let blobPromise = fillerAudioCache.get(filler);
+                if (!blobPromise) {
+                    const cleaned = cleanTextForTts(filler);
+                    if (!cleaned) return;
+                    blobPromise = fetchTTSSafe(cleaned);
+                    fillerAudioCache.set(filler, blobPromise);
+                }
+                const blob = await blobPromise;
+                if (!blob || blob.size === 0) return;
+                // Filler em 0.8x  mais devagar/pensativo que a voz normal.
+                // preservesPitch (default true em browsers modernos) mantem
+                // o timbre  nao vira efeito chipmunk.
+                console.log('[Filler] playing:', filler);
+                await playAudioBlob(blob, { playbackRate: 0.8 });
+            } catch (e) {
+                console.warn('[Filler] play failed:', e?.message || e);
+            }
+        })();
+        ctrl.cancel = () => { ctrl.cancelled = true; };
+        return ctrl;
+    }
+
+    function pickTwoFeaturedTopics() {
+        // Evita repetir topicos da sessao anterior via localStorage.
+        let lastShown = [];
+        try {
+            const raw = localStorage.getItem('sofia_last_featured_topics');
+            if (raw) lastShown = JSON.parse(raw);
+        } catch (_) { lastShown = []; }
+
+        const pool = SOFIA_FEATURED_TOPICS.filter(t => !lastShown.includes(t.topic));
+        const shuffled = (pool.length >= 2 ? pool : SOFIA_FEATURED_TOPICS).slice().sort(() => Math.random() - 0.5);
+        const chosen = shuffled.slice(0, 2);
+
+        try {
+            localStorage.setItem('sofia_last_featured_topics', JSON.stringify(chosen.map(t => t.topic)));
+        } catch (_) {}
+
+        return chosen;
+    }
+
+    function renderFeaturedTopicChips() {
+        const container = document.getElementById('topic-chips');
+        if (!container) return;
+        const chosen = pickTwoFeaturedTopics();
+        container.innerHTML = '';
+        chosen.forEach(item => {
+            const btn = document.createElement('button');
+            btn.className = 'topic-chip featured-chip';
+            btn.dataset.topic = item.topic;
+            btn.textContent = item.label;
+            // Estilo cartao maior, full-width, com leve gradient  destaca dos chips antigos.
+            btn.style.cssText = 'width:100%; padding:0.6rem 0.8rem; text-align:left; font-size:0.85rem; background:linear-gradient(135deg, rgba(157,193,131,0.22), rgba(255,150,113,0.18)); border:1px solid rgba(255,255,255,0.2); border-radius:10px; color:white; cursor:pointer; transition:all 0.15s ease;';
+            btn.addEventListener('mouseenter', () => { btn.style.transform = 'translateY(-1px)'; btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'; });
+            btn.addEventListener('mouseleave', () => { btn.style.transform = ''; btn.style.boxShadow = ''; });
+            container.appendChild(btn);
+        });
+    }
+
     function showQuestionPicker(question) {
         if (!freeQuestionPanel) return;
         lastPickerQuestion = question || '';
@@ -1589,6 +2725,9 @@
         if (freeQuestionOk) {
             freeQuestionOk.disabled = false;
         }
+
+        // Sorteia 2 topicos concretos do dia (rotacao automatica entre sessões)
+        renderFeaturedTopicChips();
 
         // Setup topic chips
         const topicChips = freeQuestionPanel.querySelectorAll('.topic-chip');
@@ -1704,7 +2843,7 @@
         setStatusText('Thinking...');
         if (recordBtn) {
             recordBtn.disabled = true;
-            setRecordText("⏳ Pensando...");
+            setRecordText(" Pensando...");
         }
 
         try {
@@ -1788,7 +2927,7 @@
         const normalized = (text || '').toLowerCase().trim();
         return [
             'no', 'nope', 'not really', 'no thanks', 'nothing else', 'nothing', 'nah',
-            'nao', 'não', 'nao obrigado', 'não obrigado', 'nada', 'nada mais'
+            'nao', 'nao', 'nao obrigado', 'nao obrigado', 'nada', 'nada mais'
         ].some(phrase => normalized === phrase || normalized.startsWith(phrase));
     }
 
@@ -1858,7 +2997,7 @@
         isProcessing = true;
         if (recordBtn) {
             recordBtn.disabled = true;
-            setRecordText("🔊 Falando...");
+            setRecordText(" Falando...");
         }
         setStatusText('Speaking...');
 
@@ -1946,7 +3085,11 @@
             }
 
             if (freeState === FREE_STATES.SHOW_QUESTION_PICKER) {
-                await launchSelectedFreeMode();
+                // Nao auto-avanca pro mission/chat com voz  aluna tem
+                // que clicar "Começar" pra escolher conscientemente.
+                // Isso evita que falar algo (tipo "sorry, didn't catch that")
+                // seja interpretado como "iniciar modo".
+                setStatusText('Escolha um modo e clique em Começar');
                 return;
             }
 
@@ -1956,7 +3099,7 @@
                 setStatusText('Thinking...');
                 if (recordBtn) {
                     recordBtn.disabled = true;
-                    setRecordText("⏳ Pensando...");
+                    setRecordText(" Pensando...");
                 }
 
                 const followupData = await apiClient.freeConversationAction('followup', {
@@ -1977,7 +3120,7 @@
                 setStatusText('Thinking...');
                 if (recordBtn) {
                     recordBtn.disabled = true;
-                    setRecordText("⏳ Pensando...");
+                    setRecordText(" Pensando...");
                 }
 
                 const opinionData = await apiClient.freeConversationAction('opinion', {
@@ -2016,7 +3159,7 @@
                     setStatusText('Thinking...');
                     if (recordBtn) {
                         recordBtn.disabled = true;
-                        setRecordText("⏳ Pensando...");
+                        setRecordText(" Pensando...");
                     }
                     const answerData = await apiClient.freeConversationAction('answer', {
                         main_question: currentMainQuestion,
@@ -2044,7 +3187,7 @@
                 setStatusText('Thinking...');
                 if (recordBtn) {
                     recordBtn.disabled = true;
-                    setRecordText("⏳ Pensando...");
+                    setRecordText(" Pensando...");
                 }
                 lastMainAnswer = text;
                 const moreData = await apiClient.freeConversationAction('followup', {
@@ -2064,7 +3207,7 @@
                 setStatusText('Thinking...');
                 if (recordBtn) {
                     recordBtn.disabled = true;
-                    setRecordText("⏳ Pensando...");
+                    setRecordText(" Pensando...");
                 }
                 const answerData = await apiClient.freeConversationAction('answer', {
                     main_question: currentMainQuestion,
@@ -2098,7 +3241,7 @@
             setStatusText('Error');
             if (recordBtn) {
                 setMicReadyState();
-                setRecordText("🎤 Clique para Falar");
+                setRecordText(" Clique para Falar");
             }
         }
     }
@@ -2112,6 +3255,11 @@
     let remainingSeconds = weekendLimitSeconds;
     let isUsageLimitReached = false;
     let usageIsWeekend = true;
+    if (portalDailyTrial.enabled) {
+        weekendLimitSeconds = portalDailyTrial.limitSeconds;
+        remainingSeconds = portalDailyTrial.limitSeconds;
+        usageIsWeekend = true;
+    }
 
     function persistUsageData() {
         try {
@@ -2119,9 +3267,13 @@
                 seconds_used: totalUsedToday,
                 remaining_seconds: remainingSeconds,
                 weekend_limit_seconds: weekendLimitSeconds,
-                is_blocked: isUsageLimitReached
+                is_blocked: isUsageLimitReached,
+                portal_trial: portalDailyTrial.enabled === true
             };
             localStorage.setItem('usage_data', JSON.stringify(payload));
+            if (portalDailyTrial.enabled) {
+                localStorage.setItem(getPortalTrialStorageKey(portalDailyTrial), JSON.stringify(payload));
+            }
         } catch (e) {
             console.log('Failed to update usage_data cache:', e);
         }
@@ -2133,7 +3285,9 @@
         if (typeof usageData.seconds_used === 'number' && usageData.seconds_used >= 0) {
             totalUsedToday = usageData.seconds_used;
         }
-        if (typeof usageData.weekend_limit_seconds === 'number' && usageData.weekend_limit_seconds > 0) {
+        if (portalDailyTrial.enabled) {
+            weekendLimitSeconds = portalDailyTrial.limitSeconds;
+        } else if (typeof usageData.weekend_limit_seconds === 'number' && usageData.weekend_limit_seconds > 0) {
             weekendLimitSeconds = usageData.weekend_limit_seconds;
         }
         if (typeof usageData.remaining_seconds === 'number') {
@@ -2175,14 +3329,10 @@
     }
 
     function getUsageBlockedMessage(payload = {}) {
-        if (typeof payload?.message === 'string' && payload.message.trim()) {
+        if (!portalDailyTrial.enabled && typeof payload?.message === 'string' && payload.message.trim()) {
             return payload.message.trim();
         }
-        const blockedDuringWeekend = typeof payload?.is_weekend === 'boolean' ? payload.is_weekend : usageIsWeekend;
-        if (blockedDuringWeekend === false) {
-            return 'A prática está disponível apenas aos finais de semana (sábado e domingo).';
-        }
-        return 'Você atingiu seu limite de prática deste fim de semana.';
+        return 'Seu tempo de prática de hoje terminou. Volte amanha para continuar usando este complemento.';
     }
 
     function applyUsageLimitFromServer(payload = {}) {
@@ -2200,6 +3350,10 @@
         if (typeof payload.is_weekend === 'boolean') {
             normalized.is_weekend = payload.is_weekend;
         }
+        if (payload.portal_trial === true || portalDailyTrial.enabled) {
+            normalized.portal_trial = true;
+            normalized.weekend_limit_seconds = portalDailyTrial.enabled ? portalDailyTrial.limitSeconds : normalized.weekend_limit_seconds;
+        }
 
         applyUsageData(normalized);
         isUsageLimitReached = true;
@@ -2212,11 +3366,23 @@
             applyUsageData(usageData || {});
         } catch (err) {
             console.warn('[Usage] Could not refresh usage status:', err);
+            if (portalDailyTrial.enabled) {
+                try {
+                    const cachedTrialUsage = localStorage.getItem(getPortalTrialStorageKey(portalDailyTrial));
+                    if (cachedTrialUsage) {
+                        applyUsageData(JSON.parse(cachedTrialUsage));
+                    }
+                } catch (cacheErr) {
+                    console.warn('[Usage] Could not load portal trial cache:', cacheErr);
+                }
+            }
         }
     }
 
     // Initialize usage tracking from login response
-    const storedUsage = localStorage.getItem('usage_data');
+    const storedUsage = portalDailyTrial.enabled
+        ? localStorage.getItem(getPortalTrialStorageKey(portalDailyTrial))
+        : localStorage.getItem('usage_data');
     if (storedUsage && user) {
         try {
             applyUsageData(JSON.parse(storedUsage));
@@ -2314,12 +3480,9 @@
         if (document.getElementById('usage-exceeded-overlay')) return;
 
         const blockedMessage = getUsageBlockedMessage(limitPayload);
-        const blockedDuringWeekend = typeof limitPayload?.is_weekend === 'boolean' ? limitPayload.is_weekend : usageIsWeekend;
-        const title = blockedDuringWeekend ? 'Tempo Esgotado' : 'Prática Fora do Horário';
-        const nextAccess = blockedDuringWeekend ? 'Sábado que vem' : 'Neste sábado';
-        const footerText = blockedDuringWeekend
-            ? 'Continue praticando no próximo fim de semana!'
-            : 'A prática por voz fica disponível aos fins de semana.';
+        const title = 'Tempo de prática encerrado';
+        const nextAccess = 'Amanha';
+        const footerText = 'Complemento a metodologia.';
 
         const overlay = document.createElement('div');
         overlay.id = 'usage-exceeded-overlay';
@@ -2331,7 +3494,7 @@
 
         overlay.innerHTML = `
             <div class="usage-exceeded-modal">
-                <div class="modal-icon">⏰</div>
+                <div class="modal-icon"></div>
                 <h2>${title}</h2>
                 <p>${escapeHtml(blockedMessage)}</p>
                 <div class="time-info">
@@ -2405,6 +3568,15 @@
         if (window.__tipsModalShownThisSession) return;
         if (tipsModalPromise) return tipsModalPromise;
 
+        // Only show on first practice session ever (per browser).
+        // The tips were appearing on every session and adding to UI clutter.
+        try {
+            if (localStorage.getItem('practice_tips_seen') === '1') {
+                window.__tipsModalShownThisSession = true;
+                return;
+            }
+        } catch (_) {}
+
         const tipsModal = document.getElementById('tips-modal');
         if (!tipsModal) {
             window.__tipsModalShownThisSession = true;
@@ -2417,6 +3589,7 @@
             if (!okBtn) {
                 tipsModal.style.display = 'none';
                 window.__tipsModalShownThisSession = true;
+                try { localStorage.setItem('practice_tips_seen', '1'); } catch (_) {}
                 resolve();
                 return;
             }
@@ -2424,6 +3597,7 @@
             okBtn.addEventListener('click', () => {
                 tipsModal.style.display = 'none';
                 window.__tipsModalShownThisSession = true;
+                try { localStorage.setItem('practice_tips_seen', '1'); } catch (_) {}
                 resolve();
             }, { once: true });
         });
@@ -2436,34 +3610,37 @@
     }
     window.showPracticeTipsModalIfNeeded = showPracticeTipsModalIfNeeded;
 
-    if (startBtn) {
-        // Add pulse animation to start button
-        startBtn.classList.add('pulse-animation');
+    let practiceStartPromise = null;
+    async function startPracticeSession() {
+        if (practiceStartPromise) return practiceStartPromise;
+        if (hasPracticeStarted) {
+            const footerBar = document.getElementById('footer-bar');
+            if (footerBar) footerBar.style.display = '';
+            if (recordBtn) setMicReadyState();
+            return;
+        }
 
-        startBtn.addEventListener('click', async () => {
+        practiceStartPromise = (async () => {
             await showPracticeTipsModalIfNeeded();
 
             const startOverlay = document.getElementById('start-overlay');
             if (startOverlay) startOverlay.style.display = 'none';
             const startMessage = document.getElementById('start-message');
             if (startMessage) startMessage.style.display = 'none';
-            // Show footer bar now that overlay is hidden
             const footerBar = document.getElementById('footer-bar');
             if (footerBar) footerBar.style.display = '';
 
-            // Remove hint and enable buttons
-            if (micHint) micHint.style.display = 'none';
+            if (micHint) micHint.style.display = '';
             if (recordBtn) setMicReadyState();
 
-            // Start usage timer
             startUsageTimer();
 
-            // Clear conversation and UI when starting fresh
             conversationLog.length = 0;
             lastAIQuestionPrompt = '';
             userMessageCount = 0;
             seenMilestones.clear();
             hasPracticeStarted = true;
+            window.__practiceStarted = true;
             sessionGoalTurns = resolveSessionGoalByLevel();
             updateSessionProgress({ quiet: true });
             localStorage.removeItem('conversation_backup');
@@ -2473,7 +3650,6 @@
                 console.warn('[SESSION] Could not clear server-side history:', err);
             }
 
-            // Remove all messages except the start message
             const messages = chatWindow.querySelectorAll(
                 '.message:not(#start-message), .subtitle-group, .lesson-start-container, .lesson-options-container, .suggested-words-card'
             );
@@ -2481,22 +3657,35 @@
             toggleConversationHistory(false);
             refreshConversationFocusView();
 
-            // Free Conversation guided cycles
             if (isFreeConversation) {
                 if (freeQuestionPanel) hideQuestionPicker();
-                await startFreeConversationFlow();
-                return;
+                try { localStorage.setItem('practice_mode', 'simulator'); } catch (_) {}
+                window.practiceMode = 'simulator';
+                preloadOpeners();
+                setTimeout(preloadFillers, 3000);
+                setTimeout(preloadTellMoreFillers, 20000);
             }
 
-            // Derive studentLevel from the difficulty selector
-            const diffToLevel = { beginner: 'A1', intermediate: 'A2', advanced: 'B1' };
+            const diffToLevel = { zero: 'zero', beginner: 'A1', intermediate: 'A2', advanced: 'B1' };
             const selDiff = window.getSelectedDifficulty ? window.getSelectedDifficulty() : 'intermediate';
-            studentLevel = diffToLevel[selDiff] || 'A2';
+            studentLevel = isZeroBeginnerContext ? 'zero' : (diffToLevel[selDiff] || 'A2');
             sessionGoalTurns = resolveSessionGoalByLevel();
 
             updateHeaderInfo();
             await startConversationFlow();
-        });
+        })();
+
+        try {
+            await practiceStartPromise;
+        } finally {
+            practiceStartPromise = null;
+        }
+    }
+    window.startPracticeSession = startPracticeSession;
+
+    if (startBtn) {
+        startBtn.classList.add('pulse-animation');
+        startBtn.addEventListener('click', startPracticeSession);
     }
 
     async function startConversationFlow() {
@@ -2515,7 +3704,7 @@
         const grammarGreetings = {
             'verb_to_be': {
                 en: "Hey! I'm happy to chat. How are you right now?",
-                pt: "Oi! Estou feliz em conversar. E voce, como esta agora?"
+                pt: "Oi! Estou feliz em conversar. E você, como esta agora?"
             },
             'greetings': {
                 en: "Hey! I'm Alex. Nice to meet you. What's your name?",
@@ -2523,55 +3712,55 @@
             },
             'articles': {
                 en: "I grabbed an apple and a sandwich earlier. What's a snack you like?",
-                pt: "Hoje eu comi uma maca e um sanduiche. Qual lanche voce gosta?"
+                pt: "Hoje eu comi uma maca e um sanduiche. Qual lanche você gosta?"
             },
             'plurals': {
                 en: "I have two cats and three plants at home. Do you have any pets or plants?",
-                pt: "Eu tenho dois gatos e tres plantas em casa. Voce tem pets ou plantas?"
+                pt: "Eu tenho dois gatos e tres plantas em casa. Você tem pets ou plantas?"
             },
             'demonstratives': {
                 en: "This chair is comfy, but that one looks better. Which do you prefer?",
-                pt: "Esta cadeira e confortavel, mas aquela parece melhor. Qual voce prefere?"
+                pt: "Esta cadeira e confortavel, mas aquela parece melhor. Qual você prefere?"
             },
             'subject_pronouns': {
                 en: "I met my friend Maria today. She was in a great mood. Who do you usually talk to?",
-                pt: "Hoje encontrei minha amiga Maria. Ela estava animada. Com quem voce costuma falar?"
+                pt: "Hoje encontrei minha amiga Maria. Ela estava animada. Com quem você costuma falar?"
             },
             'possessives': {
                 en: "My phone is almost dead. Do you have your charger with you?",
-                pt: "Meu celular esta quase sem bateria. Voce tem seu carregador?"
+                pt: "Meu celular esta quase sem bateria. Você tem seu carregador?"
             },
             'present_simple': {
                 en: "I wake up early and drink coffee every day. What do you usually do in the morning?",
-                pt: "Eu acordo cedo e tomo cafe todos os dias. O que voce costuma fazer de manha?"
+                pt: "Eu acordo cedo e tomo cafe todos os dias. O que você costuma fazer de manha?"
             },
             'present_continuous': {
                 en: "I'm chatting with you right now. What are you doing at the moment?",
-                pt: "Estou conversando com voce agora. O que voce esta fazendo neste momento?"
+                pt: "Estou conversando com você agora. O que você esta fazendo neste momento?"
             },
             'basic_questions': {
                 en: "By the way, where are you from? And what do you do?",
-                pt: "Alias, de onde voce e? E o que voce faz?"
+                pt: "Alias, de onde você e? E o que você faz?"
             },
             // Special training scenario
             'basic_structures': {
                 en: "Excuse me, could you help me for a second? How would you ask for help in English?",
-                pt: "Com licenca, voce poderia me ajudar por um segundo? Como voce pediria ajuda em ingles?"
+                pt: "Com licenca, você poderia me ajudar por um segundo? Como você pediria ajuda em inglês?"
             }
         };
 
         const bilingualGreetings = {
-            'verb_to_be': "Oi! Vamos conversar um pouco. Por exemplo: [EN]I am happy[/EN]. E voce, como esta hoje?",
+            'verb_to_be': "Oi! Vamos conversar um pouco. Por exemplo: [EN]I am happy[/EN]. E você, como esta hoje?",
             'greetings': "Oi! [EN]Nice to meet you[/EN]. Qual e o seu nome?",
-            'articles': "Hoje eu comi [EN]an apple[/EN] e [EN]a sandwich[/EN]. Qual lanche voce gosta?",
-            'plurals': "Eu tenho [EN]two cats[/EN] e [EN]three plants[/EN] em casa. Voce tem pets ou plantas?",
-            'demonstratives': "Olha: [EN]this chair[/EN] e confortavel, mas [EN]that one[/EN] parece melhor. Qual voce prefere?",
-            'subject_pronouns': "Hoje encontrei a Maria. [EN]She[/EN] estava animada. Com quem voce costuma falar?",
+            'articles': "Hoje eu comi [EN]an apple[/EN] e [EN]a sandwich[/EN]. Qual lanche você gosta?",
+            'plurals': "Eu tenho [EN]two cats[/EN] e [EN]three plants[/EN] em casa. Você tem pets ou plantas?",
+            'demonstratives': "Olha: [EN]this chair[/EN] e confortavel, mas [EN]that one[/EN] parece melhor. Qual você prefere?",
+            'subject_pronouns': "Hoje encontrei a Maria. [EN]She[/EN] estava animada. Com quem você costuma falar?",
             'possessives': "Meu celular esta quase sem bateria. [EN]Is this your charger?[/EN]",
-            'present_simple': "Eu [EN]wake up[/EN] cedo e [EN]drink coffee[/EN] todo dia. O que voce costuma fazer de manha?",
-            'present_continuous': "Agora eu [EN]am chatting[/EN] com voce. [EN]What are you doing right now?[/EN]",
+            'present_simple': "Eu [EN]wake up[/EN] cedo e [EN]drink coffee[/EN] todo dia. O que você costuma fazer de manha?",
+            'present_continuous': "Agora eu [EN]am chatting[/EN] com você. [EN]What are you doing right now?[/EN]",
             'basic_questions': "Pergunta rapida: [EN]Where are you from?[/EN] E [EN]what do you do?[/EN]",
-            'basic_structures': "Quando peco ajuda, digo: [EN]Excuse me, can you help me?[/EN] Como voce pediria ajuda?"
+            'basic_structures': "Quando peco ajuda, digo: [EN]Excuse me, can you help me?[/EN] Como você pediria ajuda?"
         };
 
         // Aliases for legacy or UI ids
@@ -2602,6 +3791,8 @@
                 translation = greetingBlock.pt;
             }
         } else {
+            // Sofia opening: sorteia 1 vez (ambos objetos de greeting compartilham)
+            const sofiaOpening = (context === 'free_conversation') ? pickSofiaOpening() : null;
             // For conversation scenarios, start with context-appropriate greeting
             const contextGreetings = {
                 'coffee_shop': {
@@ -2618,7 +3809,7 @@
                 },
                 'supermarket': {
                     en: "Hello! Did you find everything you were looking for today?",
-                    pt: "Olá! Você encontrou tudo o que procurava hoje?"
+                    pt: "Ola! Você encontrou tudo o que procurava hoje?"
                 },
                 'doctor': {
                     en: "Good morning! Please have a seat. What brings you in today?",
@@ -2626,24 +3817,85 @@
                 },
                 'hotel': {
                     en: "Welcome! Checking in? May I have your name, please?",
-                    pt: "Bem-vindo! Fazendo check-in? Qual é o seu nome, por favor?"
+                    pt: "Bem-vindo! Fazendo check-in? Qual e o seu nome, por favor?"
                 },
-                'free_conversation': {
-                    en: "Hi there! What would you like to talk about today? It can be anything - your day, hobbies, travel, work, or any topic you're interested in!",
-                    pt: "Olá! Sobre o que você gostaria de conversar hoje? Pode ser qualquer coisa - seu dia, hobbies, viagens, trabalho, ou qualquer assunto!"
-                }
+                'free_conversation': sofiaOpening
+                    ? { en: sofiaOpening.en, pt: sofiaOpening.pt || "" }
+                    : { en: "Hey! So  what was the best thing that happened to you this week? Even something small counts, I am genuinely curious.", pt: "Oi! Entao  qual foi a melhor coisa que aconteceu com você essa semana? Ate algo pequeno conta, estou genuinamente curiosa." }
             };
 
-            const contextGreeting = contextGreetings[context];
+            // BEGINNER overrides: shorter greetings, A1-A2 vocabulary,
+            // simple present, max ~8 words. Keeps the scenario role but
+            // removes complex structures ("May I see...", "What can I get started...").
+            const beginnerContextGreetings = {
+                'coffee_shop': {
+                    en: "Hi! Welcome. What would you like to drink?",
+                    pt: "Oi! Bem-vindo. O que você gostaria de beber?"
+                },
+                'restaurant': {
+                    en: "Hello! Welcome. How many people?",
+                    pt: "Ola! Bem-vindo. Quantas pessoas?"
+                },
+                'airport': {
+                    en: "Hello! Your passport, please?",
+                    pt: "Ola! Seu passaporte, por favor?"
+                },
+                'supermarket': {
+                    en: "Hi! Did you find everything?",
+                    pt: "Oi! Você encontrou tudo?"
+                },
+                'doctor': {
+                    en: "Hi! Please sit down. How can I help you?",
+                    pt: "Oi! Por favor, sente-se. Como posso ajudar?"
+                },
+                'hotel': {
+                    en: "Hi! Are you checking in? What's your name?",
+                    pt: "Oi! Você esta fazendo check-in? Qual e o seu nome?"
+                },
+                'free_conversation': sofiaOpening
+                    ? { en: sofiaOpening.en, pt: sofiaOpening.pt || "" }
+                    : { en: "Hey! So  what was the best thing that happened to you this week? Even something small counts, I am genuinely curious.", pt: "Oi! Entao  qual foi a melhor coisa que aconteceu com você essa semana? Ate algo pequeno conta, estou genuinamente curiosa." }
+            };
+
+            const selectedDifficulty = window.getSelectedDifficulty ? window.getSelectedDifficulty() : 'intermediate';
+            const isBeginner = selectedDifficulty === 'beginner';
+
+            const contextGreeting = (isBeginner && beginnerContextGreetings[context])
+                ? beginnerContextGreetings[context]
+                : contextGreetings[context];
+
             if (contextGreeting) {
                 greeting = contextGreeting.en;
                 translation = contextGreeting.pt;
+            } else if (isBeginner) {
+                // Generic fallback for beginner on scenarios without a specific override
+                greeting = "Hi! How are you today?";
+                translation = "Oi! Como você esta hoje?";
             } else {
                 // Generic fallback for other scenarios
                 greeting = "Hello! How are you doing today?";
-                translation = "Olá! Como você está hoje?";
+                translation = "Ola! Como você esta hoje?";
             }
 
+        }
+
+        // The old guided tutorial used a full-screen mask and could block the
+        // microphone button. Keep the tutorial code available for explicit use,
+        // but do not open it automatically during practice startup.
+        try { localStorage.setItem('practice_tutorial_seen', '1'); } catch (_) {}
+
+        // Contador regressivo de 5s em Free Conversation: previne aluna
+        // de achar que deu erro quando ve tela vazia. Em paralelo, TTS
+        // da saudacao ja esta sendo baixado  quando contador zera, áudio
+        // comeca quase instantaneamente.
+        if (isFreeConversation) {
+            // Dispara o TTS da saudacao AGORA (em paralelo com countdown)
+            // pra aproveitar os 5s de contador. playResponse ja faz prefetch.
+            const greetingPromise = playResponse(greeting, translation);
+            // Aguarda o contador (nao bloqueia a TTS que ja ta baixando)
+            await showStartupCountdown(5);
+            // playResponse ja chamado  áudio comeca quando blob fica pronto
+            return;
         }
 
         playResponse(greeting, translation);
@@ -2655,15 +3907,25 @@
 
     // Initialize Groq Recorder
     if (typeof DeepgramRecorder !== 'undefined') {
-        groqRecorder = new DeepgramRecorder();
-        if (recordBtn) {
-            setMicReadyState();
+        micSupportStatus = (typeof DeepgramRecorder.getSupportStatus === 'function')
+            ? DeepgramRecorder.getSupportStatus()
+            : { supported: true, code: 'ok', reason: '' };
+        if (micSupportStatus.supported) {
+            clearMicProblem();
+            groqRecorder = new DeepgramRecorder();
+            if (recordBtn) {
+                setMicReadyState();
+            }
+            console.log('[Groq] Recorder initialized');
+        } else {
+            groqRecorder = null;
+            console.warn('[Groq] Recorder unavailable:', micSupportStatus.code, micSupportStatus.reason);
+            setMicUnavailable(micSupportStatus.reason);
         }
-        console.log('[Groq] Recorder initialized');
     } else {
         console.error('[Groq] DeepgramRecorder not available');
         if (recordBtn) {
-            recordBtn.disabled = true;
+            setMicUnavailable('Gravador de audio nao carregou. Recarregue a pagina ou use "Prefere digitar?".');
         }
     }
 
@@ -2684,7 +3946,7 @@
 
         const helper = document.createElement('div');
         helper.style.cssText = 'font-size:0.85rem;color:#9aa4b2;margin-bottom:10px;';
-        helper.textContent = 'Ajuste o texto se necessário antes de enviar.';
+        helper.textContent = 'Ajuste o texto se necessario antes de enviar.';
 
         const textarea = document.createElement('textarea');
         textarea.value = transcript || '';
@@ -2707,7 +3969,7 @@
             const text = (textarea.value || '').trim();
             if (!isMeaningfulSpeechText(text)) {
                 helper.style.color = '#fca5a5';
-                helper.textContent = 'Não entendi bem esse trecho. Fale uma frase curta e completa.';
+                helper.textContent = 'Nao entendi bem esse trecho. Fale uma frase curta e completa.';
                 return;
             }
             overlay.remove();
@@ -2736,9 +3998,31 @@
 
         const allowShort = new Set([
             'ok', 'okay', 'yes', 'no', 'hi', 'hello',
-            'oi', 'ola', 'olá', 'sim', 'nao', 'não'
+            'oi', 'ola', 'ola', 'sim', 'nao', 'nao'
         ]);
         if (allowShort.has(normalized)) return true;
+
+        // Padroes comuns de RUIDO de transcrição  quando Whisper retorna
+        // o proprio prompt ou fragmentos de instrucao em vez de fala real.
+        // Se bater com qualquer, bloqueia e pede pra repetir.
+        // Test bracket-enclosure on ORIGINAL text (before normalization strips brackets)
+        if (/^\s*[\[\(][^\]\)]*[\]\)]\s*$/.test(text)) return false;
+        const transcriptionNoisePatterns = [
+            /^transcribe\s+(the\s+)?user/i,        // "Transcribe the user's speech"
+            /^please\s+transcribe/i,
+            /^(the\s+)?(user|speaker)\s+(said|says|is\s+speaking)/i,
+            /^transcreva\s+/i,                      // "Transcreva a fala..."
+            /^thank\s+you\s+for\s+watching/i,       // Whisper hallucination comum
+            /subtitles?\s+by/i,                     // Legendas fantasmas
+            /\bsubscribe\b.*\bchannel\b/i,          // "Subscribe to the channel"
+            /^\s*\[?\s*(music|applause|blank[\s_-]?audio|silence|no[\s_-]?speech)\s*\]?\s*$/i,
+        ];
+        for (const pat of transcriptionNoisePatterns) {
+            if (pat.test(normalized)) {
+                console.warn(`[STT] Ruido de transcrição detectado, bloqueando: "${normalized}"`);
+                return false;
+            }
+        }
 
         const tokens = normalized.split(' ').filter(Boolean);
         if (!tokens.length) return false;
@@ -2751,42 +4035,75 @@
     }
 
     const toggleRecording = async () => {
-        if (!recordBtn || recordBtn.disabled || !groqRecorder || learningFeedbackPending) return;
+        if (!micSupportStatus.supported) {
+            setMicUnavailable(micSupportStatus.reason);
+            return;
+        }
+        if (!groqRecorder) {
+            showMicProblem('Gravador de audio indisponivel. Recarregue a pagina ou use "Prefere digitar?".', { disableMic: true });
+            return;
+        }
+        if (!recordBtn || recordBtn.disabled || learningFeedbackPending) return;
 
         const micIcon = document.getElementById('mic-icon-inner');
 
         if (!isRecording) {
             if (!checkUsageLimit()) return;
 
-            // Start recording
+            // Start recording — disable button before async getUserMedia to prevent double-tap race
+            if (recordBtn) recordBtn.disabled = true;
             try {
                 const result = await groqRecorder.start();
                 if (result.success) {
+                    clearMicProblem();
                     isRecording = true;
+                    recordBtn.disabled = false;
                     recordBtn.classList.add('recording');
                     recordBtn.classList.remove('mic-turn-highlight');
                     recordBtn.classList.add('listening');
-                    if (micIcon) micIcon.innerText = "⏹️";
-                    setRecordText("🔴 Escutando...");
+                    if (micIcon) micIcon.innerText = "";
+                    setRecordText(" Escutando...");
                     setStatusText('Listening...');
+                    // Cronometro de resposta (30s recomendado)
+                    startResponseTimer();
+                    // Desabilita "Fale mais" enquanto user esta gravando
+                    if (typeof window.disableTellMoreButton === 'function') window.disableTellMoreButton();
                 } else {
-                    addMessage("System", result.error || "Microphone Error", true);
+                    const disableMic = isPermanentMicSupportError(result.code);
+                    if (disableMic) {
+                        micSupportStatus = {
+                            supported: false,
+                            code: result.code || 'microphone_unavailable',
+                            reason: result.error || 'Microfone indisponivel neste navegador.'
+                        };
+                    } else if (recordBtn) {
+                        recordBtn.disabled = false;
+                    }
+                    showMicProblem(result.error || "Nao consegui acessar o microfone.", { disableMic });
+                    addMessage("System", result.error || "Nao consegui acessar o microfone.", true);
                 }
-            } catch (e) { console.error(e); }
+            } catch (e) {
+                if (recordBtn) recordBtn.disabled = false;
+                console.error(e);
+                showMicProblem('Nao consegui iniciar o microfone. Verifique permissoes e tente novamente.');
+            }
         } else {
             // Stop recording and transcribe
             try {
-                if (micIcon) micIcon.innerText = "⏳";
+                if (micIcon) micIcon.innerText = "";
                 recordBtn.disabled = true;
-                setRecordText("⏳ Transcrevendo...");
+                recordBtn.classList.add('processing');
+                recordBtn.classList.add('transcribing');
+                setRecordText(" Transcrevendo...");
                 setStatusText('Thinking...');
+                stopResponseTimer();
 
                 const audioBlob = await groqRecorder.stop();
                 isRecording = false;
                 recordBtn.classList.remove('recording');
                 recordBtn.classList.remove('listening');
 
-                // Transcribe — force English STT when practicing English phrases
+                // Transcribe  force English STT when practicing English phrases
                 const sttLang = (lessonState.active && lessonState.nextAction === 'evaluate_practice') ? 'en' : lessonLang;
                 const recorderMime = groqRecorder.getMimeType ? groqRecorder.getMimeType() : 'audio/webm';
                 const transcribeResult = await transcribeWithDeepgram(audioBlob, apiClient.token, sttLang, recorderMime);
@@ -2798,7 +4115,7 @@
                     }
                     const transcript = (transcribeResult.transcript || '').trim();
                     if (!isMeaningfulSpeechText(transcript)) {
-                        addMessage('System', 'Não entendi bem. Pode repetir em uma frase curta?', true);
+                        addMessage('System', 'Nao entendi bem. Pode repetir em uma frase curta?', true);
                         setStatusText('Listening...');
                         return;
                     }
@@ -2809,36 +4126,295 @@
                         processUserResponse(transcript);
                     }
                 } else if (transcribeResult.retry) {
-                    if (micIcon) micIcon.innerText = "🤔";
-                    setTimeout(() => { if (micIcon) micIcon.innerText = "🎤"; setMicReadyState(); }, 2000);
+                    addMessage('System', transcribeResult.message || 'Nao consegui ouvir sua fala. Tente de novo.', true);
+                    setStatusText('Ready');
+                    if (micIcon) micIcon.innerText = "";
+                    setTimeout(() => { if (micIcon) micIcon.innerText = ""; setMicReadyState(); }, 2000);
                 } else if (transcribeResult.usageBlocked) {
                     const usageMessage = applyUsageLimitFromServer(transcribeResult);
                     addMessage('System', usageMessage, true);
                     showUsageExceededModal(transcribeResult);
-                    if (micIcon) micIcon.innerText = "⛔";
+                    if (micIcon) micIcon.innerText = "";
                 } else {
                     throw new Error(transcribeResult.error);
                 }
 
             } catch (err) {
+                isRecording = false;
                 console.error('[Groq] Transcription error:', err);
-                if (micIcon) micIcon.innerText = "❌";
-                setTimeout(() => { if (micIcon) micIcon.innerText = "🎤"; }, 2000);
+                addMessage('System', 'Não consegui processar o áudio. Verifique o microfone e tente novamente.', true);
             } finally {
+                isRecording = false;
+                recordBtn.classList.remove('recording');
+                recordBtn.classList.remove('listening');
+                recordBtn.classList.remove('processing');
+                recordBtn.classList.remove('transcribing');
                 setMicReadyState();
-                if (!isRecording && micIcon && micIcon.innerText !== "❌" && micIcon.innerText !== "🤔" && micIcon.innerText !== "⛔") {
-                    micIcon.innerText = "🎤";
-                }
-                if (!isRecording) {
-                    setRecordText("🎤 Clique para Falar");
-                }
+                if (micIcon) micIcon.innerText = "";
+                setRecordText(" Clique para Falar");
                 syncMicTurnCue(statusIndicator ? statusIndicator.textContent : '');
             }
         }
     };
 
     if (recordBtn) recordBtn.addEventListener('click', toggleRecording);
+
+    // ========== BOTAO "FALE MAIS" ==========
+    // Visivel so em free_conversation. Habilita após Sofia terminar de falar.
+    // Ao clicar: toca filler de transicao instantaneo + pede elaboracao.
+    const tellMoreBtn = document.getElementById('tell-me-more-btn');
+    const tellMoreHint = document.getElementById('tell-me-more-hint');
+
+    function showTellMoreButton() {
+        if (!tellMoreBtn || !isFreeConversation) return;
+        tellMoreBtn.style.display = 'flex';
+        if (tellMoreHint) tellMoreHint.style.display = 'block';
+    }
+    function enableTellMoreButton() {
+        if (!tellMoreBtn || !isFreeConversation) return;
+        tellMoreBtn.disabled = false;
+        tellMoreBtn.style.opacity = '1';
+        tellMoreBtn.style.cursor = 'pointer';
+        if (typeof window.enableSofiaControlChips === 'function') window.enableSofiaControlChips();
+    }
+    function disableTellMoreButton() {
+        if (!tellMoreBtn) return;
+        tellMoreBtn.disabled = true;
+        tellMoreBtn.style.opacity = '0.55';
+        tellMoreBtn.style.cursor = 'not-allowed';
+        if (typeof window.disableSofiaControlChips === 'function') window.disableSofiaControlChips();
+    }
+    window.enableTellMoreButton = enableTellMoreButton;
+    window.disableTellMoreButton = disableTellMoreButton;
+
+    async function handleTellMoreClick() {
+        if (!isFreeConversation || tellMoreBtn.disabled || isProcessing) return;
+
+        disableTellMoreButton();
+        isProcessing = true;
+        if (recordBtn) recordBtn.disabled = true;
+        setRecordText(' Sofia elaborando...');
+
+        // 1. Toca filler de transicao (instantaneo se cacheado)
+        let transitionPromise = null;
+        try {
+            const chosenFiller = SOFIA_TELL_MORE_FILLERS[Math.floor(Math.random() * SOFIA_TELL_MORE_FILLERS.length)];
+            let fillerBlobP = tellMoreAudioCache.get(chosenFiller);
+            if (!fillerBlobP) {
+                fillerBlobP = fetchTTSSafe(cleanTextForTts(chosenFiller));
+                tellMoreAudioCache.set(chosenFiller, fillerBlobP);
+            }
+            transitionPromise = (async () => {
+                const blob = await fillerBlobP;
+                if (blob && blob.size > 0) {
+                    await playAudioBlob(blob, { playbackRate: getPlaybackRateForDifficulty() });
+                }
+            })();
+        } catch (e) { console.warn('[TellMore] filler error:', e); }
+
+        // 2. Dispara chamada de continuacao ao backend
+        showLoadingIndicator();
+        try {
+            const practiceMode = 'simulator';
+            const difficulty = window.getSelectedDifficulty ? window.getSelectedDifficulty() : 'intermediate';
+            // Prompt especial pra continuacao
+            const userText = 'Tell me more about that  elaborate on your previous thought, share more details, feelings, or a story. Take your time.';
+            const data = await apiClient.chatStream(userText, context, lessonLang, practiceMode, {
+                studentLevel,
+                turnCount: userMessageCount,
+                recentCorrections,
+                difficulty,
+                profile: danielaProfile ? 'daniela' : '',
+                tellMeMore: true  // flag pra backend saber que e continuacao
+            }, null);
+
+            hideLoadingIndicator();
+
+            // 3. Aguarda filler transicao terminar
+            if (transitionPromise) {
+                try { await transitionPromise; } catch (_) {}
+            }
+
+            // 4. Toca resposta longa
+            const responseText = data.text || '';
+            const responseTranslation = data.translation || '';
+            if (responseText) {
+                await playResponse(responseText, responseTranslation, { showInlineFeedback: false });
+            }
+        } catch (e) {
+            console.error('[TellMore] error:', e);
+            hideLoadingIndicator();
+            addMessage('System', 'Opa, Sofia nao conseguiu continuar dessa vez. Tenta falar com o microfone.', true);
+        } finally {
+            isProcessing = false;
+            if (recordBtn) recordBtn.disabled = false;
+            setMicReadyState();
+            setRecordText(' Clique para Falar');
+            // Habilita botão de novo (Sofia pode elaborar mais ainda se quiser)
+            enableTellMoreButton();
+        }
+    }
+    if (tellMoreBtn) tellMoreBtn.addEventListener('click', handleTellMoreClick);
+    // Se e free_conversation, mostra o botão desde o inicio (disabled até Sofia falar)
+    if (isFreeConversation) showTellMoreButton();
     if (reportBtn) reportBtn.addEventListener('click', sendReport);
+
+    // === Sofia control chips (controls, not student messages) ===
+    (function setupSofiaControlChips() {
+        const row = document.getElementById('control-chips-row');
+        if (!row || !isFreeConversation) return;
+
+        const correctionBtn = document.getElementById('ctrl-correction');
+        let correctionEnabled = localStorage.getItem('sofia_correction_enabled') === '1';
+
+        function syncCorrectionUI() {
+            if (correctionBtn) correctionBtn.classList.toggle('active', correctionEnabled);
+        }
+
+        function setChipsDisabled(disabled) {
+            row.querySelectorAll('.ctrl-chip').forEach(btn => {
+                btn.disabled = Boolean(disabled);
+            });
+        }
+
+        function showRow() {
+            row.style.display = 'flex';
+            setChipsDisabled(true);
+            syncCorrectionUI();
+        }
+
+        function enableRow() {
+            row.style.display = 'flex';
+            setChipsDisabled(false);
+            syncCorrectionUI();
+        }
+
+        function disableRow() {
+            setChipsDisabled(true);
+        }
+
+        async function triggerControlAction(action, button) {
+            if (!action || isProcessing) return;
+            if (button) {
+                button.classList.add('firing');
+                setTimeout(() => button.classList.remove('firing'), 800);
+            }
+
+            const sentinelByAction = {
+                easier: 'Could you make that simpler please?',
+                example: 'Could you give me an example response?',
+                topic_switch: "Let's switch to a different topic."
+            };
+            const sentinel = sentinelByAction[action] || sentinelByAction.example;
+
+            try {
+                await processUserResponse(sentinel, {
+                    silentUserMessage: true,
+                    controlAction: action,
+                    lastAiPrompt: getLatestAIQuestionPrompt()
+                });
+            } catch (e) {
+                console.error('[control-chip] action failed:', e);
+            }
+        }
+
+        if (correctionBtn) {
+            correctionBtn.addEventListener('click', () => {
+                if (correctionBtn.disabled) return;
+                correctionEnabled = !correctionEnabled;
+                syncCorrectionUI();
+                try {
+                    localStorage.setItem('sofia_correction_enabled', correctionEnabled ? '1' : '0');
+                } catch (_) {}
+            });
+        }
+
+        row.querySelectorAll('.ctrl-chip:not(.ctrl-toggle)').forEach(btn => {
+            btn.addEventListener('click', () => triggerControlAction(btn.dataset.action, btn));
+        });
+
+        window._sofiaControls = {
+            getCorrectionEnabled: () => correctionEnabled,
+            showRow,
+            enableRow,
+            disableRow
+        };
+        window.enableSofiaControlChips = enableRow;
+        window.disableSofiaControlChips = disableRow;
+
+        showRow();
+    })();
+
+    // === Text fallback (" Prefere digitar?") ===
+    // Aluno cuja transcrição falha ou que prefere digitar tem rota alternativa.
+    // Reaproveita 100% do pipeline de processUserResponse(text)  backend e
+    // resto do app nao distinguem origem voz vs texto.
+    (function setupKeyboardFallback() {
+        const toggleBtn = document.getElementById('keyboard-fallback-toggle');
+        const row = document.getElementById('keyboard-fallback-row');
+        const input = document.getElementById('keyboard-fallback-input');
+        const sendBtn = document.getElementById('keyboard-fallback-send');
+        const closeBtn = document.getElementById('keyboard-fallback-close');
+        if (!toggleBtn || !row || !input || !sendBtn || !closeBtn) return;
+
+        const expand = () => {
+            row.style.display = 'flex';
+            toggleBtn.classList.add('active');
+            try { localStorage.setItem('keyboard_fallback_used', '1'); } catch (_) {}
+            // Foca no textarea pra UX rapida
+            setTimeout(() => { try { input.focus(); } catch (_) {} }, 50);
+        };
+        const collapse = () => {
+            row.style.display = 'none';
+            toggleBtn.classList.remove('active');
+            input.value = '';
+            sendBtn.disabled = true;
+        };
+
+        toggleBtn.addEventListener('click', expand);
+        closeBtn.addEventListener('click', collapse);
+
+        // Habilita Enviar apenas com texto nao-vazio
+        input.addEventListener('input', () => {
+            sendBtn.disabled = input.value.trim().length === 0;
+        });
+
+        // Enter envia (Shift+Enter = nova linha pra textos mais longos)
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (!sendBtn.disabled) sendBtn.click();
+            }
+        });
+
+        const submitText = async () => {
+            const text = input.value.trim();
+            if (!text) return;
+            // Bloqueia duplo-envio
+            sendBtn.disabled = true;
+            try {
+                // Limpa textarea pro proximo turno
+                input.value = '';
+                // Pipeline unico  backend nao sabe a origem
+                await processUserResponse(text);
+            } catch (e) {
+                console.error('[kb-fallback] submit error:', e);
+                sendBtn.disabled = false;
+            }
+        };
+
+        sendBtn.addEventListener('click', submitText);
+
+        // Se o aluno ja usou teclado em sessões anteriores, expande automatico
+        try {
+            if (localStorage.getItem('keyboard_fallback_used') === '1') {
+                // Na verdade NAO expande automatico  pode ser intrusivo se a
+                // pessoa quer voltar pra voz. Apenas deixa o botão mais visivel.
+                toggleBtn.style.color = 'rgba(127,176,105,0.85)';
+                toggleBtn.style.borderColor = 'rgba(127,176,105,0.4)';
+            }
+        } catch (_) {}
+    })();
 
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
@@ -2852,9 +4428,9 @@
     });
 
     // --- Dynamic AI Logic ---
-    async function processUserResponse(text) {
+    async function processUserResponse(text, options = {}) {
         if (!isMeaningfulSpeechText(text)) {
-            addMessage('System', 'Não entendi bem. Pode repetir em uma frase curta?', true);
+            addMessage('System', 'Nao entendi bem. Pode repetir em uma frase curta?', true);
             setStatusText('Listening...');
             return;
         }
@@ -2864,15 +4440,18 @@
             return; // Exit early if limit reached
         }
 
-        if (isFreeConversation) {
-            await handleFreeConversationInput(text);
-            return;
-        }
+        // Nao usamos mais o fluxo guided em free_conversation  Sofia usa
+        // o /api/chat/stream como qualquer outro cenario em simulator mode.
+        // Persona Sofia definida em scenarios_db.json (context free_conversation)
+        // e aplicada pelo backend via CONTEXT_PROMPTS.
 
         const previousAIPrompt = getLatestAIQuestionPrompt();
+        const isControlTurn = Boolean(options && options.silentUserMessage);
+        const controlAction = options && options.controlAction ? String(options.controlAction) : null;
+        const controlLastAiPrompt = (options && options.lastAiPrompt) || previousAIPrompt || '';
 
         // Check if we're in structured lesson mode
-        if (lessonState.active) {
+        if (!isControlTurn && lessonState.active) {
             // If in practice mode, evaluate the practice
             if (lessonState.nextAction === 'evaluate_practice') {
                 // Show user's practice attempt
@@ -2880,8 +4459,15 @@
                 userMessageCount++;
                 updateMessageCounter();
 
-                // Evaluate the practice with Gemini
-                await evaluateLessonPractice(text);
+                // Evaluate the practice with Gemini (block re-entry while waiting)
+                isProcessing = true;
+                setMicReadyState();
+                try {
+                    await evaluateLessonPractice(text);
+                } finally {
+                    isProcessing = false;
+                    setMicReadyState();
+                }
                 return;
             }
 
@@ -2893,43 +4479,169 @@
                         addMessage(user ? user.name : "User", text);
                         userMessageCount++;
                         updateMessageCounter();
-                        await selectLessonOption(matchResult.index, matchResult.option, text);
+                        isProcessing = true;
+                        setMicReadyState();
+                        try {
+                            await selectLessonOption(matchResult.index, matchResult.option, text);
+                        } finally {
+                            isProcessing = false;
+                            setMicReadyState();
+                        }
                     } else {
                         addMessage('System', 'Could not match your speech to any option. Please try again reading one of the phrases above.', true);
                     }
+                } else {
+                    addMessage('System', 'As opções ainda estão carregando. Aguarde um momento e tente novamente.', true);
                 }
                 return;
             }
         }
 
         // 1. Show User Text
-        addMessage(user ? user.name : "User", text);
-        userMessageCount++;
-        updateMessageCounter();
-        updateSessionProgress();
-        updateReportButton();
+        if (!isControlTurn) {
+            addMessage(user ? user.name : "User", text);
+            userMessageCount++;
+            updateMessageCounter();
+            updateSessionProgress();
+            updateReportButton();
+        }
 
         // UI State
         isProcessing = true;
         if (recordBtn) {
             recordBtn.disabled = true;
-            setRecordText("⏳ Pensando...");
+            setRecordText(" Pensando...");
             recordBtn.classList.remove('recording');
+        }
+        if (typeof window.disableSofiaControlChips === 'function') window.disableSofiaControlChips();
+
+        // CONVERSATIONAL FILLER COM DELAY: agenda filler pra tocar 5s
+        // APOS transcribe completar. Com Whisper turbo transcribe caiu
+        // pra ~500ms, entao total de silencio natural = ~5.5s. Se
+        // resposta real vier antes, filler cancelado. Se demorar mais,
+        // filler preenche o gap.
+        let fillerController = null;
+        if (isFreeConversation) {
+            const wordCount = text.trim().split(/\s+/).length;
+            const endsWithQuestion = /\?\s*$/.test(text.trim());
+            if (endsWithQuestion || wordCount >= 4) {
+                fillerController = scheduleDelayedFiller(5000);
+            }
         }
 
         // Show loading indicator with animated messages
         showLoadingIndicator();
 
+        // TIMING DEBUG
+        const _perfStart = performance.now();
+        const _perfLog = (label) => {
+            const elapsed = (performance.now() - _perfStart).toFixed(0);
+            console.log(`[TIMING] +${elapsed}ms - ${label}`);
+        };
+        _perfLog('start (transcribe done, entering chat handler)');
+
         try {
             // 2. Call AI Backend with new API client (pass lessonLang and practiceMode)
             const practiceMode = window.getSelectedMode ? window.getSelectedMode() : 'learning';
             const difficulty = window.getSelectedDifficulty ? window.getSelectedDifficulty() : 'intermediate';
-            const data = await apiClient.chat(text, context, lessonLang, practiceMode, {
+
+            // HISTORIAS DE INFANCIA: a cada 2-4 turnos (aleatorio), envia
+            // flag pro backend pedir pra Sofia contar uma historia curta (~20s)
+            // de infancia dela relacionada ao topico atual, antes de perguntar.
+            // Isso adiciona humanidade e torna conversa mais proxima/intima.
+            if (!window._nextChildhoodStoryAt) {
+                window._nextChildhoodStoryAt = userMessageCount + 2 + Math.floor(Math.random() * 3);
+            }
+            const includeChildhoodStory = !isControlTurn && isFreeConversation && userMessageCount >= window._nextChildhoodStoryAt;
+            if (includeChildhoodStory) {
+                console.log(`[ChildhoodStory] triggered at turn ${userMessageCount}`);
+                // Agenda proxima em 2-4 turnos
+                window._nextChildhoodStoryAt = userMessageCount + 2 + Math.floor(Math.random() * 3);
+            }
+
+            // Progressive TTS DESATIVADO: causava variacao prosodica
+            // perceptivel entre os 2 chunks (frase 1 + resto), usuaria
+            // sentiu como "2 vozes diferentes". Trocamos ~1-2s de latencia
+            // economizada por consistencia sonora (1 sintese unica, voz
+            // coerente do inicio ao fim). O prefetch cedo (linha ~3325)
+            // ja dispara TTS em paralelo com sugestoes/popup  cobre boa
+            // parte do tempo.
+            //
+            // Pra reativar, set useProgressiveTTS = true. A classe
+            // ProgressiveTTSPlayer continua no codigo pronta pra usar.
+            const useProgressiveTTS = false;
+            const progPlayer = useProgressiveTTS ? new ProgressiveTTSPlayer() : null;
+
+            // Early TTS prefetch: dispara o fetch do TTS assim que o texto
+            // parcial parece "completo o suficiente" (termina em . ! ou ?
+            // com >= 25 palavras). Economiza ~500ms-1s vs esperar o `final`.
+            // Usa flag pra nao disparar multiplas vezes; se o texto final
+            // nao bater com o prefetch, cai no prefetch tradicional.
+            let earlyPrefetch = null;  // { text, blobPromise }
+            const maybeFireEarlyPrefetch = (accumulated) => {
+                if (earlyPrefetch) return; // ja disparou
+                const clean = String(accumulated || '').trim();
+                if (!clean) return;
+                // Heuristica: 25+ palavras e termina em . ! ?
+                const wordCount = clean.split(/\s+/).length;
+                if (wordCount < 25) return;
+                if (!/[.!?]\s*$/.test(clean)) return;
+                const ttsReady = cleanTextForTts(clean);
+                if (!ttsReady) return;
+                try {
+                    earlyPrefetch = { text: clean, blobPromise: fetchTTSSafe(ttsReady) };
+                    console.log('[TTS] early prefetch fired at partial len=', clean.length);
+                } catch (e) {
+                    console.warn('[TTS] early prefetch failed:', e);
+                }
+            };
+
+            const onPartial = (accumulated, _delta) => {
+                try {
+                    const loader = document.getElementById('loading-indicator');
+                    if (loader) {
+                        const bubble = loader.querySelector('.bubble');
+                        if (bubble) {
+                            const text = String(accumulated || '').trim();
+                            if (text) {
+                                bubble.style.cssText = 'padding: 0.6rem 1rem; opacity: 0.75; font-style: italic;';
+                                bubble.textContent = text + ' ';
+                                chatWindow.scrollTop = chatWindow.scrollHeight;
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.warn('[chat] preview update failed:', e);
+                }
+                if (progPlayer) {
+                    try { progPlayer.feedText(accumulated); } catch (e) { console.warn('[ProgTTS] feed error:', e); }
+                }
+                // Tenta disparar TTS precocemente baseado no parcial
+                maybeFireEarlyPrefetch(accumulated);
+            };
+
+            const data = await apiClient.chatStream(text, context, lessonLang, practiceMode, {
                 studentLevel,
                 turnCount: userMessageCount,
                 recentCorrections,
-                difficulty
-            });
+                difficulty,
+                includeChildhoodStory,
+                controlAction,
+                correctionEnabled: Boolean(window._sofiaControls && window._sofiaControls.getCorrectionEnabled()),
+                isControlTurn,
+                lastAiPrompt: controlLastAiPrompt,
+                profile: danielaProfile ? 'daniela' : ''
+            }, onPartial);
+            _perfLog('chatStream() returned (stream + parse complete)');
+
+            // CRITICO: finalize o progressive player JA. Dispara o fetch
+            // da 2a frase IMEDIATAMENTE em paralelo com suggestions/popup.
+            // Sem isso, o fetch so comeca depois das sugestoes (1-2s+ gap
+            // entre frase 1 e frase 2).
+            if (progPlayer && data && data.text) {
+                progPlayer.finalize(data.text);
+                progPlayer.markFinalized();
+            }
 
             // Hide loading indicator
             hideLoadingIndicator();
@@ -2965,6 +4677,64 @@
                 responseTranslation = simplified.translation || responseTranslation;
             }
 
+            // OPENER CACHE (Sofia): tenta extrair a abertura cacheada do
+            // responseText. Se achar, reusa áudio INSTANTANEO pro opener e
+            // faz TTS APENAS do resto em paralelo. Salva ~3s vs TTS full.
+            let cachedOpener = null;
+            let contentAfterOpener = responseText;
+            if (isFreeConversation) {
+                cachedOpener = detectCachedOpener(responseText);
+                if (cachedOpener) {
+                    contentAfterOpener = cachedOpener.remaining;
+                    console.log(`[Opener] matched cached: "${cachedOpener.opener}"  remaining ${contentAfterOpener.length} chars`);
+                    _perfLog(`opener cache HIT: "${cachedOpener.opener}"`);
+                    // CRITICAL: cancela o filler fixo IMEDIATAMENTE. Senao
+                    // ele fira ao 5s durante o opener/dinamic filler e toca
+                    // em paralelo com outros áudios, quebrando pipeline.
+                    if (fillerController && !fillerController.started) {
+                        fillerController.cancel();
+                        console.log('[Opener] fixed filler cancelled preemptively');
+                    }
+                } else {
+                    console.log('[Opener] no cache match, regular TTS flow');
+                }
+            }
+
+            // TTS prefetch CEDO: reusa o earlyPrefetch (disparado DURANTE o
+            // stream) se o texto bater com o chunk final. Senao fallback pro
+            // fetch novo ap\u00f3s stream completar.
+            let prefetchedFirstTTSChunk = null;
+            try {
+                // Com opener cacheado: TTS do que sobrou após opener
+                const textToFetch = cachedOpener ? contentAfterOpener : responseText;
+                const ttsReady = cleanTextForTts(textToFetch);
+                if (ttsReady) {
+                    const earlyChunks = splitTtsText(ttsReady, 480);
+                    if (earlyChunks.length > 0) {
+                        // Se cachedOpener existe, NAO reusa earlyPrefetch (texto diferente)
+                        if (!cachedOpener && earlyPrefetch && earlyPrefetch.text === responseText && earlyPrefetch.blobPromise) {
+                            prefetchedFirstTTSChunk = {
+                                text: earlyChunks[0],
+                                blobPromise: earlyPrefetch.blobPromise
+                            };
+                            console.log('[TTS] reusing early prefetch (hit)');
+                        } else {
+                            prefetchedFirstTTSChunk = {
+                                text: earlyChunks[0],
+                                blobPromise: fetchTTSSafe(earlyChunks[0])
+                            };
+                            if (earlyPrefetch && !cachedOpener) console.log('[TTS] early prefetch text mismatch, re-fetching');
+                        }
+                        _perfLog('TTS prefetch fired (content)');
+                        prefetchedFirstTTSChunk.blobPromise.then(() => {
+                            _perfLog('TTS prefetch blob ready (content)');
+                        });
+                    }
+                }
+            } catch (e) {
+                console.warn('[TTS] early prefetch failed:', e);
+            }
+
             // Show micro-feedback for simulator mode
             if (practiceMode === 'simulator' && data.feedback) {
                 setTimeout(() => showSimulatorFeedback(data.feedback), 300);
@@ -2972,15 +4742,23 @@
 
             let popupHints = [];
             let responseHints = [];
-            if (!lessonState.active) {
+            if (!lessonState.active && !isFreeConversation) {
+                // Sugestoes so em cenarios NAO-free_conversation. Em Free
+                // Conversation (Sofia), o card "Dica de resposta" esta
+                // oculto  buscar sugestoes era 1-2s desperdicados por turno
+                // bloqueando o áudio. Latencia agora fica so atras do TTS.
                 const suggestionBaseText = sanitizeCoachDisplayText(responseText) || responseText;
-                // Step 1: Fetch inline suggestions (shown below chat)
-                responseHints = await fetchDynamicSuggestions(suggestionBaseText, false);
+                const dynamicPromise = fetchDynamicSuggestions(suggestionBaseText, false);
+                const popupPromise = (practiceMode === 'learning' && previousAIPrompt)
+                    ? fetchPopupSuggestions(sanitizeCoachDisplayText(previousAIPrompt) || previousAIPrompt, [])
+                    : Promise.resolve([]);
+
+                const [dynamicResult, popupResultRaw] = await Promise.all([dynamicPromise, popupPromise]);
+                responseHints = dynamicResult || [];
 
                 if (practiceMode === 'learning' && previousAIPrompt) {
-                    // Step 2: Fetch popup suggestions EXCLUDING inline ones (must be DIFFERENT)
-                    const popupQuestionText = sanitizeCoachDisplayText(previousAIPrompt) || previousAIPrompt;
-                    const popupResult = await fetchPopupSuggestions(popupQuestionText, responseHints);
+                    const inlineSet = new Set(responseHints.map(s => String(s.en || '').trim().toLowerCase()).filter(Boolean));
+                    const popupResult = (popupResultRaw || []).filter(r => !inlineSet.has(String(r.en || '').trim().toLowerCase()));
                     popupHints = popupResult.length
                         ? popupResult.slice(0, 3)
                         : getLearningPopupReplyOptions(context, previousAIPrompt, 3);
@@ -3008,22 +4786,48 @@
                 return null;
             })();
 
+            // progPlayer ja foi finalizado logo após o stream (acima) pra
+            // nao esperar as sugestoes. Aqui so passamos pro playResponse
+            // o wait de conclusao do áudio.
+            _perfLog('calling playResponse');
+            // Tracking inline de progresso  sem depender de Relatório
+            if (isFreeConversation && !isControlTurn) trackInlineProgress();
             playResponse(responseText, responseTranslation, {
                 forceTranslation,
                 turnFeedback: inlineLearningFeedback || (hasTurnFeedback ? data.turn_feedback : null),
                 turnCorrection: !hasTurnFeedback && backendSupportsKinds ? (data.turn_correction || null) : null,
                 enableLegacyCorrectionFallback: !hasTurnFeedback,
-                // Learning mode: popup already shows feedback, skip inline cards to reduce mobile clutter
-                showInlineFeedback: practiceMode !== 'learning'
+                showInlineFeedback: practiceMode !== 'learning',
+                prefetchedFirstTTSChunk: progPlayer ? null : prefetchedFirstTTSChunk,
+                // Audio ja esta sendo tocado pelo progressive player  skip
+                // pra evitar duplicar.
+                skipAudio: Boolean(progPlayer),
+                externalAudioPromise: progPlayer ? progPlayer.waitForCompletion() : null,
+                // Controller do filler: playResponse decide se cancela
+                // (resposta pronta rapido) ou aguarda (resposta demorou).
+                fillerController,
+                // Opener cacheado (se achou): playResponse toca ele INSTANT
+                // primeiro, depois TTS do conteudo (que ja esta em prefetch).
+                cachedOpener,
+                _perfLog
             });
 
-            const showSuggestedWords = practiceMode !== 'simulator';
-            renderSuggestedWords(
-                showSuggestedWords ? (data.suggested_words || []) : [],
-                data.retry_prompt || '',
-                responseHints,
-                responseText
-            );
+            // Free Conversation (Sofia): nao mostra card "Dica de resposta".
+            // Ela e uma conversa fluida com amiga, nao uma aula com sugestoes.
+            // Card era dissonante com a proposta (parece chat de professor).
+            const showSuggestionCards = practiceMode !== 'simulator' && !isFreeConversation;
+            if (showSuggestionCards) {
+                renderSuggestedWords(
+                    data.suggested_words || [],
+                    data.retry_prompt || '',
+                    responseHints,
+                    responseText
+                );
+            } else {
+                // Limpa qualquer card antigo que possa ter ficado renderizado
+                const existingCards = chatWindow ? chatWindow.querySelectorAll('.suggested-words-card') : [];
+                existingCards.forEach(el => el.remove());
+            }
 
             // Save conversation
             saveConversation();
@@ -3040,17 +4844,29 @@
             console.error(err);
             hideLoadingIndicator();
 
-            let errorMessage = "Connection error. Please check your internet and try again.";
+            // Mensagens friendly em PT  aluno A1 nao deve ler jargao tecnico
+            // ("Connection error", "UNAVAILABLE", "AbortError") e achar que ele errou.
+            let errorMessage = "Nao consegui gerar a resposta da IA agora. Pode tentar de novo em alguns segundos?";
             const errMessage = String(err?.message || '');
+            const errMessageLower = errMessage.toLowerCase();
             const backendError = extractBackendErrorPayload(err);
             if (err?.status === 429 && isWeekendLimitError(backendError || {})) {
                 errorMessage = applyUsageLimitFromServer(backendError || {});
                 showUsageExceededModal(backendError || {});
             }
-            if (err?.status === 503 || errMessage.includes('UNAVAILABLE') || errMessage.includes('high demand')) {
-                errorMessage = "The AI model is temporarily overloaded. Please try again in a few seconds.";
+            if (
+                (err?.status === 429 && !isWeekendLimitError(backendError || {})) ||
+                errMessageLower.includes('resource_exhausted') ||
+                errMessageLower.includes('resource exhausted') ||
+                errMessageLower.includes('quota') ||
+                errMessageLower.includes('too many requests') ||
+                errMessageLower.includes('rate limit')
+            ) {
+                errorMessage = "A IA atingiu um limite temporario agora. Tente novamente em alguns segundos.";
+            } else if (err?.status === 503 || errMessage.includes('UNAVAILABLE') || errMessage.includes('high demand')) {
+                errorMessage = "A IA esta um pouco ocupada agora. Tenta de novo em alguns segundos?";
             } else if (err.name === 'AbortError') {
-                errorMessage = "The server took too long to respond. Please try again.";
+                errorMessage = "Demorou muito pra responder. Vamos tentar de novo?";
             } else if (errMessage.includes('Session expired')) {
                 errorMessage = "Your session has expired. Redirecting to login...";
             } else if (errMessage.includes('Text too long')) {
@@ -3061,8 +4877,9 @@
             isProcessing = false;
             if (recordBtn) {
                 setMicReadyState();
-                setRecordText("🎤 Clique para Falar");
+                setRecordText(" Clique para Falar");
             }
+            if (typeof window.enableSofiaControlChips === 'function') window.enableSofiaControlChips();
         }
     }
 
@@ -3193,9 +5010,25 @@
         return chunks;
     }
 
-    function playAudioBlob(blob) {
+    // Lazy-init AudioContext for volume boost (Web Audio API).
+    // Required because HTML5 <áudio> volume is capped at 1.0  we need gain > 1
+    // to make the cloned voice (recorded quietly) comfortable to hear.
+    let _ttsAudioContext = null;
+    function getTtsAudioContext() {
+        if (!_ttsAudioContext) {
+            const AC = window.AudioContext || window.webkitAudioContext;
+            if (!AC) return null;
+            _ttsAudioContext = new AC();
+        }
+        if (_ttsAudioContext.state === 'suspended') {
+            _ttsAudioContext.resume().catch(() => {});
+        }
+        return _ttsAudioContext;
+    }
+
+    function playAudioBlob(blob, opts = {}) {
         return new Promise((resolve) => {
-            // Stop any previous audio to prevent overlap
+            // Stop any previous áudio to prevent overlap
             if (currentAudio) {
                 currentAudio.pause();
                 currentAudio.currentTime = 0;
@@ -3208,6 +5041,40 @@
             const audioUrl = URL.createObjectURL(blob);
             const audio = new Audio(audioUrl);
             currentAudio = audio;
+
+            // Playback rate override (used to speed up PT áudio since Qwen ignores
+            // the server-side `speed` param). preservesPitch keeps the voice tone
+            // natural at faster rates  no chipmunk effect.
+            const rate = Number(opts.playbackRate || 1.0);
+            if (rate > 0 && rate !== 1.0) {
+                try {
+                    audio.playbackRate = rate;
+                    if ('preservesPitch' in audio) audio.preservesPitch = true;
+                    else if ('webkitPreservesPitch' in audio) audio.webkitPreservesPitch = true;
+                    else if ('mozPreservesPitch' in audio) audio.mozPreservesPitch = true;
+                } catch (e) {
+                    console.warn('[TTS] playbackRate override failed:', e && e.message);
+                }
+            }
+
+            // Volume boost via Web Audio API when the cloned voice is too quiet.
+            // window.ttsVolumeBoost can be set by app code/localStorage (default 1.6 = +60%).
+            const boost = Number(window.ttsVolumeBoost || 1.0);
+            if (boost > 1.01) {
+                try {
+                    const ctx = getTtsAudioContext();
+                    if (ctx) {
+                        const source = ctx.createMediaElementSource(audio);
+                        const gainNode = ctx.createGain();
+                        gainNode.gain.value = boost;
+                        source.connect(gainNode);
+                        gainNode.connect(ctx.destination);
+                    }
+                } catch (e) {
+                    // If gain setup fails (e.g. CORS, already-used element), fall back silently to normal playback
+                    console.warn('[TTS] Volume boost unavailable, playing at default volume:', e && e.message);
+                }
+            }
             let cleaned = false;
             const cleanup = () => {
                 if (cleaned) return;
@@ -3218,7 +5085,7 @@
                 // Re-enable microphone after playback ends
                 if (recordBtn && !isProcessing) {
                     setMicReadyState();
-                    setRecordText("🎤 Clique para Falar");
+                    setRecordText(" Clique para Falar");
                 }
                 resolve();
             };
@@ -3238,33 +5105,311 @@
         });
     }
 
+    function getBrowserTtsLang(lang) {
+        const normalized = String(lang || '').toLowerCase();
+        if (normalized.startsWith('pt')) return 'pt-BR';
+        return 'en-US';
+    }
+
+    function pickBrowserTtsVoice(lang) {
+        try {
+            const voices = window.speechSynthesis?.getVoices?.() || [];
+            if (!voices.length) return null;
+            const exact = voices.find(v => v.lang === lang && /google|microsoft|natural|online/i.test(v.name || ''));
+            if (exact) return exact;
+            const sameLang = voices.find(v => v.lang === lang);
+            if (sameLang) return sameLang;
+            const prefix = lang.split('-')[0];
+            return voices.find(v => String(v.lang || '').toLowerCase().startsWith(prefix)) || null;
+        } catch (_) {
+            return null;
+        }
+    }
+
+    async function playBrowserTTSFallback(text, lang = lessonLang, playbackRate = 1.0) {
+        const cleanText = cleanTextForTts(text || '');
+        if (!cleanText || !('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {
+            return false;
+        }
+
+        return new Promise((resolve) => {
+            try {
+                if (currentAudio) {
+                    currentAudio.pause();
+                    currentAudio.currentTime = 0;
+                    currentAudio = null;
+                }
+                window.speechSynthesis.cancel();
+                if (recordBtn) recordBtn.disabled = true;
+                setRecordText("Falando...");
+
+                const utterance = new SpeechSynthesisUtterance(cleanText);
+                utterance.lang = getBrowserTtsLang(lang);
+                utterance.rate = Math.max(0.65, Math.min(1.35, Number(playbackRate || 1.0)));
+                utterance.pitch = 1.0;
+                utterance.volume = 1.0;
+                const voice = pickBrowserTtsVoice(utterance.lang);
+                if (voice) utterance.voice = voice;
+
+                let done = false;
+                const finish = () => {
+                    if (done) return;
+                    done = true;
+                    if (window.stopAvatarTalking) window.stopAvatarTalking();
+                    if (recordBtn && !isProcessing) {
+                        setMicReadyState();
+                        setRecordText(" Clique para Falar");
+                    }
+                    resolve(true);
+                };
+
+                utterance.onstart = () => {
+                    if (window.startAvatarTalking) window.startAvatarTalking();
+                };
+                utterance.onend = finish;
+                utterance.onerror = (event) => {
+                    console.warn('[TTS] Browser speech fallback ended with error:', event?.error || event);
+                    finish();
+                };
+
+                console.warn('[TTS] Server TTS unavailable. Using browser speech fallback.');
+                window.speechSynthesis.speak(utterance);
+                setTimeout(finish, Math.max(2500, cleanText.length * 95));
+            } catch (e) {
+                console.warn('[TTS] Browser speech fallback failed:', e?.message || e);
+                resolve(false);
+            }
+        });
+    }
+
     function finalizePlayback(skipBtn) {
         isProcessing = false;
         if (recordBtn) {
             setMicReadyState();
-            setRecordText("🎤 Clique para Falar");
+            setRecordText(" Clique para Falar");
         }
         if (window.stopAvatarTalking) window.stopAvatarTalking();
         currentAudio = null;
         if (skipBtn) skipBtn.remove();
     }
 
-    async function fetchTTSSafe(chunk) {
+    /**
+     * Taxa de reproducao por nivel. Qwen (voz clonada) ignora speed do servidor,
+     * entao fazemos client-side via audio.playbackRate com preservesPitch pra
+     * manter o timbre natural (sem efeito chipmunk). preservesPitch e padrão
+     * true nos browsers modernos.
+     */
+    function getPlaybackRateForDifficulty() {
         try {
-            return await apiClient.getTTS(chunk, ttsSpeed, lessonLang, getActiveVoice());
-        } catch (err) {
-            console.error("TTS prefetch error:", err);
-            return null;
+            const diff = (window.getSelectedDifficulty ? window.getSelectedDifficulty() : 'intermediate').toLowerCase();
+            if (diff === 'zero') return 0.65;
+            if (diff === 'beginner') return 0.85;   // ~15% mais devagar, diccao mais clara
+            if (diff === 'advanced') return 1.0;    // velocidade natural (user pediu "sem exagero")
+            return 1.0;                              // intermediate = natural
+        } catch (_) {
+            return 1.0;
+        }
+    }
+
+    async function fetchTTSSafe(chunk) {
+        // Tenta 1x normal + 1 retry em 500ms. Qwen as vezes da 500 transiente
+        // (quota de burst, erro do provider). Retry resolve sem usuario perceber.
+        for (let attempt = 0; attempt < 2; attempt++) {
+            try {
+                return await apiClient.getTTS(chunk, ttsSpeed, lessonLang, getActiveVoice());
+            } catch (err) {
+                const isLast = attempt === 1;
+                console.warn(`[TTS] fetch attempt ${attempt + 1} failed${isLast ? ' (giving up)' : ', retrying in 500ms'}:`, err?.message || err);
+                if (isLast) return null;
+                await new Promise(r => setTimeout(r, 500));
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Progressive TTS v2  2 chunks only:
+     *   1) Primeira frase (fetch disparado assim que detectada no stream)
+     *   2) Resto do texto (fetch disparado após o stream completar)
+     *
+     * Motivo: fetch por frase causa variacao prosodica perceptivel entre
+     * segmentos  perguntas soam diferentes de declarativas porque cada
+     * fetch reinicia a voz clonada com prosodia propria. Com 2 chunks,
+     * o "resto" e UMA sintese continua (voz consistente) e a latencia
+     * inicial ja foi coberta pela 1a frase.
+     *
+     * Usado SO em free_conversation + simulator.
+     */
+    class ProgressiveTTSPlayer {
+        constructor() {
+            this.firstQueued = false;
+            this.firstSentenceText = null;
+            this.queue = [];                    // [{ text, blobPromise }]
+            this.isPlaying = false;
+            this.stopped = false;
+            this._finalized = false;
+            this.playbackDone = null;
+            this._donePromise = new Promise(resolve => { this.playbackDone = resolve; });
+        }
+
+        /** Alimenta acumulado do stream. Dispara fetch da 1a frase assim que
+         *  detectada (após 1o `.!?`). Ignora frases subsequentes. */
+        feedText(accumulated) {
+            if (this.stopped || this.firstQueued || !accumulated) return;
+            const firstSentence = this._extractFirstCompleteSentence(String(accumulated));
+            if (firstSentence) {
+                this.firstQueued = true;
+                this.firstSentenceText = firstSentence;
+                const ttsReady = cleanTextForTts(firstSentence);
+                if (ttsReady) {
+                    const blobPromise = fetchTTSSafe(ttsReady);
+                    this.queue.push({ text: firstSentence, blobPromise });
+                    this._maybeStartPlayback();
+                }
+            }
+        }
+
+        /** No final do stream, enfileira o RESTO do texto (tudo após a 1a
+         *  frase que ja enfileiramos) como UMA unica sintese continua. */
+        finalize(fullText) {
+            if (this.stopped || !fullText) return;
+            const full = String(fullText).trim();
+            let remainder;
+            if (this.firstSentenceText && full.startsWith(this.firstSentenceText)) {
+                remainder = full.slice(this.firstSentenceText.length).trim();
+            } else if (this.firstSentenceText) {
+                // Fallback: se 1a frase nao bateu exatamente, tenta match parcial
+                const idx = full.indexOf(this.firstSentenceText);
+                if (idx >= 0) {
+                    remainder = full.slice(idx + this.firstSentenceText.length).trim();
+                } else {
+                    remainder = full; // pior caso  re-toca tudo (sem 1a enfileirada)
+                }
+            } else {
+                // Stream terminou sem detectar 1a frase (sem pontuacao)  enfileira tudo
+                remainder = full;
+            }
+            if (remainder) {
+                const ttsReady = cleanTextForTts(remainder);
+                if (ttsReady) {
+                    const blobPromise = fetchTTSSafe(ttsReady);
+                    this.queue.push({ text: remainder, blobPromise });
+                }
+            }
+            this._maybeStartPlayback();
+        }
+
+        /** Retorna a primeira frase completa (terminando em .!?) ou null. */
+        _extractFirstCompleteSentence(text) {
+            const match = text.match(/^([^.!?\n]+[.!?]+)(?=\s|$)/);
+            return match ? match[1].trim() : null;
+        }
+
+        async _maybeStartPlayback() {
+            if (this.isPlaying || this.stopped) return;
+            this.isPlaying = true;
+            // Taxa de reproducao por nivel (iniciante = mais devagar)
+            const rate = getPlaybackRateForDifficulty();
+            while (this.queue.length > 0 && !this.stopped && !ttsCancelled) {
+                const { text, blobPromise } = this.queue.shift();
+                try {
+                    const blob = await blobPromise;
+                    if (this.stopped || ttsCancelled) break;
+                    if (blob && blob.size > 0) {
+                        await playAudioBlob(blob, { playbackRate: rate });
+                    } else {
+                        await playBrowserTTSFallback(text, lessonLang, getPlaybackRateForDifficulty());
+                    }
+                } catch (e) {
+                    console.warn('[ProgTTS] playback error:', e?.message || e);
+                    await playBrowserTTSFallback(text, lessonLang, getPlaybackRateForDifficulty());
+                }
+            }
+            this.isPlaying = false;
+            if (ttsCancelled) this.stopped = true;
+            if (this.stopped || this._finalized) {
+                if (this.playbackDone) { this.playbackDone(); this.playbackDone = null; }
+            }
+        }
+
+        /** Sinaliza que nao haverao mais feeds. waitForCompletion pode resolver. */
+        markFinalized() {
+            this._finalized = true;
+            // Se a fila ja esvaziou e nao ta tocando, resolve agora.
+            if (!this.isPlaying && this.queue.length === 0 && this.playbackDone) {
+                this.playbackDone();
+                this.playbackDone = null;
+            }
+        }
+
+        /** Aguarda até todas as frases enfileiradas terem tocado (após markFinalized). */
+        async waitForCompletion() {
+            return this._donePromise;
+        }
+
+        stop() {
+            this.stopped = true;
+            if (this.playbackDone) { this.playbackDone(); this.playbackDone = null; }
         }
     }
 
     async function playResponse(text, translation = "", options = {}) {
+        // Opener cacheado: TTS real so precisa cobrir o conteudo após opener.
+        // O opener cached áudio toca primeiro, depois chunks do conteudo.
+        const cachedOpener = options && options.cachedOpener;
+        const textForTts = cachedOpener ? cachedOpener.remaining : text;
+
         // Clean text for TTS (remove translations/metadata)
-        const ttsText = cleanTextForTts(text);
+        const ttsText = cleanTextForTts(textForTts);
 
         // Split text and start fetching first chunk BEFORE DOM work
         const chunks = splitTtsText(ttsText, 480);
-        let firstBlobPromise = chunks.length > 0 ? fetchTTSSafe(chunks[0]) : null;
+
+        // skipAudio = progressive TTS (ou outro mecanismo externo) ja esta
+        // cuidando do áudio. Nao buscamos/tocamos aqui pra nao duplicar.
+        const skipAudio = !!(options && options.skipAudio);
+        const externalAudioPromise = options && options.externalAudioPromise;
+
+        // Reusa prefetch se o texto do primeiro chunk for identico. Caso
+        // contrario (texto mudou entre prefetch e playResponse), abre fetch
+        // novo  sem regressao, so um fetch desperdicado.
+        let firstBlobPromise = null;
+        if (!skipAudio && chunks.length > 0) {
+            const pre = options && options.prefetchedFirstTTSChunk;
+            if (pre && pre.text === chunks[0] && pre.blobPromise) {
+                firstBlobPromise = pre.blobPromise;
+            } else {
+                firstBlobPromise = fetchTTSSafe(chunks[0]);
+            }
+        }
+
+        // If dual-TTS is enabled (beginner default), prefetch the PT translation
+        // áudio in parallel so there's no extra delay after the EN finishes.
+        const shouldSpeakPt = !!(window.speakPtTranslation && translation && translation.trim());
+        // DEBUG: log pra entender por que dual-TTS nao ativa
+        console.log('[Dual-TTS] diagnostic:', {
+            speakPtTranslation: window.speakPtTranslation,
+            translation_exists: !!translation,
+            translation_len: (translation || '').length,
+            translation_preview: (translation || '').slice(0, 80),
+            shouldSpeakPt
+        });
+        let ptBlobPromise = null;
+        if (shouldSpeakPt) {
+            const ptText = cleanTextForTts(translation);
+            if (ptText && ptText.trim()) {
+                console.log('[Dual-TTS] fetching PT áudio for:', ptText.slice(0, 80));
+                ptBlobPromise = apiClient.getTTS(ptText, 1.0, 'pt', getActiveVoice())
+                    .catch(err => {
+                        console.warn('[Dual TTS] PT translation fetch failed:', err);
+                        return null;
+                    });
+            } else {
+                console.warn('[Dual-TTS] translation vazia após clean  PT nao sera tocado');
+            }
+        } else if (window.speakPtTranslation) {
+            console.warn('[Dual-TTS] toggle esta ON mas translation veio vazio da IA. Backend devia ter enviado pt. Verificar logs /api/chat/stream');
+        }
 
         // Keep the last asked question cached for learning hints/popups.
         rememberAIQuestionPrompt(text);
@@ -3273,19 +5418,140 @@
         addMessage("AI", text, true, true, translation, options);
         saveConversation();
 
-        // Play audio with prefetch pipeline
+        // Se o áudio esta sendo tratado externamente (progressive TTS, por ex),
+        // apenas aguardamos ele terminar e finalizamos o UI state  nao
+        // buscamos nem tocamos blobs aqui.
+        if (skipAudio) {
+            try {
+                ttsCancelled = false;
+                const skipBtn = showSkipAudioButton();
+                setRecordText("Falando...");
+                if (externalAudioPromise) {
+                    await externalAudioPromise;
+                }
+                finalizePlayback(skipBtn);
+            } catch (e) {
+                console.warn('[playResponse] external áudio wait error:', e);
+                finalizePlayback();
+            }
+            return;
+        }
+
+        // Play áudio with prefetch pipeline
         try {
             ttsCancelled = false;
-            if (chunks.length === 0) return;
+            if (chunks.length === 0) {
+                finalizePlayback();
+                if (typeof window.enableTellMoreButton === 'function') window.enableTellMoreButton();
+                return;
+            }
             const skipBtn = showSkipAudioButton();
 
+            // Helper: play PT translation if dual-TTS enabled.
+            // Portuguese always plays at 1.25x  native speakers don't need slow áudio.
+            // Qwen ignores server-side speed param, so rate is applied here via <áudio>.playbackRate.
+            const playPtIfNeeded = async () => {
+                if (!shouldSpeakPt || !ptBlobPromise || ttsCancelled) return;
+                try {
+                    const ptBlob = await ptBlobPromise;
+                    if (ptBlob && ptBlob.size > 0 && !ttsCancelled) {
+                        await playAudioBlob(ptBlob, { playbackRate: 1.25 });
+                    } else if (!ttsCancelled) {
+                        await playBrowserTTSFallback(translation, 'pt', 1.25);
+                    }
+                } catch (err) {
+                    console.warn('[Dual TTS] PT playback failed:', err);
+                    await playBrowserTTSFallback(translation, 'pt', 1.25);
+                }
+            };
+
+            // Order controlled by window.ptFirst (localStorage 'tts_pt_first'):
+            //  - false (default): EN first, then PT (intermediate anchoring)
+            //  - true:            PT first, then EN (super-beginner needs meaning first)
+            const ptFirst = !!window.ptFirst;
+            if (ptFirst) {
+                // Play PT first so student understands meaning, then the target EN
+                await playPtIfNeeded();
+            }
+
+            // If the main TTS text is Portuguese (grammar PT modes, etc.),
+            // speed it up  native speakers want a natural-to-fast pace.
+            // EN respeita a dificuldade: iniciante ouve ~15% mais devagar
+            // pra melhor diccao, intermediario e avancado ficam naturais.
+            const mainPlaybackRate = (lessonLang === 'pt') ? 1.25 : getPlaybackRateForDifficulty();
+
             let nextBlobPromise = firstBlobPromise;
+
+            // Filler logic: esperamos o blob real ficar pronto primeiro.
+            // Depois decidimos:
+            //   - Se filler nao comecou ainda  cancela (resposta ficou rapida,
+            //     nao precisa de filler, zero atrito pra user)
+            //   - Se filler ja comecou  aguarda ele terminar pra nao cortar
+            const fillerController = options && options.fillerController;
+
+            const _plog = options && options._perfLog;
+
+            // OPENER CACHEADO: toca (cache instantaneo) após 1s de pausa
+            // natural de "processamento". Total silencio: ~3s (transcribe
+            // + chat + 1s)  parece Sofia processando sem robotico.
+            // NAO cancela filler ainda  se content TTS nao estiver pronto
+            // quando opener terminar, filler dinamico cobre o gap.
+            if (cachedOpener && cachedOpener.blobPromise) {
+                try {
+                    // Pausa de processamento antes da Sofia falar (2s = pensando)
+                    const OPENER_THINK_DELAY_MS = 2000;
+                    if (_plog) _plog(`waiting ${OPENER_THINK_DELAY_MS}ms for natural "thinking" pause`);
+                    await new Promise(r => setTimeout(r, OPENER_THINK_DELAY_MS));
+                    if (ttsCancelled) return;
+                    const openerBlob = await cachedOpener.blobPromise;
+                    if (openerBlob && openerBlob.size > 0 && !ttsCancelled) {
+                        if (_plog) _plog('playing CACHED opener NOW');
+                        await playAudioBlob(openerBlob, { playbackRate: mainPlaybackRate });
+                        if (_plog) _plog('opener áudio finished');
+                    }
+                } catch (e) {
+                    console.warn('[Opener] playback error:', e);
+                }
+            }
+
+            // FILLER DINAMICO APOS OPENER: se cachedOpener foi tocado e o
+            // content TTS ainda nao esta pronto, toca um filler pra cobrir
+            // o gap. (O fixo ja foi cancelado preemptivamente no chat handler.)
+            if (cachedOpener && nextBlobPromise) {
+                // Checa se blob ja ta pronto (timing imediato, sem block)
+                const blobReadyCheck = Promise.race([
+                    nextBlobPromise.then(() => 'ready'),
+                    new Promise(r => setTimeout(() => r('not_ready'), 50))
+                ]);
+                const status = await blobReadyCheck;
+                if (status === 'not_ready') {
+                    if (_plog) _plog('content not ready after opener  playing DYNAMIC filler');
+                    try {
+                        const filler = SOFIA_FILLERS[Math.floor(Math.random() * SOFIA_FILLERS.length)];
+                        let fillerBlobP = fillerAudioCache.get(filler);
+                        if (!fillerBlobP) {
+                            fillerBlobP = fetchTTSSafe(cleanTextForTts(filler));
+                            fillerAudioCache.set(filler, fillerBlobP);
+                        }
+                        const fblob = await fillerBlobP;
+                        if (fblob && fblob.size > 0 && !ttsCancelled) {
+                            if (_plog) _plog(`playing filler: "${filler}"`);
+                            await playAudioBlob(fblob, { playbackRate: 0.85 });
+                        }
+                    } catch (e) {
+                        console.warn('[Filler] dynamic playback error:', e);
+                    }
+                } else {
+                    if (_plog) _plog('content ready right after opener  no filler needed');
+                }
+            }
 
             for (let i = 0; i < chunks.length; i++) {
                 if (ttsCancelled) break;
 
-                // Await the blob that was already being fetched
+                // Await the blob (TTS fetch)
                 const blob = await nextBlobPromise;
+                if (i === 0 && _plog) _plog('first content TTS blob awaited  ready to play');
 
                 // Start prefetching the NEXT chunk while this one plays
                 if (i + 1 < chunks.length) {
@@ -3293,21 +5559,47 @@
                 }
 
                 if (ttsCancelled) break;
+
+                // Filler FIXO: so se nao tinha cachedOpener (fluxo antigo)
+                if (i === 0 && fillerController && !cachedOpener) {
+                    if (!fillerController.started) {
+                        if (_plog) _plog('filler CANCELLED (TTS was fast)');
+                        fillerController.cancel();
+                    } else {
+                        if (_plog) _plog('filler already started  waiting for it to finish');
+                        try { await fillerController.promise; } catch (_) {}
+                        if (_plog) _plog('filler finished');
+                    }
+                }
+
                 if (blob && blob.size > 0) {
-                    await playAudioBlob(blob);
+                    if (i === 0 && _plog) _plog('playing real content áudio NOW');
+                    await playAudioBlob(blob, { playbackRate: mainPlaybackRate });
+                }
+                else {
+                    if (i === 0 && _plog) _plog('server TTS unavailable - using browser fallback');
+                    await playBrowserTTSFallback(chunks[i], lessonLang, getPlaybackRateForDifficulty());
                 }
             }
 
+            if (!ptFirst) {
+                // Default: PT comes after the EN
+                await playPtIfNeeded();
+            }
+
             finalizePlayback(skipBtn);
+            // Sofia terminou de falar  habilita botão "Fale mais"
+            if (typeof window.enableTellMoreButton === 'function') window.enableTellMoreButton();
         } catch (e) {
             console.error("TTS Error:", e);
             finalizePlayback();
+            if (typeof window.enableTellMoreButton === 'function') window.enableTellMoreButton();
         }
     }
 
     /**
-     * Play audio for a lesson option (without adding to chat)
-     * Used by the audio button on each option card
+     * Play áudio for a lesson option (without adding to chat)
+     * Used by the áudio button on each option card
      */
     async function playOptionAudio(text) {
         if (!text) return;
@@ -3316,9 +5608,12 @@
             const blob = await apiClient.getTTS(text, ttsSpeed, lessonLang, getActiveVoice());
             if (blob && blob.size > 0) {
                 await playAudioBlob(blob);
+            } else {
+                await playBrowserTTSFallback(text, lessonLang, getPlaybackRateForDifficulty());
             }
         } catch (e) {
-            console.error("Option audio TTS error:", e);
+            console.error("Option áudio TTS error:", e);
+            await playBrowserTTSFallback(text, lessonLang, getPlaybackRateForDifficulty());
         }
     }
 
@@ -3371,7 +5666,9 @@
         showLoadingIndicator();
 
         try {
-            const data = await apiClient.generateReport(conversationLog, context);
+            const currentMode = window.getSelectedMode ? window.getSelectedMode() : 'learning';
+            const currentDifficultyForReport = (window.getSelectedDifficulty ? window.getSelectedDifficulty() : (localStorage.getItem('practice_difficulty') || 'intermediate'));
+            const data = await apiClient.generateReport(conversationLog, context, currentMode, currentDifficultyForReport);
             hideLoadingIndicator();
 
             // Save report data for export
@@ -3398,7 +5695,74 @@
             }
         } finally {
             activeBtn.disabled = false;
-            activeBtn.innerText = originalLabel || "Gerar relatorio da conversa";
+            activeBtn.innerText = originalLabel || "Gerar relatório da conversa";
+        }
+    }
+
+    /**
+     * Tracking incremental de progresso  chamado a cada turno do aluno.
+     * Atualiza student_progress (usado pelo dashboard de conquistas) com:
+     *   - totalSessions: +1 se for o 1o turno da sessao
+     *   - totalMinutes: +0.5 por turno
+     *   - scenarios: adiciona contexto se novo
+     *   - dailyMinutesToday + dailyDate (meta diária)
+     *   - streakWeeks: atualiza semana
+     *   - badgesUnlocked: marca quais foram conquistados
+     * Assim, mesmo sem clicar em "Relatório", o aluno acumula progresso.
+     */
+    function trackInlineProgress() {
+        try {
+            const KEY = 'student_progress';
+            let data;
+            try {
+                data = JSON.parse(localStorage.getItem(KEY) || 'null');
+            } catch (_) { data = null; }
+            if (!data) {
+                data = {
+                    totalSessions: 0,
+                    totalMinutes: 0,
+                    scores: [],
+                    scenarios: [],
+                    errors: [],
+                    streakWeeks: 0,
+                    lastPracticeWeek: null,
+                    badgesUnlocked: [],
+                    dailyMinutesToday: 0,
+                    dailyDate: null
+                };
+            }
+
+            const today = new Date().toISOString().slice(0, 10);
+            if (data.dailyDate !== today) {
+                data.dailyMinutesToday = 0;
+                data.dailyDate = today;
+                data.totalSessions = (data.totalSessions || 0) + 1;  // nova sessao diária
+            }
+
+            data.totalMinutes = (data.totalMinutes || 0) + 0.5;  // ~30s por turno
+            data.dailyMinutesToday = (data.dailyMinutesToday || 0) + 0.5;
+
+            if (context && !data.scenarios.includes(context)) {
+                data.scenarios.push(context);
+            }
+
+            // Streak semanal (ISO week)
+            const getWeek = (d) => {
+                const dt = new Date(d);
+                dt.setHours(0, 0, 0, 0);
+                dt.setDate(dt.getDate() + 4 - (dt.getDay() || 7));
+                const y = new Date(dt.getFullYear(), 0, 1);
+                return `${dt.getFullYear()}-W${Math.ceil(((dt - y) / 86400000 + 1) / 7)}`;
+            };
+            const thisWeek = getWeek(new Date());
+            if (data.lastPracticeWeek !== thisWeek) {
+                data.streakWeeks = (data.streakWeeks || 0) + 1;
+                data.lastPracticeWeek = thisWeek;
+            }
+
+            localStorage.setItem(KEY, JSON.stringify(data));
+        } catch (e) {
+            console.warn('[InlineProgress] save failed:', e);
         }
     }
 
@@ -3457,6 +5821,11 @@
         const wrapper = document.createElement('div');
         wrapper.className = 'report-card';
 
+        const canDoSection = buildCanDoSection(info.can_do_markers);
+        if (canDoSection) {
+            wrapper.appendChild(canDoSection);
+        }
+
         // Overall score section
         const notaGeral = info.nota_geral !== null ? info.nota_geral : computeAvgNaturalidade(info.analise_frases);
         const scoreColor = notaGeral >= 80 ? '#22c55e' : notaGeral >= 50 ? '#f59e0b' : '#ef4444';
@@ -3486,18 +5855,18 @@
         // Meta
         const meta = document.createElement('div');
         meta.className = 'report-meta';
-        meta.appendChild(createChip('Contexto', contextName, '📍'));
-        meta.appendChild(createChip('Trocas', `${stats.total} falas`, '🗣️'));
-        meta.appendChild(createChip('Voce', `${stats.user} msg`, '👤'));
-        meta.appendChild(createChip('AI', `${stats.ai} msg`, '🤖'));
+        meta.appendChild(createChip('Contexto', contextName, ''));
+        meta.appendChild(createChip('Trocas', `${stats.total} falas`, ''));
+        meta.appendChild(createChip('Você', `${stats.user} msg`, ''));
+        meta.appendChild(createChip('AI', `${stats.ai} msg`, ''));
         wrapper.appendChild(meta);
 
         // Elogios section
         if (info.elogios && info.elogios.length) {
             const elogiosBlock = document.createElement('div');
             elogiosBlock.style.cssText = 'margin-top:16px;padding:14px;background:rgba(34,197,94,0.08);border-left:3px solid #22c55e;border-radius:8px;';
-            elogiosBlock.innerHTML = `<div style="font-weight:700;margin-bottom:8px;font-size:0.95rem;">🌟 O que você fez bem</div>` +
-                info.elogios.map(e => `<div style="margin-bottom:4px;font-size:0.9rem;color:#d1d5db;">• ${escapeHtml(e)}</div>`).join('');
+            elogiosBlock.innerHTML = `<div style="font-weight:700;margin-bottom:8px;font-size:0.95rem;"> O que você fez bem</div>` +
+                info.elogios.map(e => `<div style="margin-bottom:4px;font-size:0.9rem;color:#d1d5db;"> ${escapeHtml(e)}</div>`).join('');
             wrapper.appendChild(elogiosBlock);
         }
 
@@ -3505,17 +5874,17 @@
         if (info.dicas && info.dicas.length) {
             const dicasBlock = document.createElement('div');
             dicasBlock.style.cssText = 'margin-top:12px;padding:14px;background:rgba(245,158,11,0.08);border-left:3px solid #f59e0b;border-radius:8px;';
-            dicasBlock.innerHTML = `<div style="font-weight:700;margin-bottom:8px;font-size:0.95rem;">📈 O que melhorar</div>` +
-                info.dicas.map(d => `<div style="margin-bottom:4px;font-size:0.9rem;color:#d1d5db;">• ${escapeHtml(d)}</div>`).join('');
+            dicasBlock.innerHTML = `<div style="font-weight:700;margin-bottom:8px;font-size:0.95rem;"> O que melhorar</div>` +
+                info.dicas.map(d => `<div style="margin-bottom:4px;font-size:0.9rem;color:#d1d5db;"> ${escapeHtml(d)}</div>`).join('');
             wrapper.appendChild(dicasBlock);
         }
 
         // Practice phrase
-        if (info.frase_pratica) {
+        if (info.frase_prática) {
             const practiceBlock = document.createElement('div');
             practiceBlock.style.cssText = 'text-align:center;padding:18px;margin:16px 0;background:rgba(99,102,241,0.1);border:2px solid rgba(99,102,241,0.3);border-radius:12px;';
-            practiceBlock.innerHTML = `<div style="font-size:0.8rem;color:#94a3b8;">🎯 Sua próxima missão</div>
-                <div style="font-size:1.05rem;font-weight:700;margin-top:8px;color:#fff;">"${escapeHtml(info.frase_pratica)}"</div>`;
+            practiceBlock.innerHTML = `<div style="font-size:0.8rem;color:#94a3b8;"> Sua proxima missao</div>
+                <div style="font-size:1.05rem;font-weight:700;margin-top:8px;color:#fff;">"${escapeHtml(info.frase_prática)}"</div>`;
             wrapper.appendChild(practiceBlock);
         }
 
@@ -3525,14 +5894,14 @@
         }
 
         if (info.erros_recorrentes && info.erros_recorrentes.length) {
-            wrapper.appendChild(buildSimpleBlock('Erros recorrentes', '⚠️', info.erros_recorrentes, 'Sem padrões recorrentes.'));
+            wrapper.appendChild(buildSimpleBlock('Erros recorrentes', '', info.erros_recorrentes, 'Sem padroes recorrentes.'));
         }
 
         if (info.plano_estudo && info.plano_estudo.length) {
-            wrapper.appendChild(buildSimpleBlock('Plano de estudo', '🧭', info.plano_estudo, 'Sem plano disponível.'));
+            wrapper.appendChild(buildSimpleBlock('Plano de estudo', '', info.plano_estudo, 'Sem plano disponivel.'));
         }
 
-        // Export buttons removed — report shown in modal only
+        // Export buttons removed  report shown in modal only
 
         if (info.raw && !info.wasStructured) {
             const rawNote = document.createElement('div');
@@ -3551,6 +5920,52 @@
         }
     }
 
+    function buildCanDoSection(markers) {
+        if (!Array.isArray(markers) || !markers.length) return null;
+
+        const section = document.createElement('div');
+        section.className = 'can-do-section';
+
+        const title = document.createElement('div');
+        title.className = 'can-do-title';
+        title.textContent = ' O que você conseguiu nesta conversa';
+        section.appendChild(title);
+
+        const row = document.createElement('div');
+        row.className = 'can-do-row';
+        markers.forEach(marker => {
+            if (!marker || !marker.label) return;
+            const chip = document.createElement('div');
+            chip.className = 'can-do-chip';
+            chip.textContent = ` ${marker.label}`;
+            if (marker.evidence) {
+                chip.title = `Exemplo: "${marker.evidence}"`;
+            }
+            row.appendChild(chip);
+        });
+        if (!row.children.length) return null;
+
+        section.appendChild(row);
+        return section;
+    }
+
+    function buildCanDoHtml(markers, escapeFn) {
+        if (!Array.isArray(markers) || !markers.length) return '';
+        const chips = markers
+            .filter(marker => marker && marker.label)
+            .map(marker => {
+                const title = marker.evidence ? ` title="Exemplo: &quot;${escapeFn(marker.evidence)}&quot;"` : '';
+                return `<span class="can-do-chip"${title}> ${escapeFn(marker.label)}</span>`;
+            })
+            .join('');
+        if (!chips) return '';
+        return `
+  <section class="can-do-section">
+    <div class="can-do-title"> O que você conseguiu nesta conversa</div>
+    <div class="can-do-row">${chips}</div>
+  </section>`;
+    }
+
     function openReportWindow(apiPayload, existingWindow = null) {
         const info = normalizeReportData(apiPayload);
         const stats = getConversationStats();
@@ -3565,11 +5980,54 @@
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
 
-        // Compute overall score (from Gemini or fallback)
+        // Compute overall score (from Gemini or fallback) + breakdown
         const notaGeral = info.nota_geral !== null ? info.nota_geral : computeAvgNaturalidade(info.analise_frases);
         const scoreColor = notaGeral >= 80 ? '#22c55e' : notaGeral >= 50 ? '#f59e0b' : '#ef4444';
         const dashLength = (notaGeral / 100) * 326.7;
         const notaLabel = notaGeral >= 90 ? 'Excelente!' : notaGeral >= 75 ? 'Muito Bom!' : notaGeral >= 60 ? 'Bom progresso!' : notaGeral >= 40 ? 'Continue praticando!' : 'Vamos melhorar juntos!';
+
+        // Breakdown: explica de onde vem a nota. Feedback da aluna: "mostra
+        // 50 de 100 mas porque?"  ela nao entendia a razao da nota.
+        const frasesArr = Array.isArray(info.analise_frases) ? info.analise_frases : [];
+        const avgNat = frasesArr.length
+            ? Math.round(frasesArr.reduce((a, f) => a + (typeof f.naturalidade === 'number' ? f.naturalidade : 50), 0) / frasesArr.length)
+            : 0;
+        const corretasPct = frasesArr.length
+            ? Math.round((frasesArr.filter(f => (typeof f.naturalidade === 'number' ? f.naturalidade : 50) >= 75).length / frasesArr.length) * 100)
+            : 0;
+        const numErros = (info.correcoes || []).length;
+        const numElogios = (info.elogios || []).length;
+        const scoreBreakdownHtml = `
+          <section class="score-breakdown" style="background:var(--panel);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:18px 20px;margin-bottom:8px;">
+            <div style="font-size:0.95rem;font-weight:700;margin-bottom:10px;color:var(--text);"> De onde vem essa nota ${notaGeral}/100</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:10px;">
+              <div style="background:rgba(255,255,255,0.03);padding:10px 12px;border-radius:10px;border-left:3px solid #818cf8;">
+                <div style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">Naturalidade media</div>
+                <div style="font-size:1.4rem;font-weight:700;color:#a5b4fc;">${avgNat}<span style="font-size:0.75rem;color:var(--muted);">/100</span></div>
+                <div style="font-size:0.72rem;color:var(--muted);margin-top:2px;">quao proximo do nativo</div>
+              </div>
+              <div style="background:rgba(255,255,255,0.03);padding:10px 12px;border-radius:10px;border-left:3px solid #22c55e;">
+                <div style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">Frases corretas</div>
+                <div style="font-size:1.4rem;font-weight:700;color:#22c55e;">${corretasPct}%</div>
+                <div style="font-size:0.72rem;color:var(--muted);margin-top:2px;">acima de 75/100</div>
+              </div>
+              <div style="background:rgba(255,255,255,0.03);padding:10px 12px;border-radius:10px;border-left:3px solid #f59e0b;">
+                <div style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">Pontos a corrigir</div>
+                <div style="font-size:1.4rem;font-weight:700;color:#f59e0b;">${numErros}</div>
+                <div style="font-size:0.72rem;color:var(--muted);margin-top:2px;">${numErros === 1 ? 'correcao sugerida' : 'correcoes sugeridas'}</div>
+              </div>
+              <div style="background:rgba(255,255,255,0.03);padding:10px 12px;border-radius:10px;border-left:3px solid #22c55e;">
+                <div style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">Elogios ganhos</div>
+                <div style="font-size:1.4rem;font-weight:700;color:#22c55e;">${numElogios}</div>
+                <div style="font-size:0.72rem;color:var(--muted);margin-top:2px;">${numElogios === 1 ? 'ponto forte destacado' : 'pontos fortes destacados'}</div>
+              </div>
+            </div>
+            <div style="font-size:0.82rem;color:var(--muted);line-height:1.5;padding:8px 10px;background:rgba(255,255,255,0.03);border-radius:8px;">
+              <strong style="color:var(--text);">Como calculamos:</strong> 60% naturalidade media + 20% frases corretas + 20% variedade de vocabulário. Role abaixo pra ver cada frase analisada individualmente.
+            </div>
+          </section>
+        `;
+        const canDoHtml = buildCanDoHtml(info.can_do_markers, escapeHtml);
 
         const elogiosHtml = (info.elogios && info.elogios.length)
             ? info.elogios.map(item => `<li style="margin-bottom:8px;">${escapeHtml(item)}</li>`).join('')
@@ -3581,11 +6039,11 @@
 
         const recorrentesHtml = (info.erros_recorrentes && info.erros_recorrentes.length)
             ? info.erros_recorrentes.map(item => `<li style="margin-bottom:8px;">${escapeHtml(item)}</li>`).join('')
-            : `<li>Sem padrões recorrentes identificados.</li>`;
+            : `<li>Sem padroes recorrentes identificados.</li>`;
 
         const planoHtml = (info.plano_estudo && info.plano_estudo.length)
             ? info.plano_estudo.map(item => `<li style="margin-bottom:8px;">${escapeHtml(item)}</li>`).join('')
-            : `<li>Sem plano específico nesta sessão.</li>`;
+            : `<li>Sem plano especifico nesta sessao.</li>`;
 
         const transcriptHtml = conversationLog.length
             ? conversationLog.map(entry => {
@@ -3596,33 +6054,42 @@
             }).join('')
             : `<div class="empty">Sem falas registradas.</div>`;
 
-        // Phrase-by-phrase analysis HTML
+        // Phrase-by-phrase analysis HTML  ESTRELA do relatorio
         const analiseHtml = (info.analise_frases && info.analise_frases.length)
             ? info.analise_frases.map((item, idx) => {
                 const nat = typeof item.naturalidade === 'number' ? item.naturalidade : 50;
-                let barColor = '#ef4444';
-                if (nat >= 80) barColor = '#22c55e';
-                else if (nat >= 50) barColor = '#f59e0b';
-                const nivelText = escapeHtml(item.nivel || '');
-                const explicacao = item.explicacao ? `<div style="font-size:0.85rem;color:var(--muted);padding:8px 10px;background:rgba(255,204,0,0.08);border-radius:6px;border-left:3px solid #f59e0b;margin-top:6px;">💡 ${escapeHtml(item.explicacao)}</div>` : '';
-                const naturalLine = item.frase_natural ? `<div style="margin-bottom:6px;font-size:0.95rem;"><span style="color:#22c55e;">✅ Mais natural:</span> <strong>"${escapeHtml(item.frase_natural)}"</strong></div>` : '';
+                const veredicto = String(item.veredicto || '').toLowerCase();
+                let verdictEmoji, verdictColor, verdictBg, verdictLabel;
+                if (veredicto.includes('boa') || nat >= 80) {
+                    verdictEmoji = ''; verdictColor = '#22c55e'; verdictBg = 'rgba(34,197,94,0.12)'; verdictLabel = 'BOA';
+                } else if (veredicto.includes('melhor') || nat < 50) {
+                    verdictEmoji = ''; verdictColor = '#ef4444'; verdictBg = 'rgba(239,68,68,0.12)'; verdictLabel = 'PRECISA MELHORAR';
+                } else {
+                    verdictEmoji = ''; verdictColor = '#f59e0b'; verdictBg = 'rgba(245,158,11,0.12)'; verdictLabel = 'OK';
+                }
+
+                const positivos = item.pontos_positivos ? `<div style="margin-bottom:10px;font-size:0.9rem;background:rgba(34,197,94,0.08);border-left:3px solid #22c55e;padding:8px 12px;border-radius:6px;"><span style="color:#22c55e;font-weight:600;"> O que ficou bom:</span> ${escapeHtml(item.pontos_positivos)}</div>` : '';
+                const melhorar = item.o_que_melhorar ? `<div style="margin-bottom:10px;font-size:0.9rem;background:rgba(245,158,11,0.08);border-left:3px solid #f59e0b;padding:8px 12px;border-radius:6px;"><span style="color:#f59e0b;font-weight:600;"> O que melhorar:</span> ${escapeHtml(item.o_que_melhorar)}</div>` : '';
+                const erro = item.erro_detectado ? `<div style="margin-bottom:10px;font-size:0.9rem;background:rgba(239,68,68,0.08);border-left:3px solid #ef4444;padding:8px 12px;border-radius:6px;"><span style="color:#ef4444;font-weight:600;"> Erro detectado:</span> ${escapeHtml(item.erro_detectado)}</div>` : '';
+                const naturalLine = item.frase_natural && item.frase_natural !== item.frase_aluno ? `<div style="margin-bottom:10px;font-size:0.95rem;background:rgba(99,102,241,0.1);border-left:3px solid #818cf8;padding:8px 12px;border-radius:6px;"><span style="color:#a5b4fc;font-weight:600;"> Como um nativo diria:</span><br><strong style="font-size:1.05rem;">"${escapeHtml(item.frase_natural)}"</strong></div>` : '';
+                const explicacao = item.explicacao ? `<div style="font-size:0.85rem;color:var(--muted);padding:8px 12px;background:rgba(255,255,255,0.04);border-radius:6px;margin-top:4px;"> ${escapeHtml(item.explicacao)}</div>` : '';
+
                 return `
-                    <div class="analise-card" style="page-break-inside:avoid;">
-                        <div style="font-size:0.7rem;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Frase ${idx + 1}</div>
-                        <div style="margin-bottom:8px;font-size:0.95rem;"><span style="color:var(--muted);">🗣️ Você disse:</span> <strong>"${escapeHtml(item.frase_aluno || '')}"</strong></div>
-                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-                            <div style="flex:1;height:8px;background:rgba(255,255,255,0.1);border-radius:4px;overflow:hidden;">
-                                <div style="width:${nat}%;height:100%;background:${barColor};border-radius:4px;"></div>
-                            </div>
-                            <span style="font-weight:700;font-size:0.9rem;color:${barColor};min-width:40px;text-align:right;">${nat}%</span>
+                    <div class="analise-card" style="page-break-inside:avoid;background:var(--panel);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:16px 18px;margin-bottom:14px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                            <div style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:600;">Frase ${idx + 1}</div>
+                            <div style="display:inline-flex;align-items:center;gap:6px;background:${verdictBg};border:1px solid ${verdictColor}55;color:${verdictColor};padding:4px 12px;border-radius:999px;font-size:0.72rem;font-weight:700;letter-spacing:0.5px;">${verdictEmoji} ${verdictLabel}</div>
                         </div>
-                        ${nivelText ? `<div style="font-size:0.8rem;color:${barColor};margin-bottom:8px;font-weight:600;">${nivelText}</div>` : ''}
+                        <div style="margin-bottom:12px;font-size:1rem;padding:10px 12px;background:rgba(251,191,36,0.06);border-radius:8px;border-left:3px solid #fbbf24;"><span style="color:var(--muted);font-size:0.8rem;"> Você disse:</span><br><strong style="font-size:1.05rem;font-style:italic;">"${escapeHtml(item.frase_aluno || '')}"</strong></div>
+                        ${positivos}
+                        ${melhorar}
+                        ${erro}
                         ${naturalLine}
                         ${explicacao}
                     </div>
                 `;
             }).join('')
-            : `<div class="empty">Sem análise de frases disponível.</div>`;
+            : `<div class="empty" style="padding:20px;text-align:center;color:var(--muted);">Sem analise de frases disponivel.</div>`;
 
         // Grammar/vocabulary summary tags
         const grammarTagsHtml = (info.resumo_gramatical && info.resumo_gramatical.length)
@@ -3630,25 +6097,25 @@
             : '';
 
         // Practice phrase section
-        const practicePhraseHtml = info.frase_pratica ? `
+        const practicePhraseHtml = info.frase_prática ? `
   <section class="mission-card" style="page-break-inside:avoid;background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(139,92,246,0.1));border:2px solid rgba(99,102,241,0.3);border-radius:16px;padding:24px;text-align:center;">
-    <div style="font-size:0.85rem;color:var(--muted);margin-bottom:4px;">🎯 Sua próxima missão</div>
-    <p style="font-size:1.3rem;font-weight:700;margin:12px 0 4px;color:#fff;">"${escapeHtml(info.frase_pratica)}"</p>
-    <p style="color:var(--muted);font-size:0.85rem;margin:0;">Tente falar esta frase na sua próxima prática!</p>
+    <div style="font-size:0.85rem;color:var(--muted);margin-bottom:4px;"> Sua proxima missao</div>
+    <p style="font-size:1.3rem;font-weight:700;margin:12px 0 4px;color:#fff;">"${escapeHtml(info.frase_prática)}"</p>
+    <p style="color:var(--muted);font-size:0.85rem;margin:0;">Tente falar esta frase na sua proxima prática!</p>
   </section>` : '';
 
         // Final grade banner
-        const gradeEmoji = notaGeral >= 80 ? '🏆' : notaGeral >= 60 ? '💪' : '📖';
-        const gradeMsg = notaGeral >= 80 ? 'Você está dominando o idioma! Continue com essa dedicação.' :
+        const gradeEmoji = notaGeral >= 80 ? '' : notaGeral >= 60 ? '' : '';
+        const gradeMsg = notaGeral >= 80 ? 'Você esta dominando o idioma! Continue com essa dedicacao.' :
             notaGeral >= 60 ? 'Ótimo progresso! Cada conversa te deixa mais fluente.' :
-                'Cada erro é uma oportunidade de aprender. Você já está no caminho certo!';
+                'Cada erro e uma oportunidade de aprender. Você ja esta no caminho certo!';
         const gradeBg = notaGeral >= 70 ? 'rgba(34,197,94,0.1),rgba(16,185,129,0.05)' : 'rgba(245,158,11,0.1),rgba(234,88,12,0.05)';
         const gradeBorder = notaGeral >= 70 ? 'rgba(34,197,94,0.2)' : 'rgba(245,158,11,0.2)';
 
         const summaryText = [
             ...(info.elogios || []).slice(0, 4),
             ...(info.dicas || []).slice(0, 2)
-        ].filter(Boolean).join(' • ');
+        ].filter(Boolean).join('  ');
 
         let win = existingWindow;
         if (win && win.closed) {
@@ -3812,6 +6279,34 @@ main {
   padding: 16px;
   margin-bottom: 12px;
 }
+.can-do-section {
+  background: rgba(34,197,94,0.08);
+  border: 1px solid rgba(34,197,94,0.20);
+  border-radius: 16px;
+  padding: 18px 20px;
+}
+.can-do-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+  color: #bbf7d0;
+}
+.can-do-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.can-do-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 12px;
+  background: rgba(34,197,94,0.14);
+  border: 1px solid rgba(34,197,94,0.32);
+  border-radius: 999px;
+  color: #dcfce7;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
 @media print {
   body { background: #0f1115 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .action-bar, .no-print { display: none !important; }
@@ -3848,66 +6343,43 @@ main {
   </div>
 </header>
 <main>
-  <section class="summary">
-    <div class="card"><strong>Tom</strong><div class="val">${escapeHtml(info.tom)}</div></div>
-    <div class="card"><strong>Total de falas</strong><div class="val">${stats.total}</div></div>
-    <div class="card"><strong>Suas mensagens</strong><div class="val">${stats.user}</div></div>
-    <div class="card"><strong>Respostas da IA</strong><div class="val">${stats.ai}</div></div>
-  </section>
+  ${canDoHtml}
 
-  <section class="highlight" style="border-left:4px solid #22c55e;">
-    <h2>🌟 O que você fez bem</h2>
-    <ul>${elogiosHtml}</ul>
-  </section>
+  <!-- BREAKDOWN DA NOTA  transparencia sobre "por que 50/100?" -->
+  ${scoreBreakdownHtml}
 
-  <section class="highlight" style="border-left:4px solid #f59e0b;">
-    <h2>📈 O que melhorar</h2>
-    <ul>${dicasHtml}</ul>
-  </section>
-
-  <section class="highlight" style="border-left:4px solid #ef4444;">
-    <h2>⚠️ Erros recorrentes</h2>
-    <ul>${recorrentesHtml}</ul>
-  </section>
-
-  <section class="highlight" style="border-left:4px solid #38bdf8;">
-    <h2>🧭 Plano de estudo</h2>
-    <ul>${planoHtml}</ul>
-  </section>
-
-  ${practicePhraseHtml}
-
-  ${grammarTagsHtml ? `
-  <section class="highlight">
-    <h2>📚 Pontos de Gramática e Vocabulário</h2>
-    <div style="display:flex;flex-wrap:wrap;gap:8px;">
-      ${grammarTagsHtml}
-    </div>
-  </section>` : ''}
-
-  <section class="highlight">
-    <h2>🎯 Análise Frase a Frase</h2>
+  <!-- ANALISE FRASE A FRASE  ESTRELA DO RELATORIO -->
+  <section>
+    <h2 style="font-size:1.4rem;margin:0 0 16px;display:flex;align-items:center;gap:10px;"> Analise das suas frases</h2>
+    <p style="color:var(--muted);font-size:0.9rem;margin:0 0 16px;">Cada frase que você disse, avaliada especificamente: o que ficou bom, o que pode melhorar e a versao mais natural.</p>
     <div class="corrections">${analiseHtml}</div>
   </section>
 
-  <section style="text-align:center;padding:32px 20px;background:linear-gradient(135deg,${gradeBg});border-radius:16px;border:1px solid ${gradeBorder};page-break-inside:avoid;">
-    <div style="font-size:3rem;">${gradeEmoji}</div>
-    <h2 style="margin:8px 0;">Nota Final: ${notaGeral}/100</h2>
-    <p style="color:var(--muted);max-width:400px;margin:0 auto;">${escapeHtml(gradeMsg)}</p>
+  <!-- O que você fez bem (consolidado) -->
+  <section class="highlight" style="border-left:4px solid #22c55e;">
+    <h2> O que você fez bem</h2>
+    <ul>${elogiosHtml}</ul>
   </section>
 
+  <!-- Erros recorrentes (so se houver padrão real) -->
+  <section class="highlight" style="border-left:4px solid #ef4444;">
+    <h2> Padroes para atencao</h2>
+    <ul>${recorrentesHtml}</ul>
+  </section>
+
+  <!-- Transcricao no final pra referencia -->
   <section class="highlight">
-    <h2>💬 Transcrição da conversa</h2>
+    <h2> Transcricao da conversa</h2>
     <div class="transcript">${transcriptHtml}</div>
   </section>
 
   <section class="highlight no-print">
-    <h2>Exportar relatório</h2>
+    <h2>Exportar relatorio</h2>
     <div class="action-bar">
-      <button class="button" id="download-pdf">📄 Baixar PDF</button>
-      <button class="button secondary" id="copy-summary">📋 Copiar resumo</button>
+      <button class="button" id="download-pdf"> Baixar PDF</button>
+      <button class="button secondary" id="copy-summary"> Copiar resumo</button>
     </div>
-    <p class="footer-note">O PDF inclui todo o conteúdo desta página, colorido e completo.</p>
+    <p class="footer-note">O PDF inclui todo o conteudo desta pagina, colorido e completo.</p>
   </section>
 </main>
 <script>
@@ -3932,7 +6404,7 @@ document.getElementById('download-pdf').addEventListener('click', async () => {
     alert('Erro ao gerar PDF. Tente novamente.');
   } finally {
     btn.disabled = false;
-    btn.textContent = '📄 Baixar PDF';
+    btn.textContent = ' Baixar PDF';
   }
 });
 
@@ -3940,10 +6412,10 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
   try {
     await navigator.clipboard.writeText(${JSON.stringify(summaryText).replace(/</g, '\u003c')} || '');
     const btn = document.getElementById('copy-summary');
-    btn.textContent = '✅ Copiado!';
-    setTimeout(() => { btn.textContent = '📋 Copiar resumo'; }, 2000);
+    btn.textContent = ' Copiado!';
+    setTimeout(() => { btn.textContent = ' Copiar resumo'; }, 2000);
   } catch (err) {
-    alert('Não foi possível copiar o resumo.');
+    alert('Nao foi possivel copiar o resumo.');
   }
 });
 <\/script>
@@ -3977,18 +6449,19 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
     function normalizeReportData(payload) {
         const base = {
             titulo: "Resumo da sessao",
-            emoji: "✨",
+            emoji: "",
             tom: "positivo",
             correcoes: [],
             analise_frases: [],
             elogios: [],
             dicas: [],
-            frase_pratica: "",
+            frase_prática: "",
             erros_recorrentes: [],
             plano_estudo: [],
             nota_geral: null,
             resumo_gramatical: [],
             raw: "",
+            can_do_markers: [],
             wasStructured: false
         };
 
@@ -4005,7 +6478,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         base.titulo = source.titulo || base.titulo;
         base.emoji = source.emoji || base.emoji;
         base.tom = source.tom || base.tom;
-        base.frase_pratica = source.frase_pratica || "";
+        base.frase_prática = source.frase_prática || "";
 
         const corrections = Array.isArray(source.correcoes) ? source.correcoes : [];
         base.correcoes = corrections.map(normalizeCorrection).filter(Boolean);
@@ -4017,6 +6490,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         base.plano_estudo = Array.isArray(source.plano_estudo) ? source.plano_estudo.filter(Boolean) : [];
         base.nota_geral = typeof source.nota_geral === 'number' ? source.nota_geral : null;
         base.resumo_gramatical = Array.isArray(source.resumo_gramatical) ? source.resumo_gramatical.filter(Boolean) : [];
+        base.can_do_markers = Array.isArray(source.can_do_markers) ? source.can_do_markers.filter(marker => marker && marker.label) : [];
 
         return base;
     }
@@ -4045,9 +6519,9 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         title.className = 'block-title';
         const icon = document.createElement('span');
         icon.className = 'block-icon';
-        icon.textContent = '🎯';
+        icon.textContent = '';
         title.appendChild(icon);
-        title.appendChild(document.createTextNode('Análise Frase a Frase'));
+        title.appendChild(document.createTextNode('Analise Frase a Frase'));
         block.appendChild(title);
 
         const container = document.createElement('div');
@@ -4056,7 +6530,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         if (!frases || !frases.length) {
             const empty = document.createElement('div');
             empty.className = 'muted';
-            empty.textContent = 'Sem análise de frases disponível.';
+            empty.textContent = 'Sem analise de frases disponivel.';
             container.appendChild(empty);
         } else {
             frases.forEach((item) => {
@@ -4076,7 +6550,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 // Student phrase
                 const studentLine = document.createElement('div');
                 studentLine.style.cssText = 'margin-bottom: 8px; font-size: 0.95rem;';
-                studentLine.innerHTML = `<span style="color:#94a3b8;">🗣️ Você disse:</span> <strong>"${escapeHtml(item.frase_aluno || '')}"</strong>`;
+                studentLine.innerHTML = `<span style="color:#94a3b8;"> Você disse:</span> <strong>"${escapeHtml(item.frase_aluno || '')}"</strong>`;
                 card.appendChild(studentLine);
 
                 // Progress bar
@@ -4110,7 +6584,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 if (item.frase_natural) {
                     const naturalLine = document.createElement('div');
                     naturalLine.style.cssText = 'margin-bottom: 6px; font-size: 0.95rem;';
-                    naturalLine.innerHTML = `<span style="color:#22c55e;">✅ Mais natural:</span> <strong>"${escapeHtml(item.frase_natural || '')}"</strong>`;
+                    naturalLine.innerHTML = `<span style="color:#22c55e;"> Mais natural:</span> <strong>"${escapeHtml(item.frase_natural || '')}"</strong>`;
                     card.appendChild(naturalLine);
                 }
 
@@ -4118,7 +6592,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 if (item.explicacao) {
                     const explLine = document.createElement('div');
                     explLine.style.cssText = 'font-size: 0.85rem; color: #94a3b8; padding: 8px 10px; background: rgba(255,204,0,0.08); border-radius: 6px; border-left: 3px solid #f59e0b;';
-                    explLine.textContent = '💡 ' + item.explicacao;
+                    explLine.textContent = ' ' + item.explicacao;
                     card.appendChild(explLine);
                 }
 
@@ -4138,9 +6612,9 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         title.className = 'block-title';
         const icon = document.createElement('span');
         icon.className = 'block-icon';
-        icon.textContent = '✏️';
+        icon.textContent = '';
         title.appendChild(icon);
-        title.appendChild(document.createTextNode('Análise das Frases'));
+        title.appendChild(document.createTextNode('Analise das Frases'));
         block.appendChild(title);
 
         const ul = document.createElement('ul');
@@ -4149,14 +6623,14 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         if (!list || !list.length) {
             const li = document.createElement('li');
             li.className = 'muted';
-            li.textContent = fallbackText || 'Sem correções por enquanto.';
+            li.textContent = fallbackText || 'Sem correcoes por enquanto.';
             ul.appendChild(li);
         } else {
             list.forEach((correction) => {
                 const li = document.createElement('li');
                 li.className = 'correction-item';
 
-                // 1. Avaliação Geral (badge colorido)
+                // 1. Avaliacao Geral (badge colorido)
                 const avaliacaoBadge = document.createElement('div');
                 avaliacaoBadge.className = 'avaliacao-badge';
 
@@ -4165,7 +6639,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
 
                 if (badgeText === 'Incorreta') {
                     badgeColor = '#ef4444'; // vermelho
-                } else if (badgeText === 'Aceitável') {
+                } else if (badgeText === 'Aceitavel') {
                     badgeColor = '#f59e0b'; // amarelo/laranja
                 }
 
@@ -4190,7 +6664,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                     let tagColor = '#3b82f6'; // azul (Pouco Natural)
                     if (correction.tag.includes('Estrutura Incorreta')) {
                         tagColor = '#ef4444'; // vermelho
-                    } else if (correction.tag.includes('Compreensível')) {
+                    } else if (correction.tag.includes('Compreensivel')) {
                         tagColor = '#f59e0b'; // laranja
                     }
 
@@ -4209,7 +6683,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                     li.appendChild(tagBadge);
                 }
 
-                // 3. Comentário Breve
+                // 3. Comentario Breve
                 if (correction.comentarioBreve) {
                     const comentario = document.createElement('div');
                     comentario.className = 'comentario-breve';
@@ -4228,16 +6702,16 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 // 4. Frase Original (com erro destacado)
                 const badLine = document.createElement('div');
                 badLine.className = 'correction-line bad';
-                badLine.innerHTML = `<span style="color:#ef4444;">❌ Você disse:</span> "${escapeHtml(correction.fraseOriginal || correction.ruim || '')}"`;
+                badLine.innerHTML = `<span style="color:#ef4444;"> Você disse:</span> "${escapeHtml(correction.fraseOriginal || correction.ruim || '')}"`;
                 li.appendChild(badLine);
 
                 // 5. Frase Corrigida
                 const goodLine = document.createElement('div');
                 goodLine.className = 'correction-line good';
-                goodLine.innerHTML = `<span style="color:#10b981;">✓ Melhor forma:</span> "${escapeHtml(correction.fraseCorrigida || correction.boa || '')}"`;
+                goodLine.innerHTML = `<span style="color:#10b981;"> Melhor forma:</span> "${escapeHtml(correction.fraseCorrigida || correction.boa || '')}"`;
                 li.appendChild(goodLine);
 
-                // 6. Explicação Detalhada
+                // 6. Explicacao Detalhada
                 if (correction.explicacaoDetalhada || correction.explicacao) {
                     const explanationLine = document.createElement('div');
                     explanationLine.className = 'correction-line explanation';
@@ -4250,7 +6724,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                         border-radius: 6px;
                         border-left: 3px solid #8b5cf6;
                     `;
-                    explanationLine.innerHTML = `💡 <strong>Por que mudar:</strong> ${escapeHtml(correction.explicacaoDetalhada || correction.explicacao)}`;
+                    explanationLine.innerHTML = ` <strong>Por que mudar:</strong> ${escapeHtml(correction.explicacaoDetalhada || correction.explicacao)}`;
                     li.appendChild(explanationLine);
                 }
 
@@ -4313,7 +6787,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
     }
 
     function getConversationStats() {
-        const userMessages = conversationLog.filter(msg => msg.sender !== 'AI' && msg.sender !== 'System' && msg.sender !== 'Relatorio').length;
+        const userMessages = conversationLog.filter(msg => msg.sender !== 'AI' && msg.sender !== 'System' && msg.sender !== 'Relatório').length;
         const aiMessages = conversationLog.filter(msg => msg.sender === 'AI').length;
         return {
             total: conversationLog.length,
@@ -4399,7 +6873,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         if (intent === 'to_go_here') return 'Responda se e para levar ou para consumir aqui.';
         if (intent === 'hot_iced') return 'Responda se prefere hot ou iced.';
         if (intent === 'milk_sugar') return 'Responda se quer milk/sugar ou sem.';
-        if (intent === 'order_request') return 'Responda com a bebida que voce quer pedir.';
+        if (intent === 'order_request') return 'Responda com a bebida que você quer pedir.';
         if (intent === 'anything_else') return 'Responda com yes/no ou diga o item extra.';
         return 'Essa resposta nao corresponde a pergunta anterior.';
     }
@@ -4474,7 +6948,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         const value = String(text || '').trim();
         if (!value) return false;
         if (value.endsWith('?')) return true;
-        return /\b(what|how|when|where|why|who|which|do you|are you|can you|could you|would you|may i|qual|como|quando|onde|por que|voce gostaria|quer|pode)\b/i.test(value);
+        return /\b(what|how|when|where|why|who|which|do you|are you|can you|could you|would you|may i|qual|como|quando|onde|por que|você gostaria|quer|pode)\b/i.test(value);
     }
 
     function isTeacherSentence(text, isTranslation = false) {
@@ -4483,7 +6957,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         if (!isTranslation) {
             return /\b(you can (also )?say|you could say|instead of|optional upgrade|a useful phrase|useful model|model sentence|to sound (more )?(polite|natural)|it's very common|this is (more )?(polite|natural)|great job|nice job|polite way|more natural way|try saying)\b/i.test(value);
         }
-        return /\b(voce (tamb[eé]m )?pode dizer|voce poderia dizer|em vez de|upgrade opcional|forma mais natural|para soar|e muito comum|otimo trabalho|bom trabalho|modelo|forma educada|maneira mais natural)\b/i.test(value);
+        return /\b(você (tamb[ee]m )?pode dizer|você poderia dizer|em vez de|upgrade opcional|forma mais natural|para soar|e muito comum|otimo trabalho|bom trabalho|modelo|forma educada|maneira mais natural)\b/i.test(value);
     }
 
     function cleanScenarioSentence(sentence) {
@@ -4530,12 +7004,12 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
     function buildQuestionTranslationFallback(questionEn = '') {
         const q = normalizeComparableText(questionEn);
         if (!q) return '';
-        if (/(what would you like|what can i get|what can i get started|what do you want)/i.test(q)) return 'O que voce gostaria hoje?';
-        if (/(what kind of coffee|which coffee|kind of coffee)/i.test(q)) return 'Que tipo de cafe voce gostaria?';
-        if (/(what size|which size|size would you like)/i.test(q)) return 'Qual tamanho voce gostaria?';
-        if (/(to go|for here|take away|takeaway)/i.test(q)) return 'Voce gostaria para levar ou para consumir aqui?';
-        if (/(hot or iced|iced or hot)/i.test(q)) return 'Voce prefere quente ou gelado?';
-        if (/(with sugar|with milk|sugar or milk)/i.test(q)) return 'Voce quer com acucar ou leite?';
+        if (/(what would you like|what can i get|what can i get started|what do you want)/i.test(q)) return 'O que você gostaria hoje?';
+        if (/(what kind of coffee|which coffee|kind of coffee)/i.test(q)) return 'Que tipo de cafe você gostaria?';
+        if (/(what size|which size|size would you like)/i.test(q)) return 'Qual tamanho você gostaria?';
+        if (/(to go|for here|take away|takeaway)/i.test(q)) return 'Você gostaria para levar ou para consumir aqui?';
+        if (/(hot or iced|iced or hot)/i.test(q)) return 'Você prefere quente ou gelado?';
+        if (/(with sugar|with milk|sugar or milk)/i.test(q)) return 'Você quer com acucar ou leite?';
         if (/(anything else|something else)/i.test(q)) return 'Mais alguma coisa?';
         return '';
     }
@@ -4639,28 +7113,28 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 const status = document.createElement('div');
                 status.className = 'learning-guidance-status';
                 status.textContent = kind === 'error_correction'
-                    ? '⚠️ Precisa ajustar'
-                    : (kind === 'style_upgrade' ? '💡 Pode melhorar' : '✅ Resposta correta');
+                    ? ' Precisa ajustar'
+                    : (kind === 'style_upgrade' ? ' Pode melhorar' : ' Resposta correta');
                 contentWrap.appendChild(status);
 
                 const saidLine = document.createElement('div');
                 saidLine.className = 'learning-feedback-line';
-                saidLine.innerHTML = `<span>🎤 Você disse:</span> "${escapeHtml(userText)}"`;
+                saidLine.innerHTML = `<span> Você disse:</span> "${escapeHtml(userText)}"`;
                 contentWrap.appendChild(saidLine);
 
                 const suggestionLine = document.createElement('div');
                 suggestionLine.className = 'learning-feedback-line suggestion';
                 suggestionLine.innerHTML = kind === 'error_correction'
-                    ? `<span>✨ Forma sugerida:</span> "${escapeHtml(suggested)}"`
+                    ? `<span> Forma sugerida:</span> "${escapeHtml(suggested)}"`
                     : (kind === 'style_upgrade'
-                        ? `<span>✨ Forma mais natural:</span> "${escapeHtml(suggested)}"`
-                        : `<span>✅ Está correto:</span> "${escapeHtml(suggested)}"`);
+                        ? `<span> Forma mais natural:</span> "${escapeHtml(suggested)}"`
+                        : `<span> Esta correto:</span> "${escapeHtml(suggested)}"`);
                 contentWrap.appendChild(suggestionLine);
 
                 if (reason) {
                     const reasonEl = document.createElement('div');
                     reasonEl.className = 'learning-feedback-reason';
-                    reasonEl.textContent = `💡 ${reason}`;
+                    reasonEl.textContent = ` ${reason}`;
                     contentWrap.appendChild(reasonEl);
                 }
 
@@ -4731,7 +7205,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
             const nextBtn = document.createElement('button');
             nextBtn.type = 'button';
             nextBtn.className = 'learning-feedback-btn primary';
-            nextBtn.textContent = steps.length > 1 ? 'Proximo' : 'Continuar';
+            nextBtn.textContent = steps.length > 1 ? 'Próximo' : 'Continuar';
             actions.appendChild(nextBtn);
 
             function closeFlow() {
@@ -4759,7 +7233,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 }
 
                 backBtn.style.display = currentStepIndex > 0 ? 'inline-flex' : 'none';
-                nextBtn.textContent = currentStepIndex >= total - 1 ? 'Continuar' : 'Proximo';
+                nextBtn.textContent = currentStepIndex >= total - 1 ? 'Continuar' : 'Próximo';
             }
 
             backBtn.addEventListener('click', () => {
@@ -4803,33 +7277,33 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
 
         const title = document.createElement('div');
         title.className = kind === 'error_correction' ? 'turn-correction-title' : 'turn-style-title';
-        title.textContent = kind === 'error_correction' ? 'Correção da interação' : 'Sugestão de naturalidade';
+        title.textContent = kind === 'error_correction' ? 'Correcao da interacao' : 'Sugestao de naturalidade';
         card.appendChild(title);
 
         const studentLine = document.createElement('div');
         studentLine.className = kind === 'error_correction' ? 'turn-correction-line bad' : 'turn-style-line';
         studentLine.innerHTML = kind === 'error_correction'
-            ? `<span>❌ Você disse:</span> "${escapeHtml(student)}"`
+            ? `<span> Você disse:</span> "${escapeHtml(student)}"`
             : `<span>Você disse:</span> "${escapeHtml(student)}"`;
         card.appendChild(studentLine);
 
         const suggestedLine = document.createElement('div');
         suggestedLine.className = kind === 'error_correction' ? 'turn-correction-line good' : 'turn-style-line good';
-        suggestedLine.innerHTML = `<span>${kind === 'error_correction' ? '✅ Mais natural:' : '✅ Sugestão:'}</span> "${escapeHtml(suggested)}"`;
+        suggestedLine.innerHTML = `<span>${kind === 'error_correction' ? ' Mais natural:' : ' Sugestao:'}</span> "${escapeHtml(suggested)}"`;
         card.appendChild(suggestedLine);
 
         const reason = String(feedback.reason || '').trim();
         if (reason) {
             const note = document.createElement('div');
             note.className = kind === 'error_correction' ? 'turn-correction-note' : 'turn-style-note';
-            note.textContent = `💡 ${reason}`;
+            note.textContent = ` ${reason}`;
             card.appendChild(note);
         }
 
         const useBtn = document.createElement('button');
         useBtn.type = 'button';
         useBtn.className = 'correction-use-btn';
-        useBtn.textContent = kind === 'error_correction' ? 'Usar frase corrigida' : 'Usar sugestão';
+        useBtn.textContent = kind === 'error_correction' ? 'Usar frase corrigida' : 'Usar sugestao';
         useBtn.addEventListener('click', () => {
             if (textInput) {
                 textInput.value = suggested;
@@ -4856,9 +7330,9 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         // Remove meta-instructions that confuse beginners in the UI.
         value = value.replace(/\bLearning mode:\s*[^.!?]*[.!?]\s*/gi, '');
         value = value.replace(/\bModo Learning:\s*[^.!?]*[.!?]\s*/gi, '');
-        value = value.replace(/\b(let'?s|vamos)\s+(jump|start|get|entrar|comecar)[^.!?]*(real[- ]life|cena real|intera[cç][aã]o real)[^.!?]*[.!?]\s*/gi, '');
-        value = value.replace(/\b(i will|i'll|eu vou|vou)\s+(coach|show|give|share|guiar|mostrar|dar)\s+(easy\s+|simple\s+)?(lines?|sentences?|phrases?|frases?)\s+(you|voce)\s+(can\s+)?(say|use|dizer|usar)[^.!?]*[.!?]\s*/gi, '');
-        value = value.replace(/\b(real interaction|intera[cç][aã]o real)\b[^.!?]*[.!?]\s*/gi, '');
+        value = value.replace(/\b(let'?s|vamos)\s+(jump|start|get|entrar|começar)[^.!?]*(real[- ]life|cena real|intera[cc][aa]o real)[^.!?]*[.!?]\s*/gi, '');
+        value = value.replace(/\b(i will|i'll|eu vou|vou)\s+(coach|show|give|share|guiar|mostrar|dar)\s+(easy\s+|simple\s+)?(lines?|sentences?|phrases?|frases?)\s+(you|você)\s+(can\s+)?(say|use|dizer|usar)[^.!?]*[.!?]\s*/gi, '');
+        value = value.replace(/\b(real interaction|intera[cc][aa]o real)\b[^.!?]*[.!?]\s*/gi, '');
         value = value.replace(/(^|[.!?]\s+)[)\]]\s+/g, '$1');
         value = value.replace(/^\)\s*/g, '');
 
@@ -4877,11 +7351,11 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
     function looksPortugueseSnippet(value) {
         const text = String(value || '').toLowerCase().trim();
         if (!text) return false;
-        if (/[ãõçáàâéêíóôú]/i.test(text)) return true;
+        if (/[aocaaaeeioou]/i.test(text)) return true;
 
         const wrapped = ` ${text.replace(/\s+/g, ' ')} `;
         const markers = [
-            ' eu ', ' voce ', ' você ', ' por favor ', ' qual ', ' tamanho ', ' agora ', ' nao ', ' não ',
+            ' eu ', ' você ', ' você ', ' por favor ', ' qual ', ' tamanho ', ' agora ', ' nao ', ' nao ',
             ' obrigado ', ' obrigada ', ' queria ', ' gostaria ', ' posso ', ' pode ', ' meu ', ' minha ',
             ' com ', ' para ', ' isso ', ' aqui ', ' hoje ', ' bom ', ' boa '
         ];
@@ -4915,7 +7389,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
             }
 
             if (selected) {
-                selected = selected.replace(/^["'“”]+|["'“”]+$/g, '').trim();
+                selected = selected.replace(/^["']+|["']+$/g, '').trim();
                 if (selected) picked.push(selected);
             }
         });
@@ -4950,7 +7424,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
             /\b(do you|are you|can you|could you|would you|may i)\b/i.test(value)
         ) return 'question';
 
-        if (/^(instead of|em vez de|corre[cç][aã]o|correcao|ajuste)/i.test(lower) ||
+        if (/^(instead of|em vez de|corre[cc][aa]o|correcao|ajuste)/i.test(lower) ||
             /\b(instead of|em vez de|say:|diga:)\b/i.test(lower)) {
             return 'correction';
         }
@@ -5046,7 +7520,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 msgDiv.classList.add('user-structured');
                 const label = document.createElement('span');
                 label.className = 'user-speech-label';
-                label.textContent = '🎤 Você disse:';
+                label.textContent = ' Você disse:';
                 const content = document.createElement('span');
                 content.className = 'user-speech-text';
                 content.innerText = displayText;
@@ -5122,7 +7596,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
 
                 const label = document.createElement('div');
                 label.className = 'correction-label';
-                label.textContent = 'Correção rápida';
+                label.textContent = 'Correcao rapida';
                 correctionWrap.appendChild(label);
 
                 const phrase = document.createElement('div');
@@ -5200,7 +7674,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         toggle.type = 'button';
         toggle.className = 'suggested-words-toggle';
         toggle.setAttribute('aria-expanded', startExpanded ? 'true' : 'false');
-        toggle.innerHTML = `💡 Dica de resposta (${replies.length}) <span style="color:#FFD700;font-weight:bold;font-size:0.85em;margin-left:6px;">(Opcional)</span>`;
+        toggle.innerHTML = ` Dica de resposta (${replies.length}) <span style="color:#FFD700;font-weight:bold;font-size:0.85em;margin-left:6px;">(Opcional)</span>`;
         card.appendChild(toggle);
 
         const details = document.createElement('div');
@@ -5310,10 +7784,80 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         return null;
     }
 
+    function normalizePhraseForScore(text) {
+        return String(text || '')
+            .toLowerCase()
+            .replace(/\bi'm\b/g, 'i am')
+            .replace(/\byou're\b/g, 'you are')
+            .replace(/\bhe's\b/g, 'he is')
+            .replace(/\bshe's\b/g, 'she is')
+            .replace(/\bit's\b/g, 'it is')
+            .replace(/\bcan't\b/g, 'can not')
+            .replace(/\bdon't\b/g, 'do not')
+            .replace(/[^a-z0-9\s]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    function wordDistance(a, b) {
+        a = String(a || '');
+        b = String(b || '');
+        const rows = a.length + 1;
+        const cols = b.length + 1;
+        const matrix = Array.from({ length: rows }, () => Array(cols).fill(0));
+        for (let i = 0; i < rows; i++) matrix[i][0] = i;
+        for (let j = 0; j < cols; j++) matrix[0][j] = j;
+        for (let i = 1; i < rows; i++) {
+            for (let j = 1; j < cols; j++) {
+                const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j] + 1,
+                    matrix[i][j - 1] + 1,
+                    matrix[i - 1][j - 1] + cost
+                );
+            }
+        }
+        return matrix[a.length][b.length];
+    }
+
+    function scorePhraseMatch(transcript, target) {
+        const spokenWords = normalizePhraseForScore(transcript).split(/\s+/).filter(Boolean);
+        const targetWords = normalizePhraseForScore(target).split(/\s+/).filter(Boolean);
+        if (!targetWords.length) return { score: 0, matched: 0, total: 0, accepted: false };
+
+        let matched = 0;
+        const used = new Set();
+        targetWords.forEach((targetWord) => {
+            let bestIndex = -1;
+            let bestDistance = Infinity;
+            spokenWords.forEach((spokenWord, index) => {
+                if (used.has(index)) return;
+                const distance = spokenWord === targetWord ? 0 : wordDistance(spokenWord, targetWord);
+                const maxAllowed = targetWord.length <= 3 ? 0 : 1;
+                if (distance <= maxAllowed && distance < bestDistance) {
+                    bestDistance = distance;
+                    bestIndex = index;
+                }
+            });
+            if (bestIndex >= 0) {
+                used.add(bestIndex);
+                matched += 1;
+            }
+        });
+
+        const score = matched / targetWords.length;
+        return {
+            score,
+            matched,
+            total: targetWords.length,
+            accepted: score >= 0.7
+        };
+    }
+
     /**
      * Render lesson options as read-aloud cards (student speaks one)
      */
-    function renderLessonOptions(options, layerTitle = '') {
+    function renderLessonOptions(options, layerTitle = '', interaction = 'repeat', autoAccept = false) {
         if (!chatWindow) return;
 
         // Add lesson-mode class to enable scrolling
@@ -5338,6 +7882,9 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
 
         // Store options for voice matching
         lessonState.currentOptions = displayOptions;
+        lessonState.currentInteraction = interaction || 'repeat';
+        lessonState.autoAccept = !!autoAccept;
+        const clickDriven = !!autoAccept || ['listen', 'choose', 'complete', 'mini_chat'].includes(lessonState.currentInteraction);
 
         const container = document.createElement('div');
         container.className = 'lesson-options-container';
@@ -5361,10 +7908,12 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         title.textContent = layerTitle || 'Read one of the phrases below:';
         container.appendChild(title);
 
-        // Options list (non-clickable, for reading aloud)
+        // Options list
         displayOptions.forEach((opt, index) => {
             const card = document.createElement('div');
-            card.className = 'lesson-option-card lesson-option-readonly';
+            card.className = clickDriven
+                ? 'lesson-option-card lesson-option-clickable'
+                : 'lesson-option-card lesson-option-readonly';
 
             const optionNumber = document.createElement('div');
             optionNumber.className = 'option-number';
@@ -5379,8 +7928,8 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
 
             // Audio button - plays pronunciation
             const audioBtn = document.createElement('button');
-            audioBtn.className = 'option-audio-btn';
-            audioBtn.innerHTML = '<span class="audio-icon">🔊</span>';
+            audioBtn.className = 'option-áudio-btn';
+            audioBtn.innerHTML = '<span class="áudio-icon"></span>';
             audioBtn.title = 'Listen to pronunciation';
             audioBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
@@ -5393,16 +7942,24 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 audioBtn.classList.remove('playing');
             });
 
+            if (clickDriven) {
+                card.addEventListener('click', async () => {
+                    await selectLessonOption(index, opt, '', { autoAccept: true });
+                });
+            }
+
             card.appendChild(optionNumber);
             card.appendChild(optionContent);
             card.appendChild(audioBtn);
             container.appendChild(card);
         });
 
-        // Mic hint at the bottom
+        // Hint at the bottom
         const hint = document.createElement('div');
         hint.className = 'lesson-mic-hint';
-        hint.innerHTML = '🎤 Use the microphone and read one of the phrases above';
+        hint.innerHTML = clickDriven
+            ? 'Toque em uma opcao para continuar'
+            : 'Use o microfone e leia uma das frases acima';
         container.appendChild(hint);
 
         chatWindow.appendChild(container);
@@ -5422,9 +7979,9 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         phrase = phrase.replace(/\{[^}]+\}/g, '');
         // Clean up spacing and punctuation
         phrase = phrase.replace(/\s+/g, ' ').trim();
-        // Fix "an" before consonant sounds when size is added (e.g. "I'll have an large" → "I'll have a large")
+        // Fix "an" before consonant sounds when size is added (e.g. "I'll have an large"  "I'll have a large")
         phrase = phrase.replace(/\ban\s+(small|medium|large|extra-large|big|biggest|hot|iced)/gi, 'a $1');
-        // Fix "a" before vowel sounds (e.g. "I'd like a iced" → "I'd like an iced")
+        // Fix "a" before vowel sounds (e.g. "I'd like a iced"  "I'd like an iced")
         phrase = phrase.replace(/\ba\s+(iced)/gi, 'an $1');
         // Clean up double commas or trailing commas before end punctuation
         phrase = phrase.replace(/ ,/g, ',').replace(/,,+/g, ',');
@@ -5437,7 +7994,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
     /**
      * Handle lesson option selection (click)
      */
-    async function selectLessonOption(index, phrase, spokenText) {
+    async function selectLessonOption(index, phrase, spokenText, selectionMeta = {}) {
         lessonState.selectedOption = index;
         lessonState.selectedPhrase = phrase;
 
@@ -5471,7 +8028,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
             refCard.innerHTML = `
                 <div class="ref-header">
                     <span class="ref-label">Frase para praticar:</span>
-                    <button class="ref-audio-btn" title="Ouvir / Listen">&#128264;</button>
+                    <button class="ref-áudio-btn" title="Ouvir / Listen">&#128264;</button>
                 </div>
                 <div class="ref-phrase-en">"${displayPhrase}"</div>
                 ${phrase.pt ? `<div class="ref-phrase-pt">${phrase.pt}</div>` : ''}
@@ -5479,7 +8036,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
             refCard.style.display = 'block';
 
             // Audio button on the reference card
-            const refAudioBtn = refCard.querySelector('.ref-audio-btn');
+            const refAudioBtn = refCard.querySelector('.ref-áudio-btn');
             refAudioBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 try {
@@ -5487,7 +8044,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                     const blob = await apiClient.getTTS(displayPhrase, ttsSpeed, 'en', getActiveVoice());
                     await playAudioBlob(blob);
                 } catch (err) {
-                    console.error('Ref audio error:', err);
+                    console.error('Ref áudio error:', err);
                 } finally {
                     refAudioBtn.classList.remove('playing');
                 }
@@ -5513,6 +8070,8 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
 
             // Update state
             lessonState.nextAction = data.next_action;
+            lessonState.currentInteraction = data.interaction || 'repeat';
+            lessonState.autoAccept = !!data.auto_accept;
 
             // Store skip_to_layer if present (for branching after practice)
             if (data.skip_to_layer !== undefined) {
@@ -5521,13 +8080,17 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 lessonState.skipToLayer = null;
             }
 
-            // If user already spoke the phrase (voice selection), skip practice prompt
-            // and evaluate immediately - no need to repeat
-            if (spokenText) {
-                // Don't play the "now try saying..." prompt - go straight to evaluation
+            const shouldAutoAccept = !!selectionMeta.autoAccept || lessonState.autoAccept ||
+                ['listen', 'choose', 'complete', 'mini_chat'].includes(lessonState.currentInteraction);
+
+            if (shouldAutoAccept) {
+                await evaluateLessonPractice(displayPhrase, { autoAccepted: true });
+            } else if (spokenText) {
+                // If user already spoke the phrase (voice selection), skip practice prompt
+                // and evaluate immediately - no need to repeat
                 await evaluateLessonPractice(spokenText);
             } else {
-                // Click-based selection: play practice prompt and wait for speech
+                // Click-based selection in repeat mode: play practice prompt and wait for speech
                 playResponse(data.text, data.translation);
             }
 
@@ -5550,6 +8113,9 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         lessonState.compositeLayers = null;
         lessonState.phraseSlots = {};
         lessonState.compositePhrase = null;
+        lessonState.currentOptions = [];
+        lessonState.currentInteraction = 'repeat';
+        lessonState.autoAccept = false;
 
         showLoadingIndicator();
         try {
@@ -5584,7 +8150,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
      */
     function renderLessonStartButton() {
         const labels = lessonLang === 'pt'
-            ? ['Comecar aula', 'Iniciar pratica', 'Vamos comecar']
+            ? ['Começar aula', 'Iniciar prática', 'Vamos começar']
             : ['Start Lesson', 'Begin Practice', 'Let\'s Start'];
         const buttonLabel = pickNonRepeatingVariant(`lesson_start_btn_${context}`, labels) || labels[0];
         const container = document.createElement('div');
@@ -5629,7 +8195,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
                 // Show options
                 playResponse(data.text, data.translation);
                 setTimeout(() => {
-                    renderLessonOptions(data.options, data.layer_title);
+                    renderLessonOptions(data.options, data.layer_title, data.interaction, data.auto_accept);
                 }, 500);
             }
 
@@ -5642,18 +8208,27 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
     /**
      * Evaluate student's practice and advance
      */
-    async function evaluateLessonPractice(userText) {
+    async function evaluateLessonPractice(userText, options = {}) {
         showLoadingIndicator();
         try {
             const payload = {
                 layer: lessonState.layer,
                 text: userText,
-                selected_phrase: lessonState.selectedPhrase
+                selected_phrase: lessonState.selectedPhrase,
+                auto_accepted: !!options.autoAccepted
             };
 
             // Include composite phrase if built (for evaluation against full sentence)
             if (lessonState.compositePhrase) {
                 payload.composite_phrase = lessonState.compositePhrase;
+            }
+
+            if (isZeroBeginnerContext && !options.autoAccepted) {
+                const targetPhrase = lessonState.compositePhrase ||
+                    (lessonState.selectedPhrase && lessonState.selectedPhrase.en) || '';
+                const frontScore = scorePhraseMatch(userText, targetPhrase);
+                payload.front_match_score = frontScore.score;
+                payload.front_match_accepted = frontScore.accepted;
             }
 
             // Include skip_to_layer if present (for branching)
@@ -5665,7 +8240,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
 
             hideLoadingIndicator();
 
-            // Update layer state BEFORE playing audio
+            // Update layer state BEFORE playing áudio
             lessonState.layer = data.next_layer;
             lessonState.nextAction = data.next_action;
 
@@ -5683,6 +8258,9 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         } catch (error) {
             hideLoadingIndicator();
             console.error('Lesson evaluation error:', error);
+            // Keep practice mode active and tell the student instead of failing silently
+            lessonState.nextAction = 'evaluate_practice';
+            addMessage('System', 'Não consegui avaliar sua resposta agora. Clique no microfone e tente falar novamente.', true);
         }
     }
 
@@ -5696,13 +8274,15 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         }
 
         const isForcedStructured = ['1', 'true', 'on'].includes(structuredModeParam);
-        const autoStructuredByLevel = studentLevel === 'A1';
+        const autoStructuredByLevel = studentLevel === 'A1' || studentLevel === 'zero' || isZeroBeginnerContext;
         if (!isForcedStructured && !autoStructuredByLevel) {
             return false;
         }
 
         // List of contexts that have structured lessons (All 33 contexts)
         const structuredLessonContexts = [
+            'bdr_interview_drills',
+            'iniciantes_fluxo',
             // Fase 1 - Essenciais (10)
             'coffee_shop',
             'restaurant',
@@ -5800,7 +8380,7 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
         fallbackInfo.className = 'message system-message';
         fallbackInfo.innerHTML = `
             <div class="bubble">
-                <p>⚠️ Voice input not supported in this browser. Please use Chrome or Edge for voice features.</p>
+                <p> Voice input not supported in this browser. Please use Chrome or Edge for voice features.</p>
             </div>
         `;
         chatWindow.appendChild(fallbackInfo);
@@ -5862,36 +8442,36 @@ document.getElementById('copy-summary').addEventListener('click', async () => {
     }
 
     function updateReportButton() {
+        // Always visible so the student knows the feature exists. Disabled
+        // until they have enough turns (2) for a meaningful report; shows a
+        // countdown hint so they know what to do next.
+        const MIN_TURNS_FOR_REPORT = 2;
         const reportBar = document.getElementById('report-bar');
-        if (reportBtn) reportBtn.disabled = false;
+        const ready = userMessageCount >= MIN_TURNS_FOR_REPORT;
+        const turnsLeft = Math.max(0, MIN_TURNS_FOR_REPORT - userMessageCount);
+
+        const label = ready
+            ? ' Gerar relatório da conversa'
+            : ` Relatório  (fale mais ${turnsLeft} ${turnsLeft === 1 ? 'vez' : 'vezes'})`;
+
         if (reportBar) reportBar.style.display = 'block';
-        if (reportBarBtn) reportBarBtn.disabled = false;
+        if (reportBtn) {
+            reportBtn.disabled = !ready;
+            if (reportBtn.innerText !== label) reportBtn.innerText = label;
+        }
+        if (reportBarBtn) {
+            reportBarBtn.disabled = !ready;
+            if (reportBarBtn.innerText !== label) reportBarBtn.innerText = label;
+            reportBarBtn.style.opacity = ready ? '1' : '0.6';
+            reportBarBtn.style.cursor = ready ? 'pointer' : 'not-allowed';
+        }
     }
 
     function showSkipAudioButton() {
-        // Remove existing skip button
-        const existing = document.querySelector('.skip-audio-btn');
+        // Desabilitado: botão "Pular áudio" removido a pedido.
+        // Se houver um botão antigo do DOM, limpa.
+        const existing = document.querySelector('.skip-áudio-btn');
         if (existing) existing.remove();
-
-        const skipBtn = document.createElement('button');
-        skipBtn.className = 'skip-audio-btn';
-        skipBtn.textContent = '⏭️ Pular áudio';
-        skipBtn.title = 'Pular o áudio e continuar';
-        skipBtn.onclick = () => {
-            ttsCancelled = true;
-            if (currentAudio) {
-                currentAudio.pause();
-                currentAudio.currentTime = 0;
-                currentAudio.dispatchEvent(new Event('ended'));
-            }
-            finalizePlayback(skipBtn);
-        };
-
-        const container = document.querySelector('.player-controls') || document.querySelector('.player-overlay') || document.body;
-        if (container) {
-            container.appendChild(skipBtn);
-            return skipBtn;
-        }
         return null;
     }
     // Quick replies disabled - students must practice speaking without prompts

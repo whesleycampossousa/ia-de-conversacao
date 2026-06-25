@@ -2127,10 +2127,10 @@ def render(by_activity: dict[str, list[StudentGroup]], sentence_targets: list[di
         </div>
       </div>
       <aside class="metrics-grid multi-metrics" aria-label="Resumo global">
-        {metric_html("green", "&check;", counts["phrases"], "frases analisadas")}
+        {metric_html("blue", "&#9679;", counts["phrases"], "frases analisadas")}
         {metric_html("purple", "&#9679;&#9679;", counts["students"], "alunos participantes")}
-        {metric_html("orange", "!", counts["ok"], "tudo certo")}
-        {metric_html("blue", "&#9678;", counts["note"], "ajuste leve")}
+        {metric_html("green", "&check;", counts["ok"], "tudo certo")}
+        {metric_html("orange", "!", counts["note"], "ajuste leve")}
         {metric_html("red", "&times;", counts["fix"], "precisa corrigir")}
       </aside>
     </section>

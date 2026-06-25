@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modo Aprendizado - IA de Conversação</title>
+    <title>Modo Aprendizado - IA de Conversacao</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
@@ -12,7 +12,10 @@
 <body>
     <!-- Transparent Header -->
     <header class="netflix-remote-header scrolled" id="main-header" style="display: flex; justify-content: space-between; align-items: center;">
-        <div class="logo-big" onclick="window.location.href='dashboard.html'">EVERYDAY</div>
+        <div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="window.location.href='dashboard.html'">
+            <img src="logo.png" alt="Everyday Conversation" style="height: 42px; width: 42px; border-radius: 50%; object-fit: cover; box-shadow: 0 2px 8px rgba(220,38,62,0.35); border: 2px solid rgba(255,255,255,0.15);">
+            <div class="logo-big">EVERYDAY</div>
+        </div>
         <nav>
             <ul class="nav-links">
                 <li><a href="scenarios.html">Conversation</a></li>
@@ -33,10 +36,10 @@
             </div>
             <div class="hero-buttons">
                 <button class="btn-play" id="hero-play-btn" onclick="showLangModal('verb_to_be', 'Verb To Be')">
-                    ► Start Lesson
+                     Start Lesson
                 </button>
-                <button class="btn-info" onclick="alert('Mais informações sobre o tópico em breve!')">
-                    ℹ More Info
+                <button class="btn-info" onclick="alert('Mais informacoes sobre o topico em breve!')">
+                     More Info
                 </button>
             </div>
         </div>
@@ -52,38 +55,38 @@
 
         <!-- Error State -->
         <div id="error-state" style="display: none; text-align: center; padding: 4rem; color: #b3b3b3;">
-            <h3 style="margin-bottom: 1rem; color: #E50914;">⚠️ Erro ao carregar aulas</h3>
+            <h3 style="margin-bottom: 1rem; color: #E50914;"> Erro ao carregar aulas</h3>
             <p id="error-message" style="margin-bottom: 1.5rem;"></p>
-            <button onclick="loadTopics()" class="primary-btn">🔄 Tentar novamente</button>
+            <button onclick="loadTopics()" class="primary-btn"> Tentar novamente</button>
         </div>
 
         <!-- Basics Row -->
         <div class="category-row" id="row-basics-container" style="display: none;">
-            <div class="row-header">🌟 Basics - Start Here</div>
+            <div class="row-header"> Basics - Start Here</div>
             <div class="row-grid" id="row-basics"></div>
         </div>
 
         <!-- Pronouns Row -->
         <div class="category-row" id="row-pronouns-container" style="display: none;">
-            <div class="row-header">👤 Pronouns & Determiners</div>
+            <div class="row-header"> Pronouns & Determiners</div>
             <div class="row-grid" id="row-pronouns"></div>
         </div>
 
         <!-- Verbs Row -->
         <div class="category-row" id="row-verbs-container" style="display: none;">
-            <div class="row-header">⚡ Verb Tenses</div>
+            <div class="row-header"> Verb Tenses</div>
             <div class="row-grid" id="row-verbs"></div>
         </div>
 
         <!-- Grammar Row -->
         <div class="category-row" id="row-grammar-container" style="display: none;">
-            <div class="row-header">📚 Grammar Essentials</div>
+            <div class="row-header"> Grammar Essentials</div>
             <div class="row-grid" id="row-grammar"></div>
         </div>
 
         <!-- Advanced Row -->
         <div class="category-row" id="row-advanced-container" style="display: none;">
-            <div class="row-header">🎯 Advanced Topics</div>
+            <div class="row-header"> Advanced Topics</div>
             <div class="row-grid" id="row-advanced"></div>
         </div>
     </div>
@@ -91,23 +94,23 @@
     <!-- Language Selection Modal -->
     <div class="lang-modal-overlay" id="lang-modal">
         <div class="lang-modal">
-            <h2>🌐 Escolha o Idioma da Aula</h2>
-            <p>Como você prefere aprender <span class="lang-topic-title" id="modal-topic-title">este tópico</span>?</p>
+            <h2> Escolha o Idioma da Aula</h2>
+            <p>Como voce prefere aprender <span class="lang-topic-title" id="modal-topic-title">este topico</span>?</p>
 
             <div class="lang-options">
                 <div class="lang-option" onclick="selectLessonLanguage('en')">
-                    <span class="flag">🇺🇸</span>
+                    <span class="flag"></span>
                     <div class="lang-info">
                         <h3>100% English</h3>
-                        <p>Aula totalmente em inglês. Recomendado para prática de imersão.</p>
+                        <p>Aula totalmente em ingles. Recomendado para pratica de imersao.</p>
                     </div>
                 </div>
 
                 <div class="lang-option" onclick="selectLessonLanguage('pt')">
-                    <span class="flag">🇧🇷</span>
+                    <span class="flag"></span>
                     <div class="lang-info">
-                        <h3>Português + Inglês</h3>
-                        <p>Explicações em português com pronúncias em inglês. Ideal para iniciantes.</p>
+                        <h3>Portugues + Ingles</h3>
+                        <p>Explicacoes em portugues com pronuncias em ingles. Ideal para iniciantes.</p>
                     </div>
                 </div>
             </div>
@@ -116,7 +119,7 @@
         </div>
     </div>
 
-    <script src="api-client.js"></script>
+    <script src="api-client.js?v=fix-20260610"></script>
     <script>
         // Header scroll effect
         window.addEventListener('scroll', () => {
@@ -224,58 +227,58 @@
         // Icon mapping for all topics
         function getTopicIcon(id, defaultIcon) {
             const iconMap = {
-                'verb_to_be': '🎭',
-                'greetings': '👋',
-                'articles': '🍎',
-                'plurals': '🐈',
-                'demonstratives': '👉',
-                'zero_article': '📝',
-                'subject_pronouns': '👤',
-                'object_pronouns': '🎯',
-                'possessives': '🎒',
-                'possessive_pronouns': '🏷️',
-                'reflexive_pronouns': '🔁',
-                'present_simple': '⏰',
-                'present_continuous': '🏃',
-                'past_simple': '📅',
-                'past_continuous': '🎞️',
-                'past_perfect': '🕰️',
-                'present_perfect': '✨',
-                'present_perfect_continuous': '🔁',
-                'present_perfect_vs_past_simple': '⚖️',
-                'future_forms': '🔮',
-                'future_continuous': '⏳',
-                'future_perfect': '🎯',
-                'used_to_would': '🧸',
-                'modals_ability_permission': '✅',
-                'modals_obligation': '📌',
-                'modals_advice': '💡',
-                'modal_deduction': '🔍',
-                'conditionals_zero_first': '🌦️',
-                'conditionals_second': '💭',
-                'conditionals_third': '⏳',
-                'basic_questions': '❓',
-                'there_is_there_are': '📍',
-                'countable_uncountable': '🧮',
-                'some_any_no': '➕',
-                'quantifiers': '📊',
-                'adverbs_frequency_manner': '⏱️',
-                'comparative_adverbs': '📈',
-                'adjectives_order': '🧩',
-                'adjectives_vs_adverbs': '⚖️',
-                'prepositions_time_place': '🧭',
-                'dependent_prepositions': '🔗',
-                'gerunds_infinitives': '📝',
-                'phrasal_verbs': '🔀',
-                'passive_voice': '🎬',
-                'reported_speech': '🗣️',
-                'linking_words': '💡',
-                'question_tags': '❓',
-                'comparatives_superlatives': '🏆',
-                'relative_clauses': '🧵',
-                'wish_if_only': '🌟'
+                'verb_to_be': '',
+                'greetings': '',
+                'articles': '',
+                'plurals': '',
+                'demonstratives': '',
+                'zero_article': '',
+                'subject_pronouns': '',
+                'object_pronouns': '',
+                'possessives': '',
+                'possessive_pronouns': '',
+                'reflexive_pronouns': '',
+                'present_simple': '',
+                'present_continuous': '',
+                'past_simple': '',
+                'past_continuous': '',
+                'past_perfect': '',
+                'present_perfect': '',
+                'present_perfect_continuous': '',
+                'present_perfect_vs_past_simple': '',
+                'future_forms': '',
+                'future_continuous': '',
+                'future_perfect': '',
+                'used_to_would': '',
+                'modals_ability_permission': '',
+                'modals_obligation': '',
+                'modals_advice': '',
+                'modal_deduction': '',
+                'conditionals_zero_first': '',
+                'conditionals_second': '',
+                'conditionals_third': '',
+                'basic_questions': '',
+                'there_is_there_are': '',
+                'countable_uncountable': '',
+                'some_any_no': '',
+                'quantifiers': '',
+                'adverbs_frequency_manner': '',
+                'comparative_adverbs': '',
+                'adjectives_order': '',
+                'adjectives_vs_adverbs': '',
+                'prepositions_time_place': '',
+                'dependent_prepositions': '',
+                'gerunds_infinitives': '',
+                'phrasal_verbs': '',
+                'passive_voice': '',
+                'reported_speech': '',
+                'linking_words': '',
+                'question_tags': '',
+                'comparatives_superlatives': '',
+                'relative_clauses': '',
+                'wish_if_only': ''
             };
-            return iconMap[id] || defaultIcon || '📚';
+            return iconMap[id] || defaultIcon || '';
         }
 
         const langModal = document.getElementById('lang-modal');
@@ -298,7 +301,7 @@
                 errorState.style.display = 'none';
                 
                 const apiUrl = `${apiClient.baseURL}/api/grammar-topics`;
-                console.log('Tentando carregar tópicos de:', apiUrl);
+                console.log('Tentando carregar topicos de:', apiUrl);
                 
                 const fetchHeaders = { 'Content-Type': 'application/json' };
                 const authToken = localStorage.getItem('auth_token');
@@ -312,10 +315,10 @@
                 }
 
                 const topics = await response.json();
-                console.log('Tópicos carregados:', topics);
+                console.log('Topicos carregados:', topics);
                 
                 if (!topics || !Array.isArray(topics) || topics.length === 0) {
-                    throw new Error('Nenhum tópico encontrado');
+                    throw new Error('Nenhum topico encontrado');
                 }
 
                 allTopics = topics;
@@ -328,7 +331,7 @@
                 
                 if (err.message.includes('Failed to fetch') || err.message.includes('ERR_CONNECTION_REFUSED') || err.name === 'TypeError') {
                     errorMessage.innerHTML = `
-                        <p style="margin-bottom: 0.5rem;">Servidor não está rodando. Certifique-se de que o servidor Flask está ativo na porta 8912.</p>
+                        <p style="margin-bottom: 0.5rem;">Servidor nao esta rodando. Certifique-se de que o servidor Flask esta ativo na porta 8912.</p>
                         <code style="background: rgba(255,255,255,0.1); padding: 0.5rem; border-radius: 4px; display: block; margin: 1rem 0;">
                             python api/index.py
                         </code>
@@ -368,7 +371,7 @@
             const heroBillboard = document.getElementById('hero-billboard');
 
             heroTitle.textContent = topic.title;
-            heroDescription.textContent = topic.description || 'Aprenda este tópico fundamental de gramática inglesa.';
+            heroDescription.textContent = topic.description || 'Aprenda este topico fundamental de gramatica inglesa.';
             heroPlayBtn.setAttribute('onclick', `showLangModal('${topic.id}', '${topic.title.replace(/'/g, "\\'")}')`);
             
             const heroImg = getHeroImage(topic.id);
@@ -467,7 +470,7 @@
         function getPortugueseTitle(englishTitle, description) {
             const translations = {
                 'Verb To Be': 'Verbo to be',
-                'Greetings & Intros': 'Saudações e apresentações',
+                'Greetings & Intros': 'Saudacoes e apresentacoes',
                 'Articles (A/An/The)': 'Artigos (A/An/The)',
                 'Plural Nouns': 'Substantivos no plural',
                 'This / That / These / Those': 'This/That/These/Those',
@@ -478,35 +481,35 @@
                 'Possessive Pronouns': 'Pronomes possessivos',
                 'Reflexive Pronouns': 'Pronomes reflexivos',
                 'Present Simple': 'Presente simples',
-                'Present Continuous': 'Presente contínuo',
+                'Present Continuous': 'Presente continuo',
                 'Past Simple': 'Passado simples',
-                'Past Continuous': 'Passado contínuo',
+                'Past Continuous': 'Passado continuo',
                 'Past Perfect': 'Mais-que-perfeito',
                 'Present Perfect': 'Present perfect',
-                'Present Perfect Continuous': 'Present perfect contínuo',
+                'Present Perfect Continuous': 'Present perfect continuo',
                 'Present Perfect vs Past Simple': 'Present perfect vs passado simples',
                 'Future Forms': 'Formas de futuro',
-                'Future Continuous': 'Futuro contínuo',
+                'Future Continuous': 'Futuro continuo',
                 'Future Perfect': 'Futuro perfeito',
                 'Used To & Would': 'Used to e Would',
-                'Modals: Ability & Permission': 'Modais: habilidade e permissão',
-                'Modals: Obligation': 'Modais: obrigação',
+                'Modals: Ability & Permission': 'Modais: habilidade e permissao',
+                'Modals: Obligation': 'Modais: obrigacao',
                 'Modals: Advice': 'Modais: conselho',
-                'Modals of Deduction': 'Modais de dedução',
+                'Modals of Deduction': 'Modais de deducao',
                 'Zero & First Conditionals': 'Condicionais zero e primeira',
                 'Second Conditional': 'Segunda condicional',
                 'Third Conditional': 'Terceira condicional',
-                'Basic Questions': 'Perguntas básicas',
+                'Basic Questions': 'Perguntas basicas',
                 'There Is / There Are': 'There is / There are',
-                'Countable vs Uncountable': 'Contáveis e incontáveis',
+                'Countable vs Uncountable': 'Contaveis e incontaveis',
                 'Some, Any, No': 'Some, Any, No',
                 'Quantifiers': 'Quantificadores',
-                'Adverbs (Frequency & Manner)': 'Advérbios (frequência e modo)',
-                'Comparative Adverbs': 'Advérbios comparativos',
+                'Adverbs (Frequency & Manner)': 'Adverbios (frequencia e modo)',
+                'Comparative Adverbs': 'Adverbios comparativos',
                 'Order of Adjectives': 'Ordem dos adjetivos',
-                'Adjectives vs Adverbs': 'Adjetivos vs advérbios',
-                'Prepositions (Time, Place, Movement)': 'Preposições (tempo, lugar, movimento)',
-                'Dependent Prepositions': 'Preposições dependentes',
+                'Adjectives vs Adverbs': 'Adjetivos vs adverbios',
+                'Prepositions (Time, Place, Movement)': 'Preposicoes (tempo, lugar, movimento)',
+                'Dependent Prepositions': 'Preposicoes dependentes',
                 'Gerunds vs Infinitives': 'Gerundios e infinitivos',
                 'Phrasal Verbs': 'Phrasal verbs',
                 'Passive Voice': 'Voz passiva',
@@ -514,7 +517,7 @@
                 'Linking Words': 'Conectores',
                 'Question Tags': 'Question tags',
                 'Comparatives & Superlatives': 'Comparativos e superlativos',
-                'Relative Clauses': 'Orações relativas',
+                'Relative Clauses': 'Oracoes relativas',
                 'Wish / If Only': 'Wish / If only'
             };
             return translations[englishTitle] || description || '';

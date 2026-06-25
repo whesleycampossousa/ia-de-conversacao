@@ -317,11 +317,11 @@ def phrase_html_29(group, phrase, index: int, sentence_lookup: dict, word_lookup
         <div class="explain">
           <div class="explain-piece">
             <div class="explain-icon">!</div>
-            <div><strong>Observação:</strong>{base.escape(phrase.observation)}</div>
+            <div><strong>O que mudou:</strong>{base.escape(phrase.observation)}</div>
           </div>
           <div class="explain-piece">
             <div class="explain-icon">i</div>
-            <div><strong>Por que isso importa:</strong>{base.escape(phrase.why)}</div>
+            <div><strong>Por que ajuda:</strong>{base.escape(phrase.why)}</div>
           </div>
         </div>"""
     status_text = base.STATUS[status]["icon"] if status == "ok" else base.STATUS[status]["label"]
@@ -508,6 +508,19 @@ def attach_student_audios_25(by_activity: dict) -> list[dict]:
     return unclassified
 
 
+def sync_report_assets() -> None:
+    target = OUTPUT_HTML.parent / "assets_relatorios"
+    sources = [
+        ROOT / "assets_relatorios",
+        Path(getattr(base, "ROOT", ROOT)) / "assets_relatorios",
+        BASE_PATH.parent / "assets_relatorios",
+    ]
+    for source in sources:
+        if source.exists() and source.resolve() != target.resolve():
+            shutil.copytree(source, target, dirs_exist_ok=True)
+            return
+
+
 def validate_phrase_quality_25(phrases: list) -> None:
     problems: list[str] = []
     forbidden = [
@@ -637,6 +650,7 @@ def main() -> None:
     base.build_phrases = build_phrases_25
     validate_phrase_quality_25(build_phrases_25())
     base.main()
+    sync_report_assets()
 
     html = OUTPUT_HTML.read_text(encoding="utf-8")
     html = html.replace("06/05/2026", "04/06/2026")
@@ -648,14 +662,250 @@ def main() -> None:
         "Relatório local para revisão no Opus 4.7 antes de qualquer publicação.",
         "Relatório de revisão para estudar as correções, ouvir os modelos e comparar a própria produção.",
     )
+    reading_guide = """
+    <section class="reading-guide" aria-label="Roteiro rápido de estudo">
+      <div class="guide-main">
+        <span class="guide-kicker">Roteiro rápido</span>
+        <strong>Procure seu nome, abra seu card e compare cada linha com calma.</strong>
+        <p>O destaque mostra o que mudou na versão recomendada. Quando uma palavra sua também estiver correta, a observação precisa dizer isso claramente.</p>
+      </div>
+      <div class="guide-steps" aria-label="Como ler os destaques">
+        <span><b>1</b> Original sublinhado = trecho revisado</span>
+        <span><b>2</b> Âmbar = ajuste na recomendada</span>
+        <span><b>3</b> Riscado = saiu da frase final</span>
+        <span><b>4</b> Áudio = modelo + sua leitura</span>
+      </div>
+    </section>"""
+    html = html.replace('\n    <nav class="tabs-bar" aria-label="Atividades">', f"\n{reading_guide}\n\n    <nav class=\"tabs-bar\" aria-label=\"Atividades\">", 1)
     extra_css = """
+    .reading-guide {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(320px, .95fr);
+      gap: 14px;
+      align-items: stretch;
+      margin: 16px 0 18px;
+      padding: 16px;
+      border: 1px solid rgba(20, 115, 249, .18);
+      border-radius: 18px;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.98), rgba(239,246,255,.94)),
+        radial-gradient(circle at 2% 0%, rgba(20,115,249,.08), transparent 30%);
+      box-shadow: 0 16px 34px rgba(7, 17, 63, .08);
+    }
+    .guide-main {
+      display: grid;
+      align-content: center;
+      gap: 6px;
+      padding: 4px 4px 4px 2px;
+    }
+    .guide-kicker {
+      width: max-content;
+      padding: 5px 10px;
+      border-radius: 999px;
+      color: #0b4c90;
+      background: #eaf4ff;
+      border: 1px solid #cfe2ff;
+      font-size: .72rem;
+      font-weight: 950;
+      text-transform: uppercase;
+    }
+    .guide-main strong {
+      color: #061a4f;
+      font-size: 1.02rem;
+      line-height: 1.25;
+    }
+    .guide-main p {
+      margin: 0;
+      color: #38527f;
+      line-height: 1.45;
+      font-weight: 650;
+    }
+    .guide-steps {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 9px;
+    }
+    .guide-steps span {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 11px;
+      border: 1px solid rgba(20,115,249,.14);
+      border-radius: 13px;
+      background: #fff;
+      color: #17305e;
+      font-size: .86rem;
+      font-weight: 820;
+      box-shadow: 0 8px 16px rgba(15,39,78,.05);
+    }
+    .guide-steps b {
+      flex: 0 0 auto;
+      width: 24px;
+      height: 24px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      color: #fff;
+      background: #1473f9;
+      font-size: .82rem;
+    }
+    .tabs-bar {
+      margin-top: 4px;
+    }
+    .tab-button {
+      position: relative;
+      border-left: 6px solid rgba(20,115,249,.38);
+      background: linear-gradient(135deg, #fff, #f8fbff);
+      transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+    }
+    .tab-button:hover,
+    .tab-button:focus-visible {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 24px rgba(15, 39, 78, .10);
+      outline: none;
+    }
+    .tab-button.active {
+      border-left-color: #063f95;
+      box-shadow: 0 14px 28px rgba(20,115,249,.22);
+    }
+    .student-card {
+      border-radius: 16px;
+      border-color: rgba(20, 115, 249, .12);
+    }
+    .student-head {
+      background: linear-gradient(135deg, rgba(255,255,255,.99), rgba(248,251,255,.98));
+      transition: background .16s ease;
+    }
+    .student-head:hover {
+      background: linear-gradient(135deg, #fff, #eef6ff);
+    }
+    .student-card[data-open="false"] .student-head {
+      border-bottom-color: transparent;
+    }
+    .student-card[data-open="true"] .student-head {
+      border-bottom-color: rgba(20,115,249,.13);
+    }
+    .student-toggle {
+      color: #0b4c90;
+      background: #eef6ff;
+    }
+    .phrases {
+      padding: 16px 22px 22px;
+      background: linear-gradient(180deg, #fbfdff, #fff);
+    }
+    .phrase-card {
+      grid-template-columns: 54px minmax(0, 1fr) auto;
+      gap: 16px;
+      padding: 18px 18px 18px 20px;
+      border-radius: 16px;
+      border-left-width: 7px;
+      box-shadow: 0 10px 22px rgba(7,17,63,.05);
+    }
+    .phrase-title {
+      display: inline-flex;
+      align-items: center;
+      width: max-content;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: #f1f5fb;
+      color: #24436f;
+      font-size: .86rem;
+    }
+    .correction-tags {
+      margin: 0 0 12px;
+    }
+    .correction-tag {
+      background: #fff;
+      box-shadow: 0 5px 12px rgba(15,39,78,.05);
+    }
+    .phrase-lines {
+      gap: 8px;
+    }
+    .line-row {
+      grid-template-columns: 128px minmax(0, 1fr);
+      align-items: start;
+      min-height: 0;
+      padding: 11px 12px;
+      border: 1px solid rgba(19, 50, 91, .09);
+      border-radius: 13px;
+      background: #fff;
+    }
+    .line-row:first-child {
+      border-top: 1px solid rgba(19, 50, 91, .09);
+    }
+    .label {
+      display: inline-flex;
+      align-items: center;
+      width: max-content;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #f4f7fb;
+      color: #395377;
+      font-size: .72rem;
+      line-height: 1;
+    }
+    .fix .label.recommended {
+      background: var(--red-soft);
+    }
+    .note .label.recommended {
+      background: var(--orange-soft);
+    }
+    .sentence {
+      font-size: 1rem;
+      line-height: 1.58;
+    }
+    .sentence.corrected {
+      font-size: 1.04rem;
+      line-height: 1.6;
+    }
+    .sentence.translation {
+      color: #315783;
+      font-weight: 560;
+    }
+    .audio-row,
+    .student-audio-panel {
+      border-radius: 13px;
+      background: linear-gradient(135deg, #eef6ff, #fff);
+    }
+    .explain {
+      grid-column: 2 / 4;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      border: 0;
+      background: transparent;
+      overflow: visible;
+    }
+    .explain-piece {
+      border: 1px solid rgba(20, 115, 249, .15);
+      border-radius: 14px;
+      background: #fff;
+      box-shadow: 0 8px 18px rgba(15,39,78,.05);
+    }
+    .note .explain-piece {
+      border-color: rgba(255, 138, 0, .22);
+      background: linear-gradient(135deg, #fff, #fffaf2);
+    }
+    .fix .explain-piece {
+      border-color: rgba(230, 0, 18, .18);
+      background: linear-gradient(135deg, #fff, #fff6f7);
+    }
+    .explain-piece + .explain-piece {
+      border-left: 1px solid rgba(20, 115, 249, .15);
+    }
+    .explain strong {
+      color: #061a4f;
+      font-size: .86rem;
+      text-transform: uppercase;
+      letter-spacing: .01em;
+    }
     .question-card {
       margin: 0 0 16px;
-      padding: 14px 16px;
+      padding: 15px 17px;
       border: 1px solid #cfe2ff;
       border-left: 5px solid #2563eb;
       background: linear-gradient(135deg, #f8fbff 0%, #eef6ff 100%);
-      border-radius: 14px;
+      border-radius: 16px;
       box-shadow: 0 8px 18px rgba(37, 99, 235, .08);
     }
     .question-label {
@@ -697,8 +947,8 @@ def main() -> None:
       line-height: 1;
     }
     .diff-add {
-      background: #fff7d6;
-      border-bottom: 2px solid #f59e0b;
+      background: #fff4c2;
+      border-bottom: 2px solid #d97706;
       border-radius: 5px;
       padding: 0 2px;
       box-decoration-break: clone;
@@ -710,7 +960,7 @@ def main() -> None:
     .diff-original {
       text-decoration-line: underline;
       text-decoration-style: wavy;
-      text-decoration-color: #ef4444;
+      text-decoration-color: #dc2626;
       text-decoration-thickness: 2px;
       text-underline-offset: 4px;
       border-radius: 4px;
@@ -763,6 +1013,142 @@ def main() -> None:
       }
     }
     @media (max-width: 760px) {
+      .reading-guide {
+        grid-template-columns: 1fr;
+        padding: 13px;
+        border-radius: 16px;
+      }
+      .guide-steps {
+        grid-template-columns: 1fr;
+      }
+      .guide-main strong {
+        font-size: .98rem;
+      }
+      .guide-main p,
+      .guide-steps span {
+        font-size: .84rem;
+      }
+      .metrics-grid.multi-metrics {
+        grid-template-columns: 1fr;
+      }
+      .metrics-grid.multi-metrics .metric-card.red {
+        grid-column: auto;
+      }
+      .student-head {
+        align-items: flex-start;
+      }
+      .student-stats {
+        width: 100%;
+        justify-content: flex-start;
+      }
+      .student-toggle {
+        margin-left: auto;
+      }
+      .phrases {
+        padding: 12px;
+      }
+      .phrase-card {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 14px 12px;
+      }
+      .phrase-side {
+        grid-column: 1;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 8px;
+      }
+      .phrase-main {
+        grid-column: 1;
+        width: 100%;
+        min-width: 0;
+      }
+      .phrase-main > *,
+      .phrase-lines,
+      .line-row,
+      .audio-row,
+      .explain {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+      }
+      .status-badge {
+        grid-column: 1;
+        justify-self: start;
+      }
+      .phrase-index {
+        width: 38px;
+        height: 38px;
+        min-width: 38px;
+        font-size: 1rem;
+      }
+      .side-dot {
+        width: 24px;
+        height: 24px;
+        min-width: 24px;
+      }
+      .line-row {
+        display: block;
+        grid-column: 1 / -1;
+        min-width: 0;
+        padding: 12px;
+      }
+      .line-row .label {
+        display: inline-flex;
+        width: auto;
+        margin: 0 0 8px;
+      }
+      .sentence {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        overflow-wrap: normal;
+        word-break: normal;
+        hyphens: none;
+      }
+      .sentence.corrected {
+        font-size: 1rem;
+        line-height: 1.62;
+      }
+      .audio-word,
+      .diff-add,
+      .diff-original {
+        white-space: normal;
+        overflow-wrap: normal;
+        word-break: normal;
+      }
+      .removed-words {
+        margin-top: 10px;
+      }
+      .audio-row,
+      .student-audio-panel {
+        display: block;
+        margin-left: 0;
+        margin-right: 0;
+      }
+      .audio-row audio,
+      .student-audio-panel audio {
+        width: 100%;
+        max-width: 100%;
+      }
+      .explain {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        margin-left: 0;
+        margin-right: 0;
+      }
+      .explain-piece {
+        grid-template-columns: 28px minmax(0, 1fr);
+        padding: 12px;
+      }
+      .explain-piece + .explain-piece {
+        border-left: 1px solid rgba(20, 115, 249, .15);
+      }
       .correction-tags { margin-top: 4px; }
       .question-card { margin-left: -4px; margin-right: -4px; padding: 12px; }
     }

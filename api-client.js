@@ -10,19 +10,19 @@ class APIClient {
         const port = window.location.port;
         const protocol = window.location.protocol;
         
-        // If page is being served by the local app on port 8912, use relative paths
+        // If page is being served by Flask on port 4344, use relative paths
         // If page is opened directly (file://) or on different port, use full URL
         if (hostname === '' || protocol === 'file:') {
             // File opened directly - need full URL
-            this.baseURL = 'https://localhost:8912';
-        } else if (port === '8912' || (hostname === 'localhost' && port === '')) {
+            this.baseURL = 'http://localhost:4344';
+        } else if (port === '4344' || (hostname === 'localhost' && port === '')) {
             // Already being served by Flask - use relative paths
             this.baseURL = '';
         } else if (hostname === 'localhost' || hostname === '127.0.0.1') {
             // Local but different port - use full URL
-            this.baseURL = `${protocol}//${hostname}:8912`;
+            this.baseURL = 'http://localhost:4344';
         } else {
-            // Production/deployment or mobile accessing via LAN IP - use relative paths
+            // Production/deployment - use relative paths
             this.baseURL = '';
         }
         
@@ -54,6 +54,15 @@ class APIClient {
 
         if (this.token) {
             headers['Authorization'] = `Bearer ${this.token}`;
+        }
+
+        const portalTrial = window.portalDailyTrial;
+        if (portalTrial && portalTrial.enabled) {
+            headers['X-Portal-Trial'] = 'daily-10-min';
+            headers['X-Portal-Email'] = portalTrial.email || '';
+            headers['X-Portal-Name'] = portalTrial.name || '';
+            headers['X-Portal-Trial-Date'] = portalTrial.dateKey || '';
+            headers['X-Portal-Limit-Minutes'] = String(Math.round((portalTrial.limitSeconds || 600) / 60));
         }
 
         return headers;
@@ -153,6 +162,124 @@ class APIClient {
     }
 
     /**
+     * Send chat message using Server-Sent Events streaming.
+     * Returns a promise that resolves with the final response once streaming
+     * completes. `onPartial(accumulatedText, deltaText)` is called as text
+     * arrives progressively so the UI can render the response appearing
+     * character-by-character. Falls back to regular /api/chat on failure.
+     *
+     * On streaming success the final JSON has the same shape as /api/chat.
+     */
+    async chatStream(text, context, lessonLang = 'en', practiceMode = 'learning', meta = {}, onPartial = null) {
+        const url = `${this.baseURL}/api/chat/stream`;
+        const body = JSON.stringify({ text, context, lessonLang, practiceMode, ...meta });
+
+        // Abort if the server goes silent for too long so a hung stream falls
+        // back to /api/chat instead of leaving the student waiting forever.
+        const controller = new AbortController();
+        const STALL_TIMEOUT_MS = 45000;
+        let stallTimer = setTimeout(() => controller.abort(), STALL_TIMEOUT_MS);
+        const resetStall = () => {
+            clearTimeout(stallTimer);
+            stallTimer = setTimeout(() => controller.abort(), STALL_TIMEOUT_MS);
+        };
+
+        let response;
+        try {
+            response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    ...this.getHeaders(),
+                    'Accept': 'text/event-stream',
+                },
+                body,
+                signal: controller.signal,
+            });
+        } catch (e) {
+            clearTimeout(stallTimer);
+            // Network error or stall abort  fall back to non-streaming chat
+            console.warn('[chatStream] fetch failed, falling back to /api/chat:', e);
+            return this.chat(text, context, lessonLang, practiceMode, meta);
+        }
+
+        // If server doesn't support stream, fall back. For real API errors
+        // (429 limit, 500 provider error, auth problems), do not duplicate the
+        // request against /api/chat; surface the original error instead.
+        const ct = response.headers.get('content-type') || '';
+        const canFallbackToChat = response.status === 404 || response.status === 405 || response.status === 501;
+        if (!response.ok && !canFallbackToChat) {
+            clearTimeout(stallTimer);
+            await this.handleResponse(response);
+        }
+        if (canFallbackToChat || !ct.includes('text/event-stream')) {
+            clearTimeout(stallTimer);
+            console.warn(`[chatStream] server rejected stream (HTTP ${response.status}, ct=${ct}), falling back`);
+            return this.chat(text, context, lessonLang, practiceMode, meta);
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
+        let finalPayload = null;
+        let currentEvent = null;
+        let lastAccumulated = '';
+
+        const processLine = (line) => {
+            if (line.startsWith('event:')) {
+                currentEvent = line.slice(6).trim();
+            } else if (line.startsWith('data:')) {
+                const raw = line.slice(5).trim();
+                let data;
+                try { data = JSON.parse(raw); } catch (_) { return; }
+                if (currentEvent === 'partial' && data && typeof data.accumulated === 'string') {
+                    const accumulated = data.accumulated;
+                    const delta = data.delta || accumulated.slice(lastAccumulated.length);
+                    lastAccumulated = accumulated;
+                    if (typeof onPartial === 'function') {
+                        try { onPartial(accumulated, delta); } catch (e) { console.warn('[chatStream] onPartial error:', e); }
+                    }
+                } else if (currentEvent === 'final') {
+                    finalPayload = data;
+                } else if (currentEvent === 'error') {
+                    throw new Error(data?.error || 'stream error');
+                }
+            }
+            // blank line separates SSE events  reset event name
+            if (line === '') currentEvent = null;
+        };
+
+        try {
+            while (true) {
+                const { value, done } = await reader.read();
+                resetStall();
+                if (done) break;
+                buffer += decoder.decode(value, { stream: true });
+                // Split by SSE line separators
+                let idx;
+                while ((idx = buffer.indexOf('\n')) >= 0) {
+                    const line = buffer.slice(0, idx).replace(/\r$/, '');
+                    buffer = buffer.slice(idx + 1);
+                    processLine(line);
+                }
+            }
+            // Flush any remaining buffered line
+            if (buffer.trim()) processLine(buffer.trim());
+        } catch (e) {
+            console.warn('[chatStream] stream read error, falling back:', e);
+            return this.chat(text, context, lessonLang, practiceMode, meta);
+        } finally {
+            clearTimeout(stallTimer);
+        }
+
+        if (!finalPayload) {
+            console.warn('[chatStream] stream ended without final event, falling back');
+            return this.chat(text, context, lessonLang, practiceMode, meta);
+        }
+
+        return finalPayload;
+    }
+
+    /**
      * Free conversation actions (guided flow)
      */
     async freeConversationAction(action, payload = {}) {
@@ -183,11 +310,11 @@ class APIClient {
     /**
      * Generate report
      */
-    async generateReport(conversation, context) {
+    async generateReport(conversation, context, practiceMode = 'learning', difficulty = 'intermediate') {
         const response = await fetch(`${this.baseURL}/api/report`, {
             method: 'POST',
             headers: this.getHeaders(),
-            body: JSON.stringify({ conversation, context })
+            body: JSON.stringify({ conversation, context, practiceMode, difficulty })
         });
 
         await this.handleResponse(response);

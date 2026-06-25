@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Revisar Erros - IA de Conversação</title>
+    <title>Revisar Erros - IA de Conversacao</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -345,8 +345,11 @@
 
 <body class="review-body">
     <div class="review-container">
-        <div class="review-header">
-            <h1 id="page-title">Revisar Meus Erros</h1>
+        <div class="review-header" style="display:flex; align-items:center; gap:12px; justify-content:space-between;">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <img src="logo.png" alt="Everyday Conversation" style="height: 44px; width: 44px; border-radius: 50%; object-fit: cover; box-shadow: 0 2px 8px rgba(220,38,62,0.35); border: 2px solid rgba(255,255,255,0.15);">
+                <h1 id="page-title" style="margin:0;">Revisar Meus Erros</h1>
+            </div>
             <a href="dashboard.html" class="btn-back" id="back-btn">Voltar</a>
         </div>
 
@@ -431,7 +434,7 @@
                 <div class="empty-state">
                     <div class="empty-icon">&#9989;</div>
                     <h2>Nenhum erro para revisar!</h2>
-                    <p>Continue praticando e gere relatórios para que seus erros apareçam aqui.</p>
+                    <p>Continue praticando e gere relatorios para que seus erros aparecam aqui.</p>
                     <a href="dashboard.html" class="btn-back" style="display: inline-block; margin-top: 20px;">Voltar ao Dashboard</a>
                 </div>`;
         }
@@ -529,7 +532,7 @@
                 card.className = 'review-card incorrect shake';
                 input.className = 'answer-input incorrect-input';
                 feedback.className = 'feedback-area feedback-incorrect show';
-                feedback.innerHTML = `&#10007; A resposta correta é:<div class="correct-answer">${escapeHtml(error.right)}</div>`;
+                feedback.innerHTML = `&#10007; A resposta correta e:<div class="correct-answer">${escapeHtml(error.right)}</div>`;
             }
 
             btnCheck.style.display = 'none';
@@ -563,7 +566,7 @@
             area.innerHTML = `
                 <div class="review-card">
                     <div class="review-complete">
-                        <div class="complete-icon">${pct >= 75 ? '🎉' : pct >= 50 ? '👍' : '💪'}</div>
+                        <div class="complete-icon">${pct >= 75 ? '' : pct >= 50 ? '' : ''}</div>
                         <h2>${pct >= 75 ? 'Excelente!' : pct >= 50 ? 'Bom trabalho!' : 'Continue praticando!'}</h2>
                         <p>Você acertou</p>
                         <div class="review-score ${scoreClass}">${correctCount}/${total}</div>

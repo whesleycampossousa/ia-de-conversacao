@@ -12,52 +12,107 @@ class DeepgramRecorder {
         this.actualMimeType = 'audio/webm'; // track real format for backend
     }
 
-    /** Check if this browser supports audio recording */
-    static isSupported() {
-        return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && typeof MediaRecorder !== 'undefined');
+    static getMimeCandidates() {
+        return [
+            'audio/webm;codecs=opus',
+            'audio/webm',
+            'audio/mp4;codecs=mp4a.40.2',
+            'audio/mp4',
+            'audio/aac',
+            'audio/mpeg'
+        ];
+    }
+
+    static getSupportStatus() {
+        if (typeof window !== 'undefined' && window.isSecureContext === false) {
+            return {
+                supported: false,
+                code: 'insecure_context',
+                reason: 'O microfone so funciona em conexao segura. Abra pelo link HTTPS oficial ou use "Prefere digitar?".'
+            };
+        }
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            return {
+                supported: false,
+                code: 'get_user_media_missing',
+                reason: 'Este navegador nao liberou acesso ao microfone. Abra no Chrome ou Safari atualizado, ou use "Prefere digitar?".'
+            };
+        }
+        if (typeof MediaRecorder === 'undefined') {
+            return {
+                supported: false,
+                code: 'media_recorder_missing',
+                reason: 'Este navegador nao consegue gravar audio aqui. Abra no Chrome ou Safari atualizado, ou use "Prefere digitar?".'
+            };
+        }
+        return { supported: true, code: 'ok', reason: '' };
+    }
+
+    static getFriendlyMediaError(error) {
+        const name = error && error.name ? error.name : '';
+        if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
+            return 'Permissao do microfone negada. Toque no cadeado do navegador e libere o microfone.';
+        }
+        if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
+            return 'Nao encontrei microfone neste aparelho. Verifique o microfone ou use "Prefere digitar?".';
+        }
+        if (name === 'NotReadableError' || name === 'TrackStartError') {
+            return 'O microfone esta ocupado por outro app. Feche chamadas/gravadores e tente de novo.';
+        }
+        if (name === 'SecurityError') {
+            return 'O navegador bloqueou o microfone por seguranca. Abra pelo link HTTPS oficial.';
+        }
+        if (name === 'OverconstrainedError' || name === 'ConstraintNotSatisfiedError') {
+            return 'Nao consegui iniciar o microfone com este aparelho. Tente outro navegador ou use "Prefere digitar?".';
+        }
+        return 'Nao consegui acessar o microfone. Verifique permissoes e tente novamente.';
     }
 
     async start() {
         try {
-            // Check MediaRecorder support (missing on iOS < 14.3)
-            if (typeof MediaRecorder === 'undefined') {
-                console.error('[Recorder] MediaRecorder not supported in this browser');
+            const support = DeepgramRecorder.getSupportStatus();
+            if (!support.supported) {
                 return {
                     success: false,
-                    error: 'Seu navegador nao suporta gravacao de audio. Use Chrome, Safari 14.3+ ou Edge.'
+                    error: support.reason,
+                    code: support.code
                 };
             }
 
-            // Request microphone access — try without sampleRate first on mobile
-            // Some mobile browsers reject the sampleRate constraint
-            let stream = null;
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({
-                    audio: {
-                        echoCancellation: true,
-                        noiseSuppression: true,
-                        sampleRate: 16000
-                    }
-                });
-            } catch (constraintError) {
-                console.warn('[Recorder] getUserMedia failed with sampleRate constraint, retrying without it:', constraintError.name);
-                stream = await navigator.mediaDevices.getUserMedia({
-                    audio: {
-                        echoCancellation: true,
-                        noiseSuppression: true
-                    }
-                });
-            }
-            this.stream = stream;
+            // Request microphone access
+            const audioConstraints = [
+                {
+                    channelCount: { ideal: 1 },
+                    sampleRate: { ideal: 48000 },
+                    echoCancellation: { ideal: true },
+                    noiseSuppression: { ideal: true },
+                    autoGainControl: { ideal: true },
+                    voiceIsolation: { ideal: true }
+                },
+                {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true
+                },
+                true
+            ];
 
-            // Try WebM first (Chrome, Firefox, Edge), then mp4 (Safari/iOS)
-            let mimeType = 'audio/webm';
-            if (!MediaRecorder.isTypeSupported(mimeType)) {
-                // Safari/iOS: try mp4 variants
-                const mp4Types = ['audio/mp4', 'audio/aac', 'audio/mpeg'];
-                mimeType = mp4Types.find(t => MediaRecorder.isTypeSupported(t)) || '';
-                console.log(`[Recorder] WebM not supported, using: ${mimeType || 'browser default'}`);
+            let lastMediaError = null;
+            for (const audio of audioConstraints) {
+                try {
+                    this.stream = await navigator.mediaDevices.getUserMedia({ audio });
+                    break;
+                } catch (err) {
+                    lastMediaError = err;
+                }
             }
+            if (!this.stream) {
+                throw lastMediaError || new Error('Microphone access failed');
+            }
+
+            const mimeCandidates = DeepgramRecorder.getMimeCandidates();
+            const mimeType = mimeCandidates.find(t => MediaRecorder.isTypeSupported(t)) || '';
+            console.log(`[Recorder] Using format: ${mimeType || 'browser default'}`);
 
             const options = mimeType ? { mimeType } : {};
             this.mediaRecorder = new MediaRecorder(this.stream, options);
@@ -72,7 +127,7 @@ class DeepgramRecorder {
             };
 
             // Start recording
-            this.mediaRecorder.start();
+            this.mediaRecorder.start(250);
             this.isRecording = true;
 
             console.log(`[Recorder] Recording started (format: ${this.actualMimeType})`);
@@ -80,22 +135,10 @@ class DeepgramRecorder {
 
         } catch (error) {
             console.error('[Recorder] Microphone access error:', error);
-            // Provide a better error message for common mobile issues
-            let errorMsg = 'Nao foi possivel acessar o microfone. Verifique as permissoes.';
-            if (error.name === 'NotAllowedError') {
-                errorMsg = 'Permissao do microfone negada. Permita o acesso nas configuracoes do navegador.';
-            } else if (error.name === 'NotFoundError') {
-                errorMsg = 'Nenhum microfone encontrado neste dispositivo.';
-            } else if (error.name === 'NotReadableError') {
-                errorMsg = 'O microfone esta sendo usado por outro aplicativo.';
-            } else if (error.name === 'OverconstrainedError') {
-                errorMsg = 'Configuracao de audio nao suportada pelo seu dispositivo.';
-            } else if (window.location.protocol === 'http:' && window.location.hostname !== 'localhost') {
-                errorMsg = 'O microfone requer conexao HTTPS. Acesse via https:// no celular.';
-            }
             return {
                 success: false,
-                error: errorMsg
+                error: DeepgramRecorder.getFriendlyMediaError(error),
+                code: error && error.name ? error.name : 'microphone_error'
             };
         }
     }
@@ -126,6 +169,10 @@ class DeepgramRecorder {
                 // Resolve with audio blob
                 resolve(audioBlob);
             };
+
+            try {
+                this.mediaRecorder.requestData();
+            } catch (_) {}
 
             // Stop recording
             this.mediaRecorder.stop();
@@ -179,11 +226,22 @@ async function transcribeWithDeepgram(audioBlob, token, language = null, mimeTyp
 
         // Use apiClient baseURL if available, otherwise use relative path
         const baseURL = (typeof apiClient !== 'undefined' && apiClient.baseURL) ? apiClient.baseURL : '';
+        const headers = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        const portalTrial = window.portalDailyTrial;
+        if (portalTrial && portalTrial.enabled) {
+            headers['X-Portal-Trial'] = 'daily-10-min';
+            headers['X-Portal-Email'] = portalTrial.email || '';
+            headers['X-Portal-Name'] = portalTrial.name || '';
+            headers['X-Portal-Trial-Date'] = portalTrial.dateKey || '';
+            headers['X-Portal-Limit-Minutes'] = String(Math.round((portalTrial.limitSeconds || 600) / 60));
+        }
+
         const response = await fetch(`${baseURL}/api/transcribe`, {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
+            headers,
             body: formData
         });
 
@@ -205,7 +263,19 @@ async function transcribeWithDeepgram(audioBlob, token, language = null, mimeTyp
             }
 
             const rawError = data.error || data.message || 'Transcription failed';
-            const isUsageBlocked = response.status === 429 && /weekend practice limit reached/i.test(String(rawError));
+            if (/no speech detected|audio file is empty|empty audio/i.test(String(rawError))) {
+                return {
+                    success: false,
+                    error: rawError,
+                    message: 'Nao consegui ouvir sua fala. Tente de novo, falando um pouco mais perto do microfone.',
+                    retry: true,
+                    status: response.status
+                };
+            }
+
+            const isUsageBlocked = response.status === 429 && (
+                data.portal_trial === true || /weekend practice limit reached|limite gratuito/i.test(String(rawError))
+            );
 
             return {
                 success: false,
@@ -213,6 +283,7 @@ async function transcribeWithDeepgram(audioBlob, token, language = null, mimeTyp
                 message: data.message || '',
                 status: response.status,
                 usageBlocked: isUsageBlocked,
+                portal_trial: data.portal_trial === true,
                 remaining_seconds: typeof data.remaining_seconds === 'number' ? data.remaining_seconds : null,
                 is_weekend: typeof data.is_weekend === 'boolean' ? data.is_weekend : null
             };

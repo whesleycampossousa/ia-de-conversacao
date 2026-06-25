@@ -16,7 +16,7 @@
     <div class="app-container admin-container">
         <header class="admin-header">
             <div>
-                <h1>🛠️ Admin Panel</h1>
+                <h1> Admin Panel</h1>
                 <p id="admin-info">Loading...</p>
             </div>
             <button id="logout-btn" class="action-btn" style="margin-top: 0; padding: 0.75rem 1.5rem;">Logout</button>
@@ -26,17 +26,17 @@
             <!-- Stats Section -->
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-icon">📧</div>
+                    <div class="stat-icon"></div>
                     <div class="stat-value" id="total-emails">0</div>
                     <div class="stat-label">Authorized Emails</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon">👤</div>
+                    <div class="stat-icon"></div>
                     <div class="stat-value" id="total-users">0</div>
                     <div class="stat-label">Active Users (Live)</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon">⏱️</div>
+                    <div class="stat-icon"></div>
                     <div class="stat-value">Weekend</div>
                     <div class="stat-label">Usage Window</div>
                 </div>
@@ -45,7 +45,7 @@
             <!-- Live Observer Section -->
             <div class="admin-section">
                 <div class="section-header">
-                    <h2>📡 Live Observer</h2>
+                    <h2> Live Observer</h2>
                     <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
                         <label for="metrics-window" style="font-size:0.85rem;color:#94a3b8;">Window</label>
                         <select id="metrics-window" class="action-btn" style="margin:0;padding:0.45rem 0.8rem;background:#1f2937;">
@@ -130,7 +130,7 @@
             <!-- Weekly Didactic Report -->
             <div class="admin-section">
                 <div class="section-header">
-                    <h2>📘 Weekly Didactic Report</h2>
+                    <h2> Weekly Didactic Report</h2>
                     <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
                         <label for="weekly-range" style="font-size:0.85rem;color:#94a3b8;">Range</label>
                         <select id="weekly-range" class="action-btn" style="margin:0;padding:0.45rem 0.8rem;background:#1f2937;">
@@ -206,21 +206,21 @@
             <!-- Email Management Section -->
             <div class="admin-section">
                 <div class="section-header">
-                    <h2>📋 Manage Authorized Emails</h2>
+                    <h2> Manage Authorized Emails</h2>
                     <div style="display: flex; gap: 0.5rem;">
                         <button id="reload-btn" class="action-btn"
                             style="margin: 0; padding: 0.6rem 1.2rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
-                            🔄 Reload from File
+                             Reload from File
                         </button>
                         <button id="add-email-btn" class="action-btn" style="margin: 0; padding: 0.6rem 1.2rem;">
-                            ➕ Add Email
+                             Add Email
                         </button>
                     </div>
                 </div>
 
                 <!-- Search -->
                 <div class="search-box">
-                    <input type="text" id="search-input" placeholder="🔍 Search emails..." />
+                    <input type="text" id="search-input" placeholder=" Search emails..." />
                 </div>
 
                 <!-- Email List -->
@@ -232,7 +232,7 @@
             <!-- Platform Access -->
             <div class="admin-section">
                 <div class="section-header">
-                    <h2>🚀 Quick Access</h2>
+                    <h2> Quick Access</h2>
                 </div>
                 <div style="display: flex; gap: 1rem;">
                     <button onclick="window.location.href='scenarios.html'" class="action-btn"
@@ -264,7 +264,7 @@
         </div>
     </div>
 
-    <script src="api-client.js"></script>
+    <script src="api-client.js?v=fix-20260610"></script>
     <script>
         // Admin panel logic
         document.addEventListener('DOMContentLoaded', async () => {
@@ -564,7 +564,7 @@
                         ${email.toLowerCase() === currentAdminEmail ? '<span class="admin-badge">ADMIN</span>' : ''}
                     </div>
                     ${email.toLowerCase() !== currentAdminEmail ?
-                    `<button onclick="removeEmail(decodeURIComponent('${encodeURIComponent(email)}'))" class="remove-btn">🗑️ Remove</button>` :
+                    `<button onclick="removeEmail(decodeURIComponent('${encodeURIComponent(email)}'))" class="remove-btn"> Remove</button>` :
                     '<span style="color: #94a3b8; font-size: 0.85rem;">Cannot remove</span>'}
                 </div>
             `).join('');

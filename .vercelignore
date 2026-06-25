@@ -36,11 +36,20 @@ nul
 # Directories
 .git/
 .claude/
+.netlify/
+.pytest_cache/
+.ssl/
+.vscode/
 .vercel/cache/
 audio_cache/dynamic/
+áudio_cache/
 test_reports/
 test-results/
 tests/
+album-digital/
+outputs/
+ytmusic_automation_profile/
+ytmusic_debug_profile/
 free_conversation/
 scripts/
 voice_references/
@@ -49,6 +58,8 @@ node_modules/
 backup_today/
 files/
 files2/
+monitor/
+video_cover_work/
 
 # Misc
 *.md

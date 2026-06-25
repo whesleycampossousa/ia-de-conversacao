@@ -5,15 +5,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Conversation Player</title>
-    <!-- Version: 2026-01-26-v4 - hide footer while overlay showing -->
+    <!-- Version: 2026-06-10 audit-fixes - hide footer while overlay showing -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 
-<body style="background: black; overflow: hidden;" class="audio-only-mode">
+<body style="background: black; overflow: hidden;" class="áudio-only-mode">
 
     <div class="cinematic-player">
 
@@ -27,36 +27,346 @@
 
             <!-- Top Bar with Context Title and Subtitle Toggle -->
             <div class="player-top-bar">
+                <img src="logo.png" alt="Everyday Conversation" style="height: 40px; width: 40px; border-radius: 50%; object-fit: cover; box-shadow: 0 2px 8px rgba(220,38,62,0.35); border: 2px solid rgba(255,255,255,0.15); flex-shrink: 0; margin-right: 10px;">
                 <div class="player-context">
                     <span id="player-scenario-title">BASIC STRUCTURES TRAINING</span>
                     <span class="divider">|</span>
-                    <span id="player-mode-badge">Mode: Learning</span>
+                    <span id="player-mode-badge" data-i18n-en="Mode: Learning" data-i18n-pt="Modo: Aprender">Modo: Aprender</span>
+                    <span class="divider" id="daniela-badge-divider" style="display:none;">|</span>
+                    <span id="daniela-badge" style="display:none; color:#ff6b6b; font-weight:700;">🎯 Interview Prep</span>
                 </div>
 
-                <!-- Subtitle Toggle Button -->
-                <button id="subtitle-toggle-btn" class="subtitle-toggle-btn" onclick="toggleSubtitles()">Ativar legendas</button>
+                <!-- Subtitle Toggle + Progress + Settings Button -->
+                <button id="progress-open-btn" class="subtitle-toggle-btn"
+                    onclick="openProgressPanel()"
+                    title="Meu progresso e conquistas"
+                    style="background: linear-gradient(135deg, rgba(127,176,105,0.25), rgba(251,191,36,0.15)); border-color: rgba(127,176,105,0.5);"> Progresso</button>
+                <button id="subtitle-toggle-btn" class="subtitle-toggle-btn" onclick="toggleSubtitles()" style="margin-left: 6px;">Ativar legendas</button>
+                <button id="settings-open-btn" class="subtitle-toggle-btn"
+                    onclick="openSettingsPanel()"
+                    title="Configurações gerais"
+                    style="margin-left: 6px;"> Configurações</button>
             </div>
+
+            <!-- ===== PROGRESS PANEL (achievements inline) ===== -->
+            <div id="progress-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:510; overflow-y:auto; padding: 20px;">
+                <div style="max-width: 560px; margin: 20px auto; background: #181b22; border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 1.2rem 1.4rem 1rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
+                        <div style="font-size: 1.15rem; font-weight: 700; color: #fff;"> Meu Progresso</div>
+                        <button onclick="closeProgressPanel()" style="background: transparent; border: none; color: rgba(255,255,255,0.7); font-size: 1.5rem; cursor: pointer; padding: 0 6px;"></button>
+                    </div>
+                    <div id="progress-panel-content">
+                        <!-- Preenchido por renderProgressPanel() -->
+                    </div>
+                </div>
+            </div>
+
+            <script>
+                function openProgressPanel() {
+                    renderProgressPanel();
+                    document.getElementById('progress-overlay').style.display = 'block';
+                }
+                function closeProgressPanel() {
+                    document.getElementById('progress-overlay').style.display = 'none';
+                }
+                window.openProgressPanel = openProgressPanel;
+                window.closeProgressPanel = closeProgressPanel;
+
+                function renderProgressPanel() {
+                    const container = document.getElementById('progress-panel-content');
+                    let data;
+                    try {
+                        data = JSON.parse(localStorage.getItem('student_progress') || 'null');
+                    } catch (_) { data = null; }
+
+                    if (!data || data.totalSessions === 0) {
+                        container.innerHTML = `<div style="text-align:center; padding: 30px 10px; color: rgba(255,255,255,0.6);">
+                            <div style="font-size: 3rem; margin-bottom: 10px;"></div>
+                            <p style="font-size: 0.95rem;">Fale com a Sofia pra começar seu progresso!</p>
+                            <p style="font-size: 0.75rem; opacity: 0.7;">Cada turno conta pra estatisticas, streak e badges.</p>
+                        </div>`;
+                        return;
+                    }
+
+                    const today = new Date().toISOString().slice(0, 10);
+                    const dailyMin = data.dailyDate === today ? (data.dailyMinutesToday || 0) : 0;
+                    const goalMin = 15;
+                    const goalPct = Math.min(100, Math.round((dailyMin / goalMin) * 100));
+                    const streakEmoji = data.streakWeeks > 0 ? '' : '';
+
+                    const BADGES_LIST = [
+                        { id: 'first_session', icon: '', name: 'Primeira Sessão', desc: 'Complete 1 sessao', check: d => d.totalSessions >= 1 },
+                        { id: 'five_sessions', icon: '', name: '5 Sessões', desc: 'Complete 5 sessões', check: d => d.totalSessions >= 5 },
+                        { id: 'ten_sessions', icon: '', name: '10 Sessões', desc: 'Complete 10 sessões', check: d => d.totalSessions >= 10 },
+                        { id: 'twenty_sessions', icon: '', name: 'Dedicada', desc: 'Complete 20 sessões', check: d => d.totalSessions >= 20 },
+                        { id: 'streak_3', icon: '', name: '3 Semanas', desc: 'Pratique 3 semanas seguidas', check: d => d.streakWeeks >= 3 },
+                        { id: 'streak_5', icon: '', name: '5 Semanas', desc: 'Pratique 5 semanas seguidas', check: d => d.streakWeeks >= 5 },
+                        { id: 'hundred_min', icon: '', name: '100 Minutos', desc: 'Acumule 100 min totais', check: d => d.totalMinutes >= 100 },
+                        { id: 'five_hundred_min', icon: '', name: '500 Minutos', desc: 'Acumule 500 min totais', check: d => d.totalMinutes >= 500 },
+                        { id: 'daily_goal', icon: '', name: 'Meta do Dia', desc: 'Alcance 15 min hoje', check: d => (d.dailyDate === new Date().toISOString().slice(0,10)) && (d.dailyMinutesToday >= 15) },
+                    ];
+
+                    let html = `
+                    <!-- Streak -->
+                    <div style="background: linear-gradient(135deg, rgba(251,146,60,0.18), rgba(239,68,68,0.12)); border: 1px solid rgba(251,146,60,0.35); border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; margin-bottom: 14px;">
+                        <div style="font-size: 2.2rem;">${streakEmoji}</div>
+                        <div style="flex:1;">
+                            <div style="font-size: 1.6rem; font-weight: 800; color: #fff;">${data.streakWeeks} ${data.streakWeeks === 1 ? 'semana' : 'semanas'}</div>
+                            <div style="font-size: 0.8rem; color: rgba(255,255,255,0.7);">Sequência de prática</div>
+                        </div>
+                    </div>
+
+                    <!-- Meta diária -->
+                    <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px 14px; margin-bottom: 14px;">
+                        <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:8px;">
+                            <span style="color: #fff; font-weight: 600; font-size: 0.9rem;"> Meta Diaria</span>
+                            <span style="color: ${goalPct >= 100 ? '#22c55e' : '#fff'}; font-size: 0.85rem; font-weight:600;">${dailyMin.toFixed(1)}/${goalMin} min</span>
+                        </div>
+                        <div style="height: 8px; background: rgba(255,255,255,0.08); border-radius: 999px; overflow: hidden;">
+                            <div style="height: 100%; width: ${goalPct}%; background: linear-gradient(90deg, #7FB069, #22c55e); transition: width 0.3s;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Stats -->
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px;">
+                        <div style="background: rgba(255,255,255,0.05); padding: 12px 8px; border-radius: 10px; text-align: center;">
+                            <div style="font-size: 1.5rem; font-weight: 800; color: #7FB069;">${data.totalSessions}</div>
+                            <div style="font-size: 0.7rem; color: rgba(255,255,255,0.6);">Sessões</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.05); padding: 12px 8px; border-radius: 10px; text-align: center;">
+                            <div style="font-size: 1.5rem; font-weight: 800; color: #fbbf24;">${Math.round(data.totalMinutes)}</div>
+                            <div style="font-size: 0.7rem; color: rgba(255,255,255,0.6);">Minutos</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.05); padding: 12px 8px; border-radius: 10px; text-align: center;">
+                            <div style="font-size: 1.5rem; font-weight: 800; color: #3b82f6;">${data.scenarios.length}</div>
+                            <div style="font-size: 0.7rem; color: rgba(255,255,255,0.6);">Cenários</div>
+                        </div>
+                    </div>
+
+                    <!-- Badges -->
+                    <div style="font-size: 0.85rem; color: rgba(255,255,255,0.8); font-weight: 600; margin-bottom: 8px;"> Conquistas</div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">`;
+
+                    BADGES_LIST.forEach(badge => {
+                        const unlocked = badge.check(data);
+                        html += `<div style="background: ${unlocked ? 'linear-gradient(135deg, rgba(127,176,105,0.25), rgba(127,176,105,0.12))' : 'rgba(255,255,255,0.03)'}; border: 1px solid ${unlocked ? 'rgba(127,176,105,0.45)' : 'rgba(255,255,255,0.08)'}; border-radius: 10px; padding: 10px 6px; text-align: center; ${unlocked ? '' : 'opacity: 0.4;'}">
+                            <div style="font-size: 1.4rem; margin-bottom: 4px;">${badge.icon}</div>
+                            <div style="font-size: 0.68rem; color: #fff; font-weight: 600; line-height: 1.2; margin-bottom: 2px;">${badge.name}</div>
+                            <div style="font-size: 0.58rem; color: rgba(255,255,255,0.6); line-height: 1.2;">${badge.desc}</div>
+                        </div>`;
+                    });
+                    html += `</div>`;
+
+                    container.innerHTML = html;
+                }
+            </script>
+
+            <!-- ===== SETTINGS PANEL (unified config modal) ===== -->
+            <div id="settings-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:500; overflow-y:auto; padding: 20px;">
+                <div id="settings-panel" style="max-width: 560px; margin: 20px auto; background: #181b22; border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 1.2rem 1.4rem 1rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
+                        <div id="settings-title" style="font-size: 1.15rem; font-weight: 700; color: #fff;"> Configurações gerais</div>
+                        <button onclick="closeSettingsPanel()" style="background: transparent; border: none; color: rgba(255,255,255,0.7); font-size: 1.5rem; cursor: pointer; padding: 0 6px;"></button>
+                    </div>
+
+                    <!-- Nivel -->
+                    <div class="settings-group">
+                        <div class="settings-label"> Seu nível de inglês</div>
+                        <div class="settings-hint">Isso ajusta: tamanho das respostas, vocabulário, legendas e tradução</div>
+                        <div class="settings-pills" id="settings-difficulty">
+                            <button class="settings-pill" data-value="zero">Zero absoluto</button>
+                            <button class="settings-pill" data-value="beginner">Iniciante (A1-A2)</button>
+                            <button class="settings-pill" data-value="intermediate">Intermediario (B1-B2)</button>
+                            <button class="settings-pill" data-value="advanced">Avancado (C1+)</button>
+                        </div>
+                    </div>
+
+                    <!-- Modo mantido no DOM para compatibilidade, mas escondido da interface. -->
+                    <div class="settings-group" id="settings-mode-group" style="display:none !important;" aria-hidden="true">
+                        <div class="settings-label"> Modo de prática</div>
+                        <div class="settings-hint">Aprender: com correcoes imediatas. Simulador: conversa livre sem interrupcao.</div>
+                        <div class="settings-pills" id="settings-mode">
+                            <button class="settings-pill" data-value="learning"> Aprender</button>
+                            <button class="settings-pill" data-value="simulator"> Simulador</button>
+                        </div>
+                    </div>
+
+                    <!-- Idioma da interface -->
+                    <div class="settings-group">
+                        <div class="settings-label"> Idioma da interface</div>
+                        <div class="settings-hint">Botões, títulos e mensagens do app</div>
+                        <div class="settings-pills" id="settings-interface-lang">
+                            <button class="settings-pill" data-value="pt">Português</button>
+                            <button class="settings-pill" data-value="en">English</button>
+                        </div>
+                    </div>
+
+                    <!-- Legendas -->
+                    <div class="settings-group">
+                        <div class="settings-label"> Legendas e tradução</div>
+                        <label class="settings-row">
+                            <span>Sempre ativar legenda (mostra a tradução em PT abaixo de cada fala)</span>
+                            <input type="checkbox" id="settings-subtitles" class="settings-toggle-input" />
+                            <span class="toggle-switch"></span>
+                        </label>
+                        <div class="settings-hint" style="font-size: 0.7rem; color: rgba(255,255,255,0.5); margin-top: 4px;">Aparece um retângulo com a tradução em português logo abaixo do balão principal.</div>
+
+                        <label class="settings-row" style="margin-top: 10px;">
+                            <span>Manter legendas apenas em inglês (sem tradução PT)</span>
+                            <input type="checkbox" id="settings-subtitles-en-only" class="settings-toggle-input" />
+                            <span class="toggle-switch"></span>
+                        </label>
+                        <div class="settings-hint" style="font-size: 0.7rem; color: rgba(255,255,255,0.5); margin-top: 4px;">Quando ativo, mostra só o texto em inglês  esconde a tradução em português. Ideal pra desafio de listening sem muleta.</div>
+                    </div>
+
+                    <!-- Voz da IA -->
+                    <div class="settings-group">
+                        <div class="settings-label"> Voz da IA</div>
+                        <label class="settings-row">
+                            <span>Falar tradução PT após o EN</span>
+                            <input type="checkbox" id="settings-dual-tts" class="settings-toggle-input" />
+                            <span class="toggle-switch"></span>
+                        </label>
+                        <!-- "Ouvir PT primeiro" removido  ficou so o PT após EN -->
+                        <input type="hidden" id="settings-pt-first" value="off" />
+
+                        <label class="settings-row" style="flex-direction:column; align-items:flex-start; gap:4px;">
+                            <span>Volume do áudio: <span id="settings-volume-value" style="opacity:0.7;">1.6</span></span>
+                            <input type="range" id="settings-volume" min="0.8" max="2.4" step="0.1" style="width:100%; accent-color:#e50914;" />
+                        </label>
+                        <label class="settings-row" style="flex-direction:column; align-items:flex-start; gap:4px;">
+                            <span>Velocidade da voz EN: <span id="settings-speed-value" style="opacity:0.7;">1.0</span></span>
+                            <input type="range" id="settings-speed" min="0.6" max="1.2" step="0.05" style="width:100%; accent-color:#e50914;" />
+                        </label>
+                    </div>
+
+                    <!-- Gravação -->
+                    <div class="settings-group">
+                        <div class="settings-label"> Gravação</div>
+                        <label class="settings-row">
+                            <span>Confirmar transcrição antes de enviar</span>
+                            <input type="checkbox" id="settings-confirm-transcription" class="settings-toggle-input" />
+                            <span class="toggle-switch"></span>
+                        </label>
+                    </div>
+
+                    <!-- ===== SECRET: Modo Daniela (revelado por 7 toques no titulo acima) ===== -->
+                    <div class="settings-group" id="daniela-secret-section" style="display:none; border:1px solid rgba(229,9,20,0.45); border-radius:10px; padding:10px 12px; background:rgba(229,9,20,0.07);">
+                        <div class="settings-label">🎯 Modo Daniela — Interview Prep (BDR)</div>
+                        <div class="settings-hint">Treino dedicado de entrevista em inglês, baseado no currículo dela e na vaga (PandaDoc BDR). Não afeta os outros cenários.</div>
+                        <label class="settings-row">
+                            <span>Ativar Modo Daniela</span>
+                            <input type="checkbox" id="daniela-mode-toggle" class="settings-toggle-input" />
+                            <span class="toggle-switch"></span>
+                        </label>
+                        <div id="daniela-launchers" style="display:none; margin-top:10px; flex-direction:column; gap:8px;">
+                            <button type="button" class="settings-pill" style="width:100%; text-align:left;" onclick="launchDanielaInterview()">🎤 Entrevista (conversa com recrutador)</button>
+                            <button type="button" class="settings-pill" style="width:100%; text-align:left;" onclick="launchDanielaDrills()">🗣️ Treino de frases (pronúncia)</button>
+                        </div>
+                    </div>
+
+                    <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5); margin-top: 12px; text-align:center; line-height:1.4;">
+                        As alterações são salvas automaticamente.
+                    </div>
+                    <button id="settings-primary-btn"
+                            onclick="confirmSettingsAndStart()"
+                            style="width:100%; margin-top: 10px; padding: 14px; background: #e50914; border: none; border-radius: 8px; color: white; font-weight: 700; font-size: 1.05rem; cursor: pointer;">
+                         Começar prática
+                    </button>
+                </div>
+            </div>
+
+            <!-- ===== SECRET "Modo Daniela" wiring (7-tap reveal, toggle, launchers, badge) ===== -->
+            <script>
+            (function setupDanielaMode(){
+                const DKEY = 'daniela_mode';
+                function isOn(){ try { return localStorage.getItem(DKEY) === 'true'; } catch(_) { return false; } }
+                function applyBadge(){
+                    const on = isOn();
+                    const b = document.getElementById('daniela-badge');
+                    const d = document.getElementById('daniela-badge-divider');
+                    if (b) b.style.display = on ? '' : 'none';
+                    if (d) d.style.display = on ? '' : 'none';
+                }
+                function revealSection(){
+                    const sec = document.getElementById('daniela-secret-section');
+                    if (sec) sec.style.display = 'block';
+                    const tog = document.getElementById('daniela-mode-toggle');
+                    if (tog) tog.checked = isOn();
+                    const launch = document.getElementById('daniela-launchers');
+                    if (launch) launch.style.display = isOn() ? 'flex' : 'none';
+                }
+                window.launchDanielaInterview = function(){
+                    try { localStorage.setItem('current_context','job_interview'); } catch(_){}
+                    window.location.href = 'practice.html?context=job_interview&profile=daniela&title=' + encodeURIComponent('Interview Prep (BDR)');
+                };
+                window.launchDanielaDrills = function(){
+                    try { localStorage.setItem('current_context','bdr_interview_drills'); } catch(_){}
+                    window.location.href = 'practice.html?context=bdr_interview_drills&profile=daniela&structured=1&title=' + encodeURIComponent('BDR Phrase Drills');
+                };
+                document.addEventListener('DOMContentLoaded', function(){
+                    applyBadge();
+                    if (isOn()) revealSection();
+                    // 7-tap secret reveal on the settings title.
+                    const title = document.getElementById('settings-title');
+                    if (title){
+                        let taps = 0, timer = null;
+                        title.addEventListener('click', function(){
+                            taps++;
+                            clearTimeout(timer);
+                            timer = setTimeout(function(){ taps = 0; }, 2500);
+                            // Subtle per-tap feedback so the user knows the taps register.
+                            title.style.transition = 'opacity 0.12s';
+                            title.style.opacity = '0.4';
+                            setTimeout(function(){ title.style.opacity = '1'; }, 120);
+                            if (taps >= 7){
+                                taps = 0;
+                                revealSection();
+                                const sec = document.getElementById('daniela-secret-section');
+                                if (sec){
+                                    sec.scrollIntoView({behavior:'smooth', block:'center'});
+                                    sec.style.boxShadow = '0 0 0 3px rgba(229,9,20,0.6)';
+                                    setTimeout(function(){ sec.style.boxShadow = 'none'; }, 1300);
+                                }
+                            }
+                        });
+                    }
+                    const toggle = document.getElementById('daniela-mode-toggle');
+                    if (toggle){
+                        toggle.addEventListener('change', function(){
+                            try { localStorage.setItem(DKEY, toggle.checked ? 'true' : 'false'); } catch(_){}
+                            const launch = document.getElementById('daniela-launchers');
+                            if (launch) launch.style.display = toggle.checked ? 'flex' : 'none';
+                            applyBadge();
+                        });
+                    }
+                });
+            })();
+            </script>
 
             <!-- Objective removed -->
 
-            <!-- Start Overlay -->
+            <!-- Start Overlay (hidden: configuration now lives in the Settings Panel,
+                 which opens automatically on load. This overlay stays in the DOM because
+                 app.js's startConversationFlow hides it imperatively  we keep that path
+                 working by making the overlay invisible from the start.) -->
             <div id="start-overlay" class="start-overlay-container"
-                style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; background: rgba(0,0,0,0.95); position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 100;">
+                style="display: none; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; background: rgba(0,0,0,0.95); position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 100;">
 
                 <!-- Onboarding (shown only first time) -->
                 <div id="onboarding-overlay" style="display: none; text-align: center; margin-bottom: 1rem; max-width: 360px;">
                     <div style="font-size: 1rem; font-weight: 700; color: white; margin-bottom: 0.6rem;">Como funciona?</div>
                     <div style="display: flex; gap: 0.5rem; justify-content: center;">
                         <div style="flex: 1; background: rgba(30,30,30,0.95); border-radius: 12px; padding: 0.7rem; border: 1px solid rgba(255,255,255,0.1);">
-                            <div style="font-size: 1.3rem; margin-bottom: 0.2rem;">📚</div>
-                            <div style="font-size: 0.75rem; font-weight: 700; color: white; margin-bottom: 0.15rem;">Learning</div>
+                            <div style="font-size: 1.3rem; margin-bottom: 0.2rem;"></div>
+                            <div style="font-size: 0.75rem; font-weight: 700; color: white; margin-bottom: 0.15rem;" data-i18n-en="Learning" data-i18n-pt="Aprender">Aprender</div>
                             <div style="font-size: 0.62rem; color: rgba(255,255,255,0.55); line-height: 1.3;">
-                                Siga licoes estruturadas passo a passo. Perfeito para construir vocabulario.
+                                Siga lições estruturadas passo a passo. Perfeito para construir vocabulário.
                             </div>
                         </div>
                         <div style="flex: 1; background: rgba(30,30,30,0.95); border-radius: 12px; padding: 0.7rem; border: 1px solid rgba(255,255,255,0.1);">
-                            <div style="font-size: 1.3rem; margin-bottom: 0.2rem;">🎭</div>
-                            <div style="font-size: 0.75rem; font-weight: 700; color: white; margin-bottom: 0.15rem;">Simulator</div>
+                            <div style="font-size: 1.3rem; margin-bottom: 0.2rem;"></div>
+                            <div style="font-size: 0.75rem; font-weight: 700; color: white; margin-bottom: 0.15rem;" data-i18n-en="Simulator" data-i18n-pt="Simulador">Simulador</div>
                             <div style="font-size: 0.62rem; color: rgba(255,255,255,0.55); line-height: 1.3;">
                                 Pratique conversas reais. A IA interpreta um personagem em cenarios do dia a dia.
                             </div>
@@ -68,19 +378,19 @@
                 </div>
 
                 <!-- Mode Selection -->
-                <div id="mode-selection" class="mode-selection-container" style="text-align: center; margin-bottom: 0.5rem;">
+                <div id="mode-selection" class="mode-selection-container" style="display:none !important; text-align: center; margin-bottom: 0.5rem;" aria-hidden="true">
                     <div class="mode-title" style="font-size: 0.95rem; margin-bottom: 0.5rem; color: rgba(255,255,255,0.7);">Escolha o modo</div>
                     <div class="pmode-options" style="display: flex; flex-direction: row; gap: 0.5rem; justify-content: center;">
                         <div class="pmode-card" data-mode="learning" id="mode-learning"
                             style="width: 140px; padding: 0.5rem 0.4rem; background: rgba(30,30,30,0.95); border: 2px solid rgba(255,255,255,0.1); border-radius: 12px; cursor: pointer; text-align: center;">
-                            <div style="font-size: 1.3rem; margin-bottom: 0.1rem;">📚</div>
-                            <div style="font-size: 0.8rem; font-weight: 700; color: white;">Learning</div>
+                            <div style="font-size: 1.3rem; margin-bottom: 0.1rem;"></div>
+                            <div style="font-size: 0.8rem; font-weight: 700; color: white;" data-i18n-en="Learning" data-i18n-pt="Aprender">Aprender</div>
                             <div style="font-size: 0.58rem; color: rgba(255,255,255,0.45); line-height: 1.3; margin-top: 0.15rem;">Licoes passo a passo</div>
                         </div>
                         <div class="pmode-card" data-mode="simulator" id="mode-simulator"
                             style="width: 140px; padding: 0.5rem 0.4rem; background: rgba(30,30,30,0.95); border: 2px solid rgba(255,255,255,0.1); border-radius: 12px; cursor: pointer; text-align: center;">
-                            <div style="font-size: 1.3rem; margin-bottom: 0.1rem;">🎭</div>
-                            <div style="font-size: 0.8rem; font-weight: 700; color: white;">Simulator</div>
+                            <div style="font-size: 1.3rem; margin-bottom: 0.1rem;"></div>
+                            <div style="font-size: 0.8rem; font-weight: 700; color: white;" data-i18n-en="Simulator" data-i18n-pt="Simulador">Simulador</div>
                             <div style="font-size: 0.58rem; color: rgba(255,255,255,0.45); line-height: 1.3; margin-top: 0.15rem;">Conversas reais com IA</div>
                         </div>
                     </div>
@@ -90,6 +400,7 @@
                 <div id="difficulty-selection" style="text-align: center; margin: 0.5rem 0;">
                     <div style="font-size: 0.72rem; color: rgba(255,255,255,0.45); margin-bottom: 0.35rem;">Dificuldade</div>
                     <div class="difficulty-pills" style="display: flex; gap: 0.35rem; justify-content: center;">
+                        <button class="difficulty-pill" data-difficulty="zero">Zero</button>
                         <button class="difficulty-pill" data-difficulty="beginner">Iniciante</button>
                         <button class="difficulty-pill" data-difficulty="intermediate">Intermediario</button>
                         <button class="difficulty-pill" data-difficulty="advanced">Avancado</button>
@@ -99,8 +410,17 @@
                 <!-- Transcription Confirm Toggle (simple inline) -->
                 <div id="transcription-confirm-step" style="text-align: center; margin: 0.4rem 0;">
                     <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                        <span style="font-size: 0.7rem; color: rgba(255,255,255,0.5);">Confirmar transcricao</span>
+                        <span style="font-size: 0.7rem; color: rgba(255,255,255,0.5);">Confirmar transcrição</span>
                         <input type="checkbox" id="confirm-toggle-checkbox" style="display: none;" />
+                        <span class="toggle-switch"></span>
+                    </label>
+                </div>
+
+                <!-- PT-first toggle: let super-beginners hear Portuguese BEFORE English -->
+                <div id="pt-first-step" style="text-align: center; margin: 0.4rem 0;">
+                    <label style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <span style="font-size: 0.7rem; color: rgba(255,255,255,0.5);">Ouvir PT primeiro, depois EN</span>
+                        <input type="checkbox" id="pt-first-checkbox" style="display: none;" />
                         <span class="toggle-switch"></span>
                     </label>
                 </div>
@@ -110,8 +430,9 @@
 
                 <!-- Play button (always visible) -->
                 <button id="start-btn" class="primary-btn pulse-animation"
-                    style="padding: 0.9rem 2rem; font-size: 1.1rem; margin-top: 1rem;">
-                    ▶ Play
+                    style="padding: 0.9rem 2rem; font-size: 1.1rem; margin-top: 1rem;"
+                    data-i18n-en=" Play" data-i18n-pt=" Começar">
+                     Começar
                 </button>
                 <div id="start-message" class="start-message" style="font-size: 0.75rem; color: rgba(255,255,255,0.35); margin-top: 0.3rem;">Selecione o modo e toque para iniciar</div>
             </div>
@@ -128,27 +449,25 @@
             <div id="free-question-panel" class="free-question-panel hidden">
                 <div class="free-question-card" style="max-width: 340px;">
                     <div style="font-size: 0.85rem; color: rgba(255,255,255,0.8); font-weight: 600; margin-bottom: 0.4rem;">
-                        Sobre o que voce quer conversar?
+                        Sobre o que você quer conversar?
                     </div>
                     <div id="free-question-text" style="font-size: 0.75rem; color: rgba(255,255,255,0.65); margin-bottom: 0.45rem; line-height: 1.35;"></div>
                     <div id="free-session-mode" class="free-session-mode">
-                        <button class="free-session-chip selected" data-free-mode="mission">Missao Easy</button>
-                        <button class="free-session-chip" data-free-mode="chat">Conversa livre</button>
+                        <button class="free-session-chip selected" data-free-mode="chat">Conversa livre</button>
+                        <button class="free-session-chip" data-free-mode="mission">Missao Easy</button>
                     </div>
                     <div id="free-mission-preview" class="free-mission-preview"></div>
+                    <div id="featured-topics-intro" style="font-size: 0.78rem; color: rgba(255,255,255,0.9); line-height: 1.4; margin-bottom: 0.5rem;">
+                        <span style="display:inline-block; margin-right:0.25rem;"></span>
+                        Sofia tem duas ideias pra hoje:
+                    </div>
+                    <div id="topic-chips" style="display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.55rem;">
+                        <!-- Chips sao injetados dinamicamente por app.js (2 topicos concretos do dia) -->
+                    </div>
+                    <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5); text-align: center; margin-bottom: 0.35rem;">ou me conta outra coisa</div>
                     <input type="text" id="free-topic-input" placeholder="Ex: Minha viagem para a Italia..."
                         style="width: 100%; padding: 0.45rem 0.7rem; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: white; font-size: 0.8rem; margin-bottom: 0.4rem; outline: none; box-sizing: border-box;" />
-                    <div id="topic-chips" style="display: flex; flex-wrap: wrap; gap: 0.3rem; margin-bottom: 0.5rem;">
-                        <button class="topic-chip" data-topic="Travel">Viagens</button>
-                        <button class="topic-chip" data-topic="Movies and Series">Filmes</button>
-                        <button class="topic-chip" data-topic="Technology">Tecnologia</button>
-                        <button class="topic-chip" data-topic="Food and Cooking">Comida</button>
-                        <button class="topic-chip" data-topic="Sports">Esportes</button>
-                        <button class="topic-chip" data-topic="Career and Work">Carreira</button>
-                        <button class="topic-chip" data-topic="Music">Musica</button>
-                        <button class="topic-chip" data-topic="Daily Life">Dia a dia</button>
-                    </div>
-                    <button id="free-question-ok" class="free-question-ok" style="width: 100%;">Comecar</button>
+                    <button id="free-question-ok" class="free-question-ok" style="width: 100%;">Começar</button>
                 </div>
             </div>
 
@@ -156,11 +475,45 @@
             <div class="player-controls footer-bar" id="footer-bar">
                 <input type="checkbox" id="auto-translate-toggle" style="display:none;">
 
-                <div class="input-row voice-only-row" id="input-row">
-                    <button id="record-btn" class="control-btn mic-btn" title="Start/Speak" disabled>
-                        <span id="mic-icon-inner">🎤</span>
-                    </button>
+                <div class="input-row voice-only-row" id="input-row" style="flex-direction: column; align-items: center; gap: 0;">
+                    <div style="display: flex; flex-direction: row; align-items: center; gap: 16px; justify-content: center;">
+                        <button id="record-btn" class="control-btn mic-btn" title="Clique para Falar" disabled>
+                            <span id="mic-icon-inner"></span>
+                        </button>
+                        <button id="tell-me-more-btn" class="control-btn" title="Peca a IA para explicar mais" disabled
+                            style="display: none; width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, rgba(127,176,105,0.3), rgba(127,176,105,0.15)); border: 2px solid rgba(127,176,105,0.6); color: #B8DAA7; cursor: pointer; font-size: 1.6rem; align-items: center; justify-content: center; transition: all 0.2s; opacity: 0.55;">
+                            <span style="font-size: 1.3rem;">+</span>
+                        </button>
+                    </div>
+                    <div id="mic-hint" class="mic-hint-under">Clique no microfone para responder</div>
+                    <div id="tell-me-more-hint" style="display: none; color: #7FB069; font-size: 0.72rem; margin-top: 4px; text-align: center; opacity: 0.85;"> clique pra pedir a IA explicar mais</div>
                     <div id="record-text" style="display: none;"></div>
+
+                    <div id="control-chips-row" class="control-chips-row" style="display: none;">
+                        <button type="button" id="ctrl-easier" class="ctrl-chip" data-action="easier" title="Sofia simplifica a proxima resposta">
+                             Mais fácil
+                        </button>
+                        <button type="button" id="ctrl-example" class="ctrl-chip" data-action="example" title="Sofia da um exemplo de resposta">
+                             Me dê exemplo
+                        </button>
+                        <button type="button" id="ctrl-correction" class="ctrl-chip ctrl-toggle" data-toggle="correction" title="Sofia corrige erros leves durante a conversa">
+                             Corrigir agora
+                        </button>
+                        <button type="button" id="ctrl-topic" class="ctrl-chip" data-action="topic_switch" title="Pedir um tema diferente">
+                             Trocar tema
+                        </button>
+                    </div>
+
+                    <!-- Text fallback: pra quando o microfone falha ou o aluno prefere digitar -->
+                    <button type="button" id="keyboard-fallback-toggle" class="kb-fallback-toggle" title="Mude pra teclado se o microfone nao funcionar"> Prefere digitar?</button>
+
+                    <div id="keyboard-fallback-row" class="kb-fallback-row" style="display: none;">
+                        <textarea id="keyboard-fallback-input" class="kb-fallback-input" rows="1"
+                            placeholder="Escreva sua resposta em inglês..." autocomplete="off"
+                            autocorrect="off" spellcheck="false" maxlength="500"></textarea>
+                        <button type="button" id="keyboard-fallback-send" class="kb-fallback-send" disabled>Enviar</button>
+                        <button type="button" id="keyboard-fallback-close" class="kb-fallback-close" title="Voltar pro microfone"></button>
+                    </div>
                 </div>
 
                 <div id="pronunciation-feedback" class="pronunciation-feedback" style="display: none;">
@@ -172,7 +525,7 @@
 
                 <div id="report-bar" class="report-bar">
                     <button id="report-bar-btn">
-                        📊 Gerar relatório da conversa
+                         Gerar relatório da conversa
                     </button>
                 </div>
             </div>
@@ -200,14 +553,14 @@
     <!-- Tips Modal (shown before practice starts) -->
     <div id="tips-modal" class="tips-modal" style="display: none;">
         <div class="tips-modal-content">
-            <div class="tips-modal-icon">💡</div>
+            <div class="tips-modal-icon"></div>
             <div class="tips-modal-title">Dicas antes de começar</div>
             <div class="tips-modal-text">
-                <p>Ao clicar em <strong>gravar</strong>, fale na velocidade que quiser e pelo tempo que quiser — o botão <strong>não vai te cortar</strong>.</p>
+                <p>Ao clicar em <strong>gravar</strong>, fale na velocidade que quiser e pelo tempo que quiser  o botão <strong>não vai te cortar</strong>.</p>
                 <p>Pode falar lentamente se precisar. Recomendo tentar dar respostas maiores e mais elaboradas.</p>
-                <p>No fim, gere o <strong>relatório da conversação</strong> para estudo e aprendizado. Depois, <strong>corrija os erros gramaticais</strong>.</p>
+                <p>No fim, gere o <strong>relatório da conversa??o</strong> para estudo e aprendizado. Depois, <strong>corrija os erros gramaticais</strong>.</p>
             </div>
-            <button id="tips-modal-ok" class="tips-modal-btn">Entendi, vamos lá!</button>
+            <button id="tips-modal-ok" class="tips-modal-btn">Entendi, vamos l?!</button>
         </div>
     </div>
 
@@ -216,7 +569,7 @@
         <div class="report-modal-content">
             <div class="report-modal-header">
                 <h2>Performance Report</h2>
-                <button class="report-modal-close" onclick="closeReportModal()">✕</button>
+                <button class="report-modal-close" onclick="closeReportModal()"></button>
             </div>
             <div class="report-modal-body" id="report-modal-body">
                 <!-- Content -->
@@ -224,8 +577,8 @@
         </div>
     </div>
 
-    <script src="api-client.js"></script>
-    <script src="deepgram-recorder.js"></script>
+    <script src="api-client.js?v=fix-20260610"></script>
+    <script src="deepgram-recorder.js?v=micfix-20260618"></script>
 
     <script>
         // Init Player UI logic
@@ -239,6 +592,17 @@
         // Find background image based on context ID
         const contextId = urlParams.get('context') || 'basic_structures';
         const lessonLang = urlParams.get('lessonLang') || 'en';
+        const urlDifficulty = (urlParams.get('difficulty') || '').toLowerCase();
+        if (['zero', 'beginner', 'intermediate', 'advanced'].includes(urlDifficulty)) {
+            localStorage.setItem('practice_difficulty', urlDifficulty);
+        } else if (contextId === 'iniciantes_fluxo') {
+            localStorage.setItem('practice_difficulty', 'zero');
+        }
+        if (contextId === 'iniciantes_fluxo') {
+            localStorage.setItem('practice_mode', 'learning');
+            if (localStorage.getItem('tts_pt_first') === null) localStorage.setItem('tts_pt_first', 'true');
+            if (localStorage.getItem('tts_speak_pt_user_set') !== 'true') localStorage.setItem('tts_speak_pt', 'true');
+        }
 
         // Theme-appropriate images for each scenario/lesson
         const categoryImages = {
@@ -252,6 +616,7 @@
             'shopping': 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1920&q=80',
             'doctor': 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=1920&q=80',
             'free_conversation': 'https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=1920&q=80',
+            'iniciantes_fluxo': 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=1920&q=80',
             'taxi': 'https://images.unsplash.com/photo-1511994714008-b6d68a8b32a2?auto=format&fit=crop&w=1920&q=80',
             'supermarket': 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1920&q=80',
             'bank': 'https://images.unsplash.com/photo-1501167786227-4cba60f6d58f?auto=format&fit=crop&w=1920&q=80',
@@ -372,9 +737,56 @@
             return localStorage.getItem('preferred_voice') || 'female2';
         };
 
+        // ===== I18N ENGINE (interface language: pt/en) =====
+        // Elements opt in by adding data-i18n-pt and data-i18n-en attributes.
+        // Default is 'pt' because most of our users are Brazilian and beginners
+        // need Portuguese UI. Advanced learners can switch to 'en' for immersion.
+        window.getInterfaceLang = () => localStorage.getItem('interface_lang') || 'pt';
+        window.applyInterfaceLang = (lang) => {
+            const chosen = (lang === 'en') ? 'en' : 'pt';
+            document.querySelectorAll('[data-i18n-pt]').forEach(el => {
+                const pt = el.getAttribute('data-i18n-pt');
+                const en = el.getAttribute('data-i18n-en');
+                if (pt && en) el.textContent = (chosen === 'en') ? en : pt;
+            });
+            // Sync toggle button label: shows the OTHER language (what clicking does)
+            const btn = document.getElementById('interface-lang-toggle');
+            if (btn) btn.textContent = chosen === 'en' ? 'PT' : 'EN';
+        };
+        window.setInterfaceLang = (lang) => {
+            const chosen = (lang === 'en') ? 'en' : 'pt';
+            localStorage.setItem('interface_lang', chosen);
+            window.applyInterfaceLang(chosen);
+            // Keep toggle UI in sync (if present on page)
+            const btn = document.getElementById('interface-lang-toggle');
+            if (btn) btn.textContent = chosen === 'en' ? 'PT' : 'EN';
+        };
+        // Apply on load
+        window.applyInterfaceLang(window.getInterfaceLang());
+
+        // Map URL ?level= (A1/A2/B1/B2/C1/C2) to our difficulty buckets.
+        // When the student comes in via scenarios.html or levels.html, the URL
+        // carries the CEFR level  we sync it to localStorage so beginner presets fire.
+        const urlLevel = (new URLSearchParams(window.location.search).get('level') || '').toUpperCase();
+        const levelToDifficulty = { 'ZERO': 'zero', 'A0': 'zero', 'A1': 'beginner', 'A2': 'beginner', 'B1': 'intermediate', 'B2': 'intermediate', 'C1': 'advanced', 'C2': 'advanced' };
+        if (urlLevel && levelToDifficulty[urlLevel]) {
+            localStorage.setItem('practice_difficulty', levelToDifficulty[urlLevel]);
+        }
+
         // Subtitle visibility state (default ON for better comprehension)
+        // Preset rule: if difficulty === 'beginner' AND user never manually set it,
+        // force subtitles ON. Beginners need the translation safety net.
         const savedSubtitlePref = localStorage.getItem('auto_translate');
-        let subtitlesEnabled = savedSubtitlePref === null ? true : savedSubtitlePref === 'true';
+        const subtitleUserOverride = localStorage.getItem('auto_translate_user_set') === 'true';
+        const currentDifficulty = localStorage.getItem('practice_difficulty') || 'intermediate';
+        let subtitlesEnabled;
+        if ((currentDifficulty === 'zero' || currentDifficulty === 'beginner') && !subtitleUserOverride) {
+            subtitlesEnabled = true; // Preset: forced ON for beginners
+        } else if (savedSubtitlePref === null) {
+            subtitlesEnabled = true; // Default
+        } else {
+            subtitlesEnabled = savedSubtitlePref === 'true';
+        }
         window.subtitlesEnabled = subtitlesEnabled;
         const subtitleToggleBtn = document.getElementById('subtitle-toggle-btn');
         const autoTranslateCheckbox = document.getElementById('auto-translate-toggle');
@@ -433,6 +845,8 @@
         function toggleSubtitles() {
             window.subtitlesEnabled = !window.subtitlesEnabled;
             localStorage.setItem('auto_translate', window.subtitlesEnabled ? 'true' : 'false');
+            // Mark as user-overridden so preset-by-difficulty respects the manual choice.
+            localStorage.setItem('auto_translate_user_set', 'true');
 
             updateToggleUI();
             applySubtitleState();
@@ -440,6 +854,261 @@
 
         // Make toggleSubtitles available globally
         window.toggleSubtitles = toggleSubtitles;
+
+        // ===== SETTINGS PANEL WIRING =====
+        // Single unified panel to change every important setting in one place.
+        // Each control reads/writes the same localStorage keys the rest of the app
+        // already uses, so no new plumbing needed  they share state.
+        function openSettingsPanel() {
+            const overlay = document.getElementById('settings-overlay');
+            if (!overlay) return;
+
+            // Hydrate each section with current values
+            const currentDifficulty = localStorage.getItem('practice_difficulty') || 'intermediate';
+            const currentMode = localStorage.getItem('practice_mode') || 'learning';
+            const currentLang = window.getInterfaceLang ? window.getInterfaceLang() : 'pt';
+            const subsOn = window.subtitlesEnabled !== false;
+            const dualOn = localStorage.getItem('tts_speak_pt') === 'true'
+                || (localStorage.getItem('tts_speak_pt_user_set') !== 'true' && (currentDifficulty === 'zero' || currentDifficulty === 'beginner'));
+            const ptFirstOn = localStorage.getItem('tts_pt_first') === 'true'
+                || (localStorage.getItem('tts_pt_first') === null && currentDifficulty === 'zero');
+            const boost = parseFloat(localStorage.getItem('tts_volume_boost')) || 1.6;
+            const speed = parseFloat(localStorage.getItem('tts_speed')) || (currentDifficulty === 'zero' ? 0.65 : (currentDifficulty === 'beginner' ? 0.85 : 1.0));
+            const confirmTr = localStorage.getItem('confirm_transcription') === 'true';
+
+            // Pills: mark the active one
+            document.querySelectorAll('#settings-difficulty .settings-pill').forEach(p => {
+                p.classList.toggle('active', p.dataset.value === currentDifficulty);
+            });
+            document.querySelectorAll('#settings-mode .settings-pill').forEach(p => {
+                p.classList.toggle('active', p.dataset.value === currentMode);
+            });
+            document.querySelectorAll('#settings-interface-lang .settings-pill').forEach(p => {
+                p.classList.toggle('active', p.dataset.value === currentLang);
+            });
+
+            // Checkboxes
+            document.getElementById('settings-subtitles').checked = subsOn;
+            document.getElementById('settings-dual-tts').checked = !!dualOn;
+            document.getElementById('settings-pt-first').checked = ptFirstOn;
+            document.getElementById('settings-confirm-transcription').checked = confirmTr;
+
+            // Ranges + labels
+            const volEl = document.getElementById('settings-volume');
+            volEl.value = boost;
+            document.getElementById('settings-volume-value').textContent = boost.toFixed(1) + '';
+            const spdEl = document.getElementById('settings-speed');
+            spdEl.value = speed;
+            document.getElementById('settings-speed-value').textContent = spdEl.value + '';
+
+            overlay.style.display = 'block';
+            updateSettingsPrimaryButtonLabel();
+        }
+        window.openSettingsPanel = openSettingsPanel;
+
+        function closeSettingsPanel() {
+            const overlay = document.getElementById('settings-overlay');
+            if (overlay) overlay.style.display = 'none';
+        }
+        window.closeSettingsPanel = closeSettingsPanel;
+
+        // Primary action of the panel: "Começar prática" (first time) or
+        // "Continuar prática" (if user opened the panel mid-session to tweak something).
+        async function confirmSettingsAndStart() {
+            closeSettingsPanel();
+            if (!window.__practiceStarted) {
+                if (typeof window.startPracticeSession === 'function') {
+                    await window.startPracticeSession();
+                } else {
+                    const footerBar = document.getElementById('footer-bar');
+                    if (footerBar) footerBar.style.display = '';
+                    const recordBtn = document.getElementById('record-btn');
+                    if (recordBtn) recordBtn.disabled = false;
+                }
+            }
+        }
+        window.confirmSettingsAndStart = confirmSettingsAndStart;
+
+        // Update the primary button label depending on whether practice has started.
+        function updateSettingsPrimaryButtonLabel() {
+            const btn = document.getElementById('settings-primary-btn');
+            if (!btn) return;
+            btn.textContent = window.__practiceStarted ? ' Continuar prática' : ' Começar prática';
+        }
+
+        // Wire up pill groups  click to select, persist, apply presets
+        function wireSettingsPills(groupId, key, onChange) {
+            const group = document.getElementById(groupId);
+            if (!group) return;
+            group.querySelectorAll('.settings-pill').forEach(pill => {
+                pill.addEventListener('click', () => {
+                    const val = pill.dataset.value;
+                    group.querySelectorAll('.settings-pill').forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    localStorage.setItem(key, val);
+                    if (typeof onChange === 'function') onChange(val);
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            wireSettingsPills('settings-difficulty', 'practice_difficulty', (val) => {
+                // Update in-memory selection and re-apply presets that depend on level
+                if (typeof selectedDifficulty !== 'undefined') selectedDifficulty = val;
+                try { window.applyDifficultyPreset && window.applyDifficultyPreset(val); } catch (_) {}
+                // Also keep the start-overlay pills in sync if visible
+                document.querySelectorAll('.difficulty-pill').forEach(p => {
+                    p.classList.toggle('selected', p.dataset.difficulty === val);
+                });
+            });
+            wireSettingsPills('settings-mode', 'practice_mode', (val) => {
+                // Reflect on the mode cards in the start overlay (if still visible)
+                document.querySelectorAll('.pmode-card').forEach(c => {
+                    c.classList.toggle('selected', c.dataset.mode === val);
+                });
+                window.practiceMode = val;
+                if (window.updateHeaderInfo) window.updateHeaderInfo();
+            });
+            wireSettingsPills('settings-interface-lang', 'interface_lang', (val) => {
+                window.setInterfaceLang && window.setInterfaceLang(val);
+                if (window.updateHeaderInfo) window.updateHeaderInfo();
+            });
+
+            // Checkboxes
+            const subs = document.getElementById('settings-subtitles');
+            if (subs) subs.addEventListener('change', () => {
+                localStorage.setItem('auto_translate', subs.checked ? 'true' : 'false');
+                localStorage.setItem('auto_translate_user_set', 'true');
+                window.subtitlesEnabled = subs.checked;
+                if (typeof updateToggleUI === 'function') updateToggleUI();
+                if (typeof applySubtitleState === 'function') applySubtitleState();
+            });
+
+            // Toggle "Manter apenas EN"  esconde a tradução PT mesmo com legendas ligadas
+            const enOnly = document.getElementById('settings-subtitles-en-only');
+            if (enOnly) {
+                // Restaura estado salvo
+                enOnly.checked = localStorage.getItem('subtitles_en_only') === 'true';
+                window.subtitlesEnOnly = enOnly.checked;
+                document.body.classList.toggle('subtitles-en-only', enOnly.checked);
+                enOnly.addEventListener('change', () => {
+                    localStorage.setItem('subtitles_en_only', enOnly.checked ? 'true' : 'false');
+                    window.subtitlesEnOnly = enOnly.checked;
+                    document.body.classList.toggle('subtitles-en-only', enOnly.checked);
+                    if (typeof applySubtitleState === 'function') applySubtitleState();
+                });
+            }
+            const dual = document.getElementById('settings-dual-tts');
+            if (dual) dual.addEventListener('change', () => {
+                localStorage.setItem('tts_speak_pt', dual.checked ? 'true' : 'false');
+                localStorage.setItem('tts_speak_pt_user_set', 'true');
+                window.speakPtTranslation = dual.checked;
+            });
+            const ptf = document.getElementById('settings-pt-first');
+            if (ptf) ptf.addEventListener('change', () => {
+                localStorage.setItem('tts_pt_first', ptf.checked ? 'true' : 'false');
+                window.ptFirst = ptf.checked;
+                const mainCheckbox = document.getElementById('pt-first-checkbox');
+                if (mainCheckbox) mainCheckbox.checked = ptf.checked;
+
+                // Auto-enable dual TTS when user turns on "PT primeiro"  otherwise
+                // the PT wouldn't play at all (shouldSpeakPt requires speakPtTranslation).
+                if (ptf.checked) {
+                    const dualCb = document.getElementById('settings-dual-tts');
+                    if (dualCb && !dualCb.checked) {
+                        dualCb.checked = true;
+                        localStorage.setItem('tts_speak_pt', 'true');
+                        localStorage.setItem('tts_speak_pt_user_set', 'true');
+                        window.speakPtTranslation = true;
+                    }
+                }
+            });
+            const conf = document.getElementById('settings-confirm-transcription');
+            if (conf) conf.addEventListener('change', () => {
+                localStorage.setItem('confirm_transcription', conf.checked ? 'true' : 'false');
+                const mainCheckbox = document.getElementById('confirm-toggle-checkbox');
+                if (mainCheckbox) mainCheckbox.checked = conf.checked;
+            });
+
+            // Ranges
+            const vol = document.getElementById('settings-volume');
+            if (vol) vol.addEventListener('input', () => {
+                const v = parseFloat(vol.value);
+                document.getElementById('settings-volume-value').textContent = v.toFixed(1) + '';
+                localStorage.setItem('tts_volume_boost', v.toString());
+                window.ttsVolumeBoost = v;
+            });
+            const spd = document.getElementById('settings-speed');
+            if (spd) spd.addEventListener('input', () => {
+                const v = parseFloat(spd.value);
+                document.getElementById('settings-speed-value').textContent = v.toFixed(2) + '';
+                localStorage.setItem('tts_speed', v.toString());
+                localStorage.setItem('tts_speed_user_set', 'true');
+                window.ttsSpeed = v;
+            });
+
+            // Close on ESC or click outside the panel (only if practice has started 
+            // before the first Play, they must commit via the primary button).
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && window.__practiceStarted) closeSettingsPanel();
+            });
+            const overlay = document.getElementById('settings-overlay');
+            if (overlay) overlay.addEventListener('click', (e) => {
+                if (e.target === overlay && window.__practiceStarted) closeSettingsPanel();
+            });
+
+            // Auto-open the settings panel on first page load  this replaces the old
+            // start overlay (mode pills + difficulty pills + toggles + Play button).
+            // Wait for app.js to wire startBtn before opening.
+            setTimeout(() => {
+                if (!window.__practiceStarted && document.getElementById('settings-overlay')) {
+                    window.openSettingsPanel();
+                }
+            }, 200);
+        });
+
+        // Apply preset based on difficulty (respects user's manual override per feature).
+        // Called when the user switches difficulty levels.
+        function applyDifficultyPreset(difficulty) {
+            // 1) Subtitles / auto-translate (respects auto_translate_user_set override)
+            const subUserOverride = localStorage.getItem('auto_translate_user_set') === 'true';
+            if (!subUserOverride) {
+                if (difficulty === 'zero' || difficulty === 'beginner') {
+                    window.subtitlesEnabled = true;
+                    localStorage.setItem('auto_translate', 'true');
+                }
+                updateToggleUI();
+                applySubtitleState();
+            }
+
+            // 2) TTS speed (respects tts_speed_user_set override)
+            const speedUserOverride = localStorage.getItem('tts_speed_user_set') === 'true';
+            if (!speedUserOverride) {
+                if (difficulty === 'zero') {
+                    window.ttsSpeed = 0.65;
+                    localStorage.setItem('tts_speed', '0.65');
+                } else if (difficulty === 'beginner') {
+                    window.ttsSpeed = 0.85;
+                    localStorage.setItem('tts_speed', '0.85');
+                } else {
+                    window.ttsSpeed = 1.0;
+                    localStorage.setItem('tts_speed', '1.0');
+                }
+            }
+
+            // 3) Dual TTS (speak PT after EN)  preset ON for beginner, OFF otherwise.
+            // Respects tts_speak_pt_user_set override.
+            const dualUserOverride = localStorage.getItem('tts_speak_pt_user_set') === 'true';
+            if (!dualUserOverride) {
+                window.speakPtTranslation = (difficulty === 'zero' || difficulty === 'beginner');
+                localStorage.setItem('tts_speak_pt', window.speakPtTranslation ? 'true' : 'false');
+            }
+            if (difficulty === 'zero' && localStorage.getItem('tts_pt_first') === null) {
+                localStorage.setItem('tts_pt_first', 'true');
+                window.ptFirst = true;
+            }
+        }
+        window.applyDifficultyPreset = applyDifficultyPreset;
 
         // ===== MODE SELECTION LOGIC =====
         let selectedMode = localStorage.getItem('practice_mode') || 'learning';
@@ -451,6 +1120,29 @@
             if (simCard) simCard.style.display = 'none';
             selectedMode = 'learning';
             localStorage.setItem('practice_mode', 'learning');
+        }
+
+        // Free Conversation (Sofia): sempre simulator mode pra evitar popup
+        // de correcao de learning. Ela e amiga, nao professora.
+        // Esconde o seletor Learning/Simulator (start + settings modal)
+        // mas MANTEM o seletor de dificuldade  a Sofia adapta vocabulário
+        // e velocidade da voz conforme Iniciante / Intermediario / Avancado.
+        if (contextId === 'free_conversation') {
+            selectedMode = 'simulator';
+            localStorage.setItem('practice_mode', 'simulator');
+            const hideModeSelector = () => {
+                // Start screen
+                const modeSel = document.getElementById('mode-selection');
+                if (modeSel) modeSel.style.display = 'none';
+                // Settings modal (aparece via botão Configurações no header)
+                const settingsModeGroup = document.getElementById('settings-mode-group');
+                if (settingsModeGroup) settingsModeGroup.style.display = 'none';
+            };
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', hideModeSelector);
+            } else {
+                hideModeSelector();
+            }
         }
 
         // ===== TRANSCRIPTION CONFIRM PREFERENCE =====
@@ -520,6 +1212,17 @@
                 });
             }
 
+            // --- PT-first toggle (dual TTS order) ---
+            const ptFirstCheckbox = document.getElementById('pt-first-checkbox');
+            if (ptFirstCheckbox) {
+                ptFirstCheckbox.checked = localStorage.getItem('tts_pt_first') === 'true';
+                ptFirstCheckbox.addEventListener('change', () => {
+                    const val = ptFirstCheckbox.checked ? 'true' : 'false';
+                    localStorage.setItem('tts_pt_first', val);
+                    window.ptFirst = ptFirstCheckbox.checked;
+                });
+            }
+
             // --- Difficulty pills ---
             difficultyPills.forEach(pill => {
                 if (pill.dataset.difficulty === selectedDifficulty) pill.classList.add('selected');
@@ -528,6 +1231,8 @@
                     pill.classList.add('selected');
                     selectedDifficulty = pill.dataset.difficulty;
                     localStorage.setItem('practice_difficulty', selectedDifficulty);
+                    // Apply difficulty preset: beginner -> subtitles ON (unless user overrode)
+                    applyDifficultyPreset(selectedDifficulty);
                 });
             });
 
@@ -567,13 +1272,13 @@
             let color, text;
             if (confidence >= 0.85) {
                 color = '#22c55e';
-                text = 'Pronúncia: Excelente!';
+                text = 'Pronuncia: Excelente!';
             } else if (confidence >= 0.65) {
                 color = '#eab308';
-                text = 'Pronúncia: Boa';
+                text = 'Pronuncia: Boa';
             } else {
                 color = '#ef4444';
-                text = 'Pronúncia: Tente de novo';
+                text = 'Pronuncia: Tente de novo';
             }
 
             // Apply styles
@@ -602,7 +1307,7 @@
     </script>
 
     <!-- Load App Logic -->
-    <script src="app.js?v=20260221-07"></script>
+    <script src="app.js?v=chatfix-20260619"></script>
 
     <style>
         /* Top bar styles */
@@ -828,12 +1533,83 @@
             border-radius: 50%;
             transition: transform 0.2s;
         }
-        #confirm-toggle-checkbox:checked ~ .toggle-switch {
+        /* Selector list covers every toggle checkbox in the page.
+           When adding a new toggle, include its id here. */
+        #confirm-toggle-checkbox:checked ~ .toggle-switch,
+        #pt-first-checkbox:checked ~ .toggle-switch,
+        .settings-toggle-input:checked ~ .toggle-switch {
             background: #e50914;
         }
-        #confirm-toggle-checkbox:checked ~ .toggle-switch::after {
+        #confirm-toggle-checkbox:checked ~ .toggle-switch::after,
+        #pt-first-checkbox:checked ~ .toggle-switch::after,
+        .settings-toggle-input:checked ~ .toggle-switch::after {
             transform: translateX(16px);
             background: #fff;
+        }
+
+        /* Settings panel styles */
+        .settings-group {
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .settings-group:last-of-type {
+            border-bottom: none;
+        }
+        .settings-label {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 3px;
+        }
+        .settings-hint {
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 8px;
+            line-height: 1.35;
+        }
+        .settings-pills {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .settings-pill {
+            flex: 1;
+            min-width: 80px;
+            padding: 8px 10px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: rgba(255,255,255,0.8);
+            font-size: 0.78rem;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .settings-pill:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .settings-pill.active {
+            background: #e50914;
+            border-color: #e50914;
+            color: white;
+            font-weight: 600;
+        }
+        .settings-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 7px 0;
+            font-size: 0.82rem;
+            color: rgba(255,255,255,0.85);
+            cursor: pointer;
+            gap: 10px;
+        }
+        .settings-row input[type="checkbox"] {
+            display: none;
+        }
+        .settings-row input[type="range"] {
+            width: 100%;
+            cursor: pointer;
         }
 
         .player-objective {
@@ -883,14 +1659,178 @@
         /* Mobile Optimization - Spacious & Premium */
         @media (max-width: 600px) {
 
-            /* Header: Clean & compact but breathable */
-            .player-top-bar {
-                padding: 12px 16px;
+            /* Player overlay passa a ser flex column  cada elemento fica
+               empilhado sem sobrepor (antes era absolute por cima).
+               padding-bottom removido: era reservado pro footer fixed, mas
+               agora footer e flex item (nao precisa de padding). */
+            .player-overlay {
+                display: flex !important;
+                flex-direction: column !important;
+                height: 100dvh;
+                overflow: hidden;
+                padding-bottom: 0 !important;
+                justify-content: flex-start !important;
             }
 
+            /* Header: compacto + logo menor, botões com icones curtos.
+               IMPORTANT: position STATIC em mobile pra content flui abaixo
+               sem precisar de margin-top artificial. */
+            .player-top-bar {
+                position: static !important;
+                padding: 8px 10px !important;
+                gap: 6px;
+                flex-wrap: nowrap !important;
+                background: rgba(10, 13, 20, 0.95);
+                border-bottom: 1px solid rgba(255,255,255,0.08);
+                flex-shrink: 0;
+            }
+
+            .player-top-bar img[alt="Everyday Conversation"] {
+                height: 32px !important;
+                width: 32px !important;
+                margin-right: 4px !important;
+                flex-shrink: 0;
+            }
+
+            /* Context pill: ESCONDE em mobile (você sabe que ta em Free
+               Conversation + simulador, tem label visivel em outros lugares) */
             .player-context {
-                font-size: 0.85rem;
-                padding: 6px 12px;
+                display: none !important;
+            }
+
+            /* Botao de legendas: so texto curto ou icone em mobile */
+            #subtitle-toggle-btn {
+                padding: 6px 10px !important;
+                font-size: 0.7rem !important;
+                white-space: nowrap;
+                flex-shrink: 0;
+                margin-left: auto;  /* empurra pra direita */
+            }
+            #settings-open-btn {
+                padding: 6px 10px !important;
+                font-size: 0.7rem !important;
+                flex-shrink: 0;
+            }
+
+            /* "Ver histórico" container  flui abaixo do header sem margin
+               artificial (agora que header e static). */
+            .conversation-history-controls {
+                padding: 0 12px !important;
+                margin: 6px auto 4px !important;
+                justify-content: center !important;
+                flex-shrink: 0;
+            }
+            #history-toggle-btn,
+            .history-toggle-btn {
+                font-size: 0.68rem !important;
+                padding: 4px 10px !important;
+            }
+
+            /* Chat window: ocupa o espaco restante entre header e footer */
+            .subtitle-container,
+            #chat-window {
+                flex: 1 !important;
+                min-height: 0;
+                overflow-y: auto !important;
+                padding: 8px 10px !important;
+            }
+
+            /* Balao da IA: usa quase toda largura disponivel + centralizado
+               no eixo X (leve margin nas laterais). O avatar  fica acima. */
+            .subtitle-group {
+                align-items: center !important;  /* centraliza horizontalmente */
+                padding: 0.3rem 0 !important;
+                width: 100% !important;
+            }
+            .subtitle-line.ai {
+                width: calc(100% - 16px) !important;  /* quase full width */
+                max-width: 100% !important;
+                box-sizing: border-box;
+                padding: 0.75rem 0.9rem !important;
+                font-size: 1.05rem !important;
+            }
+            /* Balao do usuario tambem centralizado */
+            .subtitle-line.user {
+                width: calc(100% - 16px) !important;
+                max-width: 100% !important;
+                box-sizing: border-box;
+                padding: 0.75rem 0.9rem !important;
+                font-size: 1rem !important;
+            }
+            /* Traducao (legendas PT) mesma largura */
+            .translation-line {
+                width: calc(100% - 16px) !important;
+                max-width: 100% !important;
+                box-sizing: border-box;
+            }
+
+            /* Status "Pensando... preparando resposta"  esconde em mobile.
+               Ja tem feedback visual via loading-indicator (tres pontinhos no
+               chat) + texto do botão mic "Pensando..." quando processando.
+               Essa badge extra so sobrepoe o botão Relatório. */
+            .status-indicator {
+                display: none !important;
+            }
+
+            /* Rodape: agora flex item do player-overlay (nao mais fixed),
+               fica naturalmente no fundo da coluna sem sobrepor chat. */
+            .player-controls.footer-bar {
+                position: relative !important;
+                bottom: auto !important;
+                padding: 10px 16px calc(16px + env(safe-area-inset-bottom)) !important;
+                gap: 6px;
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+                flex-shrink: 0;
+            }
+
+            .player-controls.footer-bar .input-row {
+                align-items: center;
+            }
+
+            /* Relatório: fica na linha inferior, full-width, sem sobrepor */
+            .report-bar {
+                position: relative !important;
+                bottom: auto !important;
+                left: auto !important;
+                width: 100% !important;
+                margin-top: 8px;
+            }
+            .report-bar #report-bar-btn,
+            .report-bar button {
+                width: 100%;
+                padding: 8px 12px !important;
+                font-size: 0.78rem !important;
+            }
+
+            /* Feedback de pronuncia: compacto, nao cresce footer */
+            .pronunciation-feedback {
+                padding: 4px 8px !important;
+                margin-top: 4px;
+            }
+
+            /* Hint do botão "Fale mais"  1 linha so em mobile */
+            #tell-me-more-hint {
+                font-size: 0.62rem !important;
+                padding: 2px 6px !important;
+                margin-top: 2px !important;
+            }
+
+            /* Cronometro de resposta: menor na mobile pra nao empurrar tudo */
+            #response-timer-overlay {
+                top: 56px !important;
+                min-width: 180px !important;
+                padding: 6px 12px !important;
+            }
+            #response-timer-overlay > div:first-child {
+                font-size: 0.58rem !important;
+            }
+            #response-timer-value {
+                font-size: 1.3rem !important;
+            }
+            #response-timer-hint {
+                font-size: 0.55rem !important;
             }
 
             /* Start Screen: More spacing, larger touch targets */
@@ -1285,8 +2225,169 @@
             font-size: 0.75rem;
             white-space: nowrap;
         }
+
+        /* Compact practice layout patch - 2026-05-05b
+           The old player pushed the conversation to the lower third of the
+           screen. Keep the functional DOM, but make the practice surface feel
+           like a focused tutor instead of an empty video player. */
+        body.áudio-only-mode .player-top-bar {
+            padding: 12px 18px !important;
+            min-height: 58px;
+            background: linear-gradient(180deg, rgba(2, 6, 23, 0.96), rgba(2, 6, 23, 0.62), transparent) !important;
+        }
+
+        body.áudio-only-mode .player-context,
+        body.áudio-only-mode .player-context .divider,
+        body.áudio-only-mode #player-mode-badge {
+            display: none !important;
+        }
+
+        body.áudio-only-mode .player-top-bar img[alt="Everyday Conversation"] {
+            height: 46px !important;
+            width: 46px !important;
+            margin-right: 0 !important;
+        }
+
+        body.áudio-only-mode .player-top-bar .subtitle-toggle-btn {
+            border-radius: 999px;
+            padding: 8px 16px;
+            text-transform: none;
+            letter-spacing: 0;
+            background: rgba(15, 23, 42, 0.78);
+            border-color: rgba(127, 176, 105, 0.32);
+            color: rgba(241, 245, 249, 0.92);
+        }
+
+        body.áudio-only-mode .player-top-bar #subtitle-toggle-btn.active {
+            background: rgba(127, 176, 105, 0.18) !important;
+            border-color: rgba(127, 176, 105, 0.55) !important;
+            color: #d9f99d !important;
+        }
+
+        @media (min-width: 701px) {
+            body.áudio-only-mode .player-overlay {
+                justify-content: flex-start !important;
+                padding: clamp(72px, 10vh, 104px) 24px 126px !important;
+                overflow: hidden !important;
+                background:
+                    radial-gradient(circle at 50% 22%, rgba(127, 176, 105, 0.16), transparent 38%),
+                    linear-gradient(180deg, rgba(2, 6, 23, 0.72) 0%, rgba(2, 6, 23, 0.5) 55%, rgba(2, 6, 23, 0.92) 100%) !important;
+            }
+
+            body.áudio-only-mode .conversation-history-controls {
+                max-width: 720px !important;
+                margin: 0 auto 10px !important;
+                padding: 0 !important;
+                justify-content: center !important;
+            }
+
+            body.áudio-only-mode .subtitle-container {
+                max-width: 720px !important;
+                min-height: 0 !important;
+                max-height: calc(100dvh - 230px) !important;
+                margin: 0 auto !important;
+                padding: 0 12px 8px !important;
+                gap: 0.7rem !important;
+                overflow-y: auto !important;
+                justify-content: flex-start !important;
+            }
+
+            body.áudio-only-mode .subtitle-group {
+                margin-bottom: 0.4rem !important;
+                padding: 0 !important;
+                gap: 0.32rem !important;
+            }
+
+            body.áudio-only-mode .subtitle-group::before {
+                width: 28px !important;
+                height: 28px !important;
+                margin-bottom: -5px !important;
+            }
+
+            body.áudio-only-mode .subtitle-line {
+                font-size: 1.08rem !important;
+                line-height: 1.38 !important;
+                max-width: 92% !important;
+            }
+
+            body.áudio-only-mode .subtitle-line.ai,
+            body.áudio-only-mode .translation-line {
+                border-radius: 15px !important;
+            }
+
+            body.áudio-only-mode .player-controls.footer-bar {
+                padding: 4px 16px 16px !important;
+                background: linear-gradient(to top, rgba(2, 6, 23, 0.98), rgba(2, 6, 23, 0.72), transparent) !important;
+            }
+
+            body.áudio-only-mode .player-controls.footer-bar .control-btn.mic-btn {
+                width: 64px !important;
+                height: 64px !important;
+                flex-basis: 64px !important;
+                font-size: 1.45rem !important;
+            }
+
+            body.áudio-only-mode .mic-hint-under,
+            body.áudio-only-mode #tell-me-more-hint {
+                margin-top: 2px !important;
+                font-size: 0.72rem !important;
+            }
+
+            body.áudio-only-mode .control-chips-row {
+                margin-top: 5px !important;
+                gap: 5px !important;
+                justify-content: center !important;
+            }
+
+            body.áudio-only-mode .kb-fallback-toggle {
+                margin-top: 4px !important;
+            }
+
+            body.áudio-only-mode .status-indicator {
+                bottom: 18px !important;
+                right: 18px !important;
+                opacity: 0.65;
+            }
+
+            body.áudio-only-mode #report-bar {
+                position: fixed;
+                left: 10px;
+                bottom: 8px;
+                width: auto;
+                margin: 0;
+            }
+        }
+
+        @media (max-width: 700px) {
+            body.áudio-only-mode .player-overlay {
+                padding-top: 0 !important;
+            }
+
+            body.áudio-only-mode .conversation-history-controls {
+                margin: 2px auto 4px !important;
+            }
+
+            body.áudio-only-mode .subtitle-container {
+                min-height: 0 !important;
+                max-height: calc(100dvh - 245px) !important;
+                margin-bottom: 6px !important;
+                padding: 0 14px 8px !important;
+                overflow-y: auto !important;
+                justify-content: flex-start !important;
+            }
+
+            body.áudio-only-mode .subtitle-group {
+                gap: 0.25rem !important;
+                margin-bottom: 0.45rem !important;
+            }
+
+            body.áudio-only-mode .subtitle-line {
+                font-size: clamp(1.02rem, 5vw, 1.22rem) !important;
+                line-height: 1.34 !important;
+                max-width: 96% !important;
+            }
+        }
     </style>
 </body>
 
 </html>
-
