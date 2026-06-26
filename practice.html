@@ -1083,8 +1083,28 @@
             // Auto-open the settings panel on first page load  this replaces the old
             // start overlay (mode pills + difficulty pills + toggles + Play button).
             // Wait for app.js to wire startBtn before opening.
+            // EXCEPTION: a Modo Daniela launch (the 🎤/🗣️ buttons add ?profile=daniela) must
+            // START the practice immediately instead of re-opening Settings  otherwise clicking
+            // a launcher just bounces the user back to the config screen and nothing begins.
+            function danielaAutoStart(attempt){
+                if (window.__practiceStarted) return;
+                if (typeof window.startPracticeSession === 'function') {
+                    if (typeof window.closeSettingsPanel === 'function') window.closeSettingsPanel();
+                    window.startPracticeSession();
+                } else if (attempt < 40) {
+                    setTimeout(function(){ danielaAutoStart(attempt + 1); }, 100);
+                } else if (document.getElementById('settings-overlay')) {
+                    window.openSettingsPanel(); // fallback: app.js never wired the starter
+                }
+            }
             setTimeout(() => {
-                if (!window.__practiceStarted && document.getElementById('settings-overlay')) {
+                if (window.__practiceStarted) return;
+                const danielaLaunch = (new URLSearchParams(location.search).get('profile') || '').toLowerCase() === 'daniela';
+                if (danielaLaunch) {
+                    danielaAutoStart(0);
+                    return;
+                }
+                if (document.getElementById('settings-overlay')) {
                     window.openSettingsPanel();
                 }
             }, 200);
