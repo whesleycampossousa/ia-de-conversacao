@@ -50,7 +50,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Secret "Modo Daniela": scoped to the dedicated interview contexts. The secret
     // settings toggle launches practice with ?profile=daniela, which we forward to the
     // backend so it injects the BDR recruiter+coach persona. Never hijacks normal scenarios.
-    const danielaProfile = (urlParams.get('profile') || '').toLowerCase() === 'daniela';
+    const danielaProfile =
+        ((urlParams.get('profile') || '').toLowerCase() === 'daniela')
+        // Robustness: the ?profile= param can be lost on reload/navigation. As long as
+        // Modo Daniela is ON (the secret toggle) and we're in the interview context
+        // (recovered from localStorage current_context), keep the recruiter persona.
+        // Scoped to job_interview so it never hijacks other scenarios for other students.
+        || (function(){ try {
+            return localStorage.getItem('daniela_mode') === 'true' && context === 'job_interview';
+        } catch(_) { return false; } })();
     const user = apiClient.isAuthenticated() ? apiClient.getUser() : { name: 'Visitante', is_admin: false };
     const PORTAL_TRIAL_DEFAULT_MINUTES = 10;
 

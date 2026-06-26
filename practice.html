@@ -318,11 +318,11 @@
                     if (launch) launch.style.display = isOn() ? 'flex' : 'none';
                 }
                 window.launchDanielaInterview = function(){
-                    try { localStorage.setItem('current_context','job_interview'); localStorage.setItem('practice_difficulty','intermediate'); } catch(_){}
+                    try { localStorage.setItem('daniela_mode','true'); localStorage.setItem('current_context','job_interview'); localStorage.setItem('practice_difficulty','intermediate'); } catch(_){}
                     window.location.href = 'practice.html?context=job_interview&profile=daniela&title=' + encodeURIComponent('Interview Prep (BDR)');
                 };
                 window.launchDanielaDrills = function(){
-                    try { localStorage.setItem('current_context','bdr_interview_drills'); localStorage.setItem('practice_difficulty','intermediate'); } catch(_){}
+                    try { localStorage.setItem('daniela_mode','true'); localStorage.setItem('current_context','bdr_interview_drills'); localStorage.setItem('practice_difficulty','intermediate'); } catch(_){}
                     window.location.href = 'practice.html?context=bdr_interview_drills&profile=daniela&structured=1&title=' + encodeURIComponent('BDR Phrase Drills');
                 };
                 document.addEventListener('DOMContentLoaded', function(){
