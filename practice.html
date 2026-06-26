@@ -281,6 +281,27 @@
             (function setupDanielaMode(){
                 const DKEY = 'daniela_mode';
                 function isOn(){ try { return localStorage.getItem(DKEY) === 'true'; } catch(_) { return false; } }
+                function danielaActive(){
+                    try { if (new URLSearchParams(location.search).get('profile') === 'daniela') return true; } catch(_){}
+                    return isOn();
+                }
+                // Pin B2 SYNCHRONOUSLY here (this IIFE runs during parse, before practice.html
+                // initializes its selectedDifficulty var from localStorage further down). Without
+                // this, a previously-saved beginner/zero level would stick for the session.
+                try { if (danielaActive()) localStorage.setItem('practice_difficulty','intermediate'); } catch(_){}
+                // Modo Daniela = fixed B2 level (natural voice + professional English).
+                // Hide the level selector so it can't be changed, and pin difficulty to B2.
+                function lockLevelForDaniela(){
+                    const grp = document.getElementById('settings-difficulty');
+                    const section = grp ? grp.closest('.settings-group') : null;
+                    if (!section) return;
+                    if (danielaActive()){
+                        try { localStorage.setItem('practice_difficulty','intermediate'); } catch(_){}
+                        section.style.display = 'none';
+                    } else {
+                        section.style.display = '';
+                    }
+                }
                 function applyBadge(){
                     const on = isOn();
                     const b = document.getElementById('daniela-badge');
@@ -297,16 +318,17 @@
                     if (launch) launch.style.display = isOn() ? 'flex' : 'none';
                 }
                 window.launchDanielaInterview = function(){
-                    try { localStorage.setItem('current_context','job_interview'); } catch(_){}
+                    try { localStorage.setItem('current_context','job_interview'); localStorage.setItem('practice_difficulty','intermediate'); } catch(_){}
                     window.location.href = 'practice.html?context=job_interview&profile=daniela&title=' + encodeURIComponent('Interview Prep (BDR)');
                 };
                 window.launchDanielaDrills = function(){
-                    try { localStorage.setItem('current_context','bdr_interview_drills'); } catch(_){}
+                    try { localStorage.setItem('current_context','bdr_interview_drills'); localStorage.setItem('practice_difficulty','intermediate'); } catch(_){}
                     window.location.href = 'practice.html?context=bdr_interview_drills&profile=daniela&structured=1&title=' + encodeURIComponent('BDR Phrase Drills');
                 };
                 document.addEventListener('DOMContentLoaded', function(){
                     applyBadge();
                     if (isOn()) revealSection();
+                    lockLevelForDaniela();
                     // 7-tap secret reveal on the settings title.
                     const title = document.getElementById('settings-title');
                     if (title){
@@ -338,6 +360,7 @@
                             const launch = document.getElementById('daniela-launchers');
                             if (launch) launch.style.display = toggle.checked ? 'flex' : 'none';
                             applyBadge();
+                            lockLevelForDaniela();
                         });
                     }
                 });
