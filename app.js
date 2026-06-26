@@ -5218,6 +5218,10 @@ document.addEventListener('DOMContentLoaded', () => {
      * true nos browsers modernos.
      */
     function getPlaybackRateForDifficulty() {
+        // Modo Daniela: a real interview must sound natural and brisk. The recruiter
+        // voice (Chirp3-HD Achernar) ignores the server-side speed param, so pace is
+        // controlled here via playbackRate. Bypass the per-level slowdown entirely.
+        if (danielaProfile) return 1.1;
         try {
             const diff = (window.getSelectedDifficulty ? window.getSelectedDifficulty() : 'intermediate').toLowerCase();
             if (diff === 'zero') return 0.65;
