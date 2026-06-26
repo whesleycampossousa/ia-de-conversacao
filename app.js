@@ -39,7 +39,16 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (_) {}
         return 'free_conversation';
     }
-    const context = resolveScenarioContext();
+    let context = resolveScenarioContext();
+    // Modo Daniela master switch: while the secret toggle is ON, every chat session IS
+    // the BDR interview (except the structured phrase drills). Makes the mode reliable no
+    // matter how she enters and prevents falling back to free_conversation (which served a
+    // generic icebreaker and bypassed the recruiter persona).
+    try {
+        if (localStorage.getItem('daniela_mode') === 'true' && context !== 'bdr_interview_drills') {
+            context = 'job_interview';
+        }
+    } catch (_) {}
     try { localStorage.setItem('current_context', context); } catch (_) {}
     const contextName = urlParams.get('title') || 'Practice';
     const lessonLang = urlParams.get('lessonLang') || 'en'; // 'en' or 'pt' for bilingual
@@ -3813,6 +3822,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 greeting = greetingBlock.en;
                 translation = greetingBlock.pt;
             }
+        } else if (danielaProfile) {
+            // Modo Daniela: open AS THE RECRUITER (greeting + first screening question),
+            // never the generic/Sofia icebreaker. English-only  the PT field is hidden by
+            // the en-only override. Vary the pick so it isn't identical every session.
+            const danielaOpeners = [
+                { en: "Hi Daniela, thanks for taking the time today. To get us started, could you tell me a little about yourself and your background in sales?", pt: "Oi Daniela, obrigado pelo seu tempo hoje. Pra comecar, voce pode me contar um pouco sobre voce e sua experiencia em vendas?" },
+                { en: "Hi Daniela, great to meet you. Let's jump right in  walk me through your experience in outbound sales so far.", pt: "Oi Daniela, prazer em conhece-la. Vamos direto ao ponto  me conta sobre sua experiencia em vendas outbound ate aqui." },
+                { en: "Hello Daniela, thanks for joining. First up: tell me about yourself and what drew you to this BDR role.", pt: "Ola Daniela, obrigado por participar. Pra comecar: fale sobre voce e o que te atraiu nessa vaga de BDR." }
+            ];
+            const _dop = danielaOpeners[Math.floor(Math.random() * danielaOpeners.length)];
+            greeting = _dop.en;
+            translation = _dop.pt;
         } else {
             // Sofia opening: sorteia 1 vez (ambos objetos de greeting compartilham)
             const sofiaOpening = (context === 'free_conversation') ? pickSofiaOpening() : null;
