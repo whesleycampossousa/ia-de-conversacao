@@ -12131,6 +12131,7 @@ def chat():
     # recruiter+coach persona into the system prompt below (see _resolve_chat_system_prompt).
     profile = (data.get('profile') or '').strip().lower()
     is_daniela_profile = (profile == 'daniela') or (context_key in ('bdr_interview', 'bdr_interview_drills'))
+    interview_focus = (data.get('interviewFocus') or '').strip().lower()  # rotates per session for variety/breadth
 
 
 
@@ -12499,6 +12500,24 @@ def chat():
             'reunioes/mes) pra vender o resultado. (versao mais natural e forte - opcional)"}}\n'
             "===== END MODO DANIELA OVERRIDE =====\n"
         )
+        # Per-session focus (rotates from the frontend) so restarts are not the same flow and
+        # she trains every BDR dimension over time. Adds an isolated cache entry per focus.
+        _focus_map = {
+            'screening': "classic recruiter screening - background, why this role, why she is looking to move, her strengths, and salary/OTE expectations",
+            'outbound': "her outbound process in depth - prospecting, account research, multi-channel sequencing, and breaking into cold 200+ FTE accounts",
+            'objections': "objection handling and cold-call confidence - gatekeepers, 'not interested', 'just send me an email', pushback on price or timing; feel free to role-play a quick objection",
+            'ai_research': "AI tools, research and personalization (this company uses Claude) - how she researches accounts, finds triggers, personalizes at scale, and where AI fits versus real prospect understanding",
+            'behavioral': "behavioral and results stories - hitting and missing quota, a deal that slipped, coaching or leading SDRs, and working under monthly targets",
+        }
+        _lean = _focus_map.get(interview_focus)
+        if _lean:
+            daniela_persona += (
+                "\n===== THIS SESSION'S FOCUS =====\n"
+                "Lean this interview toward: " + _lean + ". Still run a real, well-rounded "
+                "interview, but make a good chunk of your questions explore this area in depth. "
+                "This focus rotates across sessions, so do NOT default to the same opening sequence "
+                "or the same question order every time.\n"
+            )
         system_prompt = (system_prompt or "") + daniela_persona
 
     # Get cached model for this context (saves ~90% on system prompt tokens)

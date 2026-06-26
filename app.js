@@ -68,6 +68,24 @@ document.addEventListener('DOMContentLoaded', () => {
         || (function(){ try {
             return localStorage.getItem('daniela_mode') === 'true' && context === 'job_interview';
         } catch(_) { return false; } })();
+    // Modo Daniela: rotate the interview FOCUS each session so restarts are never the same
+    // flow and she trains every BDR dimension over time. Sequential rotation via a counter;
+    // the focus shapes the opener (below) and is forwarded to the backend persona.
+    const DANIELA_FOCUSES = [
+        { key: 'screening', opener: "Hi Daniela, thanks for joining today. Let's start simple. Tell me about yourself and your background in sales." },
+        { key: 'outbound', opener: "Hi Daniela, great to meet you. Let's get right into it. Walk me through your process for breaking into a brand-new cold account." },
+        { key: 'objections', opener: "Hi Daniela, good to meet you. Let's dive straight in. Tell me about a tough objection you got on a cold call and how you handled it." },
+        { key: 'ai_research', opener: "Hello Daniela, thanks for joining. To kick things off, how do you use AI tools to research accounts and personalize your outreach?" },
+        { key: 'behavioral', opener: "Hi Daniela, good to meet you. Let's start with a quick story. Tell me about a month you hit, or missed, your quota and what you took from it." }
+    ];
+    let danielaFocus = '';
+    if (danielaProfile) {
+        try {
+            const _idx = parseInt(localStorage.getItem('daniela_session_idx') || '0', 10) || 0;
+            danielaFocus = DANIELA_FOCUSES[((_idx % DANIELA_FOCUSES.length) + DANIELA_FOCUSES.length) % DANIELA_FOCUSES.length].key;
+            localStorage.setItem('daniela_session_idx', String(_idx + 1));
+        } catch (_) { danielaFocus = 'screening'; }
+    }
     const user = apiClient.isAuthenticated() ? apiClient.getUser() : { name: 'Visitante', is_admin: false };
     const PORTAL_TRIAL_DEFAULT_MINUTES = 10;
 
@@ -3826,14 +3844,10 @@ document.addEventListener('DOMContentLoaded', () => {
             // Modo Daniela: open AS THE RECRUITER (greeting + first screening question),
             // never the generic/Sofia icebreaker. English-only  the PT field is hidden by
             // the en-only override. Vary the pick so it isn't identical every session.
-            const danielaOpeners = [
-                { en: "Hi Daniela, thanks for taking the time today. To get us started, could you tell me a little about yourself and your background in sales?", pt: "Oi Daniela, obrigado pelo seu tempo hoje. Pra comecar, voce pode me contar um pouco sobre voce e sua experiencia em vendas?" },
-                { en: "Hi Daniela, great to meet you. Let's jump right in  walk me through your experience in outbound sales so far.", pt: "Oi Daniela, prazer em conhece-la. Vamos direto ao ponto  me conta sobre sua experiencia em vendas outbound ate aqui." },
-                { en: "Hello Daniela, thanks for joining. First up: tell me about yourself and what drew you to this BDR role.", pt: "Ola Daniela, obrigado por participar. Pra comecar: fale sobre voce e o que te atraiu nessa vaga de BDR." }
-            ];
-            const _dop = danielaOpeners[Math.floor(Math.random() * danielaOpeners.length)];
-            greeting = _dop.en;
-            translation = _dop.pt;
+            // Open with THIS SESSION'S rotating focus opener (see DANIELA_FOCUSES above).
+            const _fo = DANIELA_FOCUSES.find(function(f){ return f.key === danielaFocus; }) || DANIELA_FOCUSES[0];
+            greeting = _fo.opener;
+            translation = '';  // English-only: PT is hidden by the en-only override anyway
         } else {
             // Sofia opening: sorteia 1 vez (ambos objetos de greeting compartilham)
             const sofiaOpening = (context === 'free_conversation') ? pickSofiaOpening() : null;
@@ -4269,6 +4283,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 recentCorrections,
                 difficulty,
                 profile: danielaProfile ? 'daniela' : '',
+                interviewFocus: danielaFocus,
                 tellMeMore: true  // flag pra backend saber que e continuacao
             }, null);
 
@@ -4674,7 +4689,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 correctionEnabled: Boolean(window._sofiaControls && window._sofiaControls.getCorrectionEnabled()),
                 isControlTurn,
                 lastAiPrompt: controlLastAiPrompt,
-                profile: danielaProfile ? 'daniela' : ''
+                profile: danielaProfile ? 'daniela' : '',
+                interviewFocus: danielaFocus
             }, onPartial);
             _perfLog('chatStream() returned (stream + parse complete)');
 
