@@ -12513,10 +12513,11 @@ def chat():
         if _lean:
             daniela_persona += (
                 "\n===== THIS SESSION'S FOCUS =====\n"
-                "Lean this interview toward: " + _lean + ". Still run a real, well-rounded "
-                "interview, but make a good chunk of your questions explore this area in depth. "
-                "This focus rotates across sessions, so do NOT default to the same opening sequence "
-                "or the same question order every time.\n"
+                "Over this interview, lean toward: " + _lean + ". EASE INTO IT NATURALLY - the chat "
+                "opens with a normal 'tell me about yourself', so react to her intro first and only "
+                "then steer a good chunk of your questions toward this area in depth. Keep it a real, "
+                "well-rounded interview. This focus rotates across sessions, so do NOT default to the "
+                "same question order every time.\n"
             )
         system_prompt = (system_prompt or "") + daniela_persona
 

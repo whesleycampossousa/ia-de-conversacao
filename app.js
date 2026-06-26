@@ -71,18 +71,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Modo Daniela: rotate the interview FOCUS each session so restarts are never the same
     // flow and she trains every BDR dimension over time. Sequential rotation via a counter;
     // the focus shapes the opener (below) and is forwarded to the backend persona.
-    const DANIELA_FOCUSES = [
-        { key: 'screening', opener: "Hi Daniela, thanks for joining today. Let's start simple. Tell me about yourself and your background in sales." },
-        { key: 'outbound', opener: "Hi Daniela, great to meet you. Let's get right into it. Walk me through your process for breaking into a brand-new cold account." },
-        { key: 'objections', opener: "Hi Daniela, good to meet you. Let's dive straight in. Tell me about a tough objection you got on a cold call and how you handled it." },
-        { key: 'ai_research', opener: "Hello Daniela, thanks for joining. To kick things off, how do you use AI tools to research accounts and personalize your outreach?" },
-        { key: 'behavioral', opener: "Hi Daniela, good to meet you. Let's start with a quick story. Tell me about a month you hit, or missed, your quota and what you took from it." }
-    ];
+    // The opener stays a natural warm opening every session (see startConversationFlow).
+    // Variety/breadth comes from this rotating FOCUS, which only steers the BODY of the
+    // interview on the backend  it does NOT turn the first question into a deep one.
+    const DANIELA_FOCUSES = ['screening', 'outbound', 'objections', 'ai_research', 'behavioral'];
     let danielaFocus = '';
     if (danielaProfile) {
         try {
             const _idx = parseInt(localStorage.getItem('daniela_session_idx') || '0', 10) || 0;
-            danielaFocus = DANIELA_FOCUSES[((_idx % DANIELA_FOCUSES.length) + DANIELA_FOCUSES.length) % DANIELA_FOCUSES.length].key;
+            danielaFocus = DANIELA_FOCUSES[((_idx % DANIELA_FOCUSES.length) + DANIELA_FOCUSES.length) % DANIELA_FOCUSES.length];
             localStorage.setItem('daniela_session_idx', String(_idx + 1));
         } catch (_) { danielaFocus = 'screening'; }
     }
@@ -3844,9 +3841,18 @@ document.addEventListener('DOMContentLoaded', () => {
             // Modo Daniela: open AS THE RECRUITER (greeting + first screening question),
             // never the generic/Sofia icebreaker. English-only  the PT field is hidden by
             // the en-only override. Vary the pick so it isn't identical every session.
-            // Open with THIS SESSION'S rotating focus opener (see DANIELA_FOCUSES above).
-            const _fo = DANIELA_FOCUSES.find(function(f){ return f.key === danielaFocus; }) || DANIELA_FOCUSES[0];
-            greeting = _fo.opener;
+            // Open like a REAL interview: warm greeting + a GENERAL "tell me about yourself".
+            // Never a deep/specific question as the first message (that felt off). Vary the
+            // wording so it isn't repetitive; the actual breadth comes from the per-session
+            // focus (interviewFocus) that steers the BODY of the interview on the backend.
+            const danielaOpeners = [
+                "Hi Daniela, thanks for joining today. To get us started, tell me a little about yourself and your background in sales.",
+                "Hi Daniela, great to meet you. Let's start with the basics  give me a quick overview of your background and what you've been doing in sales.",
+                "Hello Daniela, thanks for taking the time. First, tell me about yourself and what drew you to this BDR role.",
+                "Hi Daniela, good to meet you. Before we dive in, walk me through your background and your experience in outbound sales.",
+                "Hi Daniela, welcome, glad you're here. To kick things off, tell me a bit about your career so far and what brought you to this role."
+            ];
+            greeting = danielaOpeners[Math.floor(Math.random() * danielaOpeners.length)];
             translation = '';  // English-only: PT is hidden by the en-only override anyway
         } else {
             // Sofia opening: sorteia 1 vez (ambos objetos de greeting compartilham)
