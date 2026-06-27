@@ -4342,12 +4342,14 @@ def _effective_limit(email):
 
 
 
+    # Bypass users (a student temporarily granted extra time) take priority over the
+    # global 10-min daily trial, so their custom limit actually applies until it expires.
+    if _is_bypass_email(str(email or '').strip().lower()):
+        return TEMP_BYPASS_LIMIT_SECONDS
+
     if bool(getattr(request, 'is_portal_trial', False)):
 
         return PORTAL_DAILY_TRIAL_LIMIT_SECONDS
-
-    if _is_bypass_email(str(email or '').strip().lower()):
-        return TEMP_BYPASS_LIMIT_SECONDS
 
 
 
